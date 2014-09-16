@@ -75,6 +75,7 @@ Function AddToFileName(Const FileName, AddStr: String): String;
 Function ExtractSection(Var SectionStr: String): String;
 Function ConvertOfficeType(OfficeType: String): TOfficeDocumentFormat;
 function GetGraficFileType(FileName: string): TGraficFileType;
+function GetExtByType(FileType:TGraficFileType):String;
 {$IFNDEF FPC}
 Function UTF8ToSys(S: String): String;
 {$ENDIF}
@@ -90,19 +91,14 @@ Function CopyStrings(FromString, ToString: String; Where: TStringList): TStringL
 
 function GetIniToRole(UserID: String): String;
 function GetFormPosString(FForm:TDBForm; DialogName:String): String;
-procedure SaveFormPosINI(FForm:TDBForm; DialogName:String);
-procedure SaveFormPosBase(FDCLLogOn:TDCLLogOn; FForm:TDBForm; DialogName:String);
-procedure SaveFormPos(FDCLLogOn:TDCLLogOn; FForm:TDBForm; DialogName:String);
-
-procedure LoadFormPosINI(var FForm:TDBForm; DialogName:String);
-procedure LoadFormPosBase(FDCLLogOn:TDCLLogOn; var FForm:TDBForm; DialogName:String);
-procedure LoadFormPos(FDCLLogOn:TDCLLogOn; var FForm:TDBForm; DialogName:String);
-
+procedure SaveMainFormPos(FDCLLogOn:TDCLLogOn; FForm:TDBForm; DialogName:String);
+procedure LoadMainFormPos(FDCLLogOn:TDCLLogOn; var FForm:TDBForm; DialogName:String);
 
 
 implementation
 
-uses SumProps, uDCLResources;
+uses
+  SumProps, uDCLResources, MD5;
 
 function ValidObject(const AObj: TObject): Boolean;
 begin
@@ -124,7 +120,6 @@ Begin
 End;
 {$ENDIF}
 {$IFDEF FPC}
-
 Function Date: TDateTime;
 Begin
   Result:=Now;
@@ -1090,12 +1085,12 @@ End;
 
 Procedure TranslateProc(Var CallProc: String; Var Factor: Word);
 Const
-  ProcCount=22;
+  ProcCount=27;
   ProcNames: Array [1..ProcCount] Of String=('ConvertOraDates', 'ConvertToOraDates', 'ToFloat', // 3
     'ConvertToAccessDate', 'DeleteNonFilesSimb', 'GetFileNameToTranslite', 'ExtractFileName', // 7
     'MoneyToString', 'ByIndex', 'Count', 'IndexOf', 'ReadConfig', 'WriteConfig', 'NVL', 'iif', // 15
     'GetTempFileName', 'DaysInAMonth', 'GetMonthName', 'LeadingZero', 'GetAccessLevelByName', // 20
-    'DaysInMonth', 'MonthByDate'); // 22
+    'DaysInMonth', 'MonthByDate', 'Upper', 'Lower', 'MD5File', 'MD5String', 'Eval'); // 27
 Var
   ReplaseProc, Param, TmpStr, TmpStr2, TmpStr3, Sign: String;
   StartSel, ParamLen, StartSearch, pv1, pv2, pv3, pv4, FindProcNum, Skobki, VarNameLength,
@@ -1446,6 +1441,26 @@ Begin
           If ((pv1>0) and (pv1<13)) then
             TmpStr:=MonthsNamesW[pv1];
         End;
+        23:
+        Begin
+          TmpStr:=AnsiUpperCase(FunctionParams[1]);
+        End;
+        24:
+        Begin
+          TmpStr:=AnsiLowerCase(FunctionParams[1]);
+        End;
+        25:Begin
+          If FileExists(FunctionParams[1]) then
+          Begin
+            TmpStr:=MD5FileToStr(FunctionParams[1]);
+          End;
+        End;
+        26:Begin
+          TmpStr:=MD5DigestToStr(MD5String(FunctionParams[1]));
+        End;
+        27:Begin // Eval
+          TmpStr:=Calculate(FunctionParams[1]);
+        End;
         End;
 
       Delete(CallProc, StartSel, MaxMatch-StartSel);
@@ -1646,7 +1661,6 @@ Begin
           If Trim(FindParam('Debug=', Params[i]))='1' Then
           Begin
             GPT.DebugOn:=True;
-            Logger.Active:=True;
           End
           Else
             GPT.DebugOn:=False;
@@ -1833,36 +1847,14 @@ Begin
 End;
 
 Function HashString(S: String): String;
-Var
-  iI, ji: Word;
-  H: Cardinal;
-  ds, ds2: String;
 Begin
-  H:=0;
-  ji:=Length(S);
-  For iI:=1 To Length(S) Do
-  Begin
-    H:=H+(Ord(S[iI])Xor iI)+iI+Length(S)+ji+(Length(S)Xor iI+ji);
-    H:=H*Ord(S[iI])-111;
-    Dec(ji);
-  End;
-  ds:=IntToStr(H);
-  If (Length(ds)Mod 2)<>0 Then
-    ds:=ds+'0';
-  ji:=1;
-  ds2:='';
-  For iI:=1 To Length(ds)Div 2 Do
-  Begin
-    ds2:=ds2+Chr(StrToInt(Copy(ds, ji, 2)));
-    Inc(ji, 2);
-  End;
-  Result:=ds2;
+  Result:=MD5DigestToStr(MD5String(S));
 End;
 
 Function IsFullPath(Path: String): Boolean;
 Begin
   If Length(Path)>1 then
-    Result:=((Pos(':\', Path)=2)or(Path[1]='/')or(Path[1]='~'));
+    Result:=((Pos(':\', Path)=2)or(Path[1]='/')or(Path[1]='~')) and (PosInSet('/\', Path)<>0);
 End;
 
 Function IsUNCPath(Path: String): Boolean;
@@ -2103,6 +2095,18 @@ Begin
     Result:=gftJPEG;
 End;
 
+function GetExtByType(FileType:TGraficFileType):String;
+Begin
+  Case FileType of
+  gftBMP:Result:='bmp';
+  gftJPEG, gftOther:Result:='jpg';
+  gftPNG:Result:='png';
+  gftIcon:Result:='ico';
+  gftGIF:Result:='gif';
+  gftTIFF:Result:='tiff';
+  end;
+End;
+
 Function CopyStrings(FromString, ToString: String; Where: TStringList): TStringList;
 Var
   li, FromPos, CurrPos: Integer;
@@ -2127,10 +2131,10 @@ End;
 function GetFormPosString(FForm:TDBForm; DialogName:String): String;
 begin
   Result:=DialogName+'=Top='+IntToStr(FForm.Top)+';Left='+IntToStr(FForm.Left)+';Height='+
-    IntToStr(FForm.Height)+';Width='+IntToStr(FForm.Width)+';';
+    IntToStr(FForm.ClientHeight)+';Width='+IntToStr(FForm.Width)+';';
 end;
 
-procedure SaveFormPosINI(FForm:TDBForm; DialogName:String);
+procedure SaveFormPosINI_OLD(FForm:TDBForm; DialogName:String);
 Var
   DialogsParams: TStringList;
   i: Byte;
@@ -2169,7 +2173,7 @@ Begin
     Result:=IniUserFieldName+'='+UserID+' and ';
 End;
 
-procedure SaveFormPosBase(FDCLLogOn:TDCLLogOn; FForm:TDBForm; DialogName:String);
+procedure SaveFormPosBase_OLD(FDCLLogOn:TDCLLogOn; FForm:TDBForm; DialogName:String);
 Var
   DCLQueryL: TDCLDialogQuery;
   i: Byte;
@@ -2177,6 +2181,7 @@ Begin
   If Assigned(FForm) Then
   Begin
     DCLQueryL:=TDCLDialogQuery.Create(nil);
+    DCLQueryL.Name:='SaveFormPosOLD_'+IntToStr(UpTime);
     FDCLLogOn.SetDBName(DCLQueryL);
 
     DCLQueryL.SQL.Text:='select count(*) from '+INITable+' where '+IniUserFieldName+'='+GPT.UserID+
@@ -2206,22 +2211,63 @@ Begin
   End;
 end;
 
-procedure SaveFormPos(FDCLLogOn:TDCLLogOn; FForm:TDBForm; DialogName:String);
+procedure SaveMainFormPos(FDCLLogOn:TDCLLogOn; FForm:TDBForm; DialogName:String);
 begin
   Case GPT.FormPosInDB Of
   isDisk:
-  SaveFormPosINI(FForm, DialogName);
+  SaveFormPosINI_OLD(FForm, DialogName);
   isBase:
-  SaveFormPosBase(FDCLLogOn, FForm, DialogName);
+  SaveFormPosBase_OLD(FDCLLogOn, FForm, DialogName);
   isDiskAndBase:
   Begin
-    SaveFormPosINI(FForm, DialogName);
-    SaveFormPosBase(FDCLLogOn, FForm, DialogName);
+    SaveFormPosINI_OLD(FForm, DialogName);
+    SaveFormPosBase_OLD(FDCLLogOn, FForm, DialogName);
   End;
   End;
 end;
 
-procedure LoadFormPosINI(var FForm:TDBForm; DialogName:String);
+procedure LoadFormPosINI(var DCLForm:TDCLForm; DialogName:String);
+Var
+  FileParams, DialogsParams: TStringList;
+  ParamsCounter: Word;
+  g:Integer;
+  S:String;
+Begin
+  If DialogName<>'' Then
+    If GPT.DialogsSettings Then
+    Begin
+      If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini') Then
+      Begin
+        g:=-1;
+        FileParams:=TStringList.Create;
+        FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini');
+        DialogsParams:=CopyStrings('['+DialogName+']', '[END '+DialogName+']', FileParams);
+
+        If DialogsParams.Count>0 then
+          For ParamsCounter:=0 To DialogsParams.Count-1 Do
+          Begin
+            S:=Trim(DialogsParams[ParamsCounter]);
+            If PosEx('FormTop=', S)=1 then
+              DCLForm.Form.Top:=StrToInt(FindParam('FormTop=', S));
+            If PosEx('FormLeft=', S)=1 then
+              DCLForm.Form.Left:=StrToInt(FindParam('FormLeft=', S));
+            If PosEx('FormHeight=', S)=1 then
+              DCLForm.Form.Height:=StrToInt(FindParam('FormHeight=', S));
+            If PosEx('FormWidth=', S)=1 then
+              DCLForm.Form.Width:=StrToInt(FindParam('FormWidth=', S));
+
+            If PosEx('[Page]', S)=1 then
+              Inc(g);
+            If PosEx('SplitterPos=', S)=1 then
+              If g>-1 then
+                DCLForm.Tables[g].GridPanel.Height:=StrToInt(FindParam('SplitterPos=', S));
+          End;
+
+      End;
+    End;
+End;
+
+procedure LoadFormPosINI_OLD(var FForm:TDBForm; DialogName:String);
 Var
   DialogsParams: TStringList;
   ParamsCounter: Word;
@@ -2239,7 +2285,7 @@ Begin
           Begin
             FForm.Top:=StrToInt(FindParam('Top=', DialogsParams[ParamsCounter]));
             FForm.Left:=StrToInt(FindParam('Left=', DialogsParams[ParamsCounter]));
-            FForm.Height:=StrToInt(FindParam('Height=', DialogsParams[ParamsCounter]));
+            FForm.ClientHeight:=StrToInt(FindParam('Height=', DialogsParams[ParamsCounter]))+AddHeight;
             FForm.Width:=StrToInt(FindParam('Width=', DialogsParams[ParamsCounter]));
             break;
           End;
@@ -2249,7 +2295,7 @@ Begin
     End;
 end;
 
-procedure LoadFormPosBase(FDCLLogOn:TDCLLogOn; var FForm:TDBForm; DialogName:String);
+procedure LoadFormPosBase_OLD(FDCLLogOn:TDCLLogOn; var FForm:TDBForm; DialogName:String);
 Var
   DCLQueryL: TDCLDialogQuery;
   IniVal: String;
@@ -2257,6 +2303,7 @@ Begin
   If DialogName<>'' Then
   Begin
     DCLQueryL:=TDCLDialogQuery.Create(Nil);
+    DCLQueryL.Name:='LoadFormPosOLD_'+IntToStr(UpTime);
     FDCLLogOn.SetDBName(DCLQueryL);
 
     DCLQueryL.SQL.Text:='select * from '+INITable+' where '+GetIniToRole(GPT.UserID)+
@@ -2267,11 +2314,11 @@ Begin
     Begin
       IniVal:=DCLQueryL.FieldByName(IniParamValField).AsString;
 
-      If GPT.DialogsSettings Then
+      If GPT.DialogsSettings and (IniVal<>'') Then
       Begin
         FForm.Top:=StrToInt(FindParam('Top=', IniVal));
         FForm.Left:=StrToInt(FindParam('Left=', IniVal));
-        FForm.Height:=StrToInt(FindParam('Height=', IniVal));
+        FForm.ClientHeight:=StrToInt(FindParam('Height=', IniVal))+AddHeight;
         FForm.Width:=StrToInt(FindParam('Width=', IniVal));
       End;
     End;
@@ -2280,17 +2327,17 @@ Begin
   End;
 end;
 
-procedure LoadFormPos(FDCLLogOn:TDCLLogOn; var FForm:TDBForm; DialogName:String);
+procedure LoadMainFormPos(FDCLLogOn:TDCLLogOn; var FForm:TDBForm; DialogName:String);
 begin
   Case GPT.FormPosInDB of
   isDisk:
-  LoadFormPosINI(FForm, DialogName);
+  LoadFormPosINI_OLD(FForm, DialogName);
   isBase:
-  LoadFormPosBase(FDCLLogOn, FForm, DialogName);
+  LoadFormPosBase_OLD(FDCLLogOn, FForm, DialogName);
   isDiskAndBase:
   Begin
-    LoadFormPosINI(FForm, DialogName);
-    LoadFormPosBase(FDCLLogOn, FForm, DialogName);
+    LoadFormPosINI_OLD(FForm, DialogName);
+    LoadFormPosBase_OLD(FDCLLogOn, FForm, DialogName);
   End;
   End;
 end;

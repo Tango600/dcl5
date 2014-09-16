@@ -56,7 +56,7 @@ var
 begin
   Case message.CmdType of
   AboutMenuItem:
-  uUDL.DCLMainLogOn.About;
+  uUDL.DCLMainLogOn.About(nil);
   LockMenuItem:DCLMainLogOn.Lock;
   SC_MINIMIZE:
   begin

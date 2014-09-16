@@ -32,7 +32,7 @@ TGPT=record
   CurrentRunningScrString, CurrentRunningCmdString, Port: Integer;
   DateSeparator, TimeSeparator: Char;
   ServerCodePage, DateFormat, TimeFormat, Viewer, ConnectionString, MainFormCaption,
-  NewConnectionString, DBPath, ServerName, NewDBUserName, DBType: String;
+  NewConnectionString, DBPath, ServerName, NewDBUserName, DBType, GeneratorName: String;
   SQLDialect:Byte;
   NoParamsTable, DisableLogOnWithoutUser, MultiRolesMode: Boolean;
   DBUserName, DCLUserName, DCLUserPass, EnterPass, LongRoleName, GetValueSeparator, UpperString,
@@ -40,7 +40,7 @@ TGPT=record
   GPTTableName, GPTNameField, GPTValueField, GPTUserIDField, IniFileName, TemplatesTable,
   StringTypeChar, DCLNameField, DCLTextField, DCLTable, ShowRoleField, ACTIVE_USERS_TABLE,
   USER_LOGIN_HISTORY_TABLE, TemplatesNameField, TemplatesKeyField, TemplatesDataField,
-  UserAdminField, INITable, RolesMenuTable, TimeStampFormat, DCLLongUserName, UserID, RoleID,
+  UserAdminField, {INITable,} RolesMenuTable, TimeStampFormat, DCLLongUserName, UserID, RoleID,
   DCLRoleName, NewDBPassword, DBPassword, LibPath: String;
   FormPosInDB:TIniStore;
 end;
@@ -225,6 +225,7 @@ procedure ResetFilterParams(var FilterParams: TDBFilter);
 procedure ResetCalendarParams(var Calendar: RCalendar);
 procedure ResetFieldParams(var Field: RField);
 procedure ResetChooseValue(var Val:TReturnFormValue);
+procedure ResetDCLField(var F:TDCLDataFields);
 
 var
   GPT: TGPT;
@@ -320,6 +321,14 @@ Begin
   Val.ModifyField:='';
   Val.EditName:='';
   Val.Choosen:=False;
+End;
+
+procedure ResetDCLField(var F:TDCLDataFields);
+Begin
+  F.Name:='';
+  F.Caption:='';
+  F.ReadOnly:=False;
+  F.Width:=0;
 End;
 
 { TReturnValueParams }

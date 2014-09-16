@@ -7,7 +7,7 @@ uses
   SysUtils, Classes, uStringParams,
   Dialogs,
 {$IFDEF ADO}
-  ADODB, ADOConst, ADOInt,
+  WideStrings, ADODB, ADOConst, ADOInt,
 {$ENDIF}
 {$IFDEF BDE}
   BDE, DBClient, DBTables, Bdeconst,
@@ -35,13 +35,16 @@ type
     {$ELSE}
     FUpdateSQL: TDCLDialogQuery;
     {$ENDIF}
+    FUpdSQL:String;
 {$ENDIF}
+    FNoRefreshSQL:Boolean;
     FMainTable, FKeyField: string;
     FAfterPost, FAfterCancel, FAfterOpen, FBeforePost, FBeforeInsert, FAfterDelete,
       FAfterInsert: TDataSetNotifyEvent;
     FNotAllowOperations: TOperationsTypes;
-    FUpdateSQLDefined, FFieldsDefsDefined:Boolean;
+    FUpdateSQLDefined:Boolean;
     {$IFDEF ZEOS}
+    FFieldsDefsDefined:Boolean;
     FieldsDefs:Array of TField;
     {$ENDIF}
 
@@ -80,10 +83,12 @@ type
     Procedure SetOperations(Value: TOperationsTypes);
     Function GetOperations: TOperationsTypes;
 
-    procedure SetSQL(const AValue: TStringlist);
-    function GetSQL: TStringlist;
+    procedure SetSQL(const AValue: {$IFDEF ADO}TWideStrings{$ELSE}TStringList{$ENDIF});
+    function GetSQL: {$IFDEF ADO}TWideStrings{$ELSE}TStringList{$ENDIF};
 
     Function FindNotAllowedOperation(Value: TNotAllowedOperations): Boolean;
+
+    procedure SetNoRefreshSQL(Value:Boolean);
   public
     constructor Create(DatabaseObj: TDBLogOn);
     destructor Destroy; override;
@@ -98,8 +103,9 @@ type
     property NotAllowOperations: TOperationsTypes read GetOperations write SetOperations;
     property KeyField: String read FKeyField;
     property MainTable: String read FMainTable;
+    property NoRefreshSQL:Boolean read FNoRefreshSQL write SetNoRefreshSQL;
   published
-    property SQL:TstringList read GetSQL write SetSQL;
+    property SQL:{$IFDEF ADO}TWideStrings{$ELSE}TStringList{$ENDIF} read GetSQL write SetSQL;
     property AfterDelete: TDataSetNotifyEvent read GetAfterDeleteEvent write SetAfterDeleteEvent;
     property AfterPost: TDataSetNotifyEvent read GetAfterPostEvent write SetAfterPostEvent;
     property AfterCancel: TDataSetNotifyEvent read GetAfterCancelEvent write SetAfterCancelEvent;
@@ -112,10 +118,7 @@ type
 
 implementation
 
-Function PosEx(const SubStr, S: String): Cardinal;
-begin
-  Result:=Pos(AnsiLowerCase(SubStr), AnsiLowerCase(S));
-end;
+uses uDCLUtils;
 
 { TDCLQuery }
 
@@ -143,14 +146,12 @@ procedure TDCLQuery.AfterOpenData(Data: TDataSet);
 var
   i, j:Integer;
   LocalAfterOpen:TDataSetNotifyEvent;
-  fd:TFieldType; fn:String;
 begin
-{  TFieldType = (ftUnknown,
-    ftBoolean, , ,
-    , ftCursor, ftFixedChar,
-    , ftADT, , ftReference,
-    ftDataSet, ftOraBlob, ftOraClob, ftVariant, ftInterface,
-    ftIDispatch, ftGuid, ftFixedWideChar, ftWideMemo);
+{
+    ftCursor,
+    ftADT, ftReference,
+    ftDataSet, ftOraClob, ftInterface,
+    ftIDispatch, ftGuid
 }
 
 {$IFDEF ZEOS}
@@ -163,39 +164,74 @@ begin
     j:=0;
     For i:=1 to Fields.Count do
     Begin
-      fn:=Fields[i-1].FieldName;
-      fd:=Fields[i-1].DataType;
-      Case fd of
+      Case Fields[i-1].DataType of
       ftSmallint, ftInteger, ftLargeint, ftWord, ftAutoInc:Begin
         FieldsDefs[j]:=TIntegerField.Create(Self);
-        FieldsDefs[j].FieldName:=fn;
+        FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
         Inc(j);
       end;
-      ftFloat, ftCurrency:Begin
+      ftFloat:Begin
         FieldsDefs[j]:=TFloatField.Create(Self);
         FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
-        TFloatField(FieldsDefs[j]).Precision:=5;
-        TFloatField(FieldsDefs[j]).DisplayFormat:='#,#####';
+        TFloatField(FieldsDefs[j]).DisplayFormat:='#.#####';
+        //'#'+{$IFDEF FPC}DefaultFormatSettings.{$ENDIF}DecimalSeparator+'#####';
+        Inc(j);
+      End;
+      ftCurrency:Begin
+        FieldsDefs[j]:=TCurrencyField.Create(Self);
+        FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
+        //TFloatField(FieldsDefs[j]).Precision:=2;
+        TFloatField(FieldsDefs[j]).DisplayFormat:='#.##';
         Inc(j);
       End;
       ftBCD, ftFMTBcd:Begin
         FieldsDefs[j]:=TNumericField.Create(Self);
         FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
-        TNumericField(FieldsDefs[j]).DisplayFormat:='#,#####';
+        TNumericField(FieldsDefs[j]).DisplayFormat:='#.#####';
         Inc(j);
       End;
-      ftString, ftWideString:Begin
+      ftString, ftFixedChar, ftVariant:Begin
         FieldsDefs[j]:=TStringField.Create(Self);
+        FieldsDefs[j].Size:=Fields[i-1].Size;
         FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
         Inc(j);
       End;
-      ftDate,  ftTime, ftDateTime, ftTimeStamp:Begin
+      ftFixedWideChar, ftWideString:Begin
+        FieldsDefs[j]:=TWideStringField.Create(Self);
+        FieldsDefs[j].Size:=Fields[i-1].Size;
+        FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
+        Inc(j);
+      End;
+      ftDate:Begin
         FieldsDefs[j]:=TDateField.Create(Self);
         FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
         Inc(j);
       End;
-      ftBytes, ftVarBytes, ftBlob, ftMemo, ftGraphic, ftFmtMemo,
-      ftParadoxOle, ftDBaseOle, ftTypedBinary, ftArray:Begin
+      ftTime:Begin
+        FieldsDefs[j]:=TTimeField.Create(Self);
+        FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
+        Inc(j);
+      End;
+      ftDateTime{$IFDEF FPC}, ftTimeStamp{$ENDIF}:Begin
+        FieldsDefs[j]:=TDateTimeField.Create(Self);
+        FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
+        Inc(j);
+      End;
+      {$IFNDEF FPC}
+      ftTimeStamp:Begin
+        FieldsDefs[j]:=TSQLTimeStampField.Create(Self);
+        FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
+        Inc(j);
+      End;
+      {$ENDIF}
+      ftBoolean:Begin
+        FieldsDefs[j]:=TBooleanField.Create(Self);
+        FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
+        Inc(j);
+      End;
+      ftBytes, ftOraBlob, ftVarBytes, ftBlob, ftMemo, ftGraphic, ftFmtMemo,
+      ftParadoxOle, ftDBaseOle, ftTypedBinary, ftArray,
+      ftWideMemo:Begin
         FieldsDefs[j]:=TBlobField.Create(Self);
         FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
         Inc(j);
@@ -211,7 +247,10 @@ begin
     For i:=1 to Length(FieldsDefs) do
     Begin
       If Assigned(FieldsDefs[i-1]) then
+      Begin
+        FieldsDefs[i-1].Required:=False;
         FieldsDefs[i-1].DataSet:=Self;
+      end;
     End;
     FieldDefs.Update;
     inherited Open;
@@ -256,9 +295,13 @@ end;
 constructor TDCLQuery.Create(DatabaseObj: TDBLogOn);
 begin
   inherited Create(nil);
+  Name:='DCLQuery'+IntToStr(UpTime);
   FUpdateSQLDefined:=False;
-  FFieldsDefsDefined:=False;
+{$IFDEF IBALL}
+  FNoRefreshSQL:=False;
+{$ENDIF}
 {$IFDEF ZEOS}
+  FFieldsDefsDefined:=False;
   Connection:=DatabaseObj;
 {$ENDIF}
 {$IFDEF BDE}
@@ -284,9 +327,6 @@ begin
 {$IFDEF BDE}
   ShadowQuery.Database:=DatabaseObj;
 {$ENDIF}
-{$IFDEF ADO}
-  ShadowQuery.Connection:=DatabaseObj;
-{$ENDIF}
 {$IFDEF ZEOS}
   ShadowQuery.Connection:=DatabaseObj;
 {$ENDIF}
@@ -298,6 +338,7 @@ begin
   ShadowQuery.Database:=DatabaseObj;
   ShadowQuery.Transaction:=DatabaseObj.Transaction;
 {$ENDIF}
+  ShadowQuery.Name:='ShadowQueryDCLQuery_'+IntToStr(UpTime);
 {$ENDIF}
 end;
 
@@ -311,7 +352,6 @@ Begin
   Begin
     FMainTable:=TableName;
 {$IFDEF ADO}
-    FUpdateDataDefined:=True;
     If ToOpen then
       If not Active Then
         If SQL.Text<>'' Then
@@ -417,7 +457,10 @@ Begin
         KeyFieldsSet:=KeyFieldsSet+KeyFields[v1-1]+'=:'+KeyFields[v1-1]+',';
       If KeyFieldsSet<>'' then
         System.Delete(KeyFieldsSet, Length(KeyFieldsSet), 1);
-      FUpdateSQL.RefreshSQL.Text:='select * from '+TableName+' where '+KeyFieldsSet;
+
+      FUpdSQL:='select * from '+TableName+' where '+KeyFieldsSet;
+      If not FNoRefreshSQL then
+        FUpdateSQL.RefreshSQL.Text:=FUpdSQL;
 {$ENDIF}{$ENDIF}
       // Query.FieldList.Update;
       If not Active Then
@@ -464,9 +507,22 @@ Begin
     End;
 end;
 
+procedure TDCLQuery.SetNoRefreshSQL(Value: Boolean);
+begin
+{$IFDEF IBALL}
+  FNoRefreshSQL:=Value;
+  If Assigned(FUpdateSQL) then
+  Begin
+    If Value then
+      FUpdateSQL.RefreshSQL.Text:=''
+    Else
+      FUpdateSQL.RefreshSQL.Text:=FUpdSQL;
+  End;
+{$ENDIF}
+end;
+
 destructor TDCLQuery.Destroy;
 begin
-  Close;
 {$IFDEF CACHEON}
   FreeAndNil(FUpdateSQL);
 {$ENDIF}
@@ -547,15 +603,16 @@ begin
   Result:=FNotAllowOperations;
 end;
 
-procedure TDCLQuery.SetSQL(const AValue: TStringlist);
+procedure TDCLQuery.SetSQL(const AValue: {$IFDEF ADO}TWideStrings{$ELSE}TStringList{$ENDIF});
 begin
+  FUpdateSQLDefined:=False;
   inherited Close;
   inherited SQL.Assign(AValue);
 end;
 
-function TDCLQuery.GetSQL: TStringlist;
+function TDCLQuery.GetSQL: {$IFDEF ADO}TWideStrings{$ELSE}TStringList{$ENDIF};
 begin
-  Result:=TStringList(inherited SQL);
+  Result:={$IFDEF ADO}TWideStrings{$ELSE}TStringList{$ENDIF}(inherited SQL);
 end;
 
 function TDCLQuery.GetPrimaryKeyField(TableName: string): string;

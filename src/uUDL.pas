@@ -19,7 +19,7 @@ Uses
   Grids, DB, StdCtrls, ComCtrls, Dialogs, dbctrls, Buttons, ExtDlgs, Menus,
   DBGrids, DateUtils,
 {$IFDEF ADO}
-  ADODB, ADOConst, ADOInt,
+  ActiveX, ADODB, ADOConst, ADOInt,
 {$ENDIF}
 {$IFDEF BDE}
   BDE, DBClient, DBTables, Bdeconst,
@@ -41,7 +41,7 @@ Uses
   JPEG,
 {$ENDIF}
   {$IFDEF MSWINDOWS}uOfficeDocs, {$ENDIF}
-  uDCLMessageForm, uDCLSQLMonitor, uDCLQuery, uLogging,
+  uDCLMessageForm, uDCLSQLMonitor, uDCLQuery, uLogging, MD5,
   uStringParams, uDCLData, uDCLConst, uDCLTypes;
 
 Type
@@ -340,11 +340,13 @@ Type
     property ReadOnly: Boolean read GetReadOnly write SetReadOnly;
     property Options: TDBGridOptions read FOptions write SetGridOptions;
     property Columns: TDBGridColumns read GetColumns write SetColumns;
-    property GridPanel: TDCLMainPanel read FGridPanel;
+    property GridPanel: TDCLMainPanel read FGridPanel write FGridPanel;
     property Grid: TDBGrid read FGrid;
     property TableParts[Index: Integer]: TDCLGrid read GetTablePart write SetTablePart;
     property MultiSelect: Boolean read GetMultiselect write SetMultiselect;
   end;
+
+  { TFieldGroup }
 
   TFieldGroup=class(TObject)
   private
@@ -355,6 +357,7 @@ Type
     GraficField: TDBImage;
     RichField: {$IFDEF DELPHI}TDBRichEdit; {$ELSE}TDBMemo; {$ENDIF}
     FieldName: String;
+    FGraphicFileType:TGraficFileType;
     FGroupType: TGroupType;
     LoadButton, SaveButton, ClearButton: TSpeedButton;
     OpenPictureDialog: TOpenPictureDialog;
@@ -368,6 +371,8 @@ Type
 
     procedure SaveData(FileName: string);
     procedure LoadData(FileName: string);
+
+    procedure OnDBImageRead(Sender: TObject; S: TStream; var GraphExt : string);
   public
     constructor Create(Parent: TWinControl; Data: TDataSource; var Field: RField; aAlign: TAlign;
       GroupType: TGroupType);
@@ -443,6 +448,15 @@ Type
     procedure CloseForm(Sender: TObject; Var {%H-}Action: TCloseAction);
 
     procedure ExecCommand(CommandName:String);
+
+    procedure LoadFormPos;
+    procedure LoadFormPosINI;
+    procedure LoadFormPosBase;
+    procedure LoadFormPosUni(DialogParams:TStringList);
+    procedure SaveFormPos;
+    procedure SaveFormPosINI;
+    procedure SaveFormPosBase;
+    function SaveFormPosUni: TStringList;
   public
     LocalVariables: TVariables;
     Modal, BaseChanged, ExitNoSave: Boolean;
@@ -512,6 +526,8 @@ Type
     procedure TranslateValContext(var Params: String);
   public
     constructor Create(DCLForm: TDCLForm; var DCLLogOn: TDCLLogOn);
+    destructor Destroy; override;
+
     procedure ExecSQLCommand(SQLCommand: String; InContext: Boolean);
     procedure SetVariable(VarName, VValue: String);
 
@@ -550,6 +566,8 @@ Type
 
     property MainForm: TForm read FMainForm;
   end;
+
+  { TDCLLogOn }
 
   TDCLLogOn=class(TObject)
   private
@@ -603,7 +621,7 @@ Type
     constructor Create(DBLogOn: TDBLogOn);
     destructor Destroy; override;
 
-    procedure About;
+    procedure About(Sender:TObject);
     function Login(UserName, Password: String; ShowForm: Boolean): TLogOnStatus;
     procedure Lock;
 
@@ -623,6 +641,8 @@ Type
 
     Procedure NotifyForms(Action: TFormsNotifyAction);
     Function GetMainFormNum: Integer;
+
+    Procedure GetTableNames(var List:TStrings);
 
     procedure RePlaseVariables(Var VariablesSet: String);
     procedure TranslateVal(var S: String);
@@ -783,6 +803,8 @@ Type
     Procedure ReportExcel(ParamStr: String; Save: Boolean);
   end;
 
+  { TBaseBinStore }
+
   TBaseBinStore=class(TObject)
   private
     FErrorCode: Byte;
@@ -794,20 +816,24 @@ Type
     destructor Destroy; override;
 
     function GetData(DataName: string; FindType: TFindType): TMemoryStream;
-    procedure SetData(DataName: string; FindType: TFindType; Stream: TMemoryStream;
+    procedure SetData(DataName, Data: string; FindType: TFindType; Stream: TMemoryStream;
       Compress: Boolean);
     function IsDataExist(DataName: string; FindType: TFindType): Boolean;
     procedure DeleteData(DataName: string; FindType: TFindType);
     procedure ClearData(DataName: string; FindType: TFindType);
 
-    procedure StoreFromFile(FileName, DataName: string; FindType: TFindType; Compress: Boolean);
+    procedure StoreFromFile(FileName, DataName, Data: string; FindType: TFindType; Compress: Boolean);
     procedure SaveToFile(FileName, DataName: string; FindType: TFindType);
 
-    procedure CompressData(DataName: string; FindType: TFindType);
-    procedure DeCompressData(DataName: string; FindType: TFindType);
+    procedure CompressData(DataName, Data: string; FindType: TFindType);
+    procedure DeCompressData(DataName, Data: string; FindType: TFindType);
+
+    function MD5(DataName: string; FindType: TFindType):String;
 
     property ErrorCode: Byte read FErrorCode;
   end;
+
+  { TBinStore }
 
   TBinStore=class(TBaseBinStore)
   private
@@ -817,20 +843,24 @@ Type
       TableName, KeyField, NameField, DataField: String);
     destructor Destroy; override;
 
-    procedure StoreFromFile(FileName, DataName: string; Compress: Boolean);
+    procedure StoreFromFile(FileName, DataName, Data: string; Compress: Boolean);
     procedure SaveToFile(FileName, DataName: string);
 
     function GetData(DataName: string): TMemoryStream;
-    procedure SetData(DataName: string; Stream: TMemoryStream; Compress: Boolean);
+    procedure SetData(DataName, Data: string; Stream: TMemoryStream; Compress: Boolean);
     function IsDataExist(DataName: string): Boolean;
     procedure DeleteData(DataName: string);
     procedure ClearData(DataName: string);
 
-    procedure CompressData(DataName: string);
-    procedure DeCompressData(DataName: string);
+    procedure CompressData(DataName, Data: string);
+    procedure DeCompressData(DataName, Data: string);
+
+    function MD5(DataName: string):String;
 
     property ErrorCode;
   end;
+
+  { TDCLBinStore }
 
   TDCLBinStore=class(TBinStore)
   private
@@ -849,6 +879,8 @@ Type
 
     procedure CompressData(DataName: string);
     procedure DeCompressData(DataName: string);
+
+    function MD5(DataName:String):String;
 
     property ErrorCode;
   end;
@@ -920,6 +952,7 @@ var
   Ext, TemplateFileName: String;
 begin
   DCLQuery:=TDCLDialogQuery.Create(nil);
+  DCLQuery.Name:='WordReportQuery_'+IntToStr(UpTime);
   FDCLLogOn.SetDBName(DCLQuery);
   DCLQuery.SQL.Clear;
   tmpDCL:=TStringList.Create;
@@ -945,6 +978,7 @@ begin
   If ParamsSet<>0 Then
   Begin
     RepParamsSet:=TDCLDialogQuery.Create(Nil);
+    RepParamsSet.Name:='Command_'+IntToStr(UpTime);
     FDCLLogOn.SetDBName(RepParamsSet);
     RepParamsSet.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtCount, ' s.'+GPT.ParentFlgField+'='+
       IntToStr(ParamsSet));
@@ -1030,13 +1064,14 @@ Var
     S:=mSec div 1000;
     Dec(mSec, S*1000);
 
-    Result:=IntToStr(h)+' С‡. '+IntToStr(m)+' Рј. '+IntToStr(S)+' СЃ. '+IntToStr(mSec)+' РјСЃРµРє.';
+    Result:=IntToStr(h)+' ч. '+IntToStr(m)+' м. '+IntToStr(S)+' с. '+IntToStr(mSec)+' мсек.';
   End;
 
   Function CreateQuery: TDCLDialogQuery;
   Begin
     try
       Result:=TDCLDialogQuery.Create(dmData);
+      Result.Name:='WRQ_'+IntToStr(UpTime);
       FDCLLogOn.SetDBName(Result);
       Result.Close;
       Result.SQL.Clear;
@@ -1123,7 +1158,7 @@ Var
                   dmReport[ACurrentForm].DMForm.VariablesClass.RePlaceParams(QSQLText, IBDQ as TIBCustomDataSet, False); }
               End;
             Except
-              LogObj.WriteLog('...РћС€РёР±РєР° РёРЅС‚РµСЂРїСЂРёС‚Р°С†РёРё РїР°СЂР°РјРµС‚СЂРѕРІ/ '+sQueryToDataSources
+              LogObj.WriteLog('...Ошибка интерпритации параметров/ '+sQueryToDataSources
                 [QueryNum][Pc]);
               Errors:=true;
             End;
@@ -1134,35 +1169,35 @@ Var
 
         // RePlaceParams(QSQLText, dmData.dmReport[ACurrentForm].DMForm.idsAReportLst, False);
 
-        LogObj.WriteLog('РћР±СЂР°Р±РѕС‚РєР°['+IntToStr(QueryNum)+']... Query:'+mQueries[QueryNum].Name);
+        LogObj.WriteLog('Обработка['+IntToStr(QueryNum)+']... Query:'+mQueries[QueryNum].Name);
         If Assigned(mQueries[QueryNum].DataSource) then
           LogObj.WriteLog('     Data source: '+mQueries[QueryNum].DataSource.Name);
         LogObj.WriteLog('========SQL begin========');
         LogObj.WriteLog(QSQLText);
         LogObj.WriteLog('========SQL end==========');
-        LogObj.WriteLog('РџС‹С‚Р°РµРјСЃСЏ РѕС‚РєСЂС‹С‚СЊ....');
+        LogObj.WriteLog('Пытаемся открыть....');
         If IsReturningQuery(mQueries[QueryNum].SQL.Text) then
         Begin
           St:=GetTickCount;
           mQueries[QueryNum].Open;
           // mQueries[QueryNum].FetchAll;
-          LogObj.WriteLog('... РЈСЃРїРµС€РЅРѕ.');
-          LogObj.WriteLog('Р’СЂРµРјСЏ РІС‹РїРѕР»РЅРµРЅРёСЏ: '+GetTimeFormat(GetTickCount-St));
-          LogObj.WriteLog('РљРѕР»РёС‡РµСЃС‚РІРѕ Р·Р°РїРёСЃРµР№: '+IntToStr(mQueries[QueryNum].RecordCount));
+          LogObj.WriteLog('... Успешно.');
+          LogObj.WriteLog('Время выполнения: '+GetTimeFormat(GetTickCount-St));
+          LogObj.WriteLog('Количество записей: '+IntToStr(mQueries[QueryNum].RecordCount));
           LogObj.WriteLog('');
           // mQueries[QueryNum].FetchAll;
         End
         else
         Begin
           mQueries[QueryNum].ExecSQL;
-          LogObj.WriteLog('... Р’С‹РїРѕР»РЅРµРЅ.');
+          LogObj.WriteLog('... Выполнен.');
         End;
 
       Except
         On E: Exception do
         Begin
           LogObj.WriteLog('Query['+IntToStr(QueryNum)+']: '+mQueries[QueryNum].Name);
-          LogObj.WriteLog('РўРµРєСЃС‚ РѕС€РёР±РєРё :');
+          LogObj.WriteLog('Текст ошибки :');
           LogObj.WriteLog(E.Message);
           LogObj.WriteLog('----------------------------');
           AllOk:=False;
@@ -1172,8 +1207,8 @@ Var
     End
     else
     Begin
-      LogObj.WriteLog('РћР±СЂР°Р±РѕС‚РєР°['+IntToStr(QueryNum)+']... Query:'+mQueries[QueryNum].Name);
-      LogObj.WriteLog('... РџСѓСЃС‚РѕРµ SQL РїСЂРµРґР»РѕР¶РµРЅРёРµ.');
+      LogObj.WriteLog('Обработка['+IntToStr(QueryNum)+']... Query:'+mQueries[QueryNum].Name);
+      LogObj.WriteLog('... Пустое SQL предложение.');
     End;
     LogObj.WriteLog('');
   end;
@@ -1203,17 +1238,17 @@ Begin
     TemplateExists:=true;
     If TemplatesCount>1 then
     Begin
-      LogObj.WriteLog('Р¤Р°Р№Р»С‹ С€Р°Р±Р»РѕРЅРѕРІ ('+IntToStr(TemplatesCount)+') :');
+      LogObj.WriteLog('Файлы шаблонов ('+IntToStr(TemplatesCount)+') :');
       For TemplatesCounter:=1 to TemplatesCount do
       Begin
         vStrTmp1:=SortParams(ATemplate, TemplatesCounter);
-        LogObj.WriteLog('Р¤Р°Р№Р» С€Р°Р±Р»РѕРЅР° в„–'+IntToStr(TemplatesCounter)+' : '+vStrTmp1);
+        LogObj.WriteLog('Файл шаблона №'+IntToStr(TemplatesCounter)+' : '+vStrTmp1);
         TemplateExists:=FileExists(vStrTmp1);
         If TemplateExists then
           Templates[TemplatesCounter]:=vStrTmp1;
         If not TemplateExists then
         Begin
-          LogObj.WriteLog('Р¤Р°Р№Р» С€Р°Р±Р»РѕРЅР° РЅРµ РЅР°Р№РґРµРЅ : '+Templates[TemplatesCounter]);
+          LogObj.WriteLog('Файл шаблона не найден : '+Templates[TemplatesCounter]);
           break;
         End;
       End;
@@ -1222,7 +1257,7 @@ Begin
     Begin
       TemplateExists:=FileExists(ATemplate);
       Templates[1]:=ATemplate;
-      LogObj.WriteLog('Р¤Р°Р№Р» С€Р°Р±Р»РѕРЅР° : '+ATemplate);
+      LogObj.WriteLog('Файл шаблона : '+ATemplate);
     End;
 
     TemplatesCounter:=1;
@@ -1232,14 +1267,14 @@ Begin
       rtWord:
       begin
         PrintWord:=TPrintDoc.Create(dmData, otOpOffice, LogObj);
-        LogObj.WriteLog('Р’РµСЂСЂСЃРёСЏ PrintWord: '+PrintWord.Version);
+        LogObj.WriteLog('Веррсия PrintWord: '+PrintWord.Version);
         Case PrintWord.OfficeType of
         otNone:
-        LogObj.WriteLog('РќРµ СѓСЃС‚Р°РЅРѕРІР»РµРЅ РЅРёРєР°РєРѕР№ РѕС„РёСЃ.');
+        LogObj.WriteLog('Не установлен никакой офис.');
         otMSOffice:
-        LogObj.WriteLog('РўРёРї РѕС„РёСЃР° : MS');
+        LogObj.WriteLog('Тип офиса : MS');
         otOpOffice:
-        LogObj.WriteLog('РўРёРї РѕС„РёСЃР° : Open/Libre Office');
+        LogObj.WriteLog('Тип офиса : Open/Libre Office');
         End;
         LogObj.WriteLog('');
       end;
@@ -1409,7 +1444,7 @@ Begin
       FirstRun:=true;
       For TemplatesCounter:=1 to TemplatesCount do
       Begin
-        LogObj.WriteLog('Р’СЂРµРјСЏ СЃС‚Р°СЂС‚Р°: '+TimeToStr(Now));
+        LogObj.WriteLog('Время старта: '+TimeToStr(Now));
         LogObj.WriteLog('');
         For i:=1 to vQueryIndex do
         Begin
@@ -1421,32 +1456,32 @@ Begin
 
         FirstRun:=False;
         If AllOk then
-          LogObj.WriteLog('Р’СЃРµ SQL-Р·Р°РїСЂРѕСЃС‹ РІС‹РїРѕР»РЅРµРЅС‹ Р±РµР· РѕС€РёР±РѕРє!');
+          LogObj.WriteLog('Все SQL-запросы выполнены без ошибок!');
 
         LogObj.WriteLog('');
 
         Case FReportOutputType of
         rtWord:
         begin
-          LogObj.WriteLog('Р“РµРЅРµСЂР°С†РёСЏ РѕС‚С‡С‘С‚Р°...');
+          LogObj.WriteLog('Генерация отчёта...');
           PrintWord:=TPrintDoc.Create(dmData, otMSOffice, LogObj);
           Try
             PrintWord.PrintTemplate(Templates[TemplatesCounter], GPT.DebugOn);
           Except
             On E: Exception do
             Begin
-              LogObj.WriteLog('РћС€РёР±РєР° РіРµРЅРµСЂР°С†РёРё РѕС‚С‡С‘С‚Р°:');
-              LogObj.WriteLog('  РўРµРєСЃС‚ РѕС€РёР±РєРё :');
+              LogObj.WriteLog('Ошибка генерации отчёта:');
+              LogObj.WriteLog('  Текст ошибки :');
               LogObj.WriteLog(E.Message);
-              LogObj.WriteLog('...РќР• СѓСЃРїРµС€РЅРѕ.');
+              LogObj.WriteLog('...НЕ успешно.');
               Errors:=true;
             End;
           end;
           If not Errors then
-            LogObj.WriteLog('...РЈСЃРїРµС€РЅРѕ.');
+            LogObj.WriteLog('...Успешно.');
 
           If PrintWord.OfficeType=otMSOffice then
-            LogObj.WriteLog('Р’РµСЂСЃРёСЏ MS РѕС„РёСЃ : '+IntToStr(PrintWord.MSOVer));
+            LogObj.WriteLog('Версия MS офис : '+IntToStr(PrintWord.MSOVer));
 
           LogObj.WriteLog('[PrintVariables]');
           For i:=1 to FDCLLogOn.Variables.VariablesList.Count do
@@ -1481,19 +1516,19 @@ Begin
             End;
           End;
 
-          LogObj.WriteLog('РЎРѕС…СЂР°РЅРµРЅРёРµ РІ : '+AFileName);
+          LogObj.WriteLog('Сохранение в : '+AFileName);
           PrintWord.SaveReport(AFileName);
-          LogObj.WriteLog('Р—Р°РїСѓСЃРє РґРѕРєСѓРјРµРЅС‚Р° ...');
+          LogObj.WriteLog('Запуск документа ...');
           PrintWord.ShowReport;
         end;
         End;
 
         LogObj.WriteLog('');
-        LogObj.WriteLog('Р’СЂРµРјСЏ С„РёРЅРёС€Р°: '+TimeToStr(Now));
+        LogObj.WriteLog('Время финиша: '+TimeToStr(Now));
         LogObj.WriteLog('');
       End;
 
-      LogObj.WriteLog('РћР±СЂР°Р±РѕС‚РєР° Р·Р°РІРµСЂС€Р°СЋС‰РёС… Query.');
+      LogObj.WriteLog('Обработка завершающих Query.');
       For i:=1 to vQueryIndex do
       Begin
         If Assigned(mQueries[i]) then
@@ -1506,20 +1541,20 @@ Begin
     Else
     Begin
       Errors:=true;
-      LogObj.WriteLog('Р¤Р°Р№Р» С€Р°Р±Р»РѕРЅР° РЅРµ РЅР°Р№РґРµРЅ!!!');
+      LogObj.WriteLog('Файл шаблона не найден!!!');
       LogObj.WriteLog(Templates[TemplatesCounter]);
     End;
 
     LogObj.WriteLog('=====================================');
     LogObj.WriteLog('');
-    LogObj.WriteLog('=====РљРѕРЅРµС† Р±Р»РѕРєР° РІС‹РїРѕР»РЅРµРЅРёСЏ=====');
+    LogObj.WriteLog('=====Конец блока выполнения=====');
     LogObj.WriteLog('');
   finally
     Try
       If Errors then
       Begin
         LogObj.WriteLog('');
-        LogObj.WriteLog('!!!!!!!!Р§С‚Рѕ-С‚Рѕ РїРѕС€Р»Рѕ РЅРµ С‚Р°Рє.!!!!!!!!');
+        LogObj.WriteLog('!!!!!!!!Что-то пошло не так.!!!!!!!!');
         LogObj.WriteLog('');
       End;
 
@@ -2059,6 +2094,7 @@ Begin
   If ConnectErrorCode=0 Then
   Begin
     RolesQuery1:=TDCLDialogQuery.Create(nil);
+    RolesQuery1.Name:='Roles1_'+IntToStr(UpTime);
     FDCLLogOn.SetDBName(RolesQuery1);
 
     RolesQuery1.SQL.Text:='select count(*) from '+UsersTable+' where '+GPT.ShowRoleField+'=1';
@@ -2185,7 +2221,7 @@ begin
   RoleButtonOK:=TDialogButton.Create(RoleForm);
   RoleButtonOK.Parent:=RoleForm;
   RoleButtonOK.Default:=true;
-  RoleButtonOK.Caption:=AnsiToUTF8('РџСЂРёРЅСЏС‚СЊ');
+  RoleButtonOK.Caption:=AnsiToUTF8('Принять');
   RoleButtonOK.Width:=LoginButtonWidth;
   RoleButtonOK.Height:=ButtonHeight;
   RoleButtonOK.OnClick:=OkButtonClick;
@@ -2283,8 +2319,8 @@ Begin
   ChangePassForm.BorderStyle:=bsSingle;
   ChangePassForm.BorderIcons:=[biSystemMenu];
   ChangePassForm.Caption:=SourceToInterface(GetDCLMessageString(msChangePassord)+'.');
-  ChangePassForm.Width:=(BeginStepLeft*3)+EditWidth;
-  ChangePassForm.Height:=(BeginStepTop*2)+EditTopStep*5-FilterLabelTop*2;
+  ChangePassForm.ClientWidth:=(BeginStepLeft*3)+EditWidth;
+  ChangePassForm.ClientHeight:=(BeginStepTop*2)+EditTopStep*5-FilterLabelTop*2;
   ChangePassForm.Position:=poScreenCenter;
 
   OldPassEdit:=TEdit.Create(ChangePassForm);
@@ -2325,7 +2361,7 @@ Begin
 
   CancelButton:=TDialogButton.Create(ChangePassForm);
   CancelButton.Parent:=ChangePassForm;
-  CancelButton.Name:=AnsiToUTF8('CancelButton');
+  CancelButton.Name:='CancelButton';
   CancelButton.OnClick:=CancelChangePass;
   CancelButton.Caption:=SourceToInterface(GetDCLMessageString(msCancel));;
   CancelButton.Cancel:=true;
@@ -2467,8 +2503,8 @@ begin
   FTabs.Name:='Page_'+IntToStr(Pc+1);
   FTabs.PageControl:=FPages;
 
-  // FForm.Height:=600;
-  // Pages.Height:=400;
+  // FForm.ClientHeight:=600;
+  // Pages.ClientHeight:=400;
   ParentPanel:=FTabs.PageControl.Pages[FPages.PageCount-1];
 
   FPages.ActivePage:=FPages.Pages[FPages.PageCount-1];
@@ -2502,7 +2538,7 @@ begin
     IncButtonPanelHeight:=ButtonPanelHeight;
     FGrids[GridIndex].ButtonPanel:=TDialogPanel.Create(FGrids[GridIndex].FGridPanel);
     FGrids[GridIndex].ButtonPanel.Parent:=FGrids[GridIndex].FGridPanel;
-    FGrids[GridIndex].ButtonPanel.Top:=FForm.Height-1;
+    FGrids[GridIndex].ButtonPanel.Top:=FForm.ClientHeight-1;
     FGrids[GridIndex].ButtonPanel.Height:=ButtonPanelHeight;
     FGrids[GridIndex].ButtonPanel.Align:=alBottom;
 
@@ -2583,6 +2619,7 @@ var
   i, j: Word;
   TB1: TFormPanelButton;
 begin
+  SaveFormPos; //(FDCLLogOn, FForm, DialogName);
   For i:=1 to Length(FGrids) do
   Begin
     For j:=1 to Length(FGrids[i-1].FTableParts) do
@@ -2590,7 +2627,6 @@ begin
 
     FreeAndNil(FGrids[i-1]);
   End;
-  SaveFormPos(FDCLLogOn, FForm, DialogName);
 
   If ShowFormPanel Then
   Begin
@@ -2633,6 +2669,282 @@ begin
   DCLCommand:=TDCLCommand.Create(Self, FDCLLogOn);
   DCLCommand.ExecCommand(CommandName, Self);
   FreeAndNil(DCLCommand);
+end;
+
+procedure TDCLForm.LoadFormPos;
+begin
+  Case GPT.FormPosInDB of
+  isDisk:LoadFormPosINI;
+  isBase:LoadFormPosBase;
+  isDiskAndBase:Begin
+    LoadFormPosINI;
+    LoadFormPosBase;
+  End;
+  End;
+end;
+
+procedure TDCLForm.LoadFormPosINI;
+Var
+  FileParams, DialogsParams: TStringList;
+  ParamsCounter, FieldsCount, i: Word;
+begin
+  If DialogName<>'' Then
+    If GPT.DialogsSettings Then
+    Begin
+      If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini') Then
+      Begin
+        FileParams:=TStringList.Create;
+        FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini');
+        DialogsParams:=CopyStrings('['+DialogName+']', '[END '+DialogName+']', FileParams);
+        LoadFormPosUni(DialogsParams);
+      End;
+    End;
+end;
+
+procedure TDCLForm.LoadFormPosBase;
+var
+  INIStore:TBinStore;
+  DialogsParams, FileParams: TStringList;
+  MS:TMemoryStream;
+begin
+  DialogsParams:=TStringList.Create;
+  FileParams:=TStringList.Create;
+  INIStore:=TBinStore.Create(FDCLLogOn, ftSQL,
+      INITable, IniKeyField, IniDialogNameField, IniParamValField);
+
+  If DialogName<>'' Then
+    If GPT.DialogsSettings Then
+    Begin
+      MS:=INIStore.GetData('select '+IniParamValField+' from '+INITable+' where '+GPT.UpperString+IniDialogNameField+
+                                 GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+
+                                   GPT.UpperStringEnd+' and '+IniUserFieldName+'='+GPT.UserID);
+      If MS.Size>0 Then
+      Begin
+        MS.Position:=0;
+        FileParams.LoadFromStream(MS);
+
+        DialogsParams:=CopyStrings('['+DialogName+']', '[END '+DialogName+']', FileParams);
+        LoadFormPosUni(DialogsParams);
+      End;
+    End;
+  FreeAndNil(INIStore);
+end;
+
+procedure TDCLForm.LoadFormPosUni(DialogParams:TStringList);
+Var
+  ParamsCounter, FieldsCount, i, w: Word;
+  g:Integer;
+  FieldsMode:Boolean;
+  Grid:TDCLGrid;
+  S:String;
+  DCLF:TDCLDataFields;
+  F:RField;
+
+function FindDCLField(FieldName:String):TDCLDataFields;
+var
+  i:Integer;
+Begin
+  ResetDCLField(Result);
+  For i:=1 to Length(Grid.DataFields) do
+  Begin
+    If CompareString(Grid.DataFields[i-1].Name, FieldName) then
+    Begin
+      Result:=Grid.DataFields[i-1];
+      break;
+    End;
+  End;
+End;
+
+Begin
+  If DialogName<>'' Then
+    If GPT.DialogsSettings Then
+    Begin
+      If DialogParams.Count>0 Then
+      Begin
+        g:=-1;
+        FieldsCount:=0;
+        FieldsMode:=False;
+        ParamsCounter:=0;
+
+        If DialogParams.Count>0 then
+          While (ParamsCounter<DialogParams.Count-1) Do
+          Begin
+            S:=Trim(DialogParams[ParamsCounter]);
+            If PosEx('FormTop=', S)=1 then
+              Form.Top:=StrToInt(FindParam('FormTop=', S));
+            If PosEx('FormLeft=', S)=1 then
+              Form.Left:=StrToInt(FindParam('FormLeft=', S));
+            If PosEx('FormHeight=', S)=1 then
+              Form.Height:=StrToInt(FindParam('FormHeight=', S));
+            If PosEx('FormWidth=', S)=1 then
+              Form.Width:=StrToInt(FindParam('FormWidth=', S));
+
+            If PosEx('[Page]', S)=1 then
+            Begin
+              Inc(g);
+              FieldsMode:=False;
+              FieldsCount:=0;
+              If g>-1 then
+                Grid:=Tables[g];
+            End;
+
+            If PosEx('SplitterPos=', S)=1 then
+              If Assigned(Grid) then
+                If Assigned(Grid.PartSplitter) then
+                  //Grid.GridPanel.Height
+                  Grid.FTablePartsPages.Height:=StrToInt(FindParam('SplitterPos=', S));
+
+            If not GPT.DisableFieldsList then
+            If PosEx('[Fields]', S)=1 then
+              If Assigned(Grid) then
+              If Grid.DisplayMode in TDataGrid then
+              Begin
+                FieldsMode:=True;
+                FieldsCount:=StrToIntEx(Trim(DialogParams[ParamsCounter+1]));
+                Grid.FGrid.Columns.Clear;
+
+                i:=ParamsCounter+2;
+                While (DialogParams.Count-1>i) and (FieldsCount<>0) do
+                Begin
+                  S:=Trim(DialogParams[i+1]);
+                  w:=DefaultColumnSize;
+                  If Pos(';', S)<>0 then
+                  Begin
+                    S:=Copy(S, 1, Pos(';', S)-1);
+                    w:=StrToIntEx(FindParam('Width=', DialogParams[i+1]));
+                  End;
+                  DCLF:=FindDCLField(S);
+                  DCLF.Width:=w;
+                  DCLF.Name:=S;
+
+                  DCLF.Caption:=Trim(DialogParams[i]);
+
+                  F.Width:=DCLF.Width;
+                  F.Caption:=DCLF.Caption;
+                  F.FieldName:=DCLF.Name;
+                  F.ReadOnly:=DCLF.ReadOnly;
+
+                  Grid.AddColumn(F);
+                  Inc(i, 2);
+                  Dec(FieldsCount);
+                End;
+                Inc(ParamsCounter, i);
+              End;
+
+            Inc(ParamsCounter);
+          End;
+      End;
+    End;
+End;
+
+procedure TDCLForm.SaveFormPos;
+begin
+  Case GPT.FormPosInDB Of
+  isDisk:
+  SaveFormPosINI;
+  isBase:
+  SaveFormPosBase;
+  isDiskAndBase:
+  Begin
+    SaveFormPosINI;
+    SaveFormPosBase;
+  End;
+  End;
+end;
+
+procedure TDCLForm.SaveFormPosINI;
+Var
+  FileParams, DialogsParams: TStringList;
+  p1, p2, i, j: Integer;
+begin
+  p1:=-1;
+  p2:=-1;
+  FileParams:=TStringList.Create;
+  If DialogName<>'' Then
+    If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini') Then
+    Begin
+      FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini');
+      For i:=1 to FileParams.Count do
+      Begin
+        If PosEx('['+DialogName+']', FileParams[i-1])=1 then
+        Begin
+          p1:=i-1;
+          For j:=p1 to FileParams.Count-1 do
+          Begin
+            If PosEx('[END '+DialogName+']', FileParams[j])=1 then
+            Begin
+              p2:=j;
+              break;
+            End;
+          End;
+        End;
+      End;
+    End;
+
+  DialogsParams:=SaveFormPosUni;
+  If (p1<p2) and (p1>-1) then
+  Begin
+    For i:=p1 to p2-p1 do
+      FileParams.Delete(p1);
+  End;
+  FileParams.AddStrings(DialogsParams);
+  FileParams.SaveToFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini');
+end;
+
+procedure TDCLForm.SaveFormPosBase;
+var
+  INIStore:TBinStore;
+  MS:TMemoryStream;
+  DialogSettings:TStringList;
+begin
+  DialogSettings:=SaveFormPosUni;
+  MS:=TMemoryStream.Create;
+  DialogSettings.SaveToStream(MS);
+
+  INIStore:=TBinStore.Create(FDCLLogOn, ftSQL,
+      INITable, IniKeyField, IniDialogNameField, IniParamValField);
+  INIStore.SetData('select * from '+INITable+' where '+GPT.UpperString+IniDialogNameField+
+      GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+
+      GPT.UpperStringEnd+' and '+IniUserFieldName+'='+GPT.UserID, IniDialogNameField+'='+DialogName+','+
+        IniUserFieldName+'='+GPT.UserID, MS, False);
+
+  FreeAndNil(MS);
+  FreeAndNil(INIStore);
+end;
+
+function TDCLForm.SaveFormPosUni: TStringList;
+var
+  i, j:Word;
+begin
+  Result:=TStringList.Create;
+  If DialogName<>'' Then
+  Begin
+    Result.Append('['+DialogName+']');
+    Result.Append('FormTop='+IntToStr(Form.Top));
+    Result.Append('FormLeft='+IntToStr(Form.Left));
+    Result.Append('FormHeight='+IntToStr(Form.Height));
+    Result.Append('FormWidth='+IntToStr(Form.Width));
+
+    For i:=1 to Length(FGrids) do
+    Begin
+      Result.Append('[Page]');
+      If Assigned(FGrids[i-1].PartSplitter) then
+        Result.Append('SplitterPos='+IntToStr(FGrids[i-1].FTablePartsPages.Height));
+      If FGrids[i-1].DisplayMode in TDataGrid then
+      Begin
+        Result.Append('[Fields]');
+        Result.Append(IntToStr(FGrids[i-1].FGrid.Columns.Count));
+        For j:=1 to FGrids[i-1].FGrid.Columns.Count do
+        Begin
+          Result.Append(FGrids[i-1].FGrid.Columns[j-1].Title.Caption);
+          Result.Append(FGrids[i-1].FGrid.Columns[j-1].FieldName+';Width='+IntToStr(FGrids[i-1].FGrid.Columns[j-1].Width));
+        End;
+      End;
+    End;
+
+    Result.Append('[END '+DialogName+']');
+    Result.Append('');
+  End;
 end;
 
 constructor TDCLForm.Create(DialogName: String; var DCLLogOn: TDCLLogOn; ParentForm: TDCLForm;
@@ -2702,7 +3014,7 @@ begin
   FForm:=TDBForm.Create(Application);
   FForm.Name:=Trim(DialogName)+IntToStr(FFormNum);
   FForm.Width:=650;
-  FForm.Height:=400;
+  FForm.ClientHeight:=400;
   FForm.OnClose:=CloseForm;
   FForm.KeyPreview:=true;
   FForm.Position:=poScreenCenter;
@@ -2742,7 +3054,7 @@ begin
   DBStatus.Parent:=FForm;
   DBStatus.SimplePanel:=False;
   DBStatus.Align:=alBottom;
-  // DBStatus.Top:=FForm.Height;
+  // DBStatus.Top:=FForm.ClientHeight;
   DBStatus.Panels.Insert(0);
   DBStatus.Panels.Insert(1);
   DBStatus.Panels.Insert(2);
@@ -2916,13 +3228,13 @@ begin
       If PosEx('FormHeight=', ScrStr)=1 Then
       Begin
         FormHeight:=StrToIntEx(FindParam('FormHeight=', ScrStr));
-        FForm.Height:=FormHeight;
+        FForm.ClientHeight:=FormHeight;
       End;
 
       If PosEx('FormWidth=', ScrStr)=1 Then
       Begin
         FormWidth:=StrToIntEx(FindParam('FormWidth=', ScrStr));
-        FForm.Width:=FormWidth;
+        FForm.ClientWidth:=FormWidth;
       End;
 
       If PosEx('Execute=', ScrStr)=1 Then
@@ -3152,6 +3464,7 @@ begin
               If PosEx(' from ', tmpSQL)<>0 Then
               Begin
                 ShadowQuery:=TDCLDialogQuery.Create(Nil);
+                ShadowQuery.Name:='FormShadowK_'+IntToStr(UpTime);
                 FDCLLogOn.SetDBName(ShadowQuery);
                 ShadowQuery.SQL.Text:=tmpSQL;
                 Try
@@ -3908,6 +4221,7 @@ begin
         Else If PosEx('LoadFromTable=', FOPL[ScrStrNum+1])<>0 Then
         Begin
           ShadowQuery:=TDCLDialogQuery.Create(Nil);
+          ShadowQuery.Name:='ShadFields_'+IntToStr(UpTime);
           FDCLLogOn.SetDBName(ShadowQuery);
           ShadowQuery.SQL.Text:=FindParam('SQL=', FOPL[ScrStrNum+1]);
           Try
@@ -4007,8 +4321,6 @@ begin
           Else
             FField.FieldName:=Trim(FOPL[ScrStrNum+FieldNo+FieldNo+1]);
 
-          FGrids[GridIndex].AddField(FField);
-
           FField.Hint:=FindParam('Hint=', FOPL[ScrStrNum+FieldNo+FieldNo]);
 
           TmpStr:=FindParam('VariableName=', FOPL[ScrStrNum+FieldNo+FieldNo]);
@@ -4083,14 +4395,13 @@ begin
 
           If FindParam('ReadOnly=', FField.OPL)<>'' then
           Begin
-            // РЈР±СЂР°С‚СЊ РІРµР·РґРµ
+            // Убрать везде
             FField.ReadOnly:=StrToIntEx(FindParam('ReadOnly=', FField.OPL))=1;
           End;
 
           Case DisplayMode of
           dctFields, dctFieldsStep:
           begin
-
             If PosEx('[FieldParagraphDown];', FOPL[ScrStrNum+FieldNo+FieldNo])<>0 Then
             Begin
               Case FField.FType Of
@@ -4172,6 +4483,7 @@ begin
               FGrids[GridIndex].AddDropBox(FField);
           end;
           End;
+          FGrids[GridIndex].AddField(FField);
 
           If DisplayMode in TDataFields then
             If not FField.CurrentEdit and FieldExists(FField.FieldName, FGrids[GridIndex].Query)
@@ -4241,6 +4553,8 @@ begin
             TB.Show;
           End;
 
+    FPages.ActivePageIndex:=0;
+
     If Not FForm.Showing Then
     If ModalOpen then
       FForm.ShowModal
@@ -4249,7 +4563,7 @@ begin
       FForm.Show;
 
       If FormHeight<>0 Then
-        FForm.Height:=FormHeight;
+        FForm.ClientHeight:=FormHeight;
 
       // Query.AfterScroll(Query);
 
@@ -4259,7 +4573,7 @@ begin
 {$ENDIF}
     End;
   End;
-  LoadFormPos(FDCLLogOn, FForm, DialogName);
+  LoadFormPos; //(FDCLLogOn, FForm, DialogName);
 end;
 
 procedure TDCLForm.DeleteAllStatus;
@@ -4615,6 +4929,7 @@ Begin
     If SQLText<>'' Then
     Begin
       DCLQuery:=TDCLDialogQuery.Create(Nil);
+      DCLQuery.Name:='SetVal_Ret'+IntToStr(UpTime);
       FDCLLogOn.SetDBName(DCLQuery);
       DCLQuery.SQL.Text:=SQLText;
       Screen.Cursor:=crSQLWait;
@@ -4728,13 +5043,23 @@ begin
   FDCLForm:=DCLForm;
 
   DCLQuery:=TDCLDialogQuery.Create(nil);
+  DCLQuery.Name:='Command_'+IntToStr(UpTime);
   FDCLLogOn.SetDBName(DCLQuery);
 
   DCLQuery2:=TDCLDialogQuery.Create(nil);
+  DCLQuery2.Name:='Command2_'+IntToStr(UpTime);
   FDCLLogOn.SetDBName(DCLQuery2);
 
   Spool:=TStringList.Create;
   SpoolFileName:=IncludeTrailingPathDelimiter(AppConfigDir)+'Spool.txt';
+end;
+
+destructor TDCLCommand.Destroy;
+begin
+  If Assigned(DCLQuery) then
+    FreeAndNil(DCLQuery);
+  If Assigned(DCLQuery2) then
+    FreeAndNil(DCLQuery2);
 end;
 
 procedure TDCLCommand.ExecCommand(Command: String; DCLForm: TDCLForm);
@@ -4830,14 +5155,16 @@ begin
   Begin
     if Assigned(FDCLForm) then
       FDCLForm.ChooseAndClose(chmChooseAndClose);
+    Exit;
   End;
 
   If CompareString(Command, 'Close') then
   Begin
     if Assigned(FDCLForm) then
       FDCLLogOn.CloseForm(FDCLForm);
-    FDCLForm:=Popf;
+    //FDCLForm:=Popf;
     Executed:=true;
+    Exit;
   End;
 
   If CompareString(Command, 'Structure') then
@@ -4917,7 +5244,7 @@ begin
   If CompareString(Command, 'DeleteConf') Then
   Begin
     If GetRaightsByContext(InContext)>ulReadOnly Then
-      If ShowErrorMessage(10, SourceToInterface('РЈРґР°Р»РёС‚СЊ Р·Р°РїРёСЃСЊ?'))=1 Then
+      If ShowErrorMessage(10, SourceToInterface('Удалить запись?'))=1 Then
         FDCLForm.CurrentQuery.Delete;
     Executed:=true;
   End;
@@ -4994,7 +5321,7 @@ begin
 
   If CompareString(Command, 'About')or CompareString(Command, 'Version') Then
   Begin
-    FDCLLogOn.About;
+    FDCLLogOn.About(nil);
     Executed:=true;
   End;
 
@@ -5047,7 +5374,7 @@ begin
     Begin
       FCommandDCL.Clear;
       FCommandDCL.Text:=Command;
-      /// DebugProc('РџРѕРїС‹С‚РєР° РёСЃРїРѕР»РЅРёС‚СЊ РєРѕРјР°РЅРґСѓ: '+Command);
+      /// DebugProc('Попытка исполнить команду: '+Command);
       /// If PosEx('script type=visual', FCommandDCL[0])<>0 Then Open(Nil, Nil, Nil, '', FCommandDCL);
     End
     Else
@@ -5075,7 +5402,7 @@ begin
         Begin
           If (PosEx('About;', ScrStr)=1)or(PosEx('Version;', ScrStr)=1) Then
           Begin
-            FDCLLogOn.About;
+            FDCLLogOn.About(nil);
           End;
 
           If PosEx('Lock;', ScrStr)=1 Then
@@ -6293,14 +6620,14 @@ begin
           Begin
             v1:=StrToIntEx(FindParam('FormHeight=', ScrStr));
             If Assigned(FDCLForm) then
-              FDCLForm.FForm.Height:=v1;
+              FDCLForm.FForm.ClientHeight:=v1;
           End;
 
           If PosEx('FormWidth=', ScrStr)=1 Then
           Begin
             v1:=StrToIntEx(FindParam('FormWidth=', ScrStr));
             If Assigned(FDCLForm) then
-              FDCLForm.FForm.Width:=v1;
+              FDCLForm.FForm.ClientWidth:=v1;
           End;
 
           If (PosEx('PutInDB=', ScrStr)=1) or (PosEx('PutToDB=', ScrStr)=1) Then
@@ -6317,7 +6644,7 @@ begin
                 If not Assigned(BinStore) then
                   BinStore:=TBinStore.Create(FDCLLogOn, ftSQL, '', '', '',
                     FindParam('DataField=', ScrStr));
-                BinStore.StoreFromFile(TmpStr, FindParam('SQL=', ScrStr), tmpStr2='1');
+                BinStore.StoreFromFile(TmpStr, FindParam('SQL=', ScrStr), '', tmpStr2='1');
               End
               Else
                 ShowErrorMessage(-8001, TmpStr);
@@ -6374,7 +6701,7 @@ begin
               BinStore:=TBinStore.Create(FDCLLogOn, ftSQL, '', '', '',
                 FindParam('DataField=', ScrStr));
 
-            BinStore.DeCompressData(FindParam('SQL=', ScrStr));
+            BinStore.DeCompressData(FindParam('SQL=', ScrStr), '');
           End;
 
           If PosEx('CompressData=', ScrStr)=1 Then
@@ -6383,7 +6710,19 @@ begin
               BinStore:=TBinStore.Create(FDCLLogOn, ftSQL, '', '', '',
                 FindParam('DataField=', ScrStr));
 
-            BinStore.CompressData(FindParam('SQL=', ScrStr));
+            BinStore.CompressData(FindParam('SQL=', ScrStr), '');
+          End;
+
+          If PosEx('MD5Data=', ScrStr)=1 Then
+          Begin
+            tmpStr1:=FindParam('MD5Data=', ScrStr);
+
+            If not Assigned(BinStore) then
+              BinStore:=TBinStore.Create(FDCLLogOn, ftSQL, '', '', '',
+                FindParam('DataField=', ScrStr));
+            If not FDCLLogOn.Variables.Exists(tmpStr1) then
+              FDCLLogOn.Variables.NewVariable(tmpStr1);
+            FDCLLogOn.Variables.Variables[tmpStr1]:=BinStore.MD5(FindParam('SQL=', ScrStr));
           End;
 
           If PosEx('SQLmon_Clear;', ScrStr)=1 Then
@@ -6558,6 +6897,7 @@ Begin
   If GetRaightsByContext(InContext)>ulWrite Then
   Begin
     ADOCommand:=TDCLDialogQuery.Create(Nil);
+    ADOCommand.Name:='ExecSQL_'+IntToStr(UpTime);
     TranslateValContext(SQLCommand);
     If GPT.DebugOn Then
     Begin
@@ -6585,6 +6925,7 @@ Begin
   If GetRaightsByContext(InContext)>ulWrite Then
   Begin
     ADOCommand:=TCommandQuery.Create(Nil);
+    ADOCommand.Name:='ExecSQL_'+IntToStr(UpTime);
     TranslateValContext(SQLCommand);
     If GPT.DebugOn Then
     Begin
@@ -6612,6 +6953,7 @@ Begin
   If GetRaightsByContext(InContext)>ulWrite Then
   Begin
     ADOCommand:=TCommandQuery.Create(Nil);
+    ADOCommand.Name:='ExecSQL_'+IntToStr(UpTime);
     TranslateValContext(SQLCommand);
     If GPT.DebugOn Then
     Begin
@@ -6639,6 +6981,7 @@ Begin
   If GetRaightsByContext(InContext)>ulWrite Then
   Begin
     ADOCommand:=TCommandQuery.Create(Nil);
+    ADOCommand.Name:='ExecSQL_'+IntToStr(UpTime);
     TranslateValContext(SQLCommand);
     If GPT.DebugOn Then
     Begin
@@ -6926,6 +7269,7 @@ Begin
     TranslateValContext(ExpressionTmp);
 
     DCLQuery:=TDCLDialogQuery.Create(nil);
+    DCLQuery.Name:='Expression_'+IntToStr(UpTime);
     FDCLLogOn.SetDBName(DCLQuery);
     DCLQuery.SQL.Text:=ExpressionTmp;
     Try
@@ -6979,7 +7323,7 @@ end;
 
 { TDCLLogOn }
 
-procedure TDCLLogOn.About;
+procedure TDCLLogOn.About(Sender:TObject);
 Const
   FormWidth=520;
   FormHeight=430;
@@ -7495,7 +7839,6 @@ begin
     Else
       FDBLogOn.LibraryLocation:=DefaultLibraryLocation;
 
-
 {$IFDEF FPC}
     GPT.ServerCodePage:=NormalizeEncoding(GPT.ServerCodePage);
 {$ENDIF}
@@ -7573,7 +7916,7 @@ begin
       Except
         DebugProc('  ... Fail');
         ConnectErrorCode:=255;
-        ShowErrorMessage(0, 'РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕРґСЃРѕРµРґРёРЅРёС‚СЊСЃСЏ Рє Р‘Р”. 0000');
+        ShowErrorMessage(0, 'Не удалось подсоединиться к БД. 0000');
         Result:=255;
       End;
     End;
@@ -7582,6 +7925,7 @@ begin
   if not Assigned(ShadowQuery) then
   begin
     ShadowQuery:=TDCLDialogQuery.Create(nil);
+    ShadowQuery.Name:='DCLLogOn_ShadowQuery';
     SetDBName(ShadowQuery);
   end;
 end;
@@ -7662,7 +8006,7 @@ begin
     FDBLogOn:=DBLogOn;
 
 {$IFDEF ADO}
-  FDBLogOn.KeepConnection:=true;
+  FDBLogOn.KeepConnection:=True;
 {$ENDIF}
 end;
 
@@ -7706,7 +8050,7 @@ begin
   End;
 
   FDCLMainMenu:=TDCLMainMenu.Create(Self, MainForm);
-  LoadFormPos(Self, MainForm, 'MainForm');
+  LoadMainFormPos(Self, MainForm, 'MainForm');
 end;
 
 procedure TDCLLogOn.Disconnect;
@@ -7774,6 +8118,7 @@ Var
   Q: TDCLDialogQuery;
 Begin
   Q:=TDCLDialogQuery.Create(nil);
+  Q.Name:='GetConfInfo_'+IntToStr(UpTime);
   SetDBName(Q);
   Q.SQL.Text:='select '+GPT.DCLTextField+' from '+GPT.DCLTable+' where '+GPT.IdentifyField+'=60000';
   Q.Open;
@@ -7788,6 +8133,7 @@ Var
   Q: TDCLDialogQuery;
 Begin
   Q:=TDCLDialogQuery.Create(nil);
+  Q.Name:='GetConfVer_'+IntToStr(UpTime);
   SetDBName(Q);
   Q.SQL.Text:='select '+GPT.DCLNameField+' from '+GPT.DCLTable+' where '+GPT.IdentifyField+'=60001';
   Q.Open;
@@ -7843,6 +8189,19 @@ Begin
     Break;
     End; }
 End;
+
+procedure TDCLLogOn.GetTableNames(var List: TStrings);
+begin
+{$IFDEF ADO}
+  FDBLogOn.GetTableNames(List);
+{$ENDIF}
+{$IFDEF ZEOS}
+  FDBLogOn.GetTableNames('', List);
+{$ENDIF}
+{$IFDEF IB}
+
+{$ENDIF}
+end;
 
 function TDCLLogOn.GetNextForm: Integer;
 var
@@ -7957,6 +8316,7 @@ Var
 begin
 {$IFNDEF EMBEDDED}
   LoggingQuery:=TDCLDialogQuery.Create(nil);
+  LoggingQuery.Name:='LoggingUser_'+IntToStr(UpTime);
   SetDBName(LoggingQuery);
 
   If Login Then
@@ -8055,6 +8415,7 @@ begin
     Begin
       RoleOK:=lsRejected;
       repeat
+        Application.Initialize;
         LogOnForm.ShowForm;
         GetUserName(LogOnForm.UserName);
         If CheckPass(LogOnForm.UserName, LogOnForm.EnterPass, GPT.DCLUserPass) then
@@ -8090,7 +8451,7 @@ begin
   If GPT.UserLoggingHistory Then
     GPT.UserLoggingHistory:=TableExists(GPT.USER_LOGIN_HISTORY_TABLE);
 
-  LoggingUser(true);
+  LoggingUser(True);
 
   MessageFormObject:=TMessageFormObject.Create('', '');
   If GPT.UseMessages Then
@@ -8234,6 +8595,7 @@ Begin
   FDCLMainMenu.LockMenu;
 
   MenuQuery:=TDCLDialogQuery.Create(Nil);
+  MenuQuery.Name:='Menu_'+IntToStr(UpTime);
   SetDBName(MenuQuery);
   MenuQuery.SQL.Text:=GetRolesQueryText(qtCount, ' s.'+GPT.IdentifyField+
     ' between 40001 and 40100');
@@ -8319,6 +8681,7 @@ Begin
       WhereUser:=' and '+GPT.GPTUserIDField+'='+UserID;
 
     ParamsQuery:=TDCLDialogQuery.Create(Nil);
+    ParamsQuery.Name:='Params_'+IntToStr(UpTime);
     SetDBName(ParamsQuery);
     ParamsQuery.SQL.Text:='select '+GPT.GPTValueField+' from '+GPT.GPTTableName+' where '+
       GPT.UpperString+GPT.GPTNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+
@@ -8330,7 +8693,7 @@ Begin
   End;
 End;
 
-procedure TDCLLogOn.RePlaseVariables(Var VariablesSet: String);
+procedure TDCLLogOn.RePlaseVariables(var VariablesSet: String);
 begin
   Variables.RePlaseVariables(VariablesSet, nil);
 end;
@@ -8381,6 +8744,7 @@ Var
   TestQuery: TDCLDialogQuery;
 Begin
   TestQuery:=TDCLDialogQuery.Create(nil);
+  TestQuery.Name:='TebleExists_'+IntToStr(UpTime);
   SetDBName(TestQuery);
 {$IFDEF IBALL}
   TestQuery.SQL.Text:=
@@ -8486,18 +8850,20 @@ Var
   End;
 
 Begin
-  // 4 - Р’С‹С…РѕРґ РїРѕ РґР°С‚Рµ.
-  // 2,3 - Р—Р°РїСѓСЃРє РїСЂРёР»РѕР¶РµРЅРёСЏ.
-  // 1 - РЎРѕРѕР±С‰РµРЅРёРµ.
-  // 5 - Р—Р°РїСѓСЃРє СЃРєСЂРёРїС‚Р°.
+  // 4 - Выход по дате.
+  // 2,3 - Запуск приложения.
+  // 1 - Сообщение.
+  // 5 - Запуск скрипта.
 {$IFNDEF NODCLMESSAGES}
   If Not GPT.UseMessages Then
     Exit;
 
   ShadowQuery:=TDCLDialogQuery.Create(Nil);
+  ShadowQuery.Name:='Wait_'+IntToStr(UpTime);
   SetDBName(ShadowQuery);
 
   ShadowQuery1:=TDCLDialogQuery.Create(Nil);
+  ShadowQuery1.Name:='Wait1_'+IntToStr(UpTime);
   SetDBName(ShadowQuery1);
 
   ShadowQuery.Close;
@@ -8588,7 +8954,7 @@ Begin
         Begin
           If ExitFlag=0 Then
           Begin
-            MessageToUser(AnsiToUTF8('Р’С‹С…РѕРґ РёР· СЃРёСЃС‚РµРјС‹ С‡РµСЂРµР· '+IntToStr(ExitTime)+' СЃРµРєСѓРЅРґ.'));
+            MessageToUser(AnsiToUTF8('Выход из системы через '+IntToStr(ExitTime)+' секунд.'));
             ExitFlag:=1;
             TimeToExit:=UpTime+(ExitTime*1000);
           End;
@@ -8625,6 +8991,7 @@ Begin
       WhereUser:=' and '+GPT.GPTUserIDField+'='+UserID;
 
     ParamsQuery:=TDCLDialogQuery.Create(Nil);
+    ParamsQuery.Name:='WriteConfig_'+IntToStr(UpTime);
     SetDBName(ParamsQuery);
     ParamsQuery.SQL.Text:='select count(*) from '+GPT.GPTTableName+' where '+GPT.UpperString+
       GPT.StringTypeChar+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+ConfigName+
@@ -8667,8 +9034,8 @@ Begin
 
   ItemMenu:=TMenuItem.Create(MainMenu);
   ItemMenu.Name:='ItemMeu_About';
-  ItemMenu.Caption:='Рћ...';
-  // ItemMenu.OnClick:=About.ShowAboutForm;
+  ItemMenu.Caption:='О...';
+  ItemMenu.OnClick:=DCLMainLogOn.About;
   MainMenu.Items.Add(ItemMenu);
 End;
 
@@ -8758,11 +9125,10 @@ Var
   RecCount: Integer;
 Begin
   MenuQuery1:=TDCLDialogQuery.Create(Nil);
-
-  MenuQuery1.Close;
-  tmp1:=Copy((Sender As TMenuItem).Name, 10, length((Sender As TMenuItem).Name));
-
+  MenuQuery1.Name:='ClickMenu_'+IntToStr(UpTime);
   FDCLLogOn.SetDBName(MenuQuery1);
+
+  tmp1:=Copy((Sender As TMenuItem).Name, 10, length((Sender As TMenuItem).Name));
 
   MenuQuery1.SQL.Text:='select Count(*) from '+GPT.DCLTable+' where '+GPT.IdentifyField+'='+tmp1;
   MenuQuery1.Open;
@@ -8813,6 +9179,7 @@ var
   RecCount: Integer;
 begin
   MenuQuery:=TDCLDialogQuery.Create(Nil);
+  MenuQuery.Name:='DestroyMenu_'+IntToStr(UpTime);
   FDCLLogOn.SetDBName(MenuQuery);
 
   MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtCount, ' s.'+GPT.IdentifyField+
@@ -8903,6 +9270,7 @@ begin
   // Form.OnActivate:=DBDialogFormActions.ActivateDBForm;
 
   MenuQuery:=TDCLDialogQuery.Create(Nil);
+  MenuQuery.Name:='CreateMenu_'+IntToStr(UpTime);
   FDCLLogOn.SetDBName(MenuQuery);
 
   If Assigned(FMainMenu)and Relogin then
@@ -8954,9 +9322,10 @@ begin
         If PosEx('from', tmpSQL)<>0 Then
         Begin
           DCLQuery:=TDCLDialogQuery.Create(Nil);
+          DCLQuery.Name:='Menu20001_'+IntToStr(UpTime);
+          FDCLLogOn.SetDBName(DCLQuery);
           FDCLLogOn.RePlaseVariables(tmpSQL);
           DCLQuery.SQL.Text:=tmpSQL;
-          FDCLLogOn.SetDBName(DCLQuery);
           DCLQuery.Open;
           tmpSQL:=TrimRight(DCLQuery.Fields[0].AsString);
           DCLQuery.Close;
@@ -9078,6 +9447,7 @@ begin
   If RecCount>0 Then
   Begin
     SubQuery:=TDCLDialogQuery.Create(Nil);
+    SubQuery.Name:='MenuSub10001_'+IntToStr(UpTime);
     FDCLLogOn.SetDBName(SubQuery);
 
     MenuQuery.Close;
@@ -9138,6 +9508,7 @@ begin
         If PosEx('from', tmpSQL)<>0 Then
         Begin
           DCLQuery:=TDCLDialogQuery.Create(Nil);
+          DCLQuery.Name:='Menu20051_'+IntToStr(UpTime);
           DCLQuery.SQL.Text:=tmpSQL;
           FDCLLogOn.SetDBName(DCLQuery);
           DCLQuery.Open;
@@ -9299,7 +9670,7 @@ begin
     If Not FieldExists(BrushColors[l].Key, FQuery) Then
     Begin
       DebugProc('//!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-      DebugProc('Р’ РїСЂРµРґР»РѕР¶РµРЅРёРё Color=, СѓРєР°Р·Р°РЅРЅРѕ РЅРµСЃСѓС‰РµСЃС‚РІСѓСЋС‰РµРµ РїРѕР»Рµ : '+BrushColors[l].Key);
+      DebugProc('В предложении Color=, указанно несуществующее поле : '+BrushColors[l].Key);
       DebugProc(OPL);
       DebugProc('//!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
     End;
@@ -9479,6 +9850,7 @@ begin
   ContextLists[l].DataField:=Field.FieldName;
 
   ShadowQuery:=TDCLDialogQuery.Create(Nil);
+  ShadowQuery.Name:='ContextList_'+IntToStr(UpTime);
   FDCLLogOn.SetDBName(ShadowQuery);
 
   ShadowQuery.SQL.Text:='select '+ContextLists[l].Field+' from '+ContextLists[l].Table+' order by '+
@@ -9569,6 +9941,7 @@ begin
   2:
   Begin
     ShadowQuery:=TDCLDialogQuery.Create(Nil);
+    ShadowQuery.Name:='DateBoxQ_'+IntToStr(UpTime);
     FDCLLogOn.SetDBName(ShadowQuery);
     TempStr:=FindParam('SQL=', Field.OPL);
     FDCLLogOn.RePlaseVariables(TempStr);
@@ -9666,6 +10039,7 @@ begin
     DBFilters[l].FilterString:='';
 
     DBFilters[l].FilterQuery:=TDCLDialogQuery.Create(Nil);
+    DBFilters[l].FilterQuery.Name:='DBFilterQ_'+IntToStr(UpTime);
     FDCLLogOn.SetDBName(DBFilters[l].FilterQuery);
     DBFilters[l].FilterData:=TDataSource.Create(Nil);
     DBFilters[l].FilterData.DataSet:=DBFilters[l].FilterQuery;
@@ -9802,6 +10176,7 @@ begin
     If tmpSQL1<>'' Then
     Begin
       ShadowQuery:=TDCLDialogQuery.Create(Nil);
+      ShadowQuery.Name:='GroupBoxQ_'+IntToStr(UpTime);
       FDCLLogOn.SetDBName(ShadowQuery);
 
       TranslateVal(tmpSQL1);
@@ -9873,6 +10248,7 @@ begin
       If tmpSQL1<>'' Then
       Begin
         ShadowQuery:=TDCLDialogQuery.Create(Nil);
+        ShadowQuery.Name:='DropBoxQ_'+IntToStr(UpTime);
         FDCLLogOn.SetDBName(ShadowQuery);
 
         TranslateVal(tmpSQL1);
@@ -10055,6 +10431,7 @@ begin
   2:
   Begin
     ShadowQuery:=TDCLDialogQuery.Create(Nil);
+    ShadowQuery.Name:='FieldBoxQ_'+IntToStr(UpTime);
     FDCLLogOn.SetDBName(ShadowQuery);
     TempStr:=FindParam('SQL=', Field.OPL);
     RePlaseParams(TempStr);
@@ -10117,6 +10494,7 @@ begin
   If TempStr<>'' Then
   Begin
     Lookups[l].LookupQuery:=TDCLDialogQuery.Create(Nil);
+    Lookups[l].LookupQuery.Name:='LookupQ_'+IntToStr(UpTime);
     Lookups[l].LookupQuery.Tag:=l;
     FDCLLogOn.SetDBName(Lookups[l].LookupQuery);
     TranslateVal(TempStr);
@@ -10197,6 +10575,7 @@ begin
       If PosEx(' from ', TempStr)<>0 Then
       Begin
         ShadowQuery:=TDCLDialogQuery.Create(Nil);
+        ShadowQuery.Name:='LookupShadow_'+IntToStr(UpTime);
         FDCLLogOn.SetDBName(ShadowQuery);
         ShadowQuery.SQL.Text:=TempStr;
         Try
@@ -10422,6 +10801,7 @@ var
   v1, v2: Integer;
 begin
   SumQuery:=TDCLDialogQuery.Create(Nil);
+  SumQuery.Name:='SummQuery_'+IntToStr(UpTime);
   SummString:=FindParam('SummQuery=', OPL);
   SumQuery.SQL.Text:=GetSummQuery;
   FDCLLogOn.SetDBName(SumQuery);
@@ -10847,6 +11227,7 @@ Begin
   If Trim(Combo.Text)<>'' Then
   Begin
     tmpQuery:=TDCLDialogQuery.Create(Nil);
+    tmpQuery.Name:='tmpContextListQ_'+IntToStr(UpTime);
     FDCLLogOn.SetDBName(tmpQuery);
 
     tmpQuery.SQL.Text:='select '+ContextLists[ComboNum].KeyField+' from '+ContextLists[ComboNum]
@@ -10879,6 +11260,7 @@ Begin
     If Combo.Text<>'' Then
     Begin
       tmpQuery:=TDCLDialogQuery.Create(Nil);
+      tmpQuery.Name:='ContextListKeyDown_'+IntToStr(UpTime);
       FDCLLogOn.SetDBName(tmpQuery);
       tmpQuery.SQL.Text:='select '+ContextLists[ComboNum].Field+', '+ContextLists[ComboNum].KeyField
         +' from '+ContextLists[ComboNum].Table+' where '+GPT.UpperString+ContextLists[ComboNum]
@@ -11392,7 +11774,7 @@ begin
     Try
       FQuery.Open;
     Except
-      // ShowErrorMessage(-1111, 'SQL='+tmpSQL1+CR+SourceToInterface('РЈСЃР»РѕРІРёСЏ РїРѕРёСЃРєР°=')+FindSQL);
+      // ShowErrorMessage(-1111, 'SQL='+tmpSQL1+CR+SourceToInterface('Условия поиска=')+FindSQL);
     End;
   End;
 end;
@@ -11426,6 +11808,8 @@ Begin
 End;
 
 destructor TDCLGrid.Destroy;
+var
+  Q:TDCLQuery;
 begin
   If Assigned(FQuery) then
   Begin
@@ -11443,12 +11827,17 @@ begin
               End;
             End
             Else
+            Begin
               Try
                 BaseChanged:=False;
                 FQuery.Cancel;
               Except
                 //
               End;
+            End;
+
+    {Q:=FQuery;
+    FreeAndNil(Q);}
   End;
 end;
 
@@ -12492,8 +12881,7 @@ end;
 procedure TDCLGrid.SetNewQuery(Data: TDataSource);
 begin
   FQueryGlob:=TDCLQuery.Create(FDCLLogOn.FDBLogOn);
-  FQueryGlob.Name:='Query_'+IntToStr(UpTime);
-  FDCLLogOn.SetDBName(FQueryGlob);
+  FQueryGlob.Name:='DCLQuery_'+FDCLForm.DialogName+'_'+IntToStr(UpTime);
 
   FQueryGlob.AfterInsert:=AfterInsert;
   FQueryGlob.AfterScroll:=ScrollDB;
@@ -12685,7 +13073,7 @@ begin
         TollButton.OnClick:=ToolButtonsOnClick;
         TollButton.Tag:=i1;
 
-        inc(ToolButtonsCount);
+        Inc(ToolButtonsCount);
         ToolButtonPanelButtons[ToolButtonsCount]:=TollButton;
         ToolCommands[ToolButtonsCount]:=ToolButtonsCmd[i1];
       End;
@@ -12889,14 +13277,16 @@ procedure TMainFormAction.CloseMainForm(Sender: TObject; var Action: TCloseActio
 var
   v1: Integer;
 begin
-  SaveFormPos(DCLMainLogOn, DCLMainLogOn.MainForm, 'MainForm');
+  SaveMainFormPos(DCLMainLogOn, DCLMainLogOn.MainForm, 'MainForm');
 
   For v1:=1 to DCLMainLogOn.FormsCount do
   Begin
     if Assigned(DCLMainLogOn.Forms[v1-1]) then
       If DCLMainLogOn.ActiveDCLForms[v1-1] then
-        DCLMainLogOn.Forms[v1-1].Free;
+        FreeAndNil(DCLMainLogOn.FForms[v1-1]);
   End;
+
+  EndDCL;
 end;
 
 procedure TMainFormAction.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -13076,6 +13466,7 @@ Begin
       End;
 
       DCLQuery:=TDCLDialogQuery.Create(nil);
+      DCLQuery.Name:='OfficeReport_'+IntToStr(UpTime);
       FDCLLogOn.SetDBName(DCLQuery);
       Try
         If VarIsEmpty(OO) Then
@@ -13314,6 +13705,7 @@ Begin
       If Assigned(FDCLGrid) Then
         FDCLGrid.TranslateVal(SQLStr);
       DCLQuery:=TDCLDialogQuery.Create(nil);
+      DCLQuery.Name:='OfficeReport2_'+IntToStr(UpTime);
       FDCLLogOn.SetDBName(DCLQuery);
       DCLQuery.SQL.Text:=SQLStr;
       Try
@@ -13463,6 +13855,7 @@ Begin
       If Assigned(FDCLGrid) Then
         FDCLGrid.TranslateVal(SQLStr);
       DCLQuery:=TDCLDialogQuery.Create(nil);
+      DCLQuery.Name:='OfRep3_'+IntToStr(UpTime);
       FDCLLogOn.SetDBName(DCLQuery);
       DCLQuery.SQL.Text:=SQLStr;
       Try
@@ -13596,6 +13989,7 @@ Begin
       If Assigned(FDCLGrid) Then
         FDCLGrid.TranslateVal(SQLStr);
       DCLQuery:=TDCLDialogQuery.Create(nil);
+      DCLQuery.Name:='OfRep4_'+IntToStr(UpTime);
       FDCLLogOn.SetDBName(DCLQuery);
       DCLQuery.SQL.Text:=SQLStr;
       Try
@@ -13821,6 +14215,7 @@ Begin
   If ParamsSet<>0 Then
   Begin
     RepParamsSet:=TDCLDialogQuery.Create(Nil);
+    RepParamsSet.Name:='RepParamsSet_'+IntToStr(UpTime);
     FDCLLogOn.SetDBName(RepParamsSet);
     RepParamsSet.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtCount, ' s.'+GPT.ParentFlgField+'='+
       IntToStr(ParamsSet));
@@ -13953,6 +14348,7 @@ Begin
           InitSkrypts[LocalVar1]));
 
         GrabQuery:=TDCLDialogQuery.Create(Nil);
+        GrabQuery.Name:='RepGabQ_'+IntToStr(UpTime);
         tmpSQL1:=FindParam('SQL=', InitSkrypts[LocalVar1]);
         RePlaseVariables(tmpSQL1);
         GrabQuery.SQL.Text:=tmpSQL1;
@@ -14020,7 +14416,7 @@ Begin
 
   If GrabFormYes Then
   Begin
-    GrabValueForm.Height:=ElementsTop+BeginStepTop+ButtonPanelHeight;
+    GrabValueForm.ClientHeight:=ElementsTop+BeginStepTop+ButtonPanelHeight;
     BtOk:=TButton.Create(GrabValueForm);
     BtOk.Parent:=GrabValueForm;
     BtOk.Tag:=0;
@@ -14491,7 +14887,7 @@ end;
 
 procedure TDCLBinStore.CompressData(DataName: string);
 begin
-  inherited CompressData(DataName);
+  inherited CompressData(DataName, '');
 end;
 
 constructor TDCLBinStore.Create(DCLLogOn: TDCLLogOn);
@@ -14502,7 +14898,12 @@ end;
 
 procedure TDCLBinStore.DeCompressData(DataName: string);
 begin
-  inherited DeCompressData(DataName);
+  inherited DeCompressData(DataName, '');
+end;
+
+function TDCLBinStore.MD5(DataName: String):String;
+begin
+  Result:=inherited MD5(DataName);
 end;
 
 procedure TDCLBinStore.DeleteData(DataName: string);
@@ -14510,7 +14911,7 @@ begin
   inherited DeleteData(DataName);
 end;
 
-Function TDCLBinStore.GetTemplateFile(Template, FileName, Ext: String): String;
+function TDCLBinStore.GetTemplateFile(Template, FileName, Ext: String): String;
 Var
   TempFile: String;
 Begin
@@ -14551,7 +14952,7 @@ end;
 
 procedure TDCLBinStore.StoreFromFile(FileName, DataName: string; Compress: Boolean);
 begin
-  inherited StoreFromFile(FileName, DataName, Compress);
+  inherited StoreFromFile(FileName, DataName, '', Compress);
 end;
 
 procedure DisconnectDB;
@@ -14570,6 +14971,7 @@ Begin
   Begin
     If DCLMainLogOn.NewLogOn then
     Begin
+      DisconnectDB;
       FreeAndNil(DCLMainLogOn);
     End;
   End;
@@ -14689,6 +15091,7 @@ begin
       If Not GPT.NoParamsTable Then
       Begin
         ParamsQuery:=TDCLDialogQuery.Create(Nil);
+        ParamsQuery.Name:='InitDCLParams_'+IntToStr(UpTime);
         ParamsQuery.SQL.Text:='select '+GPT.GPTNameField+', '+GPT.GPTValueField+' from '+
           GPT.GPTTableName;
         DCLMainLogOn.SetDBName(ParamsQuery);
@@ -14744,6 +15147,7 @@ begin
     DCLMainLogOn.SQLMon:=TDCLSQLMon.Create(IncludeTrailingPathDelimiter(AppConfigDir)+'SQLMon.txt');
 
     RolesQuery1:=TDCLDialogQuery.Create(Nil);
+    RolesQuery1.Name:='InitRolesQuery_'+IntToStr(UpTime);
     DCLMainLogOn.SetDBName(RolesQuery1);
 {$IFNDEF EMBEDDED}
     RolesQuery1.SQL.Text:='select count(*) from '+UsersTable;
@@ -14805,6 +15209,7 @@ begin
   ThumbPanel:=TPanel.Create(Parent);
   ThumbPanel.Parent:=Parent;
   ThumbPanel.Name:='ThumbPanel'+IntToStr(UpTime);
+  ThumbPanel.Caption:='';
   ThumbPanel.Tag:=1;
   ThumbPanel.BevelInner:=bvLowered;
 
@@ -14839,10 +15244,15 @@ begin
   Case GroupType of
   gtGrafic:
   Begin
+    FGraphicFileType:=gftJPEG;
     GraficField:=TDBImage.Create(ThumbPanel);
     GraficField.Parent:=ThumbPanel;
     GraficField.Name:='DBPic'+IntToStr(UpTime);
     GraficField.DataSource:=Data;
+    {$IFDEF FPC}
+    GraficField.Caption:='';
+    GraficField.OnDBImageRead:=OnDBImageRead;
+    {$ENDIF}
     GraficField.DataField:=Field.FieldName;
     GraficField.Align:=alClient;
     GraficField.Stretch:=False;
@@ -14875,6 +15285,9 @@ begin
     MemoField.Align:=alClient;
     MemoField.ScrollBars:=ssBoth;
     MemoField.DataSource:=Data;
+    {$IFDEF FPC}
+    MemoField.Caption:='';
+    {$ENDIF}
     MemoField.DataField:=FieldName;
     MemoField.ReadOnly:=Field.ReadOnly;
     If Field.Hint<>'' Then
@@ -15002,6 +15415,60 @@ begin
   End;
 end;
 
+procedure TFieldGroup.OnDBImageRead(Sender: TObject; S: TStream;
+  var GraphExt: string);
+Var
+  Signature:Array of Byte;
+begin
+  SetLength(Signature, 10);
+  S.Read(Signature[0], 10);
+  S.Position:=0;
+
+  If (Signature[0]=66) and (Signature[1]=77) then
+  Begin
+    GraphExt:='bmp';
+    FGraphicFileType:=gftBMP;
+  End
+  Else
+  If (Signature[0]=$FF) and (Signature[1]=$D8) then
+  Begin
+    GraphExt:='jpg';
+    FGraphicFileType:=gftJPEG;
+  End
+  Else
+  If (Signature[0]=$89) and (Signature[1]=$50) and (Signature[2]=$4E) and (Signature[3]=$47) and (Signature[4]=$0D) and
+   (Signature[5]=$0A) and (Signature[6]=$1A) and (Signature[7]=$0A) then
+  Begin
+    GraphExt:='png';
+    FGraphicFileType:=gftPNG;
+  End
+  Else
+  If (Signature[0]=$47) and (Signature[1]=$49) and (Signature[2]=$46) and (Signature[3]=$38) then
+  Begin
+    GraphExt:='gif';
+    FGraphicFileType:=gftGIF;
+  End
+  Else
+  If ((Signature[0]=$49) and (Signature[1]=$49) and (Signature[2]=$2A) and (Signature[3]=$00)) or
+    ((Signature[4]=$4D) and (Signature[5]=$4D) and (Signature[6]=$00) and (Signature[7]=$2A)) then
+  Begin
+    GraphExt:='tiff';
+    FGraphicFileType:=gftTIFF;
+  End
+  Else
+  If (Signature[0]=$00) and (Signature[1]=$00) and ((Signature[2]=$01) or (Signature[2]=$02)) and
+    (Signature[3]=$00) and (Signature[4]>=1) then
+  Begin
+    GraphExt:='ico';
+    FGraphicFileType:=gftIcon;
+  End
+  Else
+  Begin
+    GraphExt:='Unk';
+    FGraphicFileType:=gftOther;
+  End;
+end;
+
 procedure TFieldGroup.Save(Sender: TObject);
 Begin
   Case FGroupType of
@@ -15009,9 +15476,9 @@ Begin
   Begin
     SavePictureDialog:=TSavePictureDialog.Create(Nil);
     SavePictureDialog.Name:='SavePictureDialog1';
-    SavePictureDialog.DefaultExt:='jpg';
-    // SavePictureDialog.Filter:=GraphicFilter(TGraphic);
-    SavePictureDialog.Filter:='JPEG Image File (*.jpeg)|*.jpeg;*.jpg|Bitmaps (*.bmp)|*.bmp';
+    SavePictureDialog.DefaultExt:=GetExtByType(FGraphicFileType);
+    SavePictureDialog.Filter:=GraphicFilter(TGraphic);
+    //SavePictureDialog.Filter:='JPEG Image File (*.jpeg)|*.jpeg;*.jpg|Bitmaps (*.bmp)|*.bmp';
 
     If SavePictureDialog.Execute then
       SaveData(SavePictureDialog.FileName);
@@ -15111,18 +15578,21 @@ end;
 
 destructor TBaseBinStore.Destroy;
 begin
-  If DCLQuery.Active then
-    DCLQuery.Close;
-  FreeAndNil(DCLQuery);
+  If Assigned(DCLQuery) then
+  Begin
+    If DCLQuery.Active then
+      DCLQuery.Close;
+    //FreeAndNil(DCLQuery);
+  End;
 end;
 
-procedure TBaseBinStore.CompressData(DataName: string; FindType: TFindType);
+procedure TBaseBinStore.CompressData(DataName, Data: string; FindType: TFindType);
 Var
   MS: TMemoryStream;
 begin
   MS:=GetData(DataName, FindType);
   MS.Position:=0;
-  SetData(DataName, FindType, MS, true);
+  SetData(DataName, Data, FindType, MS, true);
   MS.Free;
 end;
 
@@ -15137,14 +15607,24 @@ begin
   FDataField:=DataField;
 
   DCLQuery:=TDCLQuery.Create(FDCLLogOn.FDBLogOn);
+  DCLQuery.Name:='BaseBinStore'+IntToStr(UpTime);
+  DCLQuery.NoRefreshSQL:=True;
 end;
 
-procedure TBaseBinStore.DeCompressData(DataName: string; FindType: TFindType);
+procedure TBaseBinStore.DeCompressData(DataName, Data: string; FindType: TFindType);
 var
   MS: TMemoryStream;
 begin
   MS:=GetData(DataName, FindType);
-  SetData(DataName, FindType, MS, False);
+  SetData(DataName, Data, FindType, MS, False);
+end;
+
+function TBaseBinStore.MD5(DataName: string; FindType: TFindType): String;
+var
+  MS:TMemoryStream;
+begin
+  MS:=GetData(DataName, FindType);
+  Result:=MD5DigestToStr(MD5Stream(MS));
 end;
 
 procedure TBaseBinStore.DeleteData(DataName: string; FindType: TFindType);
@@ -15266,11 +15746,12 @@ begin
   GetData(DataName, FindType).SaveToFile(FileName);
 end;
 
-procedure TBaseBinStore.SetData(DataName: string; FindType: TFindType; Stream: TMemoryStream;
+procedure TBaseBinStore.SetData(DataName, Data: string; FindType: TFindType; Stream: TMemoryStream;
   Compress: Boolean);
 var
   BS: TMemoryStream;
-  tmpSQL: String;
+  tmpSQL, insSQL, valuesSQL, S, Value: String;
+  i:Integer;
   Signature: Cardinal;
 begin
   If Stream.Size>0 then
@@ -15290,7 +15771,7 @@ begin
 
     Case FindType of
     ftByName:
-    tmpSQL:='select * from '+FTableName+' where '+GPT.UpperString+GPT.TemplatesNameField+
+    tmpSQL:='select * from '+FTableName+' where '+GPT.UpperString+FNameField+
       GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+DataName+GPT.StringTypeChar+
       GPT.UpperStringEnd;
     ftByIndex:
@@ -15318,25 +15799,43 @@ begin
       ftByIndex:
       DCLQuery.SQL.Text:='insert into '+FTableName+'('+FKeyField+') values('+DataName+')';
       ftSQL:
-      DCLQuery.Insert;
-      End;
-      If FindType<>ftSQL then
       Begin
-        DCLQuery.ExecSQL;
-        DCLQuery.SQL.Text:=tmpSQL;
-        DCLQuery.Open;
+        insSQL:='';
+        valuesSQL:='';
+        For i:=1 to ParamsCount(Data) do
+        Begin
+          S:=SortParams(Data, i);
+          Value:=CopyCut(S, Pos('=', S), Length(S));
+          Delete(Value, 1, 1);
+          insSQL:=insSQL+','+S;
+          valuesSQL:=valuesSQL+','+GPT.StringTypeChar+Value+GPT.StringTypeChar;
+          //DCLQuery.FieldByName(S).AsString:=Value;
+        End;
+        If insSQL<>'' then
+          Delete(insSQL, 1, 1);
+        If valuesSQL<>'' then
+          Delete(valuesSQL, 1, 1);
+
+        tmpSQL:='insert into '+FTableName+'('+insSQL+') values('+valuesSQL+')';
       End;
+      End;
+      DCLQuery.ExecSQL;
+      DCLQuery.SQL.Text:=tmpSQL;
+      DCLQuery.Open;
     End;
-    If not(DCLQuery.State in [dsInsert, dsEdit]) then
+    If not (DCLQuery.State in [dsInsert, dsEdit]) then
       DCLQuery.Edit;
     Stream.Position:=0;
     TBlobField(DCLQuery.FieldByName(FDataField)).LoadFromStream(Stream);
-    DCLQuery.Post;
-    DCLQuery.Close;
+    Try
+      DCLQuery.Post;
+    Finally
+      DCLQuery.Close;
+    End;
   End;
 end;
 
-procedure TBaseBinStore.StoreFromFile(FileName, DataName: string; FindType: TFindType;
+procedure TBaseBinStore.StoreFromFile(FileName, DataName, Data: string; FindType: TFindType;
   Compress: Boolean);
 var
   MS: TMemoryStream;
@@ -15345,7 +15844,7 @@ begin
   Begin
     MS:=TMemoryStream.Create;
     MS.LoadFromFile(FileName);
-    SetData(DataName, FindType, MS, Compress);
+    SetData(DataName, Data, FindType, MS, Compress);
   End;
 end;
 
@@ -15361,9 +15860,9 @@ begin
   inherited Destroy;
 end;
 
-procedure TBinStore.CompressData(DataName: string);
+procedure TBinStore.CompressData(DataName, Data: string);
 begin
-  inherited CompressData(DataName, FFindType);
+  inherited CompressData(DataName, Data, FFindType);
 end;
 
 constructor TBinStore.Create(DCLLogOn: TDCLLogOn; FindType: TFindType;
@@ -15373,9 +15872,14 @@ begin
   inherited Create(DCLLogOn, TableName, KeyField, NameField, DataField);
 end;
 
-procedure TBinStore.DeCompressData(DataName: string);
+procedure TBinStore.DeCompressData(DataName, Data: string);
 begin
-  inherited DeCompressData(DataName, FFindType);
+  inherited DeCompressData(DataName, Data, FFindType);
+end;
+
+function TBinStore.MD5(DataName: string): String;
+begin
+  Result:=inherited MD5(DataName, FFindType);
 end;
 
 procedure TBinStore.DeleteData(DataName: string);
@@ -15398,14 +15902,14 @@ begin
   inherited SaveToFile(FileName, DataName, FFindType);
 end;
 
-procedure TBinStore.SetData(DataName: string; Stream: TMemoryStream; Compress: Boolean);
+procedure TBinStore.SetData(DataName, Data: string; Stream: TMemoryStream; Compress: Boolean);
 begin
-  inherited SetData(DataName, FFindType, Stream, Compress);
+  inherited SetData(DataName, Data, FFindType, Stream, Compress);
 end;
 
-procedure TBinStore.StoreFromFile(FileName, DataName: string; Compress: Boolean);
+procedure TBinStore.StoreFromFile(FileName, DataName, Data: string; Compress: Boolean);
 begin
-  inherited StoreFromFile(FileName, DataName, FFindType, Compress);
+  inherited StoreFromFile(FileName, DataName, Data, FFindType, Compress);
 end;
 
 {$IFNDEF EMBEDDED}

@@ -57,8 +57,8 @@ Begin
     ProgressForm:=TForm.Create(Nil);
     ProgressForm.Caption:='Загрузка....';
     ProgressForm.Position:=poScreenCenter;
-    ProgressForm.Width:=255;
-    ProgressForm.Height:=110;
+    ProgressForm.ClientWidth:=255;
+    ProgressForm.ClientHeight:=110;
     ProgressForm.BorderIcons:=[biSystemMenu];
     ProgressForm.FormStyle:=fsStayOnTop;
     ProgressForm.BorderStyle:=bsSingle;

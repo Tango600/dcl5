@@ -48,7 +48,7 @@ var
 begin
   Case message.CmdType of
   AboutMenuItem:
-  uUDL.DCLMainLogOn.About;
+  uUDL.DCLMainLogOn.About(nil);
   LockMenuItem:DCLMainLogOn.Lock;
   SC_MINIMIZE:
   begin
@@ -119,6 +119,7 @@ var
   T: TextFile;
   AppH:THandle;
 begin
+  PixelsPerInch:=96;
   Caption:='DCL Run v.'+uDCLConst.Version;
 {$IFDEF MSWINDOWS}
 {$IFNDEF NEWDELPHI}

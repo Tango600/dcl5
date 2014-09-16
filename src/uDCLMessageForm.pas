@@ -56,8 +56,8 @@ begin
   MessageForm.BorderIcons:=[biSystemMenu];
   MessageForm.Caption:=AnsiToUTF8('Уведомление. '+TimeStampToStr(Date));
   MessageForm.Position:=poScreenCenter;
-  MessageForm.Width:=400;
-  MessageForm.Height:=300;
+  MessageForm.ClientWidth:=400;
+  MessageForm.ClientHeight:=300;
 
   MessageLabel:=TLabel.Create(MessageForm);
   MessageLabel.Parent:=MessageForm;

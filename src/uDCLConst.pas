@@ -23,11 +23,17 @@ const
   DBEngineType='ZEOS';
   DefaultIBPort=3050;
   DefaultDBType='firebird-2.5';
+  {$IFDEF MSWINDOWS}
+  DefaultLibraryLocation='gds32.dll';
+  {$ENDIF}
+  {$IFDEF UNIX}
+  DefaultLibraryLocation='fbclient.so';
+  {$ENDIF}
 {$ENDIF}
 {$IFDEF SQLdbIB}
   DBEngineType='SQLdbIB';
 {$ENDIF}
-  Version='10.0.0.87';
+  Version='10.0.0.119';
 
   CompotableVersion='9.1.125.303';
 
@@ -65,7 +71,9 @@ const
 
 {$IFDEF FPC}
   CalendarLeft={$IFDEF ZVComponents}20{$ELSE}30{$ENDIF};
+  AddHeight=20;
 {$ELSE}
+  AddHeight=0;
   CalendarLeft=15;
 {$ENDIF}
   ToolButtonPanelHeight=29;
@@ -131,6 +139,7 @@ const
   DCL_TablePrefix='DCL_';
 
   INITable=DCL_TablePrefix+'INI_PROFILES';
+  IniKeyField='INI_ID';
   IniUserFieldName='INI_USER_ID';
   IniDialogNameField='INI_DIALOG_NAME';
   IniParamValField='INI_PARAM_VALUE';
@@ -316,7 +325,7 @@ Type
   TReportCodePage=(rcp1251, rcp866);
   TReportViewMode=(rvmOneRecord, rvmAllDS, rvmGrid, rvmMultitRecordReport, rvmBookmarcks);
   TFieldBoxType=(fbtOutBox, fbtInputBox, fbtEditBox);
-  TGraficFileType=(gftNone, gftBMP, gftJPEG, gftOther);
+  TGraficFileType=(gftNone, gftBMP, gftJPEG, gftPNG, gftIcon, gftGIF, gftTIFF, gftOther);
   TDataFieldTypeType=(dftDefault, dftMemo, dftGrafic, dftRichText, dftLogic, dftFloat);
   TSpoolType=(stNone, stSpool, stText);
   TGroupType=(gtGrafic, gtMemo, gtRichText);
