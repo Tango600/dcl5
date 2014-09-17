@@ -176,7 +176,6 @@ Type
     Function QueryBuilder(GetQueryMode, QueryMode: Byte): String;
     function GetFingQuery: String;
     Function FindRaightQuery(St: String): String;
-    Function GetQueryToRaights(S: String): String;
     procedure ChangeTabPage(Sender: TObject);
 
     procedure ClickNavig(Sender: TObject; Button: TNavigateBtn);
@@ -449,6 +448,8 @@ Type
 
     procedure ExecCommand(CommandName:String);
 
+    function GetQueryToRaights(S: String): String;
+
     procedure LoadFormPos;
     procedure LoadFormPosINI;
     procedure LoadFormPosBase;
@@ -640,7 +641,7 @@ Type
     procedure SetDBName(Query: TDCLDialogQuery);
 
     Procedure NotifyForms(Action: TFormsNotifyAction);
-    Function GetMainFormNum: Integer;
+    //Function GetMainFormNum: Integer;
 
     Procedure GetTableNames(var List:TStrings);
 
@@ -2671,6 +2672,43 @@ begin
   FreeAndNil(DCLCommand);
 end;
 
+function TDCLForm.GetQueryToRaights(S: String): String;
+Var
+  RaightsStr, SQLStr: String;
+  DCLQuery: TDCLDialogQuery;
+  FFactor:Word;
+Begin
+  Result:=S;
+  DCLQuery:=TDCLDialogQuery.Create(Nil);
+  FDCLLogOn.SetDBName(DCLQuery);
+  RaightsStr:=FindParam('UserRaights=', S);
+  RePlaseVariables(RaightsStr);
+  FDCLLogOn.RePlaseVariables(RaightsStr);
+  FFactor:=0;
+  TranslateProc(RaightsStr, FFactor);
+
+  If (GPT.DCLUserName<>'')And(RaightsStr<>'')And(GPT.UserID<>'') Then
+  Begin
+    SQLStr:='select count(*) from '+UsersTable+' u where u.'+UserIDField+' '+RaightsStr+' and u.'+
+    UserIDField+'='+GPT.UserID;
+    DCLQuery.SQL.Text:=SQLStr;
+    Try
+      DCLQuery.Open;
+    Except
+      ShowErrorMessage(-9000, 'SQL='+SQLStr);
+    End;
+    If DCLQuery.Fields[0].AsInteger<>0 Then
+      Result:=S
+    Else
+      Result:='';
+  End
+  Else
+    Result:=S;
+
+  DCLQuery.Close;
+  FreeAndNil(DCLQuery);
+End;
+
 procedure TDCLForm.LoadFormPos;
 begin
   Case GPT.FormPosInDB of
@@ -2964,7 +3002,7 @@ var
   UserLevel: TUserLevelsType;
   ButtonParams: RButtonParams;
 
-  procedure SetNewQuery;
+  procedure SetNewQuery(SQL:String);
   Begin
     If not QCreated then
     Begin
@@ -2976,11 +3014,11 @@ var
       If not Assigned(FGrids[GridIndex].FQueryGlob) then
         FGrids[GridIndex].SetNewQuery(nil);
     End;
-    FGrids[GridIndex].SetSQLToStore(tmpSQL, qtMain, ulUndefined);
+    FGrids[GridIndex].SetSQLToStore(SQL, qtMain, ulUndefined);
 
     QueryGlob:=FGrids[GridIndex].Query;
-    TranslateVal(tmpSQL);
-    FGrids[GridIndex].SQL:=tmpSQL;
+    TranslateVal(SQL);
+    FGrids[GridIndex].SQL:=SQL;
     FGrids[GridIndex].Open;
   End;
 
@@ -3333,16 +3371,21 @@ begin
             ScrStrNum:=v2;
             For v3:=v1+1 to v2-1 do
               tmpSQL:=tmpSQL+FOPL[v3]+' ';
-            SetNewQuery;
+            FNewPage:=False;
+            SetNewQuery(tmpSQL);
             break;
           End;
       End;
 
       If PosEx('Query=', ScrStr)=1 then
       Begin
-        FNewPage:=False;
-        tmpSQL:=FindParam('query=', ScrStr);
-        SetNewQuery;
+        ScrStr:=GetQueryToRaights(ScrStr);
+        If ScrStr<>'' then
+        Begin
+          tmpSQL:=FindParam('Query=', ScrStr);
+          FNewPage:=False;
+          SetNewQuery(tmpSQL);
+        End;
       End;
 
       If PosEx('QueryName=', ScrStr)=1 then
@@ -5196,7 +5239,7 @@ begin
   Begin
     if Assigned(FDCLForm) then
     Begin
-      // FDCLForm.Tables[-1].ca
+      FDCLForm.Tables[-1].CancelDB;
     End;
     Executed:=true;
   End;
@@ -5492,10 +5535,10 @@ begin
                   NavigVisiButtonsVar[v1]:=[];
                 If PosEx('first', TmpStr)<>0 Then
                   NavigVisiButtonsVar[1]:=[nbFirst];
-                { If PosEx('prior', KeyField)<>0 Then
+                If PosEx('prior', TmpStr)<>0 Then
                   NavigVisiButtonsVar[2]:= [nbPrior];
-                  If PosEx('next', KeyField)<>0 Then
-                  NavigVisiButtonsVar[3]:= [nbNext]; }
+                If PosEx('next', TmpStr)<>0 Then
+                  NavigVisiButtonsVar[3]:= [nbNext];
                 If PosEx('last', TmpStr)<>0 Then
                   NavigVisiButtonsVar[4]:=[nbLast];
                 If PosEx('insert', TmpStr)<>0 Then
@@ -7425,7 +7468,6 @@ Begin
 {$IFDEF ADO}+'. ADO.db v.'+FDBLogOn.Version{$ENDIF}
 {$IFDEF SQLdbIB}+'. SQLdb v.'+AboutForm.LCLVersion{$ENDIF})+
       SourceToInterface('. '+GetDCLMessageString(msStatus)+' : '+ReliseStatues[ReleaseStatus]+'.');
-    // SQLDA_CURRENT_VERSION
   End;
 
   AboutLabel:=TLabel.Create(AboutPanel);
@@ -8179,17 +8221,6 @@ Begin
     End;
 End;
 
-function TDCLLogOn.GetMainFormNum: Integer;
-Begin
-  Result:=-1;
-  { For i:=1 To MaxFormsCount Do
-    If FormData[i].MainForm Then
-    Begin
-    Result:=i;
-    Break;
-    End; }
-End;
-
 procedure TDCLLogOn.GetTableNames(var List: TStrings);
 begin
 {$IFDEF ADO}
@@ -8627,42 +8658,52 @@ End;
 
 procedure TDCLLogOn.NotifyForms(Action: TFormsNotifyAction);
 Var
-  i, tmpCF, mfn: Integer;
+  i, j, tmpCF: Integer;
 Begin
   tmpCF:=CurrentForm;
-  mfn:=GetMainFormNum;
   If length(FForms)>0 then
     For i:=0 To FormsCount-1 Do
-      If mfn<>i Then
         If ActiveDCLForms[i] Then
           If Assigned(FForms[i]) Then
             Case Action Of
             fnaRefresh:
-            FForms[i].RefreshForm;
+              FForms[i].RefreshForm;
             fnaClose:
-            FreeAndNil(FForms[i]);
-            { fnaSetMDI:
-              FForms[i].FForm.Parent:=FormData[mfn].DBForm; }
+              FreeAndNil(FForms[i]);
+            fnaSetMDI:
+              FForms[i].FForm.Parent:=MainForm;
             fnaResetMDI:
-            FForms[i].FForm.Parent:=Nil;
+              FForms[i].FForm.Parent:=Nil;
             fnaHide:
-            FForms[i].FForm.Hide;
+              FForms[i].FForm.Hide;
             fnaShow:
-            FForms[i].FForm.Show;
-            { fnaStopAutoRefresh:
-              If Assigned(FormData[i].RefreshTimer) Then
-              FormData[i].RefreshTimer.Enabled:=False;
-              fnaStartAutoRefresh:
-              If Assigned(FormData[i].RefreshTimer) Then
-              FormData[i].RefreshTimer.Enabled:=True;
-              fnaPauseAutoRefresh:
-              If Assigned(FormData[i].RefreshTimer) Then
-              If FormData[i].RefreshTimer.Enabled then
-              FormData[i].LastStateTimer:=FormData[i].RefreshTimer.Enabled;
-              fnaResumeAutoRefresh:
-              If Assigned(FormData[i].RefreshTimer) Then
-              If not FormData[i].RefreshTimer.Enabled then
-              FormData[i].RefreshTimer.Enabled:=FormData[i].LastStateTimer; }
+              FForms[i].FForm.Show;
+            fnaStopAutoRefresh:
+            Begin
+              For j:=1 to FForms[i].GridsCount do
+                If Assigned(FForms[i].Tables[j-1].RefreshTimer) Then
+                  FForms[i].Tables[j-1].RefreshTimer.Enabled:=False;
+            End;
+            fnaStartAutoRefresh:
+            Begin
+              For j:=1 to FForms[i].GridsCount do
+                If Assigned(FForms[i].Tables[j-1].RefreshTimer) Then
+                  FForms[i].Tables[j-1].RefreshTimer.Enabled:=True;
+            End;
+            fnaPauseAutoRefresh:
+            Begin
+              For j:=1 to FForms[i].GridsCount do
+                If Assigned(FForms[i].Tables[j-1].RefreshTimer) Then
+                  If FForms[i].Tables[j-1].RefreshTimer.Enabled then
+                   FForms[i].Tables[j-1].LastStateTimer:=FForms[i].Tables[j-1].RefreshTimer.Enabled;
+            End;
+            fnaResumeAutoRefresh:
+            Begin
+              For j:=1 to FForms[i].GridsCount do
+                If Assigned(FForms[i].Tables[j-1].RefreshTimer) Then
+                  If not FForms[i].Tables[j-1].RefreshTimer.Enabled then
+                    FForms[i].Tables[j-1].RefreshTimer.Enabled:=FForms[i].Tables[j-1].LastStateTimer;
+            End;
             End;
   CurrentForm:=tmpCF;
   // FForms[CurrentForm].BringToFront;
@@ -12062,41 +12103,6 @@ function TDCLGrid.GetQuery: TDCLQuery;
 begin
   Result:=TDCLQuery(FData.DataSet); // FQuery;
 end;
-
-function TDCLGrid.GetQueryToRaights(S: String): String;
-Var
-  RaightsStr, SQLStr: String;
-  DCLQuery: TDCLDialogQuery;
-Begin
-  Result:=S;
-  { DCLQuery:=TDCLDialogQuery.Create(Nil);
-    SetDBName(DCLQuery);
-    RaightsStr:=FindParam('UserRaights=', S);
-    RePlaseVariables(RaightsStr);
-    FFactor:=0;
-    TranslateProc(RaightsStr, FFactor);
-
-    If (GPT.DCLUserName<>'')And(RaightsStr<>'')And(GPT.UserID<>'') Then
-    Begin
-    SQLStr:='select count(*) from '+UsersTable+' u where u.'+UserIDField+' '+RaightsStr+' and u.'+
-    UserIDField+'='+GPT.UserID;
-    DCLQuery.SQL.Text:=SQLStr;
-    Try
-    DCLQuery.Open;
-    Except
-    ShowErrorMessage(-9000, 'SQL='+SQLStr);
-    End;
-    If DCLQuery.Fields[0].AsInteger<>0 Then
-    Result:=S
-    Else
-    Result:='';
-    End
-    Else
-    Result:=S;
-
-    DCLQuery.Close;
-    FreeAndNil(DCLQuery); }
-End;
 
 function TDCLGrid.GetReadOnly: Boolean;
 begin
