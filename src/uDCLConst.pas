@@ -33,7 +33,7 @@ const
 {$IFDEF SQLdbIB}
   DBEngineType='SQLdbIB';
 {$ENDIF}
-  Version='10.0.0.121';
+  Version='10.0.0.123';
 
   CompotableVersion='9.1.125.303';
 
@@ -305,7 +305,7 @@ Type
   TUserLevelsType=(ulDeny, ulReadOnly, ulWrite, ulExecute, ulLevel1, ulLevel2, ulLevel3, ulLevel4,
     ulDeveloper, ulUndefined);
   TPageType=(ptMainPage, ptTablePart);
-  TDataControlType=(dctFields, dctFieldsStep, dctMainGrid, dctTablePart, dctLookupGrid);
+  TDataControlType=(dctFields, dctFieldsStep, dctMainGrid, dctSideGrid, dctTablePart, dctLookupGrid);
 
   TNotAllowedOperations=(dsoNone, dsoDelete, dsoInsert, dsoEdit);
 

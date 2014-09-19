@@ -2620,7 +2620,7 @@ var
   i, j: Word;
   TB1: TFormPanelButton;
 begin
-  SaveFormPos; //(FDCLLogOn, FForm, DialogName);
+  SaveFormPos;
   For i:=1 to Length(FGrids) do
   Begin
     For j:=1 to Length(FGrids[i-1].FTableParts) do
@@ -3841,6 +3841,25 @@ begin
       Begin
         If Assigned(FPages) Then
           FTabs.Caption:=FindParam('Title=', ScrStr);
+      End;
+
+      If PosEx('SideGrid=', ScrStr)=1 Then
+      Begin
+        v1:=AddGrid(FForm, dctSideGrid, Query, nil);
+
+        Tables[v1].Splitter1:=TSplitter.Create(FForm);
+        Tables[v1].Splitter1.Name:='Splitter_SideGrid1';
+        Tables[v1].Splitter1.Parent:=FForm;
+        Tables[v1].Splitter1.Left:=250;
+        Tables[v1].Splitter1.Align:=alLeft;
+
+        ScrStr:=GetQueryToRaights(ScrStr);
+        If ScrStr<>'' then
+        Begin
+          tmpSQL:=FindParam('SideGrid=', ScrStr);
+          FNewPage:=False;
+          SetNewQuery(tmpSQL);
+        End;
       End;
 
       If PosEx('TablePart=', ScrStr)=1 Then
@@ -11703,7 +11722,7 @@ Var
   v1, FFactor: Word;
   FieldCaption, tmpSQL2: String;
 begin
-  If (not(FDisplayMode in [dctMainGrid, dctTablePart]))or(not Assigned(FGrid)) Then
+  If (not(FDisplayMode in TDataGrid))or(not Assigned(FGrid)) Then
     StrIndex:=1
   Else
     StrIndex:=0;
@@ -12047,13 +12066,13 @@ Begin
   If Assigned(FindGrid) Then
   Begin
     Enything:=False;
-    If not(DisplayMode in [dctMainGrid, dctTablePart]) Then
+    If not (DisplayMode in TDataGrid) Then
       StrIndex:=1
     Else
       StrIndex:=0;
 
     Result:=' ';
-    If DisplayMode in [dctMainGrid, dctTablePart] Then
+    If DisplayMode in TDataGrid Then
     Begin
       For FieldIndex:=1 To FGrid.Columns.Count Do
         If FindGrid.Cells[FieldIndex, StrIndex]<>'' Then
@@ -12071,7 +12090,7 @@ Begin
       End;
     End;
 
-    If not(DisplayMode in [dctMainGrid, dctTablePart]) Then
+    If not (DisplayMode in TDataGrid) Then
     Begin
       For FieldIndex:=1 To FindFields.Count Do
         If FindGrid.Cells[FieldIndex, StrIndex]<>'' Then
@@ -13029,7 +13048,12 @@ begin
       FGrid:=TDBGrid.Create(FGridPanel);
       FGrid.Parent:=FGridPanel;
       FGrid.DataSource:=FData;
-      FGrid.Align:=alClient;
+      Case FDisplayMode of
+      dctMainGrid, dctTablePart, dctLookupGrid:
+        FGrid.Align:=alClient;
+      dctSideGrid:
+        FGrid.Align:=alRight;
+      End;
       FGrid.OnDblClick:=GridDblClick;
       FGrid.OnTitleClick:=SortDB;
 {$IFDEF FPC}
@@ -14816,7 +14840,7 @@ Begin
     rvmGrid:
     Begin
       If Assigned(FDCLGrid) Then
-        If FDCLGrid.DisplayMode in [dctTablePart, dctMainGrid] then
+        If FDCLGrid.DisplayMode in TDataGrid then
           If FDCLGrid.Grid.SelectedRows.Count>0 Then
           Begin
             For BookMarks:=0 To FDCLGrid.Grid.SelectedRows.Count-1 Do
@@ -14845,7 +14869,7 @@ Begin
     rvmBookmarcks:
     Begin
       If Assigned(FDCLGrid) Then
-        If FDCLGrid.DisplayMode in [dctTablePart, dctMainGrid] then
+        If FDCLGrid.DisplayMode in TDataGrid then
           If FDCLGrid.Grid.SelectedRows.Count>0 Then
           Begin
             Nubers:=1;
@@ -15756,7 +15780,7 @@ procedure TBaseBinStore.SetData(DataName, Data: string; FindType: TFindType; Str
   Compress: Boolean);
 var
   BS: TMemoryStream;
-  tmpSQL, insSQL, valuesSQL, S, Value: String;
+  tmpSQL, tmpSQL1, insSQL, valuesSQL, S, Value: String;
   i:Integer;
   Signature: Cardinal;
 begin
@@ -15796,6 +15820,7 @@ begin
     End;
     If DCLQuery.IsEmpty then
     Begin
+      tmpSQL1:=tmpSQL;
       If FindType<>ftSQL then
         DCLQuery.Close;
       Case FindType of
@@ -15823,10 +15848,11 @@ begin
           Delete(valuesSQL, 1, 1);
 
         tmpSQL:='insert into '+FTableName+'('+insSQL+') values('+valuesSQL+')';
+        DCLQuery.SQL.Text:=tmpSQL;
       End;
       End;
       DCLQuery.ExecSQL;
-      DCLQuery.SQL.Text:=tmpSQL;
+      DCLQuery.SQL.Text:=tmpSQL1;
       DCLQuery.Open;
     End;
     If not (DCLQuery.State in [dsInsert, dsEdit]) then
