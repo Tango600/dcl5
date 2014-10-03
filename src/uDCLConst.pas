@@ -34,7 +34,7 @@ const
 {$IFDEF SQLdbIB}
   DBEngineType='SQLdbIB';
 {$ENDIF}
-  Version='10.0.0.143';
+  Version='10.0.0.151';
 
   CompotableVersion='9.1.125.303';
 

@@ -462,6 +462,7 @@ Type
     LocalVariables: TVariables;
     Modal, ExitNoSave: Boolean;
     FDialogName: String;
+    ExitCode:Byte;
 
     constructor Create(DialogName: String; var DCLLogOn: TDCLLogOn; ParentForm: TDCLForm;
       aFormNum: Integer; OPL: TStringList; Query: TDCLDialogQuery; Data: TDataSource;
@@ -2621,7 +2622,8 @@ var
   i, j: Word;
   TB1: TFormPanelButton;
 begin
-  SaveFormPos;
+  If ExitCode=0 then
+    SaveFormPos;
 
   If Assigned(DBStatus) then
     FreeAndNil(DBStatus);
@@ -2645,8 +2647,9 @@ begin
       End;
   End;
 
-  For i:=1 to length(EventsClose) do
-    ExecCommand(EventsClose[i-1]);
+  If ExitCode=0 then
+    For i:=1 to length(EventsClose) do
+      ExecCommand(EventsClose[i-1]);
 
   For i:=1 to FDCLLogOn.FormsCount do
   Begin
@@ -3028,6 +3031,7 @@ var
   End;
 
 begin
+  ExitCode:=0;
   NotDestroyedDCLForm:=False;
   FParentForm:=ParentForm;
   FRetunValue.Choosen:=False;
@@ -3208,11 +3212,11 @@ begin
         idUserLevel:
         UserLevel:=TranslateDigitToUserLevel(FindParam('UserAccessRaight=', ScrStr));
         End;
-        If UserLevel>=UserLevelLocal Then
+        If UserLevel>UserLevelLocal Then
         Begin
           ShowErrorMessage(0, SourceToInterface(GetDCLMessageString(msNotAllow)+' '+
             GetDCLMessageString(msOpenForm)));
-          FreeAndNil(Self);
+          ExitCode:=1;
           Exit;
         End;
       End;
@@ -4636,53 +4640,56 @@ begin
       {$ENDIF}
     end;
 
-    QueryGlob:=FGrids[0].FQuery;
-    DataGlob:=FGrids[0].DataSource;
-
-    For ScrStrNum:=1 to length(FGrids) do
-      FGrids[ScrStrNum-1].Show;
-
-    MainPanel.Height:=120;
-    MainPanel.Width:=350;
-    MainPanel.Align:=alClient;
-
-    If FormWidth>FForm.Width Then
-      FForm.Width:=FormWidth;
-
-    If Assigned(FDCLLogOn.FDCLMainMenu) then
-      If ShowFormPanel Then
-        If Assigned(FDCLLogOn.FDCLMainMenu.FormBar) Then
-          If FDCLLogOn.FDCLMainMenu.FormBar.Parent<>FForm Then
-          Begin
-            TB.Caption:=FForm.Caption;
-            TB.Hint:=FForm.Caption;
-            TB.ShowHint:=true;
-            TB.Show;
-          End;
-
-    FPages.ActivePageIndex:=0;
-    ChangeTabPage(FPages);
-
-    If FForm.Showing Then
-      FForm.Hide;
-    If Not FForm.Showing Then
-    If ModalOpen then
-      FForm.ShowModal
-    Else
+    If ExitCode=0 then
     Begin
-      FForm.Show;
+      QueryGlob:=FGrids[0].FQuery;
+      DataGlob:=FGrids[0].DataSource;
 
-      If FormHeight<>0 Then
-        FForm.ClientHeight:=FormHeight;
+      For ScrStrNum:=1 to length(FGrids) do
+        FGrids[ScrStrNum-1].Show;
 
-      // Query.AfterScroll(Query);
-{$IFNDEF DCLDEBUG}
-      If Modal Then
-        FForm.FormStyle:=fsStayOnTop;
-{$ENDIF}
+      MainPanel.Height:=120;
+      MainPanel.Width:=350;
+      MainPanel.Align:=alClient;
+
+      If FormWidth>FForm.Width Then
+        FForm.Width:=FormWidth;
+
+      If Assigned(FDCLLogOn.FDCLMainMenu) then
+        If ShowFormPanel Then
+          If Assigned(FDCLLogOn.FDCLMainMenu.FormBar) Then
+            If FDCLLogOn.FDCLMainMenu.FormBar.Parent<>FForm Then
+            Begin
+              TB.Caption:=FForm.Caption;
+              TB.Hint:=FForm.Caption;
+              TB.ShowHint:=true;
+              TB.Show;
+            End;
+
+      FPages.ActivePageIndex:=0;
+      ChangeTabPage(FPages);
+
+      If FForm.Showing Then
+        FForm.Hide;
+      If Not FForm.Showing Then
+      If ModalOpen then
+        FForm.ShowModal
+      Else
+      Begin
+        FForm.Show;
+
+        If FormHeight<>0 Then
+          FForm.ClientHeight:=FormHeight;
+
+        // Query.AfterScroll(Query);
+  {$IFNDEF DCLDEBUG}
+        If Modal Then
+          FForm.FormStyle:=fsStayOnTop;
+  {$ENDIF}
+      End;
     End;
+    LoadFormPos;
   End;
-  LoadFormPos; //(FDCLLogOn, FForm, DialogName);
 end;
 
 procedure TDCLForm.DeleteAllStatus;
@@ -8076,7 +8083,7 @@ begin
     End;
 {$ENDIF}
 
-  if not Assigned(ShadowQuery) then
+  if not Assigned(ShadowQuery) and (Result=0) then
   begin
     ShadowQuery:=TDCLDialogQuery.Create(nil);
     ShadowQuery.Name:='DCLLogOn_ShadowQuery';
@@ -8184,11 +8191,19 @@ begin
   FForms[i]:=TDCLForm.Create(FormName, Self, ParentForm, i, Scr, Query, Data,
                                        ModalMode, ReturnValueMode, ReturnValueParams);
   CurrentForm:=i;
-  ActiveDCLForms[i]:=true;
+  ActiveDCLForms[i]:=True;
 
-  If Assigned(FDCLMainMenu) then
-    FDCLMainMenu.UpdateFormBar;
-  Result:=FForms[i];
+  If FForms[i].ExitCode=0 then
+  Begin
+    If Assigned(FDCLMainMenu) then
+      FDCLMainMenu.UpdateFormBar;
+    Result:=FForms[i];
+  End
+  Else
+  Begin
+    CloseFormNum(i);
+    Result:=nil;
+  End;
   FreeAndNil(Scr);
 end;
 
@@ -8204,7 +8219,8 @@ begin
   End;
 
   FDCLMainMenu:=TDCLMainMenu.Create(Self, MainForm);
-  LoadMainFormPos(Self, MainForm, 'MainForm');
+  If ConnectErrorCode=0 then
+    LoadMainFormPos(Self, MainForm, 'MainForm');
 end;
 
 procedure TDCLLogOn.Disconnect;
@@ -9416,345 +9432,348 @@ begin
     Exit;
   End;
 
-  If ShowFormPanel and not Assigned(FormBar) Then
+  If ConnectErrorCode=0 then
   Begin
-    FormBar:=TToolBar.Create(Form);
-    FormBar.Parent:=Form;
-    FormBar.Name:='FormBar';
-    FormBar.ShowCaptions:=true;
-    FormBar.Height:=FormPanelHeight;
-    FormBar.ButtonHeight:=FormPanelButtonHeight;
-    FormBar.ButtonWidth:=FormPanelButtonWidth;
-    FormBar.Show;
-  End;
-
-  Form.OnClose:=MainFormAction.CloseMainForm;
-  Form.OnCloseQuery:=MainFormAction.FormCloseQuery;
-
-  // Form.OnActivate:=DBDialogFormActions.ActivateDBForm;
-
-  MenuQuery:=TDCLDialogQuery.Create(Nil);
-  MenuQuery.Name:='CreateMenu_'+IntToStr(UpTime);
-  FDCLLogOn.SetDBName(MenuQuery);
-
-  If Assigned(FMainMenu)and Relogin then
-    FreeAndNil(FMainMenu);
-
-  FMainMenu:=TMainMenu.Create(FForm);
-{$IFDEF DELPHI}
-  FMainMenu.AutoHotkeys:=maManual;
-{$ENDIF}
-  MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtCount, ' s.'+GPT.IdentifyField+
-    ' between 20001 and 20050');
-
-  RecCount:=0;
-  DebugProc('Selecting components(20001):');
-  DebugProc('  Query: '+MenuQuery.SQL.Text);
-  Try
-    DebugProc('  ... selected');
-    MenuQuery.Open;
-    RecCount:=MenuQuery.Fields[0].AsInteger;
-    DebugProc('  ... OK');
-  Except
-    DebugProc('  ... Fail');
-  End;
-
-  If RecCount>0 Then
-  Begin
-    MenuQuery.Close;
-    MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtSelect,
-      ' s.'+GPT.IdentifyField+' between 20001 and 20050 order by s.'+GPT.IdentifyField);
-
-    MenuQuery.Open;
-    If Assigned(MainFormStatus) Then
-      FreeAndNil(MainFormStatus);
-
-    If Not Assigned(MainFormStatus) Then
+    If ShowFormPanel and not Assigned(FormBar) Then
     Begin
-      MainFormStatus:=TStatusBar.Create(Form);
-      MainFormStatus.Name:='MainStatusPanel';
-      MainFormStatus.Parent:=Form;
-      MainFormStatus.SimplePanel:=False;
+      FormBar:=TToolBar.Create(Form);
+      FormBar.Parent:=Form;
+      FormBar.Name:='FormBar';
+      FormBar.ShowCaptions:=true;
+      FormBar.Height:=FormPanelHeight;
+      FormBar.ButtonHeight:=FormPanelButtonHeight;
+      FormBar.ButtonWidth:=FormPanelButtonWidth;
+      FormBar.Show;
     End;
-    While Not MenuQuery.Eof Do
+
+    Form.OnClose:=MainFormAction.CloseMainForm;
+    Form.OnCloseQuery:=MainFormAction.FormCloseQuery;
+
+    // Form.OnActivate:=DBDialogFormActions.ActivateDBForm;
+
+    MenuQuery:=TDCLDialogQuery.Create(Nil);
+    MenuQuery.Name:='CreateMenu_'+IntToStr(UpTime);
+    FDCLLogOn.SetDBName(MenuQuery);
+
+    If Assigned(FMainMenu)and Relogin then
+      FreeAndNil(FMainMenu);
+
+    FMainMenu:=TMainMenu.Create(FForm);
+  {$IFDEF DELPHI}
+    FMainMenu.AutoHotkeys:=maManual;
+  {$ENDIF}
+    MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtCount, ' s.'+GPT.IdentifyField+
+      ' between 20001 and 20050');
+
+    RecCount:=0;
+    DebugProc('Selecting components(20001):');
+    DebugProc('  Query: '+MenuQuery.SQL.Text);
+    Try
+      DebugProc('  ... selected');
+      MenuQuery.Open;
+      RecCount:=MenuQuery.Fields[0].AsInteger;
+      DebugProc('  ... OK');
+    Except
+      DebugProc('  ... Fail');
+    End;
+
+    If RecCount>0 Then
     Begin
-      If MenuQuery.FieldByName(GPT.DCLTextField).AsString<>'' Then
-        tmpSQL:=MenuQuery.FieldByName(GPT.DCLTextField).AsString
-      Else
-        tmpSQL:=TrimRight(MenuQuery.FieldByName(GPT.DCLNameField).AsString);
-      If PosEx('select', tmpSQL)<>0 Then
-        If PosEx('from', tmpSQL)<>0 Then
-        Begin
-          DCLQuery:=TDCLDialogQuery.Create(Nil);
-          DCLQuery.Name:='Menu20001_'+IntToStr(UpTime);
-          FDCLLogOn.SetDBName(DCLQuery);
-          FDCLLogOn.RePlaseVariables(tmpSQL);
-          DCLQuery.SQL.Text:=tmpSQL;
-          DCLQuery.Open;
-          tmpSQL:=TrimRight(DCLQuery.Fields[0].AsString);
-          DCLQuery.Close;
-          FreeAndNil(DCLQuery);
-        End;
-      If PosEx('ReturnValue=', tmpSQL)<>0 Then
+      MenuQuery.Close;
+      MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtSelect,
+        ' s.'+GPT.IdentifyField+' between 20001 and 20050 order by s.'+GPT.IdentifyField);
+
+      MenuQuery.Open;
+      If Assigned(MainFormStatus) Then
+        FreeAndNil(MainFormStatus);
+
+      If Not Assigned(MainFormStatus) Then
       Begin
-        tmpSQL1:=FindParam('ReturnValue=', tmpSQL);
-        DeleteNonPrintSimb(tmpSQL1);
-        FDCLLogOn.RePlaseVariables(tmpSQL1);
-        tmpSQL:=tmpSQL1;
+        MainFormStatus:=TStatusBar.Create(Form);
+        MainFormStatus.Name:='MainStatusPanel';
+        MainFormStatus.Parent:=Form;
+        MainFormStatus.SimplePanel:=False;
       End;
-
-      MainFormStatus.Panels.Insert(MainFormStatus.Panels.Count);
-      MainFormStatus.Panels[MainFormStatus.Panels.Count-1].Text:=tmpSQL;
-      If MenuQuery.FieldByName(GPT.ParentFlgField).AsInteger<>0 Then
-        MainFormStatus.Panels[MainFormStatus.Panels.Count-1].Width:=
-          MenuQuery.FieldByName(GPT.ParentFlgField).AsInteger
-      Else
-        MainFormStatus.Panels[MainFormStatus.Panels.Count-1].Width:=Length(tmpSQL)*CharWidth;
-      MenuQuery.Next;
-    End;
-  End;
-  MenuQuery.Close;
-
-  MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtSelect, ' s.'+GPT.IdentifyField+'=0');
-  MenuQuery.Open;
-  tmpSQL:=TrimRight(MenuQuery.FieldByName(GPT.DCLNameField).AsString);
-  FDCLLogOn.RePlaseVariables(tmpSQL);
-  tmpSQL:=tmpSQL+AnsiToUTF8(GPT.MainFormCaption);
-  FForm.Caption:=tmpSQL;
-
-  If NewMainForm Then
-    FForm.Show;
-
-  MenuQuery.Close;
-
-  MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtCount, ' s.'+GPT.IdentifyField+
-    ' between 1 and 1000');
-
-  RecCount:=0;
-  DebugProc('Selecting main menu:');
-  DebugProc('  Query: '+MenuQuery.SQL.Text);
-  Try
-    DebugProc('  ... selected');
-    MenuQuery.Open;
-    RecCount:=MenuQuery.Fields[0].AsInteger;
-    DebugProc('  ... OK');
-  Except
-    DebugProc('  ... Fail');
-  End;
-  If RecCount>0 Then
-  Begin
-    MenuQuery.Close;
-    MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtSelect,
-      ' s.'+GPT.IdentifyField+' between 1 and 1000 order by s.'+GPT.IdentifyField);
-
-    MenuQuery.Open;
-    While Not MenuQuery.Eof Do
-    Begin
-      AddMainItem(TrimRight(MenuQuery.FieldByName(GPT.DCLNameField).AsString),
-        'MenuItem_'+TrimRight(MenuQuery.FieldByName(GPT.IdentifyField).AsString));
-      MenuQuery.Next;
-    End;
-  End
-  Else
-    CreateAboutItem(FMainMenu, FForm);
-
-  MenuQuery.Close;
-
-  MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtCount, ' s.'+GPT.IdentifyField+
-    ' between 1001 and 10000');
-
-  RecCount:=0;
-  DebugProc('Selecting sub menu:');
-  DebugProc('  Query: '+MenuQuery.SQL.Text);
-  Try
-    DebugProc('  ... selected');
-    MenuQuery.Open;
-    RecCount:=MenuQuery.Fields[0].AsInteger;
-    DebugProc('  ... OK');
-  Except
-    DebugProc('  ... Fail');
-  End;
-
-  MenuQuery.Close;
-  If RecCount>0 Then
-  Begin
-    MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtSelect,
-      ' s.'+GPT.IdentifyField+' between 1001 and 10000 order by s.'+GPT.IdentifyField);
-    MenuQuery.Open;
-
-    While Not MenuQuery.Eof Do
-    Begin
-      AddSubItem(TrimRight(MenuQuery.FieldByName(GPT.DCLNameField).AsString),
-        'MenuItem_'+MenuQuery.FieldByName(GPT.IdentifyField).AsString,
-        FMainMenu.Items.IndexOf((FMainMenu.FindComponent('MenuItem_'+
-        TrimRight(MenuQuery.FieldByName(GPT.ParentFlgField).AsString)) As TMenuItem)));
-      MenuQuery.Next;
-    End;
-  End;
-  MenuQuery.Close;
-
-  MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtCount, ' s.'+GPT.IdentifyField+
-    ' between 10001 and 16000');
-
-  RecCount:=0;
-  DebugProc('Selecting sub sub menu:');
-  DebugProc('  Query: '+MenuQuery.SQL.Text);
-  Try
-    DebugProc('  ... selected');
-    MenuQuery.Open;
-    RecCount:=MenuQuery.Fields[0].AsInteger;
-    DebugProc('  ... OK');
-  Except
-    DebugProc('  ... Fail');
-  End;
-
-  If RecCount>0 Then
-  Begin
-    SubQuery:=TDCLDialogQuery.Create(Nil);
-    SubQuery.Name:='MenuSub10001_'+IntToStr(UpTime);
-    FDCLLogOn.SetDBName(SubQuery);
-
-    MenuQuery.Close;
-    MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtSelect,
-      ' s.'+GPT.IdentifyField+' between 10001 and 16000 order by s.'+GPT.IdentifyField);
-    MenuQuery.Open;
-
-    SubQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtSelect, ' s.'+GPT.IdentifyField+'='+
-      MenuQuery.FieldByName(GPT.ParentFlgField).AsString);
-    SubQuery.Open;
-    SubNum:=SubQuery.FieldByName(GPT.ParentFlgField).AsInteger;
-    SubQuery.Close;
-
-    While Not MenuQuery.Eof Do
-    Begin
-      v1:=FindMenuItemIndex('MenuItem_'+IntToStr(SubNum));
-      If v1<>-1 then
-        AddSubSubItem(TrimRight(MenuQuery.FieldByName(GPT.DCLNameField).AsString),
-          'MenuItem_'+MenuQuery.FieldByName(GPT.IdentifyField).AsString, v1,
-          FindSubMenuItemIndex('MenuItem_'+TrimRight(MenuQuery.FieldByName(GPT.ParentFlgField)
-          .AsString), v1));
-      MenuQuery.Next;
-    End;
-    FreeAndNil(SubQuery);
-  End;
-  MenuQuery.Close;
-
-  MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtCount, ' s.'+GPT.IdentifyField+
-    ' between 20051 and 20100');
-
-  RecCount:=0;
-  DebugProc('Selecting components(20051):');
-  DebugProc('  Query: '+MenuQuery.SQL.Text);
-  Try
-    DebugProc('  ... selected');
-    MenuQuery.Open;
-    RecCount:=MenuQuery.Fields[0].AsInteger;
-    DebugProc('  ... OK');
-  Except
-    DebugProc('  ... Fail');
-  End;
-
-  If RecCount>0 Then
-  Begin
-    MenuQuery.Close;
-    MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtSelect,
-      ' s.'+GPT.IdentifyField+' between 20051 and 20100 order by s.'+GPT.IdentifyField);
-    MenuQuery.Open;
-    tmpSQL:='';
-    tmpSQL1:='';
-    While Not MenuQuery.Eof Do
-    Begin
-      If MenuQuery.FieldByName(GPT.DCLTextField).AsString<>'' Then
-        tmpSQL:=MenuQuery.FieldByName(GPT.DCLTextField).AsString
-      Else
-        tmpSQL:=TrimRight(MenuQuery.FieldByName(GPT.DCLNameField).AsString);
-      If PosEx('select', tmpSQL)<>0 Then
+      While Not MenuQuery.Eof Do
       Begin
-        If PosEx('from', tmpSQL)<>0 Then
-        Begin
-          DCLQuery:=TDCLDialogQuery.Create(Nil);
-          DCLQuery.Name:='Menu20051_'+IntToStr(UpTime);
-          DCLQuery.SQL.Text:=tmpSQL;
-          FDCLLogOn.SetDBName(DCLQuery);
-          DCLQuery.Open;
-          tmpSQL1:=tmpSQL1+TrimRight(DCLQuery.Fields[0].AsString);
-          DCLQuery.Close;
-          FreeAndNil(DCLQuery);
-        End;
-      End
-      Else
-        tmpSQL1:=tmpSQL1+tmpSQL;
-      MenuQuery.Next;
-    End;
-    Form.Caption:=Form.Caption+tmpSQL1;
-  End;
-  MenuQuery.Close;
-
-  MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtCount, ' s.'+GPT.IdentifyField+
-    ' between 40001 and 40100');
-
-  RecCount:=0;
-  DebugProc('Selecting components(40001):');
-  DebugProc('  Query: '+MenuQuery.SQL.Text);
-  Try
-    DebugProc('  ... selected');
-    MenuQuery.Open;
-    RecCount:=MenuQuery.Fields[0].AsInteger;
-    DebugProc('  ... OK');
-  Except
-    DebugProc('  ... Fail');
-  End;
-
-  If RecCount>0 Then
-  Begin
-    FDCLLogOn.RunInitSkripts;
-  End;
-  MenuQuery.Close;
-
-  MenuQuery.SQL.Text:='select Count(*) from '+GPT.DCLTable+' where '+GPT.IdentifyField+'=50000';
-  RecCount:=0;
-  DebugProc('Selecting components(50000):');
-  DebugProc('  Query: '+MenuQuery.SQL.Text);
-  Try
-    DebugProc('  ... selected');
-    MenuQuery.Open;
-    RecCount:=MenuQuery.Fields[0].AsInteger;
-    DebugProc('  ... OK');
-  Except
-    DebugProc('  ... Fail');
-  End;
-  If RecCount>0 Then
-  Begin
-    For RecCount:=1 To 4 Do
-      ProgrammCompVer[RecCount]:=StrToInt(SortParams(CompotableVersion, RecCount, '.'));
-
-    MenuQuery.Close;
-    MenuQuery.SQL.Text:='select '+GPT.DCLNameField+' from '+GPT.DCLTable+' where '+
-      GPT.IdentifyField+'=50000';
-    MenuQuery.Open;
-    tmpSQL:=Trim(MenuQuery.FieldByName(GPT.DCLNameField).AsString);
-    If length(tmpSQL)>=11 Then
-      For RecCount:=1 To 4 Do
-        BaseCompVer[RecCount]:=StrToInt(SortParams(tmpSQL, RecCount, '.'));
-
-    For RecCount:=1 To 4 Do
-      If ProgrammCompVer[RecCount]<BaseCompVer[RecCount] Then
-      Begin
-        If RecCount=1 Then
-          ShowErrorMessage(1,
-            SourceToInterface(GetDCLMessageString(msVersionsGap)))
+        If MenuQuery.FieldByName(GPT.DCLTextField).AsString<>'' Then
+          tmpSQL:=MenuQuery.FieldByName(GPT.DCLTextField).AsString
         Else
-          ShowErrorMessage(1,
-            SourceToInterface(GetDCLMessageString(msOldVersion)));
+          tmpSQL:=TrimRight(MenuQuery.FieldByName(GPT.DCLNameField).AsString);
+        If PosEx('select', tmpSQL)<>0 Then
+          If PosEx('from', tmpSQL)<>0 Then
+          Begin
+            DCLQuery:=TDCLDialogQuery.Create(Nil);
+            DCLQuery.Name:='Menu20001_'+IntToStr(UpTime);
+            FDCLLogOn.SetDBName(DCLQuery);
+            FDCLLogOn.RePlaseVariables(tmpSQL);
+            DCLQuery.SQL.Text:=tmpSQL;
+            DCLQuery.Open;
+            tmpSQL:=TrimRight(DCLQuery.Fields[0].AsString);
+            DCLQuery.Close;
+            FreeAndNil(DCLQuery);
+          End;
+        If PosEx('ReturnValue=', tmpSQL)<>0 Then
+        Begin
+          tmpSQL1:=FindParam('ReturnValue=', tmpSQL);
+          DeleteNonPrintSimb(tmpSQL1);
+          FDCLLogOn.RePlaseVariables(tmpSQL1);
+          tmpSQL:=tmpSQL1;
+        End;
 
-        break;
-      End
-      Else If ProgrammCompVer[RecCount]>BaseCompVer[RecCount] Then
-        break;
+        MainFormStatus.Panels.Insert(MainFormStatus.Panels.Count);
+        MainFormStatus.Panels[MainFormStatus.Panels.Count-1].Text:=tmpSQL;
+        If MenuQuery.FieldByName(GPT.ParentFlgField).AsInteger<>0 Then
+          MainFormStatus.Panels[MainFormStatus.Panels.Count-1].Width:=
+            MenuQuery.FieldByName(GPT.ParentFlgField).AsInteger
+        Else
+          MainFormStatus.Panels[MainFormStatus.Panels.Count-1].Width:=Length(tmpSQL)*CharWidth;
+        MenuQuery.Next;
+      End;
+    End;
+    MenuQuery.Close;
+
+    MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtSelect, ' s.'+GPT.IdentifyField+'=0');
+    MenuQuery.Open;
+    tmpSQL:=TrimRight(MenuQuery.FieldByName(GPT.DCLNameField).AsString);
+    FDCLLogOn.RePlaseVariables(tmpSQL);
+    tmpSQL:=tmpSQL+AnsiToUTF8(GPT.MainFormCaption);
+    FForm.Caption:=tmpSQL;
+
+    If NewMainForm Then
+      FForm.Show;
+
+    MenuQuery.Close;
+
+    MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtCount, ' s.'+GPT.IdentifyField+
+      ' between 1 and 1000');
+
+    RecCount:=0;
+    DebugProc('Selecting main menu:');
+    DebugProc('  Query: '+MenuQuery.SQL.Text);
+    Try
+      DebugProc('  ... selected');
+      MenuQuery.Open;
+      RecCount:=MenuQuery.Fields[0].AsInteger;
+      DebugProc('  ... OK');
+    Except
+      DebugProc('  ... Fail');
+    End;
+    If RecCount>0 Then
+    Begin
+      MenuQuery.Close;
+      MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtSelect,
+        ' s.'+GPT.IdentifyField+' between 1 and 1000 order by s.'+GPT.IdentifyField);
+
+      MenuQuery.Open;
+      While Not MenuQuery.Eof Do
+      Begin
+        AddMainItem(TrimRight(MenuQuery.FieldByName(GPT.DCLNameField).AsString),
+          'MenuItem_'+TrimRight(MenuQuery.FieldByName(GPT.IdentifyField).AsString));
+        MenuQuery.Next;
+      End;
+    End
+    Else
+      CreateAboutItem(FMainMenu, FForm);
+
+    MenuQuery.Close;
+
+    MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtCount, ' s.'+GPT.IdentifyField+
+      ' between 1001 and 10000');
+
+    RecCount:=0;
+    DebugProc('Selecting sub menu:');
+    DebugProc('  Query: '+MenuQuery.SQL.Text);
+    Try
+      DebugProc('  ... selected');
+      MenuQuery.Open;
+      RecCount:=MenuQuery.Fields[0].AsInteger;
+      DebugProc('  ... OK');
+    Except
+      DebugProc('  ... Fail');
+    End;
+
+    MenuQuery.Close;
+    If RecCount>0 Then
+    Begin
+      MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtSelect,
+        ' s.'+GPT.IdentifyField+' between 1001 and 10000 order by s.'+GPT.IdentifyField);
+      MenuQuery.Open;
+
+      While Not MenuQuery.Eof Do
+      Begin
+        AddSubItem(TrimRight(MenuQuery.FieldByName(GPT.DCLNameField).AsString),
+          'MenuItem_'+MenuQuery.FieldByName(GPT.IdentifyField).AsString,
+          FMainMenu.Items.IndexOf((FMainMenu.FindComponent('MenuItem_'+
+          TrimRight(MenuQuery.FieldByName(GPT.ParentFlgField).AsString)) As TMenuItem)));
+        MenuQuery.Next;
+      End;
+    End;
+    MenuQuery.Close;
+
+    MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtCount, ' s.'+GPT.IdentifyField+
+      ' between 10001 and 16000');
+
+    RecCount:=0;
+    DebugProc('Selecting sub sub menu:');
+    DebugProc('  Query: '+MenuQuery.SQL.Text);
+    Try
+      DebugProc('  ... selected');
+      MenuQuery.Open;
+      RecCount:=MenuQuery.Fields[0].AsInteger;
+      DebugProc('  ... OK');
+    Except
+      DebugProc('  ... Fail');
+    End;
+
+    If RecCount>0 Then
+    Begin
+      SubQuery:=TDCLDialogQuery.Create(Nil);
+      SubQuery.Name:='MenuSub10001_'+IntToStr(UpTime);
+      FDCLLogOn.SetDBName(SubQuery);
+
+      MenuQuery.Close;
+      MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtSelect,
+        ' s.'+GPT.IdentifyField+' between 10001 and 16000 order by s.'+GPT.IdentifyField);
+      MenuQuery.Open;
+
+      SubQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtSelect, ' s.'+GPT.IdentifyField+'='+
+        MenuQuery.FieldByName(GPT.ParentFlgField).AsString);
+      SubQuery.Open;
+      SubNum:=SubQuery.FieldByName(GPT.ParentFlgField).AsInteger;
+      SubQuery.Close;
+
+      While Not MenuQuery.Eof Do
+      Begin
+        v1:=FindMenuItemIndex('MenuItem_'+IntToStr(SubNum));
+        If v1<>-1 then
+          AddSubSubItem(TrimRight(MenuQuery.FieldByName(GPT.DCLNameField).AsString),
+            'MenuItem_'+MenuQuery.FieldByName(GPT.IdentifyField).AsString, v1,
+            FindSubMenuItemIndex('MenuItem_'+TrimRight(MenuQuery.FieldByName(GPT.ParentFlgField)
+            .AsString), v1));
+        MenuQuery.Next;
+      End;
+      FreeAndNil(SubQuery);
+    End;
+    MenuQuery.Close;
+
+    MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtCount, ' s.'+GPT.IdentifyField+
+      ' between 20051 and 20100');
+
+    RecCount:=0;
+    DebugProc('Selecting components(20051):');
+    DebugProc('  Query: '+MenuQuery.SQL.Text);
+    Try
+      DebugProc('  ... selected');
+      MenuQuery.Open;
+      RecCount:=MenuQuery.Fields[0].AsInteger;
+      DebugProc('  ... OK');
+    Except
+      DebugProc('  ... Fail');
+    End;
+
+    If RecCount>0 Then
+    Begin
+      MenuQuery.Close;
+      MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtSelect,
+        ' s.'+GPT.IdentifyField+' between 20051 and 20100 order by s.'+GPT.IdentifyField);
+      MenuQuery.Open;
+      tmpSQL:='';
+      tmpSQL1:='';
+      While Not MenuQuery.Eof Do
+      Begin
+        If MenuQuery.FieldByName(GPT.DCLTextField).AsString<>'' Then
+          tmpSQL:=MenuQuery.FieldByName(GPT.DCLTextField).AsString
+        Else
+          tmpSQL:=TrimRight(MenuQuery.FieldByName(GPT.DCLNameField).AsString);
+        If PosEx('select', tmpSQL)<>0 Then
+        Begin
+          If PosEx('from', tmpSQL)<>0 Then
+          Begin
+            DCLQuery:=TDCLDialogQuery.Create(Nil);
+            DCLQuery.Name:='Menu20051_'+IntToStr(UpTime);
+            DCLQuery.SQL.Text:=tmpSQL;
+            FDCLLogOn.SetDBName(DCLQuery);
+            DCLQuery.Open;
+            tmpSQL1:=tmpSQL1+TrimRight(DCLQuery.Fields[0].AsString);
+            DCLQuery.Close;
+            FreeAndNil(DCLQuery);
+          End;
+        End
+        Else
+          tmpSQL1:=tmpSQL1+tmpSQL;
+        MenuQuery.Next;
+      End;
+      Form.Caption:=Form.Caption+tmpSQL1;
+    End;
+    MenuQuery.Close;
+
+    MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtCount, ' s.'+GPT.IdentifyField+
+      ' between 40001 and 40100');
+
+    RecCount:=0;
+    DebugProc('Selecting components(40001):');
+    DebugProc('  Query: '+MenuQuery.SQL.Text);
+    Try
+      DebugProc('  ... selected');
+      MenuQuery.Open;
+      RecCount:=MenuQuery.Fields[0].AsInteger;
+      DebugProc('  ... OK');
+    Except
+      DebugProc('  ... Fail');
+    End;
+
+    If RecCount>0 Then
+    Begin
+      FDCLLogOn.RunInitSkripts;
+    End;
+    MenuQuery.Close;
+
+    MenuQuery.SQL.Text:='select Count(*) from '+GPT.DCLTable+' where '+GPT.IdentifyField+'=50000';
+    RecCount:=0;
+    DebugProc('Selecting components(50000):');
+    DebugProc('  Query: '+MenuQuery.SQL.Text);
+    Try
+      DebugProc('  ... selected');
+      MenuQuery.Open;
+      RecCount:=MenuQuery.Fields[0].AsInteger;
+      DebugProc('  ... OK');
+    Except
+      DebugProc('  ... Fail');
+    End;
+    If RecCount>0 Then
+    Begin
+      For RecCount:=1 To 4 Do
+        ProgrammCompVer[RecCount]:=StrToInt(SortParams(CompotableVersion, RecCount, '.'));
+
+      MenuQuery.Close;
+      MenuQuery.SQL.Text:='select '+GPT.DCLNameField+' from '+GPT.DCLTable+' where '+
+        GPT.IdentifyField+'=50000';
+      MenuQuery.Open;
+      tmpSQL:=Trim(MenuQuery.FieldByName(GPT.DCLNameField).AsString);
+      If length(tmpSQL)>=11 Then
+        For RecCount:=1 To 4 Do
+          BaseCompVer[RecCount]:=StrToInt(SortParams(tmpSQL, RecCount, '.'));
+
+      For RecCount:=1 To 4 Do
+        If ProgrammCompVer[RecCount]<BaseCompVer[RecCount] Then
+        Begin
+          If RecCount=1 Then
+            ShowErrorMessage(1,
+              SourceToInterface(GetDCLMessageString(msVersionsGap)))
+          Else
+            ShowErrorMessage(1,
+              SourceToInterface(GetDCLMessageString(msOldVersion)));
+
+          break;
+        End
+        Else If ProgrammCompVer[RecCount]>BaseCompVer[RecCount] Then
+          break;
+    End;
+    MenuQuery.Close;
+
+    FreeAndNil(MenuQuery);
   End;
-  MenuQuery.Close;
-
-  FreeAndNil(MenuQuery);
 end;
 
 function TDCLMainMenu.FindMenuItemIndex(ItemName: string): Integer;
@@ -10332,13 +10351,12 @@ var
   l: Word;
   ShadowQuery: TDCLDialogQuery;
   TmpStr, tmpStr1, tmpSQL1: String;
-  DropListValues: TDBComboBox;
-  DropList: TCustomComboBox;
+  DropList: TComboBox;
   v1, v2: Integer;
 begin
   If FDisplayMode in TDataGrid then
   Begin
-    TmpStr:=FindParam('DropListBox=', Field.OPL);
+    TmpStr:=FindParam('List=', Field.OPL);
     TranslateVal(TmpStr);
     If TmpStr<>'' Then
     Begin
@@ -10388,71 +10406,54 @@ begin
     SetLength(DropBoxes, l+1);
     Field.CurrentEdit:=true;
 
-    TmpStr:=FindParam('SetIndexValue=', Field.OPL);
-    If (TmpStr='1')Or Not FQuery.Active Then
+    DropBoxes[l].DropList:=TComboBox.Create(FieldPanel);
+    DropBoxes[l].DropList.Parent:=FieldPanel;
+    DropBoxes[l].DropList.Name:='DropListBox_'+Field.FieldName;
+    DropBoxes[l].DropList.Tag:=l;
+
+    DropBoxes[l].FieldName:=Field.FieldName;
+    DropBoxes[l].DropList.Top:=Field.Top;
+    DropBoxes[l].DropList.Left:=Field.Left;
+    Field.Height:=DropBoxes[l].DropList.Height;
+
+    DropBoxes[l].DropList.OnSelect:=DropListOnSelectItem;
+
+    DropBoxes[l].DropList.Clear;
+    DropList:=DropBoxes[l].DropList;
+
+    If FindParam('VariableName=', Field.OPL)<>'' Then
     Begin
-      DropBoxes[l].DropList:=TComboBox.Create(FieldPanel);
-      DropBoxes[l].DropList.Parent:=FieldPanel;
-      DropBoxes[l].DropList.Name:='DropListBox_'+Field.FieldName;
-      DropBoxes[l].DropList.Tag:=l;
+      tmpStr1:=FindParam('VariableName=', Field.OPL);
+      DropBoxes[l].Variable:=tmpStr1;
+      FDCLLogOn.Variables.NewVariable(tmpStr1);
+    End;
 
-      DropBoxes[l].FieldName:=Field.FieldName;
-      DropBoxes[l].DropList.Top:=Field.Top;
-      DropBoxes[l].DropList.Left:=Field.Left;
-      Field.Height:=DropBoxes[l].DropList.Height;
 
-      DropBoxes[l].DropList.OnSelect:=DropListOnSelectItem;
-
-      DropBoxes[l].DropList.Clear;
-      DropList:=DropBoxes[l].DropList;
-
-      If FindParam('VariableName=', Field.OPL)<>'' Then
-      Begin
-        tmpStr1:=FindParam('VariableName=', Field.OPL);
-        DropBoxes[l].Variable:=tmpStr1;
-        FDCLLogOn.Variables.NewVariable(tmpStr1);
-      End;
-    End
-    Else
+    tmpSQL1:=FindParam('SQL=', Field.OPL);
+    If tmpSQL1<>'' then
     Begin
-      DropListValues:=TDBComboBox.Create(FieldPanel);
-      DropListValues.Parent:=FieldPanel;
-      DropListValues.DataSource:=FData;
-      DropListValues.DataField:=Field.FieldName;
-      DropListValues.Name:='DropListBox_'+Field.FieldName;
-      DropListValues.Top:=Field.Top;
-      DropListValues.Left:=Field.Left;
-      Field.Height:=DropListValues.Height;
+      ShadowQuery:=TDCLDialogQuery.Create(Nil);
+      ShadowQuery.Name:='DropBoxQ_'+IntToStr(UpTime);
+      FDCLLogOn.SetDBName(ShadowQuery);
 
-      DropListValues.Clear;
-      DropList:=DropListValues;
+      TranslateVal(tmpSQL1);
+      ShadowQuery.SQL.Text:=tmpSQL1;
+      Try
+        ShadowQuery.Open;
 
-      tmpSQL1:=FindParam('SQL=', Field.OPL);
-      If tmpSQL1<>'' Then
-      Begin
-        ShadowQuery:=TDCLDialogQuery.Create(Nil);
-        ShadowQuery.Name:='DropBoxQ_'+IntToStr(UpTime);
-        FDCLLogOn.SetDBName(ShadowQuery);
+        While Not ShadowQuery.Eof Do
+        Begin
+          TmpStr:=Trim(ShadowQuery.Fields[0].AsString);
+          If TmpStr='' Then
+            TmpStr:='';
+          DropList.Items.Append(TmpStr);
 
-        TranslateVal(tmpSQL1);
-        ShadowQuery.SQL.Text:=tmpSQL1;
-        Try
-          ShadowQuery.Open;
-
-          While Not ShadowQuery.Eof Do
-          Begin
-            TmpStr:=Trim(ShadowQuery.Fields[0].AsString);
-            If TmpStr='' Then
-              TmpStr:='';
-            DropList.Items.Append(TmpStr);
-
-            ShadowQuery.Next;
-          End;
-          ShadowQuery.Close;
-          FreeAndNil(ShadowQuery);
-        Except
-          ShowErrorMessage(-1107, 'SQL='+tmpSQL1);
+          ShadowQuery.Next;
         End;
+        ShadowQuery.Close;
+        FreeAndNil(ShadowQuery);
+      Except
+        ShowErrorMessage(-1107, 'SQL='+tmpSQL1);
       End;
     End;
 
@@ -15268,7 +15269,8 @@ begin
 
     TransParams:=true;
 
-    If DCLMainLogOn.ConnectDB=0 then
+    ConnectErrorCode:=DCLMainLogOn.ConnectDB;
+    If ConnectErrorCode=0 then
     Begin
 {$IFNDEF EMBEDDED}
       GPT.NoParamsTable:=not DCLMainLogOn.TableExists(GPT.GPTTableName);
@@ -15318,42 +15320,43 @@ begin
         End;
 {$ENDIF}
       End;
-    End;
 
-    ShowLogOnForm:=False;
-    If ShiftDown Then
-    Begin
-      ShowLogOnForm:=true;
-      // GPT.DCLUserName:='';
-      GPT.EnterPass:='';
-    End;
 
-    DCLMainLogOn.SQLMon:=TDCLSQLMon.Create(IncludeTrailingPathDelimiter(AppConfigDir)+'SQLMon.txt');
-
-    RolesQuery1:=TDCLDialogQuery.Create(Nil);
-    RolesQuery1.Name:='InitRolesQuery_'+IntToStr(UpTime);
-    DCLMainLogOn.SetDBName(RolesQuery1);
-{$IFNDEF EMBEDDED}
-    RolesQuery1.SQL.Text:='select count(*) from '+UsersTable;
-
-    If DCLMainLogOn.TableExists(UsersTable) then
-      Try
-        RolesQuery1.Open;
-        GPT.DisableLogOnWithoutUser:=RolesQuery1.Fields[0].AsInteger>0;
-        RolesQuery1.Close;
-      Except
-        GPT.DCLUserName:='';
-        ShowLogOnForm:=False;
-        DebugProc(GetDCLMessageString(msTable)+' '+GetDCLMessageString(msUsers)+' "'+UsersTable+'" '+
-          GetDCLMessageString(msNotFoundM)+'.');
+      ShowLogOnForm:=False;
+      If ShiftDown Then
+      Begin
+        ShowLogOnForm:=true;
+        // GPT.DCLUserName:='';
+        GPT.EnterPass:='';
       End;
-{$ELSE}
-    GPT.DisableLogOnWithoutUser:=False;
-{$ENDIF}
-    If DCLMainLogOn.Login(GPT.DCLUserName, GPT.EnterPass, ShowLogOnForm)<>lsLogonOK then
-      DCLMainLogOn.RoleOK:=lsRejected;
-    If DCLMainLogOn.RoleOK=lsNotNeed then
-      DCLMainLogOn.RoleOK:=lsLogonOK;
+
+      DCLMainLogOn.SQLMon:=TDCLSQLMon.Create(IncludeTrailingPathDelimiter(AppConfigDir)+'SQLMon.txt');
+
+      RolesQuery1:=TDCLDialogQuery.Create(Nil);
+      RolesQuery1.Name:='InitRolesQuery_'+IntToStr(UpTime);
+      DCLMainLogOn.SetDBName(RolesQuery1);
+  {$IFNDEF EMBEDDED}
+      RolesQuery1.SQL.Text:='select count(*) from '+UsersTable;
+
+      If DCLMainLogOn.TableExists(UsersTable) then
+        Try
+          RolesQuery1.Open;
+          GPT.DisableLogOnWithoutUser:=RolesQuery1.Fields[0].AsInteger>0;
+          RolesQuery1.Close;
+        Except
+          GPT.DCLUserName:='';
+          ShowLogOnForm:=False;
+          DebugProc(GetDCLMessageString(msTable)+' '+GetDCLMessageString(msUsers)+' "'+UsersTable+'" '+
+            GetDCLMessageString(msNotFoundM)+'.');
+        End;
+  {$ELSE}
+      GPT.DisableLogOnWithoutUser:=False;
+  {$ENDIF}
+      If DCLMainLogOn.Login(GPT.DCLUserName, GPT.EnterPass, ShowLogOnForm)<>lsLogonOK then
+        DCLMainLogOn.RoleOK:=lsRejected;
+      If DCLMainLogOn.RoleOK=lsNotNeed then
+        DCLMainLogOn.RoleOK:=lsLogonOK;
+    End;
   End
   Else
   Begin

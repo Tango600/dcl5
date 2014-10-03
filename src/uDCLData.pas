@@ -43,6 +43,7 @@ TGPT=record
   UserAdminField, {INITable,} RolesMenuTable, TimeStampFormat, DCLLongUserName, UserID, RoleID,
   DCLRoleName, NewDBPassword, DBPassword, LibPath: String;
   FormPosInDB:TIniStore;
+
 end;
 
 TLogonParams=record

@@ -436,9 +436,9 @@ End;
 
 Function KeyState(Key: Integer): Boolean;
 Begin
-//{$R-}
+{$R-}
   Result:=HiWord(GetKeyState(Key))<>0;
-//{$R+}
+{$R+}
 End;
 
 Function ExecAndWait(Const FileName: ShortString; Const WinState: Word): Boolean;
