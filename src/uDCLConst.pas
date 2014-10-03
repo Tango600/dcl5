@@ -4,6 +4,7 @@ unit uDCLConst;
 interface
 
 uses
+  uStringParams,
 {$IFDEF FPC}
   LConvEncoding,
 {$ENDIF}
@@ -33,7 +34,7 @@ const
 {$IFDEF SQLdbIB}
   DBEngineType='SQLdbIB';
 {$ENDIF}
-  Version='10.0.0.123';
+  Version='10.0.0.143';
 
   CompotableVersion='9.1.125.303';
 
@@ -131,6 +132,9 @@ const
 {$ENDIF}
   SummGridHeight=26+AddSummGridHeight;
   SumPanelHeight=150;
+
+  DefaultFormHeight=MaxAllFieldsHeight+ToolButtonPanelHeight+ButtonPanelHeight;
+  DefaultFormWidth=MaxAllFieldsWidth+10;
 
   CharWidth=7;
 
@@ -255,6 +259,8 @@ const
   Digits='0123456789.,';
   /// Math
 
+  StopSimbols=DefaultParamsSeparator+DefaultValuesSeparator+DefaultParamDelim+'( )[],=.%:;&$#@*'#39;
+
   IntervalTimeToInitScripts=700;
   IntervalTimeNotify=61007;
   TimeToTerminate=5000;
@@ -343,5 +349,6 @@ const
 
 
 implementation
+
 
 end.

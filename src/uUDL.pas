@@ -460,7 +460,7 @@ Type
     function SaveFormPosUni: TStringList;
   public
     LocalVariables: TVariables;
-    Modal, BaseChanged, ExitNoSave: Boolean;
+    Modal, ExitNoSave: Boolean;
     FDialogName: String;
 
     constructor Create(DialogName: String; var DCLLogOn: TDCLLogOn; ParentForm: TDCLForm;
@@ -475,10 +475,11 @@ Type
     //procedure RunCommand(Command: String);
     procedure RePlaseVariables(var VariablesSet: String);
     procedure RePlaseParams(var Params: string);
-    Procedure TranslateVal(Var Params: String);
+    Procedure TranslateVal(Var Params: String; CheckParams:Boolean);
     procedure SetDBStatus(StatusStr: String);
     procedure AddStatus(StatusStr: String; Width: Integer);
     procedure SetStatus(StatusStr: String; StatusNum, Width: Integer);
+    procedure SetStatusWidth(StatusNum, Width: Integer);
     procedure DeleteStatus(StatusNum: Integer);
     procedure DeleteAllStatus;
     procedure SetRecNo;
@@ -2539,7 +2540,7 @@ begin
     IncButtonPanelHeight:=ButtonPanelHeight;
     FGrids[GridIndex].ButtonPanel:=TDialogPanel.Create(FGrids[GridIndex].FGridPanel);
     FGrids[GridIndex].ButtonPanel.Parent:=FGrids[GridIndex].FGridPanel;
-    FGrids[GridIndex].ButtonPanel.Top:=FForm.ClientHeight-1;
+    FGrids[GridIndex].ButtonPanel.Top:=FForm.ClientHeight-2;
     FGrids[GridIndex].ButtonPanel.Height:=ButtonPanelHeight;
     FGrids[GridIndex].ButtonPanel.Align:=alBottom;
 
@@ -2621,6 +2622,10 @@ var
   TB1: TFormPanelButton;
 begin
   SaveFormPos;
+
+  If Assigned(DBStatus) then
+    FreeAndNil(DBStatus);
+
   For i:=1 to Length(FGrids) do
   Begin
     For j:=1 to Length(FGrids[i-1].FTableParts) do
@@ -2805,7 +2810,7 @@ Begin
         ParamsCounter:=0;
 
         If DialogParams.Count>0 then
-          While (ParamsCounter<DialogParams.Count-1) Do
+          While (ParamsCounter<DialogParams.Count) Do
           Begin
             S:=Trim(DialogParams[ParamsCounter]);
             If PosEx('FormTop=', S)=1 then
@@ -3017,7 +3022,7 @@ var
     FGrids[GridIndex].SetSQLToStore(SQL, qtMain, ulUndefined);
 
     QueryGlob:=FGrids[GridIndex].Query;
-    TranslateVal(SQL);
+    TranslateVal(SQL, False);
     FGrids[GridIndex].SQL:=SQL;
     FGrids[GridIndex].Open;
   End;
@@ -3043,11 +3048,20 @@ begin
   //DCLCommand:=TDCLCommand.Create(Self, FDCLLogOn);
   Commands:=TDCLCommandButton.Create(DCLLogOn, Self);
   UserLevelLocal:=FDCLLogOn.AccessLevel;
-  FormHeight:=0;
-  FormWidth:=0;
+  FormHeight:=DefaultFormHeight;
+  FormWidth:=DefaultFormWidth;
   ExitNoSave:=False;
   SetLength(FGrids, 0);
   // CachedUpdates:=False;
+  For v1:=1 to FDCLLogOn.FormsCount do
+  Begin
+    If Assigned(FDCLLogOn.Forms[v1-1]) then
+    If FDCLLogOn.Forms[v1-1].Form.FormStyle=fsStayOnTop then
+    Begin
+      Modal:=True;
+      Break;
+    End;
+  End;
 
   FForm:=TDBForm.Create(Application);
   FForm.Name:=Trim(DialogName)+IntToStr(FFormNum);
@@ -3101,8 +3115,9 @@ begin
 
   MainPanel:=TDCLMainPanel.Create(FForm);
   MainPanel.Parent:=FForm;
-  MainPanel.Height:=70;
+  MainPanel.Height:=470;
   MainPanel.Top:=50;
+  MainPanel.Align:=alClient;
 
   QCreated:=true;
   AddMainPage(Query, Data);
@@ -3120,7 +3135,7 @@ begin
       { RePlaseVariables(ScrStr);
         FFactor:=0;
         TranslateProc(ScrStr, FFactor); }
-      inc(GPT.CurrentRunningScrString);
+      Inc(GPT.CurrentRunningScrString);
 
       If Pos('//', ScrStr)=1 Then
       Begin
@@ -3130,6 +3145,7 @@ begin
 
       If PosEx('Orientation=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         tmpSQL:=LowerCase(FindParam('Orientation=', ScrStr));
         If tmpSQL='horizontal' then
           FGrids[GridIndex].FOrientation:=oHorizontal;
@@ -3139,6 +3155,7 @@ begin
 
       If PosEx('AutoRefresh;', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         FGrids[GridIndex].RefreshTimer:=TTimer.Create(Nil);
         FGrids[GridIndex].RefreshTimer.Tag:=GridIndex;
         FGrids[GridIndex].RefreshTimer.Interval:=AutoResfreshInterval;
@@ -3149,6 +3166,7 @@ begin
 
       If PosEx('AutoRefresh=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         tmpSQL:=ScrStr;
         RePlaseVariables(tmpSQL);
         v1:=StrToIntEx(FindParam('AutoRefresh=', tmpSQL))*1000;
@@ -3167,6 +3185,7 @@ begin
       Begin
         If FDCLLogOn.AccessLevel>=ulLevel3 Then
         Begin
+          TranslateVal(ScrStr, True);
           tmpSQL:=FindParam('SetUserAccessRaight=', ScrStr);
 
           Case IsDigit(tmpSQL) Of
@@ -3181,6 +3200,7 @@ begin
 
       If PosEx('UserAccessRaight=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         tmpSQL:=FindParam('UserAccessRaight=', ScrStr);
         Case IsDigit(tmpSQL) Of
         idDigit:
@@ -3199,6 +3219,7 @@ begin
 
       If PosEx('AddNotAllowOperation=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         TmpStr:=FindParam('AddNotAllowOperation=', ScrStr);
         If PosEx('Insert', TmpStr)<>0 then
           FGrids[GridIndex].AddNotAllowedOperation(dsoInsert);
@@ -3210,6 +3231,7 @@ begin
 
       If PosEx('QueryKeyField=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         FGrids[GridIndex].KeyMarks.KeyField:=FindParam('QueryKeyField=', ScrStr);
         FGrids[GridIndex].KeyMarks.TitleField:=FindParam('TitleField=', ScrStr);
         If FGrids[GridIndex].KeyMarks.TitleField='' Then
@@ -3223,6 +3245,7 @@ begin
 
       If PosEx('ExitNoSave=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         tmpSQL:=FindParam('exitnosave=', ScrStr);
         If tmpSQL='1' Then
           ExitNoSave:=true;
@@ -3248,6 +3271,11 @@ begin
         ExecCommand(ScrStr);
       End;
 
+      If PosEx('StatusWidth=', ScrStr)=1 Then
+      Begin
+        ExecCommand(ScrStr);
+      End;
+
       If PosEx('SetStatusText=', ScrStr)=1 Then
       Begin
         ExecCommand(ScrStr);
@@ -3265,12 +3293,14 @@ begin
 
       If PosEx('FormHeight=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         FormHeight:=StrToIntEx(FindParam('FormHeight=', ScrStr));
         FForm.ClientHeight:=FormHeight;
       End;
 
       If PosEx('FormWidth=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         FormWidth:=StrToIntEx(FindParam('FormWidth=', ScrStr));
         FForm.ClientWidth:=FormWidth;
       End;
@@ -3287,11 +3317,13 @@ begin
 
       If PosEx('SetValueSeparator=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         GPT.GetValueSeparator:=FindParam('SetValueSeparator=', ScrStr);
       End;
 
       If PosEx('ReadOnly=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         TmpStr:=Trim(FindParam('ReadOnly=', ScrStr));
         FGrids[GridIndex].TranslateVal(TmpStr);
 
@@ -3305,6 +3337,7 @@ begin
 
       If PosEx('Navigator=', ScrStr)=1 then
       Begin
+        TranslateVal(ScrStr, True);
         tmpSQL:=FindParam('Navigator=', ScrStr);
         If tmpSQL='0' then
         Begin
@@ -3363,6 +3396,7 @@ begin
 
       If PosEx('[QUERY]', ScrStr)=1 then
       Begin
+        TranslateVal(ScrStr, False);
         v1:=ScrStrNum;
         tmpSQL:='';
         For v2:=v1 to OPLLinesCount do
@@ -3379,6 +3413,7 @@ begin
 
       If PosEx('Query=', ScrStr)=1 then
       Begin
+        TranslateVal(ScrStr, False);
         ScrStr:=GetQueryToRaights(ScrStr);
         If ScrStr<>'' then
         Begin
@@ -3390,12 +3425,14 @@ begin
 
       If PosEx('QueryName=', ScrStr)=1 then
       Begin
+        TranslateVal(ScrStr, True);
         tmpSQL:=FindParam('QueryName=', ScrStr);
         FGrids[GridIndex].QueryName:=tmpSQL;
       End;
 
       If PosEx('OrderByFields=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         tmpSQL:=FindParam('OrderByFields=', ScrStr);
         v2:=ParamsCount(tmpSQL);
         For v1:=1 To v2 Do
@@ -3417,6 +3454,7 @@ begin
         (PosSet('AutoApply=,CashBase=,Live=,ParamCheck=', ScrStr)<>0)or
         (PosEx('UpdateTable=', ScrStr)=1) then
       Begin
+        TranslateVal(ScrStr, True);
 {$IFDEF CACHEON}
         { CachedUpdates:=True;
           FGrids[GridIndex].CachedUpdates:=True; }
@@ -3429,15 +3467,15 @@ begin
 
       If PosEx('FindQuery=', ScrStr)=1 then
       Begin
+        TranslateVal(ScrStr, False);
         tmpSQL:=FindParam('FindQuery=', ScrStr);
         FGrids[GridIndex].SetSQLToStore(tmpSQL, qtFind, ulUndefined);
       End;
 
       If PosEx('ExecCommand=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         TmpStr:=FindParam('ExecCommand=', ScrStr);
-        RePlaseParams(TmpStr);
-        RePlaseVariables(TmpStr);
         ExecCommand(TmpStr);
       End;
 
@@ -3448,6 +3486,7 @@ begin
 
       If PosEx('Calendar=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         ResetCalendarParams(Calendar);
         Calendar.Caption:=FindParam('Label=', ScrStr);
 
@@ -3472,12 +3511,10 @@ begin
 
       If PosEx('DBFilter=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         FFilter.SQL:=FindParam('SQL=', ScrStr);
         If FFilter.SQL='' then
           FFilter.SQL:=FindParam('DBFilterQuery=', ScrStr);
-        RePlaseVariables(FFilter.SQL);
-        FFactor:=0;
-        TranslateProc(FFilter.SQL, FFactor);
         If FFilter.SQL<>'' Then
         Begin
           ResetFilterParams(FFilter);
@@ -3528,6 +3565,7 @@ begin
 
       If PosEx('ContextFilter=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         ResetFilterParams(FFilter);
         FFilter.FilterType:=ftContextFilter;
         FFilter.Caption:=FindParam('Label=', ScrStr);
@@ -3575,6 +3613,7 @@ begin
 
       If (PosEx('Between=', ScrStr)=1)or(PosEx('ContextBetween=', ScrStr)=1) Then
       Begin
+        TranslateVal(ScrStr, True);
         tmpSQL:=FindParam('between=', ScrStr);
         v3:=ParamsCount(tmpSQL);
         If v3 Mod 2=0 Then
@@ -3582,10 +3621,10 @@ begin
           v2:=1;
           For v1:=1 To v3 Div 2 Do
           Begin
-            v5:=StrToIntEx(SortParams(tmpSQL, v2));
-            v3:=StrToIntEx(SortParams(tmpSQL, v2+1));
+            v3:=StrToIntEx(SortParams(tmpSQL, v2))-1;
+            v5:=StrToIntEx(SortParams(tmpSQL, v2+1))-1;
+            FGrids[GridIndex].DBFilters[v3].Between:=v5;
             FGrids[GridIndex].DBFilters[v5].Between:=StopFilterFlg;
-            FGrids[GridIndex].DBFilters[v5].Between:=v3;
             inc(v2, 1);
           End;
         End
@@ -3595,12 +3634,10 @@ begin
 
       If PosEx('TablePartToolButton=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         If Not FindDisableAction(LowerCase(FindParam('action=', ScrStr))) Then
         Begin
           tmpSQL1:=FindParam('AccessLevel=', ScrStr);
-          RePlaseVariables(tmpSQL1);
-          FFactor:=0;
-          TranslateProc(tmpSQL1, FFactor);
           v2:=0;
           If tmpSQL1<>'' then
           Begin
@@ -3635,15 +3672,19 @@ begin
 
             ButtonParams.Hint:=InitCap(FindParam('hint=', ScrStr));
 
-            ButtonParams.Action:=FindParam('action=', ScrStr);
-
-            If FindParam('action=', ScrStr)<>'' then
-              ButtonParams.Pict:=FindParam('action=', ScrStr)
+            TmpStr:=FindParam('Action=', ScrStr);
+            If TmpStr<>'' then
+            Begin
+              ButtonParams.Command:=TmpStr;
+              ButtonParams.Pict:=FindParam('action=', ScrStr);
+            End
             Else
-              ButtonParams.Pict:=FindParam('Pict=', ScrStr);
+            Begin
+              If PosEx('CommandName=', ScrStr)<>0 Then
+                ButtonParams.Command:=FindParam('commandname=', ScrStr);
 
-            If PosEx('commandname=', ScrStr)<>0 Then
-              ButtonParams.Command:=FindParam('commandname=', ScrStr);
+              ButtonParams.Pict:=FindParam('Pict=', ScrStr);
+            End;
 
             If PosEx('bold', FindParam('FontStyle=', ScrStr))<>0 Then
               ButtonParams.FontStyle:=ButtonParams.FontStyle+[fsBold];
@@ -3671,12 +3712,10 @@ begin
 
       If PosEx('CommandButton=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         If Not FindDisableAction(LowerCase(FindParam('action=', ScrStr))) Then
         Begin
           tmpSQL1:=FindParam('AccessLevel=', ScrStr);
-          RePlaseVariables(tmpSQL1);
-          FFactor:=0;
-          TranslateProc(tmpSQL1, FFactor);
           If tmpSQL1<>'' then
           Begin
             IsDigitType:=IsDigit(tmpSQL1);
@@ -3710,15 +3749,19 @@ begin
 
             ButtonParams.Hint:=InitCap(FindParam('hint=', ScrStr));
 
-            ButtonParams.Action:=FindParam('action=', ScrStr);
-
-            If FindParam('action=', ScrStr)<>'' then
-              ButtonParams.Pict:=FindParam('action=', ScrStr)
+            TmpStr:=FindParam('Action=', ScrStr);
+            If TmpStr<>'' then
+            Begin
+              ButtonParams.Command:=TmpStr;
+              ButtonParams.Pict:=FindParam('Action=', ScrStr);
+            End
             Else
-              ButtonParams.Pict:=FindParam('Pict=', ScrStr);
+            Begin
+              If PosEx('CommandName=', ScrStr)<>0 Then
+                ButtonParams.Command:=FindParam('commandname=', ScrStr);
 
-            If PosEx('commandname=', ScrStr)<>0 Then
-              ButtonParams.Command:=FindParam('commandname=', ScrStr);
+              ButtonParams.Pict:=FindParam('Pict=', ScrStr);
+            End;
 
             If PosEx('bold', FindParam('FontStyle=', ScrStr))<>0 Then
               ButtonParams.FontStyle:=ButtonParams.FontStyle+[fsBold];
@@ -3759,11 +3802,11 @@ begin
 
       If PosEx('modal=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         tmpSQL:=FindParam('Modal=', ScrStr);
-        If tmpSQL='0' Then
-          Modal:=False;
+        //If tmpSQL='0' Then Modal:=False;
         If tmpSQL='1' Then
-          Modal:=true;
+          Modal:=True;
       End;
 
       If PosEx('GetFieldValue=', ScrStr)=1 Then
@@ -3780,6 +3823,7 @@ begin
       Begin
         If Assigned(FPages) Then
         Begin
+          TranslateVal(ScrStr, True);
           If LowerCase(FindParam('Orientation=', ScrStr))=LowerCase('top') Then
             FPages.TabPosition:=tpTop;
           If LowerCase(FindParam('Orientation=', ScrStr))=LowerCase('left') Then
@@ -3818,14 +3862,14 @@ begin
 
       If PosEx('Caption=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         tmpSQL:=InitCap(FindParam('caption=', ScrStr));
-        RePlaseVariables(tmpSQL);
-        RePlaseParams(tmpSQL);
         FForm.Caption:=tmpSQL;
       End;
 
       If PosEx('Style=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         tmpSQL:=FindParam('Style=', ScrStr);
         If tmpSQL='0' Then
           DisplayMode:=dctFields;
@@ -3839,12 +3883,14 @@ begin
 
       If PosEx('Title=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         If Assigned(FPages) Then
           FTabs.Caption:=FindParam('Title=', ScrStr);
       End;
 
       If PosEx('SideGrid=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         v1:=AddGrid(FForm, dctSideGrid, Query, nil);
 
         Tables[v1].Splitter1:=TSplitter.Create(FForm);
@@ -3864,9 +3910,11 @@ begin
 
       If PosEx('TablePart=', ScrStr)=1 Then
       begin
+        TranslateVal(ScrStr, False);
+        
         tmpSQL:=FindParam('Title=', ScrStr);
 
-        ParentPanel.Align:=alClient;
+        //ParentPanel.Align:=alClient;
         TabIndex:=FGrids[GridIndex].AddPartPage(tmpSQL, DataGlob);
         If not Assigned(FGrids[GridIndex].PartSplitter) then
         Begin
@@ -3891,7 +3939,10 @@ begin
               Try
                 FGrids[GridIndex].TableParts[TabIndex].Open;
               Except
-                ShowErrorMessage(-1200, 'SQL='+tmpSQL);
+                On E: Exception do
+                Begin
+                  ShowErrorMessage(-1200, E.Message+' / SQL='+tmpSQL);
+                End;
               End;
             FGrids[GridIndex].TableParts[TabIndex].Show;
             FGrids[GridIndex].TableParts[TabIndex].SetSQLToStore(tmpSQL, qtMain, ulUndefined);
@@ -3956,7 +4007,6 @@ begin
             End;
 
             TmpStr:=Trim(FindParam('ReadOnly=', ScrStr));
-            TranslateVal(TmpStr);
             If StrToIntEx(TmpStr)=1 Then
             Begin
               FGrids[GridIndex].TableParts[TabIndex].ReadOnly:=true;
@@ -4010,13 +4060,14 @@ begin
 
       If PosEx('SummQuery=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, False);
         FGrids[GridIndex].AddSumGrid(ScrStr);
       End;
 
       If PosEx('ApplicationTitle=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         tmpSQL:=FindParam('ApplicationTitle=', ScrStr);
-        TranslateVal(tmpSQL);
         Application.Title:=tmpSQL;
       End;
 
@@ -4027,6 +4078,7 @@ begin
 
       If PosEx('Events=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         If PosEx('AfterOpenEvents=', ScrStr)<>0 Then
         Begin
           TmpStr:=FindParam('AfterOpenEvents=', ScrStr);
@@ -4113,6 +4165,7 @@ begin
 
       If PosEx('LocalDeclare=', ScrStr)=1 Then
       Begin
+        TranslateVal(ScrStr, True);
         TmpStr:=Trim(FindParam('LocalDeclare=', ScrStr));
         For v1:=1 To ParamsCount(TmpStr) Do
         Begin
@@ -4126,7 +4179,6 @@ begin
           Begin
             tmpStr2:=Trim(Copy(tmpStr2, 1, v1-1));
             tmpSQL:=Copy(tmpStr2, v1+1, Length(tmpStr2)-v1);
-            TranslateVal(tmpSQL);
 
             LocalVariables.NewVariable(tmpStr2, tmpSQL);
           End;
@@ -4185,9 +4237,7 @@ begin
 
       If PosEx('DBImage=', ScrStr)=1 Then
       Begin
-        TmpStr:=ScrStr;
-        TranslateVal(TmpStr);
-        ScrStr:=TmpStr;
+        TranslateVal(ScrStr, True);
 
         ResetFieldParams(FField);
         FField.Width:=EditWidth;
@@ -4207,9 +4257,7 @@ begin
 
       If PosEx('DBRichText=', ScrStr)=1 Then
       Begin
-        TmpStr:=ScrStr;
-        TranslateVal(TmpStr);
-        ScrStr:=TmpStr;
+        TranslateVal(ScrStr, True);
 
         ResetFieldParams(FField);
         FField.Width:=EditWidth;
@@ -4229,9 +4277,7 @@ begin
 
       If PosEx('DBText=', ScrStr)=1 Then
       Begin
-        TmpStr:=ScrStr;
-        TranslateVal(TmpStr);
-        ScrStr:=TmpStr;
+        TranslateVal(ScrStr, True);
 
         ResetFieldParams(FField);
         FField.Width:=EditWidth;
@@ -4584,18 +4630,17 @@ begin
 
       /// //////////////////////////////
       inc(ScrStrNum);
+      {$IFDEF DCLDEBUG2}
+      Application.ProcessMessages;
+      Sleep(1000);
+      {$ENDIF}
     end;
 
     QueryGlob:=FGrids[0].FQuery;
     DataGlob:=FGrids[0].DataSource;
 
-    // MainPanel.Align:=alClient;
-    // FGrids[GridIndex].ButtonPanel.Align:=alBottom;
-
     For ScrStrNum:=1 to length(FGrids) do
-    begin
       FGrids[ScrStrNum-1].Show;
-    end;
 
     MainPanel.Height:=120;
     MainPanel.Width:=350;
@@ -4616,7 +4661,10 @@ begin
           End;
 
     FPages.ActivePageIndex:=0;
+    ChangeTabPage(FPages);
 
+    If FForm.Showing Then
+      FForm.Hide;
     If Not FForm.Showing Then
     If ModalOpen then
       FForm.ShowModal
@@ -4628,7 +4676,6 @@ begin
         FForm.ClientHeight:=FormHeight;
 
       // Query.AfterScroll(Query);
-
 {$IFNDEF DCLDEBUG}
       If Modal Then
         FForm.FormStyle:=fsStayOnTop;
@@ -4707,19 +4754,28 @@ begin
   Result:=nil;
   If length(FGrids)>0 then
   Begin
-    If ((Index=-1)or(Index=0))and(length(FGrids)>0) then
-      Result:=FGrids[CurrentGridIndex]
+    If (Index=-1) then
+    Begin
+      If Assigned(FGrids[CurrentGridIndex]) then
+        Result:=FGrids[CurrentGridIndex];
+    End
     Else
     Begin
-      j:=0;
-      for i:=1 to length(FGrids) do
+      If (length(FGrids)>=0) and (length(FGrids)>Index) then
       Begin
-        If FGrids[i-1].TabType=ptMainPage then
-          inc(j);
-        If j=Index then
+        j:=-1;
+        For i:=1 to length(FGrids) do
         Begin
-          Result:=FGrids[i-1];
-          break;
+          If Assigned(FGrids[i-1]) then
+          Begin
+            If FGrids[i-1].TabType=ptMainPage then
+              inc(j);
+            If j=Index then
+            Begin
+              Result:=FGrids[i-1];
+              break;
+            End;
+          End;
         End;
       End;
     End;
@@ -4804,6 +4860,7 @@ end;
 
 procedure TDCLForm.SetRecNo;
 begin
+  If GetActive then
   If Assigned(DBStatus) then
   Begin
     DBStatus.Panels[0].Text:=IntToStr(CurrentQuery.RecNo)+'/'+IntToStr(CurrentQuery.RecordCount);
@@ -4814,10 +4871,25 @@ procedure TDCLForm.SetStatus(StatusStr: String; StatusNum, Width: Integer);
 begin
   If StatusNum<0 then
     StatusNum:=DBStatus.Panels.Count-1;
+  If StatusNum>DBStatus.Panels.Count then
+    StatusNum:=DBStatus.Panels.Count-1;
   If Assigned(DBStatus) then
     If DBStatus.Panels.Count>StatusNum then
     Begin
       DBStatus.Panels[StatusNum].Text:=StatusStr;
+      SetStatusWidth(StatusNum, Width);
+    End;
+end;
+
+procedure TDCLForm.SetStatusWidth(StatusNum, Width: Integer);
+begin
+  If StatusNum<0 then
+    StatusNum:=DBStatus.Panels.Count-1;
+  If StatusNum>DBStatus.Panels.Count then
+    StatusNum:=DBStatus.Panels.Count-1;
+  If Assigned(DBStatus) then
+    If DBStatus.Panels.Count>StatusNum then
+    Begin
       If Width>5 then
         DBStatus.Panels[StatusNum].Width:=Width;
     End;
@@ -4831,7 +4903,7 @@ end;
 
 procedure TDCLForm.SetTable(Index: Integer; Value: TDCLGrid);
 begin
-  if length(FGrids)>Index then
+  If (length(FGrids)>Index) and (Index>=0) then
     FGrids[Index]:=Value;
 end;
 
@@ -4914,11 +4986,12 @@ Begin
   End;
 End;
 
-procedure TDCLForm.TranslateVal(var Params: String);
+procedure TDCLForm.TranslateVal(var Params: String; CheckParams:Boolean);
 Var
   FFactor: Word;
 Begin
-  RePlaseParams(Params);
+  If CheckParams then
+    RePlaseParams(Params);
   RePlaseVariables(Params);
   FFactor:=0;
   TranslateProc(Params, FFactor);
@@ -4984,9 +5057,11 @@ Begin
         FDCLLogOn.Variables.Variables[VarName]:='';
   End;
 
-  If PosEx('ReturnQuery=', S)<>0 Then
+  If (PosEx('ReturnQuery=', S)<>0) or (PosEx('SQL=', S)<>0) Then
   Begin
     SQLText:=FindParam('ReturnQuery=', S);
+    If SQLText='' then
+      SQLText:=FindParam('SQL=', S);
     TranslateValContext(SQLText);
     If SQLText<>'' Then
     Begin
@@ -5846,7 +5921,7 @@ begin
             End;
 
             TmpStr:=FindParam('TablePartQuery=', ScrStr);
-            FDCLForm.TranslateVal(TmpStr);
+            FDCLForm.TranslateVal(TmpStr, False);
 
             FDCLForm.Tables[-1].TableParts[v1].Query.SQL.Text:=TmpStr;
             Try
@@ -6502,10 +6577,9 @@ begin
               Begin
                 If not (FDCLForm.CurrentQuery.State in [dsEdit, dsInsert]) then
                   FDCLForm.CurrentQuery.Edit;
-                If RetVal.EditName='' then
-                  FDCLForm.CurrentQuery.FieldByName(RetVal.ModifyField).AsString:=RetVal.Val
-                Else
-                  FDCLForm.CurrentQuery.FieldByName(RetVal.ModifyField).AsString:=RetVal.Key;
+                FDCLForm.CurrentQuery.FieldByName(RetVal.ModifyField).AsString:=RetVal.Key;
+                If RetVal.DataField<>'' then
+                  FDCLForm.CurrentQuery.FieldByName(RetVal.DataField).AsString:=RetVal.Val
               End;
 
               If RetVal.EditName<>'' then
@@ -6645,6 +6719,25 @@ begin
             If FindParam('Width=', ScrStr)<>'' Then
               v2:=StrToIntEx(Trim(FindParam('Width=', ScrStr)));
             FDCLForm.SetStatus(TmpStr, v1-1, v2);
+          End;
+
+          If PosEx('StatusWidth=', ScrStr)=1 Then
+          Begin
+            TmpStr:=FindParam('StatusWidth=', ScrStr);
+            If TmpStr<>'' Then
+            Begin
+              If LowerCase(TmpStr)='last' Then
+                v1:=0
+              Else
+                v1:=StrToIntEx(Trim(FindParam('StatusWidth=', ScrStr)))
+            End
+            Else
+              v1:=0;
+
+            v2:=-1;
+            If FindParam('Width=', ScrStr)<>'' Then
+              v2:=StrToIntEx(Trim(FindParam('Width=', ScrStr)));
+            FDCLForm.SetStatusWidth(v1-1, v2);
           End;
 
           If PosEx('DeleteStatus=', ScrStr)=1 Then
@@ -8474,8 +8567,11 @@ begin
           RoleOK:=lsLogonOK;
         End;
         inc(PassRetries);
-        if LogOnForm.PressOK=psCanceled then
-          break;
+        If LogOnForm.PressOK=psCanceled then
+        Begin
+          //break;
+          Halt(0);
+        End;
       until (Result=lsLogonOK)or(PassRetries>3);
     End
     Else If CheckPass(UserName, Password, GPT.DCLUserPass) then
@@ -8554,43 +8650,47 @@ Begin
     End;
     GPT.DCLLongUserName:=TrimRight(ShadowQuery.FieldByName(LongUserNameField).AsString);
   End;
-  GPT.UserID:=ShadowQuery.FieldByName(UserIDField).AsString;
-  FUserID:=ShadowQuery.FieldByName(UserIDField).AsInteger;
-  GPT.RoleID:=ShadowQuery.FieldByName(UserRoleField).AsString;
-  GPT.LongRoleName:=Trim(ShadowQuery.FieldByName(LongRoleNameField).AsString);
-  GPT.DCLRoleName:=Trim(ShadowQuery.FieldByName(RoleNameField).AsString);
-  If DBUserNameField<>'' then
-  Begin
-    Delete(DBUserNameField, 1, 1);
-{$IFDEF ADO}
-    GPT.NewConnectionString:=Trim(ShadowQuery.FieldByName(Trim(DBUserNameField)).AsString);
-{$ELSE}
-    GPT.NewDBUserName:=Trim(ShadowQuery.FieldByName(Trim(DBUserNameField)).AsString);
-{$ENDIF}
-  End;
 
-  If DBPasswordField<>'' then
+  If not ShadowQuery.IsEmpty then
   Begin
-    Delete(DBPasswordField, 1, 1);
-    GPT.NewDBPassword:=Trim(ShadowQuery.FieldByName(Trim(DBPasswordField)).AsString);
-  End;
-
-  If GPT.DisableLogOnWithoutUser then
-  Begin
-    Try
-      FAccessLevel:=TranslateDigitToUserLevel(ShadowQuery.FieldByName(UserAdminField).AsInteger);
-    Except
-      FAccessLevel:=ulExecute;
+    GPT.UserID:=ShadowQuery.FieldByName(UserIDField).AsString;
+    FUserID:=ShadowQuery.FieldByName(UserIDField).AsInteger;
+    GPT.RoleID:=ShadowQuery.FieldByName(UserRoleField).AsString;
+    GPT.LongRoleName:=Trim(ShadowQuery.FieldByName(LongRoleNameField).AsString);
+    GPT.DCLRoleName:=Trim(ShadowQuery.FieldByName(RoleNameField).AsString);
+    If DBUserNameField<>'' then
+    Begin
+      Delete(DBUserNameField, 1, 1);
+  {$IFDEF ADO}
+      GPT.NewConnectionString:=Trim(ShadowQuery.FieldByName(Trim(DBUserNameField)).AsString);
+  {$ELSE}
+      GPT.NewDBUserName:=Trim(ShadowQuery.FieldByName(Trim(DBUserNameField)).AsString);
+  {$ENDIF}
     End;
-  End
-  Else
-    FAccessLevel:=ulExecute;
 
-  If GPT.HashPass then
-    GPT.DCLUserPass:=TrimRight(ShadowQuery.FieldByName(UserPassField).AsString)
-  Else
-    GPT.DCLUserPass:=TrimRight(ShadowQuery.FieldByName(UserPassField).AsString);
+    If DBPasswordField<>'' then
+    Begin
+      Delete(DBPasswordField, 1, 1);
+      GPT.NewDBPassword:=Trim(ShadowQuery.FieldByName(Trim(DBPasswordField)).AsString);
+    End;
 
+    If GPT.DisableLogOnWithoutUser then
+    Begin
+      Try
+        FAccessLevel:=TranslateDigitToUserLevel(ShadowQuery.FieldByName(UserAdminField).AsInteger);
+      Except
+        FAccessLevel:=ulExecute;
+      End;
+    End
+    Else
+      FAccessLevel:=ulExecute;
+
+    If GPT.HashPass then
+      GPT.DCLUserPass:=TrimRight(ShadowQuery.FieldByName(UserPassField).AsString)
+    Else
+      GPT.DCLUserPass:=TrimRight(ShadowQuery.FieldByName(UserPassField).AsString);
+  End;
+  
   ShadowQuery.Close;
   If GPT.MultiRolesMode Then
   Begin
@@ -8699,26 +8799,29 @@ Begin
               FForms[i].FForm.Show;
             fnaStopAutoRefresh:
             Begin
-              For j:=1 to FForms[i].GridsCount do
+              For j:=1 to FForms[i].TablesCount do
                 If Assigned(FForms[i].Tables[j-1].RefreshTimer) Then
                   FForms[i].Tables[j-1].RefreshTimer.Enabled:=False;
             End;
             fnaStartAutoRefresh:
             Begin
-              For j:=1 to FForms[i].GridsCount do
+              For j:=1 to FForms[i].TablesCount do
+              If Assigned(FForms[i].Tables[j-1]) then
                 If Assigned(FForms[i].Tables[j-1].RefreshTimer) Then
                   FForms[i].Tables[j-1].RefreshTimer.Enabled:=True;
             End;
             fnaPauseAutoRefresh:
             Begin
-              For j:=1 to FForms[i].GridsCount do
+              For j:=1 to FForms[i].TablesCount do
+              If Assigned(FForms[i].Tables[j-1]) then
                 If Assigned(FForms[i].Tables[j-1].RefreshTimer) Then
                   If FForms[i].Tables[j-1].RefreshTimer.Enabled then
                    FForms[i].Tables[j-1].LastStateTimer:=FForms[i].Tables[j-1].RefreshTimer.Enabled;
             End;
             fnaResumeAutoRefresh:
             Begin
-              For j:=1 to FForms[i].GridsCount do
+              For j:=1 to FForms[i].TablesCount do
+              If Assigned(FForms[i].Tables[j-1]) then
                 If Assigned(FForms[i].Tables[j-1].RefreshTimer) Then
                   If not FForms[i].Tables[j-1].RefreshTimer.Enabled then
                     FForms[i].Tables[j-1].RefreshTimer.Enabled:=FForms[i].Tables[j-1].LastStateTimer;
@@ -9310,6 +9413,7 @@ begin
   If FDCLLogOn.RoleOK<>lsLogonOK then
   Begin
     CreateAboutItem(FMainMenu, FMainForm);
+    Exit;
   End;
 
   If ShowFormPanel and not Assigned(FormBar) Then
@@ -9524,10 +9628,11 @@ begin
     While Not MenuQuery.Eof Do
     Begin
       v1:=FindMenuItemIndex('MenuItem_'+IntToStr(SubNum));
-      AddSubSubItem(TrimRight(MenuQuery.FieldByName(GPT.DCLNameField).AsString),
-        'MenuItem_'+MenuQuery.FieldByName(GPT.IdentifyField).AsString, v1,
-        FindSubMenuItemIndex('MenuItem_'+TrimRight(MenuQuery.FieldByName(GPT.ParentFlgField)
-        .AsString), v1));
+      If v1<>-1 then
+        AddSubSubItem(TrimRight(MenuQuery.FieldByName(GPT.DCLNameField).AsString),
+          'MenuItem_'+MenuQuery.FieldByName(GPT.IdentifyField).AsString, v1,
+          FindSubMenuItemIndex('MenuItem_'+TrimRight(MenuQuery.FieldByName(GPT.ParentFlgField)
+          .AsString), v1));
       MenuQuery.Next;
     End;
     FreeAndNil(SubQuery);
@@ -9817,6 +9922,7 @@ begin
   CheckBoxes[l].CheckBox.Left:=Field.Left;
   CheckBoxes[l].CheckBox.Top:=Field.Top;
   CheckBoxes[l].CheckBox.Width:=EditWidth;
+  Field.Height:=CheckBoxes[l].CheckBox.Height;
 
   Case CheckBoxes[l].CheckBox.Checked Of
   true:
@@ -9877,6 +9983,7 @@ procedure TDCLGrid.AddContextList(var Field: RField);
 var
   l: Word;
   ShadowQuery: TDCLDialogQuery;
+  lSQL:String;
 begin
   l:=length(ContextLists);
   SetLength(ContextLists, l+1);
@@ -9896,6 +10003,7 @@ begin
     ContextLists[l].ContextList.Width:=Field.Width
   Else
     ContextLists[l].ContextList.Width:=EditWidth;
+  Field.Height:=ContextLists[l].ContextList.Height;
   ContextLists[l].ContextList.Hint:=Field.Hint;
   ContextLists[l].ContextList.ShowHint:=true;
 
@@ -9913,8 +10021,18 @@ begin
   ShadowQuery.Name:='ContextList_'+IntToStr(UpTime);
   FDCLLogOn.SetDBName(ShadowQuery);
 
-  ShadowQuery.SQL.Text:='select '+ContextLists[l].Field+' from '+ContextLists[l].Table+' order by '+
-    ContextLists[l].Field;
+  lSQL:=FindParam('SQL=', Field.OPL);
+  If lSQL<>'' then
+  Begin
+    ContextLists[l].SQL:=lSQL;
+    ShadowQuery.SQL.Text:=lSQL;
+  End
+  Else
+  Begin
+    ContextLists[l].SQL:='';
+    ShadowQuery.SQL.Text:='select '+ContextLists[l].Field+' from '+ContextLists[l].Table+' order by '+
+      ContextLists[l].Field;
+  End;
   ShadowQuery.Open;
   ShadowQuery.First;
 
@@ -9971,6 +10089,7 @@ begin
     DateBoxes[DateBoxCount].DateBox.Width:=Field.Width
   Else
     DateBoxes[DateBoxCount].DateBox.Width:=DateBoxWidth;
+  Field.Height:=DateBoxes[DateBoxCount].DateBox.Height;
 
   DateBoxes[DateBoxCount].DateBox.Top:=Field.Top;
   DateBoxes[DateBoxCount].DateBox.Left:=Field.Left;
@@ -10035,6 +10154,7 @@ begin
   DateBoxes[DateBoxCount].DateBoxToVariables:=KeyField;
   If TempStr<>'' then
     DateBoxes[DateBoxCount].DateBox.Date:=StrToDate(TempStr);
+  OnChangeDateBox(DateBoxes[DateBoxCount].DateBox);
 
   IncXYPos(EditTopStep, DateBoxes[DateBoxCount].DateBox.Width, Field);
 end;
@@ -10053,6 +10173,7 @@ begin
     DBCheckBoxes[l].Width:=Field.Width
   Else
     DBCheckBoxes[l].Width:=CheckWidth;
+  Field.Height:=DBCheckBoxes[l].Height;
   DBCheckBoxes[l].ShowHint:=true;
   DBCheckBoxes[l].Hint:=Field.Hint;
   DBCheckBoxes[l].Caption:=Field.Caption;
@@ -10278,6 +10399,7 @@ begin
       DropBoxes[l].FieldName:=Field.FieldName;
       DropBoxes[l].DropList.Top:=Field.Top;
       DropBoxes[l].DropList.Left:=Field.Left;
+      Field.Height:=DropBoxes[l].DropList.Height;
 
       DropBoxes[l].DropList.OnSelect:=DropListOnSelectItem;
 
@@ -10300,6 +10422,7 @@ begin
       DropListValues.Name:='DropListBox_'+Field.FieldName;
       DropListValues.Top:=Field.Top;
       DropListValues.Left:=Field.Left;
+      Field.Height:=DropListValues.Height;
 
       DropListValues.Clear;
       DropList:=DropListValues;
@@ -10388,6 +10511,7 @@ begin
     Field.Width:=EditWidth;
   EditField.Width:=Field.Width;
   Field.CurrentEdit:=False;
+  Field.Height:=EditField.Height;
 
   IncXYPos(EditTopStep, Field.Width, Field);
 end;
@@ -10524,6 +10648,7 @@ begin
   Edits[EditsCount].EditToVariables:=KeyField;
   FDCLForm.LocalVariables.Variables[KeyField]:=TempStr;
   Edits[EditsCount].Edit.Text:=TempStr;
+  Field.Height:=Edits[EditsCount].Edit.Height;
 
   IncXYPos(EditTopStep, Edits[EditsCount].Edit.Width, Field);
 end;
@@ -10546,7 +10671,7 @@ var
 begin
   l:=length(Lookups);
   SetLength(Lookups, l+1);
-  Field.CurrentEdit:=true;
+  Field.CurrentEdit:=True;
 
   TempStr:=FindParam('SQL=', Field.OPL);
   If TempStr='' then
@@ -10579,7 +10704,7 @@ begin
   Lookups[l].Lookup.Name:='LookUpField_'+IntToStr(l);
   Lookups[l].Lookup.Tag:=l;
 
-  Lookups[l].Lookup.ShowHint:=true;
+  Lookups[l].Lookup.ShowHint:=True;
   Lookups[l].Lookup.Hint:=Field.Hint;
 
   If FQuery.Active Then
@@ -10593,7 +10718,7 @@ begin
       Lookups[l].Lookup.DataField:=Field.FieldName;
     End
     Else
-      NoDataField:=true;
+      NoDataField:=True;
   End
   Else
     NoDataField:=true;
@@ -10606,6 +10731,7 @@ begin
     Lookups[l].Lookup.Width:=Field.Width
   Else
     Lookups[l].Lookup.Width:=EditWidth;
+  Field.Height:=Lookups[l].Lookup.Height;
 
   TempStr:=FindParam('VariableName=', Field.OPL);
   If TempStr<>'' Then
@@ -10653,6 +10779,7 @@ begin
       If (not(FQuery.State in [dsInsert, dsEdit]))and FQuery.Active and(not NoDataField) then
         Query.Edit;
       Lookups[l].Lookup.KeyValue:=TempStr;
+      FData.DataSet.FieldByName(Field.FieldName).AsInteger:=Lookups[l].Lookup.KeyValue;
       LookupOnClick(Lookups[l].Lookup);
     End;
   End;
@@ -10747,9 +10874,10 @@ begin
     FTablePartsPages:=TPageControl.Create(FGridPanel);
     FTablePartsPages.Parent:=FGridPanel;
     FTablePartsPages.Top:=5;
+    FTablePartsPages.Height:=150;
+    FTablePartsPages.Align:=alTop;
     FTablePartsPages.OnChange:=ChangeTabPage;
     FTablePartsPages.Tag:=2;
-    FTablePartsPages.Height:=350;
     FTablePartsPages.Align:=alBottom;
   End;
 
@@ -10989,11 +11117,7 @@ var
   v1, v2: Integer;
 begin
   If FUserLevelLocal<ulWrite Then
-    Data.Cancel
-  Else
-  Begin
-    SetDataStatus(dssChanged);
-  End;
+    Data.Cancel;
 
   For v1:=1 to FDCLLogOn.FormsCount do
   Begin
@@ -11125,7 +11249,6 @@ end;
 procedure TDCLGrid.AfterRefresh(Data: TDataSet);
 begin
   FDCLForm.SetDBStatus('');
-  FDCLForm.BaseChanged:=False;
   BaseChanged:=False;
 end;
 
@@ -11290,9 +11413,22 @@ Begin
     tmpQuery.Name:='tmpContextListQ_'+IntToStr(UpTime);
     FDCLLogOn.SetDBName(tmpQuery);
 
-    tmpQuery.SQL.Text:='select '+ContextLists[ComboNum].KeyField+' from '+ContextLists[ComboNum]
-      .Table+' where '+ContextLists[ComboNum].Field+'='+GPT.StringTypeChar+Combo.Text+
-      GPT.StringTypeChar;
+    If ContextLists[ComboNum].Table<>'' then
+      tmpQuery.SQL.Text:='select '+ContextLists[ComboNum].KeyField+' from '+ContextLists[ComboNum]
+        .Table+' where '+ContextLists[ComboNum].Field+'='+GPT.StringTypeChar+Combo.Text+
+        GPT.StringTypeChar
+    Else
+    Begin
+      If PosEx(' where ', ContextLists[ComboNum].SQL)<>0 then
+        tmpQuery.SQL.Text:=ContextLists[ComboNum].SQL+
+          ' and '+ContextLists[ComboNum].Field+'='+GPT.StringTypeChar+Combo.Text+
+          GPT.StringTypeChar
+      Else
+        tmpQuery.SQL.Text:=ContextLists[ComboNum].SQL+
+          ' where '+ContextLists[ComboNum].Field+'='+GPT.StringTypeChar+Combo.Text+
+          GPT.StringTypeChar;
+    End;
+
     tmpQuery.Open;
 
     If not tmpQuery.IsEmpty then
@@ -11876,25 +12012,24 @@ begin
     If BaseChanged Then
       If FDCLForm.ExitNoSave=False Then
         If FQuery.Active Then
-          If BaseChanged or (FQuery.State In [dsEdit, dsInsert]) Then
-            If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msSave)+' '+GetDCLMessageString(msEditings)+'?'))=1 Then
-            Begin
-              Try
-                FQuery.Post;
-                BaseChanged:=False;
-              Except
-                //
-              End;
-            End
-            Else
-            Begin
-              Try
-                BaseChanged:=False;
-                FQuery.Cancel;
-              Except
-                //
-              End;
+          If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msSave)+' '+GetDCLMessageString(msEditings)+'?'))=1 Then
+          Begin
+            Try
+              FQuery.Post;
+              BaseChanged:=False;
+            Except
+              //
             End;
+          End
+          Else
+          Begin
+            Try
+              BaseChanged:=False;
+              FQuery.Cancel;
+            Except
+              //
+            End;
+          End;
 
     {Q:=FQuery;
     FreeAndNil(Q);}
@@ -12339,7 +12474,7 @@ begin
   If MaxAllFieldsWidth<Field.Left then
   Begin
     Field.Left:=BeginStepLeft;
-    inc(Field.Top, MaxStepFields);
+    inc(Field.Top, MaxStepFields+FieldDownStep);
   End;
 end;
 
@@ -12538,9 +12673,8 @@ Var
         Postfix:='%';
       End;
       End;
-    End
-    Else
-      BetweenFormat;
+    End;
+    BetweenFormat;
 
     If CondStr='' Then
       CondStr:=UpperPrefix+Delimiter+ExemplStr+Postfix+Delimiter+UpperPostfix;
@@ -12623,7 +12757,7 @@ Begin
 
           If ExeplStr<>'-1' Then
           Begin
-            If DBFilters[FN].Between<>StopFilterFlg Then
+            If DBFilters[FN].Between<>StopFilterFlg then
             Begin
               Exempl2:='';
               If WhereStr>' ' Then
@@ -12853,12 +12987,10 @@ begin
     If Assigned(FDCLForm.ParentForm) then
     Begin
       FDCLForm.ParentForm.SetDBStatus(SourceToInterface(GetDCLMessageString(msModified)));
-      FDCLForm.ParentForm.BaseChanged:=True;
       BaseChanged:=True;
     End;
 
     FDCLForm.SetDBStatus(SourceToInterface(GetDCLMessageString(msModified)));
-    FDCLForm.BaseChanged:=True;
     BaseChanged:=True;
   end;
   dssSaved:
@@ -12866,12 +12998,10 @@ begin
     If Assigned(FDCLForm.ParentForm) then
     Begin
       FDCLForm.ParentForm.SetDBStatus(SourceToInterface(GetDCLMessageString(msNone)));
-      FDCLForm.ParentForm.BaseChanged:=False;
       BaseChanged:=False;
     End;
 
     FDCLForm.SetDBStatus(SourceToInterface(GetDCLMessageString(msNone)));
-    FDCLForm.BaseChanged:=False;
     BaseChanged:=False;
   end;
   End;
@@ -13248,6 +13378,9 @@ End;
 procedure TDCLCommandButton.AddCommand(Parent: TWinControl; ButtonParams: RButtonParams);
 var
   FButtonsCount: Integer;
+  BinStore:TDCLBinStore;
+  MS:TMemoryStream;
+  BM:TBitmap;
 begin
   FButtonsCount:=length(Commands);
   inc(FButtonsCount);
@@ -13271,7 +13404,27 @@ begin
 
   CommandButton[FButtonsCount-1].Glyph.Transparent:=true;
   If ButtonParams.Pict<>'' then
-    CommandButton[FButtonsCount-1].Glyph.Assign(DrawBMPButton(ButtonParams.Pict));
+  Begin
+    BM:=DrawBMPButton(ButtonParams.Pict);
+    If BM.Width<>0 then
+    Begin
+      CommandButton[FButtonsCount-1].Glyph.Assign(BM);
+    End
+    Else
+    Begin
+      BinStore:=TDCLBinStore.Create(FDCLLogOn);
+      MS:=BinStore.GetData(ButtonParams.Pict);
+      If MS.Size=0 then
+        CommandButton[FButtonsCount-1].Glyph.Assign(DrawBMPButton(ButtonParams.Pict))
+      Else
+      Begin
+        BM:=TBitmap.Create;
+        BM.LoadFromStream(MS);
+        CommandButton[FButtonsCount-1].Glyph.Assign(BM);
+        MS.Free;
+      End;
+    End;
+  End;
 
   If ButtonParams.FontStyle=[fsBold] then
     CommandButton[FButtonsCount-1].Font.Style:=CommandButton[FButtonsCount-1].Font.Style+[fsBold];
@@ -13309,7 +13462,7 @@ var
 begin
   SaveMainFormPos(DCLMainLogOn, DCLMainLogOn.MainForm, 'MainForm');
 
-  For v1:=1 to DCLMainLogOn.FormsCount do
+  For v1:=DCLMainLogOn.FormsCount downto 1 do
   Begin
     if Assigned(DCLMainLogOn.Forms[v1-1]) then
       If DCLMainLogOn.ActiveDCLForms[v1-1] then
@@ -15044,6 +15197,7 @@ begin
   GPT.UseMessages:=true;
   ScriptRunCreated:=False;
   GPT.DebugOn:=False;
+  GPT.DialogsSettings:=True;
   GPT.Port:=0;
 {$IFDEF ZEOS}
   GPT.DBType:=DefaultDBType;

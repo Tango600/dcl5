@@ -173,14 +173,13 @@ begin
       ftFloat:Begin
         FieldsDefs[j]:=TFloatField.Create(Self);
         FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
+        TFloatField(FieldsDefs[j]).Precision:=5;
         TFloatField(FieldsDefs[j]).DisplayFormat:='#.#####';
-        //'#'+{$IFDEF FPC}DefaultFormatSettings.{$ENDIF}DecimalSeparator+'#####';
         Inc(j);
       End;
       ftCurrency:Begin
         FieldsDefs[j]:=TCurrencyField.Create(Self);
         FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
-        //TFloatField(FieldsDefs[j]).Precision:=2;
         TFloatField(FieldsDefs[j]).DisplayFormat:='#.##';
         Inc(j);
       End;

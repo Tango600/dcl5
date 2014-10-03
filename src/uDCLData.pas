@@ -89,7 +89,7 @@ RDependFind=Record
 End;
 
 RButtonParams=record
-  Caption, Hint, Command, Action, Pict: string;
+  Caption, Hint, Command, Pict: string;
   Top, Left, Width, Height: Word;
   Default, Cancel: Boolean;
   FontStyle:TFontStyles;
@@ -182,7 +182,7 @@ end;
 
 TContextList=record
   ContextList: TComboBox;
-  Table, Field, KeyField, DataField, ListField: String;
+  SQL, Table, Field, KeyField, DataField, ListField: String;
 end;
 
 TDropBox=record
@@ -205,7 +205,7 @@ TFontStyleRec=Record
 End;
 
 TReturnFormValue=Record
-  Key, Val, ModifyField, EditName:String;
+  Key, Val, ModifyField, DataField, EditName:String;
   Choosen:Boolean;
 end;
 

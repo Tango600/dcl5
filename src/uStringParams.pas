@@ -9,7 +9,7 @@ uses
   cwstring,
 {$ENDIF}
 {$ENDIF}
-  SysUtils, uDCLData, uDCLConst;
+  SysUtils;
 
 const
   DefaultParamsSeparator=';';
@@ -44,6 +44,8 @@ Function InterfaceToSystem(S:String): String;
 
 
 implementation
+
+uses uDCLConst, uDCLData;
 
 {$IFNDEF FPC}
 Function ConvertEncoding(Const S, FromEncoding, ToEncoding: String): String;
@@ -119,24 +121,36 @@ end;
 
 Function FindParam(const KeyWord, StrParam: String): String;
 var
-  Start, EndStr, lp: Word;
+  Start, EndStr, lp, StartPos: Integer;
   vStrParam: String;
+  Find:Boolean;
 begin
   Result:='';
-  vStrParam:=StrParam+DefaultParamsSeparator;
-  Start:=PosEx(KeyWord, vStrParam);
-  if Start<>0 then
+  StartPos:=1;
+  Find:=False;
+  vStrParam:=DefaultParamsSeparator+StrParam+DefaultParamsSeparator;
+  Start:=PosEx(KeyWord, Copy(vStrParam, StartPos, Length(vStrParam)));
+  If Start<>0 then
   begin
-    Result:='';
-    lp:=Length(vStrParam);
-    EndStr:=Start+Length(KeyWord);
-    While vStrParam[EndStr]<>DefaultParamsSeparator do
-    begin
-      if EndStr-1=lp then
-        break;
-      Result:=Result+vStrParam[EndStr];
-      Inc(EndStr);
-    end;
+    Repeat
+      Result:='';
+      Start:=PosEx(KeyWord, Copy(vStrParam, StartPos, Length(vStrParam)));
+      If Start<>0 then
+      If Pos(vStrParam[Start-2+StartPos], StopSimbols)<>0 then
+      Begin
+        lp:=Length(vStrParam);
+        EndStr:=Start+StartPos-1+Length(KeyWord);
+        While vStrParam[EndStr]<>DefaultParamsSeparator do
+        begin
+          if EndStr-1=lp then
+            break;
+          Result:=Result+vStrParam[EndStr];
+          Inc(EndStr);
+        end;
+        Find:=True;
+      End;
+      Inc(StartPos);
+    Until (Find) or (StartPos>Length(vStrParam));
   end;
 end;
 
