@@ -77,9 +77,6 @@ type
     function GetAfterInsertEvent: TDataSetNotifyEvent;
     procedure SetAfterInsertEvent(Event: TDataSetNotifyEvent);
 
-    procedure SaveDB;
-    procedure CancelDB;
-
     Procedure SetOperations(Value: TOperationsTypes);
     Function GetOperations: TOperationsTypes;
 
@@ -99,6 +96,9 @@ type
     procedure Edit;
     procedure Delete;
     procedure SetUpdateSQL(TableName, KeyField: String);
+
+    procedure SaveDB;
+    procedure CancelDB;
 
     property NotAllowOperations: TOperationsTypes read GetOperations write SetOperations;
     property KeyField: String read FKeyField;
@@ -289,6 +289,14 @@ begin
 {$IFDEF CACHEON}
   CancelUpdates;
 {$ENDIF}
+{$IFDEF ZEOS}
+  If not Connection.AutoCommit then
+    Connection.Commit;
+{$ELSE}
+{$IFDEF IBALL}
+  Transaction.CommitRetaining;
+{$ENDIF}
+{$ENDIF}
 end;
 
 constructor TDCLQuery.Create(DatabaseObj: TDBLogOn);
@@ -453,11 +461,17 @@ Begin
 {$IFNDEF SQLdbIB}
       KeyFieldsSet:='';
       For v1:=1 To Length(KeyFields) Do
-        KeyFieldsSet:=KeyFieldsSet+KeyFields[v1-1]+'=:'+KeyFields[v1-1]+',';
+        KeyFieldsSet:=KeyFieldsSet+KeyFields[v1-1]+'=:'+KeyFields[v1-1]+' and ';
       If KeyFieldsSet<>'' then
-        System.Delete(KeyFieldsSet, Length(KeyFieldsSet), 1);
+        System.Delete(KeyFieldsSet, Length(KeyFieldsSet)-4, 5);
 
-      FUpdSQL:='select * from '+TableName+' where '+KeyFieldsSet;
+      UpdatesFieldsSet:='';
+      For v1:=1 To Length(KeyFields) Do
+        UpdatesFieldsSet:=UpdatesFieldsSet+':'+KeyFields[v1-1]+' is null and ';
+      If UpdatesFieldsSet<>'' then
+        System.Delete(UpdatesFieldsSet, Length(UpdatesFieldsSet)-4, 5);
+
+      FUpdSQL:='select * from '+TableName+' where (('+KeyFieldsSet+') or ('+UpdatesFieldsSet+'))';
       If not FNoRefreshSQL then
         FUpdateSQL.RefreshSQL.Text:=FUpdSQL;
 {$ENDIF}{$ENDIF}
@@ -684,6 +698,12 @@ begin
 {$ENDIF}
 {$IFDEF ZEOS}
   CommitUpdates;
+  If not Connection.AutoCommit then
+    Connection.Commit;
+{$ELSE}
+{$IFDEF IBALL}
+  Transaction.CommitRetaining;
+{$ENDIF}
 {$ENDIF}
 {$ENDIF}
 end;

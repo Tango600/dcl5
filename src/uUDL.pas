@@ -486,6 +486,8 @@ Type
     procedure SetRecNo;
     procedure SetTabIndex(Index: Integer);
     procedure RefreshForm;
+    procedure CloseDatasets;
+    procedure ResumeDatasets;
     procedure SetVariable(VarName, VValue: string);
     procedure GetChooseValue;
     Function ChooseAndClose(Action: TChooseMode):TReturnFormValue;
@@ -660,6 +662,7 @@ Type
 
     function ConnectDB: Integer;
     procedure Disconnect;
+    procedure ReconnectDB;
 
     property FormsCount: Integer read GetFormsCount;
     property MainForm: TForm read FMainForm;
@@ -3244,7 +3247,7 @@ begin
 
       If PosEx('ReOpen;', ScrStr)=1 Then
       Begin
-        FGrids[GridIndex].ReFreshQuery;
+        ReFreshForm;
       End;
 
       If PosEx('ExitNoSave=', ScrStr)=1 Then
@@ -4809,6 +4812,31 @@ begin
   End;
 end;
 
+procedure TDCLForm.CloseDatasets;
+var
+  i, j: Integer;
+begin
+  For i:=1 to length(FGrids) do
+  Begin
+    For j:=1 to Length(FGrids[i-1].FTableParts) do
+      FGrids[i-1].FTableParts[j-1].Close;
+
+    FGrids[i-1].Close;
+  End;
+end;
+
+procedure TDCLForm.ResumeDatasets;
+var
+  i, j: Integer;
+begin
+  For i:=1 to length(FGrids) do
+  Begin
+    FGrids[i-1].Open;
+    For j:=1 to Length(FGrids[i-1].FTableParts) do
+      FGrids[i-1].FTableParts[j-1].Open;
+  End;
+end;
+
 procedure TDCLForm.RePlaseParams(var Params: string);
 begin
   FGrids[CurrentGridIndex].RePlaseParams(Params);
@@ -5355,7 +5383,7 @@ begin
 
   If CompareString(Command, 'PostClose') Then
   Begin
-    If FDCLForm.CurrentQuery.State in [dsEdit, dsInsert] Then
+    If FDCLForm.CurrentQuery.State in dsEditModes Then
       FDCLForm.CurrentQuery.Post;
     if Assigned(FDCLForm) then
       FreeAndNil(FDCLForm);
@@ -5364,7 +5392,7 @@ begin
 
   If CompareString(Command, 'CancelClose') Then
   Begin
-    If FDCLForm.CurrentQuery.State in [dsEdit, dsInsert] Then
+    If FDCLForm.CurrentQuery.State in dsEditModes Then
       FDCLForm.CurrentQuery.Cancel;
     if Assigned(FDCLForm) then
       FreeAndNil(FDCLForm);
@@ -5373,7 +5401,7 @@ begin
 
   If CompareString(Command, 'Post') Then
   Begin
-    If FDCLForm.CurrentQuery.State in [dsEdit, dsInsert] Then
+    If FDCLForm.CurrentQuery.State in dsEditModes Then
       FDCLForm.CurrentQuery.Post;
     Executed:=true;
   End;
@@ -5410,7 +5438,7 @@ begin
   // ==============================================================
   If CompareString(Command, 'Post_Part') Then
   Begin
-    If FDCLForm.CurrentPartQuery.State in [dsEdit, dsInsert] Then
+    If FDCLForm.CurrentPartQuery.State in dsEditModes Then
       FDCLForm.CurrentPartQuery.Post;
     Executed:=true;
   End;
@@ -5831,7 +5859,13 @@ begin
 
           If PosEx('ReOpen;', ScrStr)=1 Then
           Begin
-            FDCLForm.RefreshForm;
+            If Assigned(FDCLForm) then
+              FDCLForm.RefreshForm;
+          End;
+
+          If PosEx('ReConnect;', ScrStr)=1 Then
+          Begin
+            FDCLLogOn.ReconnectDB;
           End;
 
           If PosEx('GotoKey=', ScrStr)=1 Then
@@ -6323,14 +6357,14 @@ begin
                         If Assigned(FDCLForm.Tables[-1].TableParts[v3]) then
                         Begin
                           If not(FDCLForm.Tables[-1].TableParts[v3].Query.State
-                            in [dsEdit, dsInsert]) Then
+                            in dsEditModes) Then
                             FDCLForm.Tables[-1].TableParts[v3].Query.Edit;
                           FDCLForm.Tables[-1].TableParts[v3].Query.FieldByName(tmp1).AsString:=tmp2;
                         End;
                     End
                     Else
                     Begin
-                      If not(FDCLForm.CurrentQuery.State in [dsInsert, dsEdit]) then
+                      If not(FDCLForm.CurrentQuery.State in dsEditModes) then
                         FDCLForm.CurrentQuery.Edit;
                       FDCLForm.CurrentQuery.FieldByName(tmp1).AsString:=tmp2;
                     End;
@@ -6341,12 +6375,12 @@ begin
                   If GetRaightsByContext(InContext)>ulReadOnly Then
                     If Trim(FindParam('TablePartNum=', ScrStr))<>'' Then
                     Begin
-                      If FDCLForm.Tables[-1].TableParts[v1].Query.State in [dsEdit, dsInsert] Then
+                      If FDCLForm.Tables[-1].TableParts[v1].Query.State in dsEditModes Then
                         FDCLForm.Tables[-1].TableParts[v1].Query.Post;
                     End
                     Else
                     Begin
-                      If FDCLForm.CurrentQuery.State in [dsEdit, dsInsert] Then
+                      If FDCLForm.CurrentQuery.State in dsEditModes Then
                         FDCLForm.CurrentQuery.Post;
                     End;
                 End;
@@ -6354,7 +6388,7 @@ begin
                 If FindParam('Commit=', ScrStr)='1' Then
                 Begin
                   If GetRaightsByContext(InContext)>ulWrite Then
-                    If FDCLForm.CurrentQuery.State in [dsEdit, dsInsert] Then
+                    If FDCLForm.CurrentQuery.State in dsEditModes Then
                       FDCLForm.CurrentQuery.Post;
 {$IFDEF ADO}
                   FDCLForm.CurrentQuery.Connection.CommitTrans;
@@ -6475,20 +6509,20 @@ begin
           If PosEx('Post;', ScrStr)=1 Then
           Begin
             If GetRaightsByContext(InContext)>ulReadOnly then
-              If FDCLForm.CurrentQuery.State in [dsEdit, dsInsert] Then
+              If FDCLForm.CurrentQuery.State in dsEditModes Then
                 FDCLForm.CurrentQuery.Post;
           End;
 
           If PosEx('PostClose;', ScrStr)=1 Then
           Begin
-            If FDCLForm.CurrentQuery.State in [dsEdit, dsInsert] Then
+            If FDCLForm.CurrentQuery.State in dsEditModes Then
               FDCLForm.CurrentQuery.Post;
             FreeAndNil(FDCLForm);
           End;
 
           If PosEx('CancelClose;', ScrStr)=1 Then
           Begin
-            If FDCLForm.CurrentQuery.State in [dsEdit, dsInsert] Then
+            If FDCLForm.CurrentQuery.State in dsEditModes Then
               FDCLForm.CurrentQuery.Cancel;
             if Assigned(FDCLForm) then
               FreeAndNil(FDCLForm);
@@ -6502,7 +6536,7 @@ begin
 
           If PosEx('Cancel;', ScrStr)=1 Then
           Begin
-            If FDCLForm.CurrentQuery.State in [dsEdit, dsInsert] Then
+            If FDCLForm.CurrentQuery.State in dsEditModes Then
               FDCLForm.CurrentQuery.Cancel;
           End;
 
@@ -6582,7 +6616,7 @@ begin
               FDCLForm:=Popf;
               If FieldExists(RetVal.ModifyField, FDCLForm.CurrentQuery) then
               Begin
-                If not (FDCLForm.CurrentQuery.State in [dsEdit, dsInsert]) then
+                If not (FDCLForm.CurrentQuery.State in dsEditModes) then
                   FDCLForm.CurrentQuery.Edit;
                 FDCLForm.CurrentQuery.FieldByName(RetVal.ModifyField).AsString:=RetVal.Key;
                 If RetVal.DataField<>'' then
@@ -8227,6 +8261,20 @@ procedure TDCLLogOn.Disconnect;
 begin
   LoggingUser(False);
   FDBLogOn.Connected:=False;
+end;
+
+procedure TDCLLogOn.ReconnectDB;
+var
+  i:Integer;
+begin
+  For i:=1 to FormsCount do
+    FForms[i-1].CloseDatasets;
+
+  FDBLogOn.Connected:=False;
+  FDBLogOn.Connected:=True;
+
+  For i:=1 to FormsCount do
+    FForms[i-1].ResumeDatasets;
 end;
 
 procedure TDCLLogOn.ExecShellCommand(ShellCommandText: String);
@@ -10777,7 +10825,7 @@ begin
       End;
     If TempStr<>'' Then
     Begin
-      If (not(FQuery.State in [dsInsert, dsEdit]))and FQuery.Active and(not NoDataField) then
+      If (not(FQuery.State in dsEditModes))and FQuery.Active and(not NoDataField) then
         Query.Edit;
       Lookups[l].Lookup.KeyValue:=TempStr;
       FData.DataSet.FieldByName(Field.FieldName).AsInteger:=Lookups[l].Lookup.KeyValue;
@@ -11377,7 +11425,11 @@ end;
 procedure TDCLGrid.Close;
 begin
   If FQuery.Active then
+  Begin
+    If FQuery.State in dsEditModes then FQuery.Post;
     FLocalBookmark:=FQuery.GetBookmark;
+    FQuery.Close;
+  End;
 end;
 
 procedure TDCLGrid.ColumnsManege(Sender: TObject);
@@ -11724,10 +11776,10 @@ Begin
   Begin
     If FQuery.FieldByName(DropBoxes[v1].FieldName).AsInteger<>v2 Then
     Begin
-      If Not(Query.State In [dsInsert, dsEdit]) Then
+      If Not(Query.State In dsEditModes) Then
         FQuery.Edit;
 
-      If Query.State In [dsInsert, dsEdit] Then
+      If Query.State In dsEditModes Then
         FQuery.FieldByName(DropBoxes[v1].FieldName).AsInteger:=v2;
     End;
   End;
@@ -12010,14 +12062,15 @@ var
 begin
   If Assigned(FQuery) then
   Begin
+    BaseChanged:=False;
     If BaseChanged Then
       If FDCLForm.ExitNoSave=False Then
         If FQuery.Active Then
+        If FQuery.State in dsEditModes then
           If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msSave)+' '+GetDCLMessageString(msEditings)+'?'))=1 Then
           Begin
             Try
               FQuery.Post;
-              BaseChanged:=False;
             Except
               //
             End;
@@ -12025,15 +12078,11 @@ begin
           Else
           Begin
             Try
-              BaseChanged:=False;
               FQuery.Cancel;
             Except
               //
             End;
           End;
-
-    {Q:=FQuery;
-    FreeAndNil(Q);}
   End;
 end;
 
@@ -12811,8 +12860,12 @@ procedure TDCLGrid.ReFreshQuery;
 Var
   tpc: Byte;
 begin
+  SaveDB;
+  If FQuery.State in dsEditModes then
+    FQuery.Post;
+  If FQuery.Active Then
+    FQuery.SaveDB;
   FQuery.DisableControls;
-
   If FQuery.Active Then
   Begin
     For tpc:=1 To length(FTableParts) Do
@@ -12846,7 +12899,7 @@ Begin
   Begin
     If Query.FieldByName(RollBars[v1].Field).AsString<>IntToStr((Sender As TTrackBar).Position) Then
     Begin
-      If Not(Query.State In [dsInsert, dsEdit]) Then
+      If Not(Query.State In dsEditModes) Then
         Query.Edit;
 
       Query.FieldByName(RollBars[v1].Field).AsString:=IntToStr((Sender As TTrackBar).Position);
@@ -13403,7 +13456,7 @@ begin
   CommandButton[FButtonsCount-1].Default:=ButtonParams.Default;
   CommandButton[FButtonsCount-1].Cancel:=ButtonParams.Cancel;
 
-  CommandButton[FButtonsCount-1].Glyph.Transparent:=true;
+  CommandButton[FButtonsCount-1].Glyph.Transparent:=True;
   If ButtonParams.Pict<>'' then
   Begin
     BM:=DrawBMPButton(ButtonParams.Pict);
@@ -13420,8 +13473,12 @@ begin
       Else
       Begin
         BM:=TBitmap.Create;
+        MS.Position:=0;
         BM.LoadFromStream(MS);
+        CommandButton[FButtonsCount-1].Glyph.TransparentMode:=tmFixed;
+        CommandButton[FButtonsCount-1].Glyph.TransparentColor:=BM.Canvas.Pixels[0, 0];
         CommandButton[FButtonsCount-1].Glyph.Assign(BM);
+        CommandButton[FButtonsCount-1].Glyph.Transparent:=True;
         MS.Free;
       End;
     End;
@@ -16012,7 +16069,7 @@ begin
       DCLQuery.SQL.Text:=tmpSQL1;
       DCLQuery.Open;
     End;
-    If not (DCLQuery.State in [dsInsert, dsEdit]) then
+    If not (DCLQuery.State in dsEditModes) then
       DCLQuery.Edit;
     Stream.Position:=0;
     TBlobField(DCLQuery.FieldByName(FDataField)).LoadFromStream(Stream);

@@ -710,10 +710,15 @@ Begin
   If CompareString(BMPType, 'undo') Then
     MS.Write(Bitmap_Undo, Length(Bitmap_Undo));
 
-  If CompareString(BMPType, 'Cancel')or CompareString(BMPType, 'CancelClose') Then
+  If CompareString(BMPType, 'edit') Then
+    MS.Write(Bitmap_Pen, Length(Bitmap_Pen));
+  If CompareString(BMPType, 'new') or CompareString(BMPType, 'append') Then
+    MS.Write(Bitmap_New, Length(Bitmap_New));
+
+  If CompareString(BMPType, 'Cancel') or CompareString(BMPType, 'CancelClose') Then
     MS.Write(Bitmap_Cancel, Length(Bitmap_Cancel));
 
-  If CompareString(BMPType, 'Post')or CompareString(BMPType, 'PostClose') Then
+  If CompareString(BMPType, 'Post') or CompareString(BMPType, 'PostClose') Then
     MS.Write(Bitmap_Post, Length(Bitmap_Post));
 
   If CompareString(BMPType, 'logo') Then
@@ -742,6 +747,7 @@ Begin
     Result.LoadFromStream(MS);
     Result.TransparentColor:=Result.Canvas.Pixels[0, 0]; // clWhite;
     Result.TransparentMode:=tmFixed; // tmAuto;
+    Result.Transparent:=True;
   End
   Else
     Result:=TBitmap.Create;
