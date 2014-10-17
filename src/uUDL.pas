@@ -102,6 +102,8 @@ Type
     LookupPanel: TDialogPanel;
   end;
 
+  { TDCLGrid }
+
   TDCLGrid=class(TObject)
   private
     FromForm:String;
@@ -306,6 +308,7 @@ Type
     procedure AddEdit(var Field: RField);
     procedure AddFieldBox(Var Field: RField; FieldBoxType: TFieldBoxType; NamePrefix: String);
     procedure AddDateBox(Var Field: RField);
+    procedure AddSimplyCheckBox(Var Field: RField);
     procedure AddCheckBox(Var Field: RField);
     procedure AddDBCheckBox(Var Field: RField);
     procedure AddLookUp(Var Field: RField);
@@ -4553,10 +4556,20 @@ begin
               FGrids[GridIndex].AddDateBox(FField);
             End;
 
-            If PosEx('CheckBox=', FieldCaptScrStr)<>0 Then
+            If PosEx('DBCheckBox=', FieldCaptScrStr)<>0 Then
             Begin
-              FGrids[GridIndex].AddCheckBox(FField);
-            End;
+              FGrids[GridIndex].AddDBCheckBox(FField);
+            End
+            Else
+              If PosEx('SimplyCheckBox=', FieldCaptScrStr)<>0 Then
+              Begin
+                FGrids[GridIndex].AddSimplyCheckBox(FField);
+              End
+              Else
+                If PosEx('CheckBox=', FieldCaptScrStr)<>0 Then
+                Begin
+                  FGrids[GridIndex].AddCheckBox(FField);
+                End;
 
             If PosEx('LookUp=', FieldCaptScrStr)<>0 Then
             Begin
@@ -4622,7 +4635,7 @@ begin
               End;
               ftBoolean:
               Begin
-                FGrids[GridIndex].AddCheckBox(FField);
+                FGrids[GridIndex].AddDBCheckBox(FField);
               End
             Else
             FGrids[GridIndex].AddEdit(FField);
@@ -9959,7 +9972,7 @@ begin
   ToolPanelElementLeft:=ToolPanelElementLeft+CalendarLeft+Calendars[l].Control.Width;
 end;
 
-procedure TDCLGrid.AddCheckBox(var Field: RField);
+procedure TDCLGrid.AddSimplyCheckBox(var Field: RField);
 Var
   l: Integer;
 begin
@@ -10002,12 +10015,20 @@ begin
   Field.Height:=CheckBoxes[l].CheckBox.Height;
 
   Case CheckBoxes[l].CheckBox.Checked Of
-  true:
+  True:
   FDCLLogOn.Variables.Variables[Field.Variable]:='1';
   False:
   FDCLLogOn.Variables.Variables[Field.Variable]:='0';
   End;
   IncXYPos(EditTopStep, EditWidth, Field);
+end;
+
+procedure TDCLGrid.AddCheckBox(var Field: RField);
+begin
+  If FQuery.Active then
+    AddDBCheckBox(Field)
+  Else
+    AddSimplyCheckBox(Field);
 end;
 
 procedure TDCLGrid.AddColumn(Field: RField);
@@ -10240,6 +10261,7 @@ procedure TDCLGrid.AddDBCheckBox(var Field: RField);
 var
   l: Word;
 begin
+  Field.CurrentEdit:=True;
   l:=length(DBCheckBoxes);
   SetLength(DBCheckBoxes, l+1);
   DBCheckBoxes[l]:=TDBCheckBox.Create(FieldPanel);
@@ -11848,7 +11870,7 @@ Begin
   FDCLForm.LocalVariables.Variables[Edits[EdNamb].EditToVariables]:=EdText;
 end;
 
-procedure TDCLGrid.EditOnFloatData(Sender: TObject; Var Key: Char);
+procedure TDCLGrid.EditOnFloatData(Sender: TObject; var Key: Char);
 begin
   If Key=FloatDelimiterFrom Then
     Key:=FloatDelimiterTo;
@@ -15701,6 +15723,7 @@ begin
   SetLength(Signature, 10);
   S.Read(Signature[0], 10);
   S.Position:=0;
+  Marker:=0;
   S.Read(Marker, PAGSignatureSize);
   S.Position:=0;
 
