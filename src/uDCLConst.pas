@@ -34,7 +34,7 @@ const
 {$IFDEF SQLdbIB}
   DBEngineType='SQLdbIB';
 {$ENDIF}
-  Version='10.0.0.159';
+  Version='10.0.0.163';
 
   CompotableVersion='9.1.125.303';
 
@@ -235,6 +235,7 @@ const
 {$IFDEF FPC}
   DefaultInterfaceEncoding=EncodingUTF8;
 {$ENDIF}
+  PAGSignatureSize=3;
   PAGSignature=$474150;
   ParamPrefix=':';
   FieldObjectPrefix='$';
@@ -342,6 +343,7 @@ Type
   TFindType=(ftByIndex, ftByName, ftSQL);
   TNewQueryMode=(nqmNew, nqmFromGrid);
   TChooseMode=(chmNone, chmChoose, chmChooseAndClose);
+  TMessageType=(mbtError=0, mbtWarning=1, mbtInformation=9, mbtConfirmation=10);
 
 const
   ReleaseStatus=rsAlpha;

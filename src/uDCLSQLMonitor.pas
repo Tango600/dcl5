@@ -32,6 +32,7 @@ type
     procedure Clear;
     procedure AddSQLText(SQL: string);
     procedure AddTrace(DS: TDCLDialogQuery);
+    procedure DelTrace(DS: TDCLDialogQuery);
 
     property TrraceStatus: Boolean read FTrraceStatus write SetTrraceStatus;
   end;
@@ -59,6 +60,7 @@ begin
           FSQLContaner.SaveToFile(FFileName);
         If Assigned(DSEvents[i-1].EventBeforeOpen) then
           DSEvents[i-1].EventBeforeOpen(Data);
+        Break;
       End;
   End;
 end;
@@ -79,6 +81,22 @@ begin
   Clear;
   FFileName:=FileName;
   FTrraceStatus:=False;
+end;
+
+procedure TDCLSQLMon.DelTrace(DS: TDCLDialogQuery);
+var
+  i: Word;
+begin
+  For i:=1 to Length(DSEvents) do
+  Begin
+    If Assigned(DSEvents[i-1].DataSet) then
+      If DSEvents[i-1].DataSet=DS then
+      Begin
+        DSEvents[i-1].EventBeforeOpen:=nil;
+        DSEvents[i-1].DataSet:=nil;
+        Break;
+      End;
+  End;
 end;
 
 procedure TDCLSQLMon.Resume;

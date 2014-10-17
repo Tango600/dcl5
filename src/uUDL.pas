@@ -104,6 +104,7 @@ Type
 
   TDCLGrid=class(TObject)
   private
+    FromForm:String;
     FGridPanel: TDCLMainPanel;
     FDCLLogOn: TDCLLogOn;
     FForm: TDBForm;
@@ -136,7 +137,7 @@ Type
     SummString: String;
     FTableParts: array of TDCLGrid;
     PartTabIndex, MaxStepFields: Integer;
-    PartQueryGlob: TDCLQuery;
+    //PartQueryGlob: TDCLQuery;
     NotAllowedOperations: TOperationsTypes;
     RowColor, RowTextColor: TColor;
     SummGrid: TToolGrid;
@@ -411,7 +412,7 @@ Type
     FTabs: TTabSheet;
     CurrentGridIndex, CurrentTabIndex, GridIndex: Integer;
     DataGlob: TDataSource;
-    QueryGlob: TDCLQuery;
+    QueryGlobIndex: Integer;
     FItnQuery: TDCLQuery;
     DBStatus: TStatusBar;
     GridPanel: TDialogPanel;
@@ -427,7 +428,6 @@ Type
       Data: TDataSource): Integer;
     procedure AddMainPage(Query: TDCLDialogQuery; Data: TDataSource);
     procedure ChangeTabPage(Sender: TObject);
-    function GridsCount: Word;
     procedure AddEvents(var Events: TEventsArray; EventsSet: String);
 
     function GetMainQuery: TDCLQuery;
@@ -640,7 +640,7 @@ Type
     function CreateForm(FormName: String; ParentForm: TDCLForm; Query: TDCLDialogQuery;
       Data: TDataSource; ModalMode: Boolean; ReturnValueMode:TChooseMode;
         ReturnValueParams:TReturnValueParams=nil): TDCLForm;
-    Function CloseForm(Form: TDCLForm):TReturnFormValue;
+    Function CloseForm(var Form: TDCLForm):TReturnFormValue;
     procedure CloseFormNum(FormNum: Integer);
     procedure SetDBName(Query: TDCLDialogQuery);
 
@@ -2477,7 +2477,7 @@ var
   Pc: Integer;
   ButtonParams: RButtonParams;
 begin
-  FNewPage:=true;
+  FNewPage:=True;
 
   If Not Assigned(FPages) Then
   Begin
@@ -2509,8 +2509,6 @@ begin
   FTabs.Name:='Page_'+IntToStr(Pc+1);
   FTabs.PageControl:=FPages;
 
-  // FForm.ClientHeight:=600;
-  // Pages.ClientHeight:=400;
   ParentPanel:=FTabs.PageControl.Pages[FPages.PageCount-1];
 
   FPages.ActivePage:=FPages.Pages[FPages.PageCount-1];
@@ -2519,7 +2517,7 @@ begin
   GridIndex:=AddGrid(ParentPanel, dctMainGrid, Query, Data);
   FTabs.PageControl.Pages[FPages.PageCount-1].Tag:=GridIndex;
   CurrentGridIndex:=GridIndex;
-  QueryGlob:=FGrids[GridIndex].Query;
+  QueryGlobIndex:=GridIndex;
   DataGlob:=FGrids[GridIndex].DataSource;
   FGrids[GridIndex].TabType:=ptMainPage;
   GridPanel:=FGrids[GridIndex].FGridPanel;
@@ -2544,7 +2542,7 @@ begin
     IncButtonPanelHeight:=ButtonPanelHeight;
     FGrids[GridIndex].ButtonPanel:=TDialogPanel.Create(FGrids[GridIndex].FGridPanel);
     FGrids[GridIndex].ButtonPanel.Parent:=FGrids[GridIndex].FGridPanel;
-    FGrids[GridIndex].ButtonPanel.Top:=FForm.ClientHeight-2;
+    FGrids[GridIndex].ButtonPanel.Top:=30;//FForm.ClientHeight-2;
     FGrids[GridIndex].ButtonPanel.Height:=ButtonPanelHeight;
     FGrids[GridIndex].ButtonPanel.Align:=alBottom;
 
@@ -2614,7 +2612,7 @@ begin
   Ord(ptMainPage)+1:
   Begin
     CurrentGridIndex:=(Sender as TPageControl).ActivePage.Tag;
-    QueryGlob:=FGrids[CurrentGridIndex].FQuery;
+    QueryGlobIndex:=CurrentGridIndex;
     DataGlob:=FGrids[CurrentGridIndex].DataSource;
   End;
   End;
@@ -2630,6 +2628,10 @@ begin
 
   If Assigned(DBStatus) then
     FreeAndNil(DBStatus);
+
+  If ExitCode=0 then
+    For i:=1 to length(EventsClose) do
+      ExecCommand(EventsClose[i-1]);
 
   For i:=1 to Length(FGrids) do
   Begin
@@ -2650,16 +2652,12 @@ begin
       End;
   End;
 
-  If ExitCode=0 then
-    For i:=1 to length(EventsClose) do
-      ExecCommand(EventsClose[i-1]);
-
   For i:=1 to FDCLLogOn.FormsCount do
   Begin
     If Assigned(FDCLLogOn.Forms[i-1]) then
       If FDCLLogOn.ActiveDCLForms[i-1] then
         If Self=FDCLLogOn.Forms[i-1].FParentForm then
-          FDCLLogOn.Forms[i-1].Free;
+          FreeAndNil(FDCLLogOn.FForms[i-1]);
   End;
 
   FParentForm:=nil;
@@ -3027,7 +3025,7 @@ var
     End;
     FGrids[GridIndex].SetSQLToStore(SQL, qtMain, ulUndefined);
 
-    QueryGlob:=FGrids[GridIndex].Query;
+    QueryGlobIndex:=GridIndex;
     TranslateVal(SQL, False);
     FGrids[GridIndex].SQL:=SQL;
     FGrids[GridIndex].Open;
@@ -3126,7 +3124,7 @@ begin
   MainPanel.Top:=50;
   MainPanel.Align:=alClient;
 
-  QCreated:=true;
+  QCreated:=True;
   AddMainPage(Query, Data);
 
   If length(FOPL.Text)>3 then
@@ -3861,8 +3859,6 @@ begin
 {$ELSE}
           FPages.ShowTabs:=True;
 {$ENDIF}
-          // FPages.ActivePage:=FPages.Pages[0];  //dep
-          // FPages.ActivePageIndex:=0;           //dep
         End;
         FNewPage:=False;
       End;
@@ -4645,7 +4641,8 @@ begin
 
     If ExitCode=0 then
     Begin
-      QueryGlob:=FGrids[0].FQuery;
+      FItnQuery:=nil;
+      QueryGlobIndex:=0;
       DataGlob:=FGrids[0].DataSource;
 
       For ScrStrNum:=1 to length(FGrids) do
@@ -4744,7 +4741,10 @@ end;
 
 function TDCLForm.GetMainQuery: TDCLQuery;
 begin
-  Result:=QueryGlob;
+  Result:=nil;
+  If (Length(FGrids)>QueryGlobIndex) and (QueryGlobIndex>=0) then
+    If Assigned(FGrids[QueryGlobIndex]) then
+      Result:=FGrids[QueryGlobIndex].FQuery;
 end;
 
 function TDCLForm.GetParentForm: TDCLForm;
@@ -4797,11 +4797,6 @@ begin
   Result:=length(FGrids);
 end;
 
-function TDCLForm.GridsCount: Word;
-begin
-  Result:=length(FGrids);
-end;
-
 procedure TDCLForm.RefreshForm;
 var
   i: Integer;
@@ -4844,7 +4839,7 @@ end;
 
 procedure TDCLForm.RePlaseVariables(var VariablesSet: String);
 begin
-  LocalVariables.RePlaseVariables(VariablesSet, QueryGlob);
+  LocalVariables.RePlaseVariables(VariablesSet, GetMainQuery);
   FDCLLogOn.RePlaseVariables(VariablesSet);
 end;
 
@@ -5406,6 +5401,13 @@ begin
     Executed:=true;
   End;
 
+  If CompareString(Command, 'Cancel') Then
+  Begin
+    If FDCLForm.CurrentQuery.State in dsEditModes Then
+      FDCLForm.CurrentQuery.Cancel;
+    Executed:=true;
+  End;
+
   If CompareString(Command, 'Delete') Then
   Begin
     If GetRaightsByContext(InContext)>ulReadOnly Then
@@ -5640,7 +5642,7 @@ begin
                 DCLMainLogOn.Forms[v2].Free;
               If CompareString(tmpStr2, 'refresh') Then
               Begin
-                For v3:=1 to FDCLLogOn.Forms[v2].GridsCount do
+                For v3:=1 to FDCLLogOn.Forms[v2].GetTablesCount do
                   FDCLLogOn.Forms[v2].Tables[v3-1].ReFreshQuery;
               End;
             End;
@@ -7747,7 +7749,7 @@ begin
     RoleOK:=lsLogonOK;
 end;
 
-function TDCLLogOn.CloseForm(Form: TDCLForm):TReturnFormValue;
+function TDCLLogOn.CloseForm(Var Form: TDCLForm):TReturnFormValue;
 var
   v1: Integer;
 begin
@@ -8109,10 +8111,13 @@ begin
         Result:=0;
         ConnectErrorCode:=0;
       Except
-        DebugProc('  ... Fail');
-        ConnectErrorCode:=255;
-        ShowErrorMessage(0, 'Не удалось подсоединиться к БД. 0000');
-        Result:=255;
+        On E: Exception do
+        Begin
+          DebugProc('  ... Fail');
+          ConnectErrorCode:=255;
+          ShowErrorMessage(0, SourceToInterface(GetDCLMessageString(msConnectDBError)+' 0000 / '+E.Message));
+          Result:=255;
+        End;
       End;
     End;
 {$ENDIF}
@@ -8368,10 +8373,9 @@ end;
 
 function TDCLLogOn.GetForm(Index: Integer): TDCLForm;
 begin
+  Result:=nil;
   If length(FForms)>Index then
-    Result:=FForms[Index]
-  Else
-    Result:=nil;
+    Result:=FForms[Index];
 end;
 
 function TDCLLogOn.GetFormsCount: Integer;
@@ -8402,11 +8406,17 @@ begin
 {$IFDEF ADO}
   FDBLogOn.GetTableNames(List);
 {$ENDIF}
+{$IFDEF BDE}
+  FDBLogOn.GetTableNames(List);
+{$ENDIF}
 {$IFDEF ZEOS}
   FDBLogOn.GetTableNames('', List);
 {$ENDIF}
+{$IFDEF SQLDB}
+  FDBLogOn.
+{$ENDIF}
 {$IFDEF IB}
-
+  FDBLogOn.GetTableNames(List, False);
 {$ENDIF}
 end;
 
@@ -10945,7 +10955,7 @@ begin
 
   PartTabIndex:=AddTablePart(FTablePartsTabs.PageControl.Pages[FTablePartsPages.PageCount-1], Data);
   FTablePartsTabs.PageControl.Pages[FTablePartsPages.PageCount-1].Tag:=PartTabIndex;
-  PartQueryGlob:=FTableParts[PartTabIndex].Query;
+//  PartQueryGlob:=FTableParts[PartTabIndex].Query;
   Result:=PartTabIndex;
 end;
 
@@ -11219,44 +11229,47 @@ var
   tmpSQL: string;
   v1, v2: Integer;
 begin
-  Screen.Cursor:=crDefault;
-  ExecEvents(EventsAfterOpen);
-
-  If Assigned(SumQuery) Then
+  If Assigned(FDCLLogOn) then
   Begin
-    tmpSQL:=GetSummQuery;
-    TranslateVal(tmpSQL);
-    SumQuery.Close;
-    SumQuery.SQL.Text:=tmpSQL;
-    Try
-      SumQuery.Open;
-    Except
-      ShowErrorMessage(-1118, 'SQL='+tmpSQL);
+    Screen.Cursor:=crDefault;
+    ExecEvents(EventsAfterOpen);
+
+    If Assigned(SumQuery) Then
+    Begin
+      tmpSQL:=GetSummQuery;
+      TranslateVal(tmpSQL);
+      SumQuery.Close;
+      SumQuery.SQL.Text:=tmpSQL;
+      Try
+        SumQuery.Open;
+      Except
+        ShowErrorMessage(-1118, 'SQL='+tmpSQL);
+      End;
     End;
-  End;
 
-  For v1:=1 to FDCLLogOn.FormsCount do
-  Begin
-    If Assigned(FDCLLogOn.Forms[v1-1]) then
-      If FDCLLogOn.ActiveDCLForms[v1-1] then
-        If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) then
-        Begin
-          If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm then
-            For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
-              FDCLLogOn.Forms[v1-1].Tables[v2-1].ScrollDB(Data);
-        End;
-  End;
+    For v1:=1 to FDCLLogOn.FormsCount do
+    Begin
+      If Assigned(FDCLLogOn.Forms[v1-1]) then
+        If FDCLLogOn.ActiveDCLForms[v1-1] then
+          If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) then
+          Begin
+            If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm then
+              For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
+                FDCLLogOn.Forms[v1-1].Tables[v2-1].ScrollDB(Data);
+          End;
+    End;
 
-  For v1:=1 to FDCLLogOn.FormsCount do
-  Begin
-    If Assigned(FDCLLogOn.Forms[v1-1]) then
-      If FDCLLogOn.ActiveDCLForms[v1-1] then
-        If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) then
-        Begin
-          If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm then
-            For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
-              FDCLLogOn.Forms[v1-1].Tables[v2-1].AfterOpen(Data);
-        End;
+    For v1:=1 to FDCLLogOn.FormsCount do
+    Begin
+      If Assigned(FDCLLogOn.Forms[v1-1]) then
+        If FDCLLogOn.ActiveDCLForms[v1-1] then
+          If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) then
+          Begin
+            If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm then
+              For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
+                FDCLLogOn.Forms[v1-1].Tables[v2-1].AfterOpen(Data);
+          End;
+    End;
   End;
 end;
 
@@ -11391,7 +11404,7 @@ End;
 procedure TDCLGrid.ChangeTabPage(Sender: TObject);
 begin
   CurrentTabIndex:=(Sender as TPageControl).ActivePage.Tag;
-  PartQueryGlob:=Query;
+//  PartQueryGlob:=Query;
   FDCLForm.CurrentTabIndex:=CurrentTabIndex;
 end;
 
@@ -11556,6 +11569,7 @@ constructor TDCLGrid.Create(var Form: TDCLForm; Parent: TWinControl; SurfType: T
 var
   v1: Integer;
 begin
+  FromForm:=Form.FName;
   FOrientation:=oVertical;
   MaxStepFields:=0;
   FShowed:=False;
@@ -12057,17 +12071,21 @@ Begin
 End;
 
 destructor TDCLGrid.Destroy;
-var
-  Q:TDCLQuery;
 begin
+  If Assigned(FLocalBookmark) then
+    try
+      FQuery.FreeBookmark(FLocalBookmark);
+    except
+      //
+    end;
+
   If Assigned(FQuery) then
   Begin
-    BaseChanged:=False;
     If BaseChanged Then
       If FDCLForm.ExitNoSave=False Then
         If FQuery.Active Then
         If FQuery.State in dsEditModes then
-          If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msSave)+' '+GetDCLMessageString(msEditings)+'?'))=1 Then
+          If ShowErrorMessage(Ord(mbtConfirmation), SourceToInterface(GetDCLMessageString(msSave)+' '+GetDCLMessageString(msEditings)+'?'))=1 Then
           Begin
             Try
               FQuery.Post;
@@ -12084,6 +12102,13 @@ begin
             End;
           End;
   End;
+  BaseChanged:=False;
+  FDCLLogOn.SQLMon.DelTrace(FQueryGlob);
+{  If Assigned(FQueryGlob) then
+  If not Assigned(FQueryGlob.DataSource) then
+    FreeAndNil(FQueryGlob);}
+  FromForm:='_Closed_'+FromForm;
+  FQueryGlob:=nil;
 end;
 
 function TDCLGrid.GetColumns: TDBGridColumns;
@@ -12369,13 +12394,12 @@ End;
 
 function TDCLGrid.GetTablePart(Index: Integer): TDCLGrid;
 begin
+  Result:=nil;
   If Index<>-1 then
   begin
     If length(FTableParts)>Index then
       Result:=FTableParts[Index];
-  end
-  else
-    Result:=nil;
+  end;
 end;
 
 procedure TDCLGrid.GridDblClick(Sender: TObject);
@@ -12920,6 +12944,13 @@ Var
   v1, v2: Word;
   TmpStr: string;
 Begin
+  If (FromForm='') or (Pos('_Closed_', FromForm)=1) then
+  begin
+    FDCLForm:=nil;
+    Exit;
+  end;
+  If not Assigned(FQueryGlob) then
+    Exit;
   If Not FQuery.Active Then
     Exit;
   For v1:=1 to length(EventsScroll) Do
@@ -13001,8 +13032,9 @@ Begin
         If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) then
         Begin
           If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm then
-            For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
-              FDCLLogOn.Forms[v1-1].Tables[v2-1].ScrollDB(FQuery);
+            If FDCLLogOn.Forms[v1-1].Tables[v2-1]<>Self then
+              For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
+                FDCLLogOn.Forms[v1-1].Tables[v2-1].ScrollDB(FQuery);
         End;
   End;
 End;
@@ -15663,10 +15695,31 @@ procedure TFieldGroup.OnDBImageRead(Sender: TObject; S: TStream;
   var GraphExt: string);
 Var
   Signature:Array of Byte;
+  Source, Dest:TMemoryStream;
+  Marker:Cardinal;
 begin
   SetLength(Signature, 10);
   S.Read(Signature[0], 10);
   S.Position:=0;
+  S.Read(Marker, PAGSignatureSize);
+  S.Position:=0;
+
+  If Marker=PAGSignature then //  (Signature[0]=$50) and (Signature[1]=$41) and (Signature[2]=$47) then
+  Begin
+    S.Position:=PAGSignatureSize;
+    Source:=TMemoryStream.Create;
+    Source.CopyFrom(S, S.Size-3);
+    Dest:=TMemoryStream.Create;
+    DecompressProc(Source, Dest);
+    Dest.Position:=0;
+    S.Position:=0;
+    S.CopyFrom(Dest, Dest.Size);
+    S.Position:=0;
+    S.Read(Signature[0], 10);
+    S.Position:=0;
+    Source.Free;
+    Dest.Free;
+  End;
 
   If (Signature[0]=66) and (Signature[1]=77) then
   Begin
@@ -15936,7 +15989,7 @@ begin
       Begin
         Marker:=0;
         MS.Position:=0;
-        MS.Read(Marker, 3);
+        MS.Read(Marker, PAGSignatureSize);
 
         If Marker=PAGSignature Then // "PAG" Signature
         Begin
@@ -16004,7 +16057,7 @@ begin
     Begin
       BS:=TMemoryStream.Create;
       Signature:=PAGSignature;
-      BS.Write(Signature, 3);
+      BS.Write(Signature, PAGSignatureSize);
       Stream.Position:=0;
       CompressProc(Stream, BS);
       BS.Position:=0;

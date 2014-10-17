@@ -26,6 +26,8 @@ Function CompareString(S1, S2: String): Boolean;
 Function ShowErrorMessage(ErrorCode: Integer; AddText: String=''): Integer;
 Function StrToIntEx(St: String): LongInt;
 Function HexToInt(HexStr: String): Int64;
+Function Pow(const Base:Cardinal; PowNum: Word): Cardinal; overload;
+Function Pow(Const Base: Real; PowNum: Word): Real; overload;
 Procedure DeleteNonPrintSimb(Var S: String);
 Function CountSimb(S: String; C: Char): byte;
 Function TimeStampToStr(NowDate: TDateTime): String;
@@ -759,6 +761,30 @@ End;
 
 // ========================Math=================================
 
+Function Pow(const Base:Cardinal; PowNum: Word): Cardinal; overload;
+var
+  i: Word;
+  s: Cardinal;
+Begin
+  s:=Base;
+  If PowNum>1 then
+  For i:=1 to PowNum-1 do
+    s:=s*Base;
+  Result:=s;
+End;
+
+Function Pow(Const Base: Real; PowNum: Word): Real; overload;
+Var
+  i: Word;
+  S: Real;
+Begin
+  S:=Base;
+  If PowNum>1 then
+  For i:=1 To PowNum-1 Do
+    S:=S*Base;
+  Result:=S;
+End;
+
 Function StrToIntEx(St: String): LongInt;
 Var
   iI, L: Integer;
@@ -858,19 +884,6 @@ End;
 Function FindOperands(Const Formula: String): Boolean;
 Begin
   Result:=FindOperate(Formula).SignPos<>0;
-End;
-
-Function Pow(Const Num: Real; PowNum: Word): Real;
-Var
-  i: byte;
-  S, Base: Real;
-Begin
-  Base:=Num;
-  S:=Num;
-  For i:=1 To PowNum-1 Do
-    S:=S*Base;
-
-  Result:=S;
 End;
 
 Function FormulaEval(Formula: TExpr): String;

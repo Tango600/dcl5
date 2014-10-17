@@ -35,7 +35,7 @@ type
     {$ELSE}
     FUpdateSQL: TDCLDialogQuery;
     {$ENDIF}
-    FUpdSQL:String;
+    FRefreshSQL:String;
 {$ENDIF}
     FNoRefreshSQL:Boolean;
     FMainTable, FKeyField: string;
@@ -471,9 +471,9 @@ Begin
       If UpdatesFieldsSet<>'' then
         System.Delete(UpdatesFieldsSet, Length(UpdatesFieldsSet)-4, 5);
 
-      FUpdSQL:='select * from '+TableName+' where (('+KeyFieldsSet+') or ('+UpdatesFieldsSet+'))';
+      FRefreshSQL:='select * from '+TableName+' where (('+KeyFieldsSet+') or ('+UpdatesFieldsSet+'))';
       If not FNoRefreshSQL then
-        FUpdateSQL.RefreshSQL.Text:=FUpdSQL;
+        FUpdateSQL.RefreshSQL.Text:=FRefreshSQL;
 {$ENDIF}{$ENDIF}
       // Query.FieldList.Update;
       If not Active Then
@@ -529,7 +529,7 @@ begin
     If Value then
       FUpdateSQL.RefreshSQL.Text:=''
     Else
-      FUpdateSQL.RefreshSQL.Text:=FUpdSQL;
+      FUpdateSQL.RefreshSQL.Text:=FRefreshSQL;
   End;
 {$ENDIF}
 end;
