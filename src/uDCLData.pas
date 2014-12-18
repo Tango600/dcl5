@@ -11,38 +11,38 @@ uses
   uDCLConst, uDCLTypes;
 
 type
-{$IFNDEF FPC}
+  {$IFNDEF FPC}
   DateTimePicker=TDateTimePicker;
   TNavButtons=TNavButton;
   TNavButtonsSet={$IFDEF NONEOLDCOMPONENTS}TNavButtonSet; {$ELSE}TButtonSet; {$ENDIF}
-{$ENDIF}
-{$IFDEF FPC}
-DateTimePicker={$IFDEF ZVComponents}TZVDateTimePicker; {$ELSE}TDateEdit; {$ENDIF}
-TNavButtons=TDBNavButton;
-TNavButtonsSet=TDBNavButtonSet;
-{$ENDIF}
-TDialogLabel=TLabel;
-TOrientation=(oVertical, oHorizontal);
+  {$ENDIF}
+  {$IFDEF FPC}
+  DateTimePicker={$IFDEF ZVComponents}TZVDateTimePicker; {$ELSE}TDateEdit; {$ENDIF}
+  TNavButtons=TDBNavButton;
+  TNavButtonsSet=TDBNavButtonSet;
+  {$ENDIF}
+  TDialogLabel=TLabel;
+  TOrientation=(oVertical, oHorizontal);
 
-TGPT=record
-// EnableSQLTrace,
-  OldStyle, DebugMesseges, OneCopy, ExitCnf, UseMessages, UserLogging, UserLoggingHistory, DebugOn,
-  DisableFieldsList, HashPass, ShowPicture, DialogsSettings, DisableColors,
-  DisableIniPasword: Boolean;
-  CurrentRunningScrString, CurrentRunningCmdString, Port: Integer;
-  DateSeparator, TimeSeparator: Char;
-  ServerCodePage, DateFormat, TimeFormat, Viewer, ConnectionString, MainFormCaption,
-  NewConnectionString, DBPath, ServerName, NewDBUserName, DBType, GeneratorName: String;
-  SQLDialect:Byte;
-  NoParamsTable, DisableLogOnWithoutUser, MultiRolesMode: Boolean;
-  DBUserName, DCLUserName, DCLUserPass, EnterPass, LongRoleName, GetValueSeparator, UpperString,
-  UpperStringEnd, NotifycationsTable, IdentifyField, ParentFlgField, CommandField, NumSeqField,
-  GPTTableName, GPTNameField, GPTValueField, GPTUserIDField, IniFileName, TemplatesTable,
-  StringTypeChar, DCLNameField, DCLTextField, DCLTable, ShowRoleField, ACTIVE_USERS_TABLE,
-  USER_LOGIN_HISTORY_TABLE, TemplatesNameField, TemplatesKeyField, TemplatesDataField,
-  UserAdminField, {INITable,} RolesMenuTable, TimeStampFormat, DCLLongUserName, UserID, RoleID,
-  DCLRoleName, NewDBPassword, DBPassword, LibPath: String;
-  FormPosInDB:TIniStore;
+  TGPT=record
+  // EnableSQLTrace,
+    OldStyle, DebugMesseges, OneCopy, ExitCnf, UseMessages, UserLogging, UserLoggingHistory, DebugOn,
+    DisableFieldsList, HashPass, ShowPicture, DialogsSettings, DisableColors,
+    DisableIniPasword, IBAll: Boolean;
+    CurrentRunningScrString, CurrentRunningCmdString, Port: Integer;
+    DateSeparator, TimeSeparator: Char;
+    ServerCodePage, DateFormat, TimeFormat, Viewer, ConnectionString, MainFormCaption,
+    NewConnectionString, DBPath, ServerName, NewDBUserName, DBType, GeneratorName: String;
+    SQLDialect:Byte;
+    NoParamsTable, DisableLogOnWithoutUser, MultiRolesMode: Boolean;
+    DBUserName, DCLUserName, DCLUserPass, EnterPass, LongRoleName, GetValueSeparator, UpperString,
+    UpperStringEnd, NotifycationsTable, IdentifyField, ParentFlgField, CommandField, NumSeqField,
+    GPTTableName, GPTNameField, GPTValueField, GPTUserIDField, IniFileName, TemplatesTable,
+    StringTypeChar, DCLNameField, DCLTextField, DCLTable, ShowRoleField, ACTIVE_USERS_TABLE,
+    USER_LOGIN_HISTORY_TABLE, TemplatesNameField, TemplatesKeyField, TemplatesDataField,
+    UserAdminField, {INITable,} RolesMenuTable, TimeStampFormat, DCLLongUserName, UserID, RoleID,
+    DCLRoleName, NewDBPassword, DBPassword, LibPath: String;
+    FormPosInDB:TIniStore;
 
 end;
 
@@ -61,7 +61,7 @@ RField=record
   FieldName, Caption, Hint, OPL, ComponentName, Variable, CheckValue, UnCheckValue: String;
   PasswordChar:Char;
   IsFieldWidth, IsFieldHeight, CurrentEdit, ReadOnly, NoDataField: Boolean;
-  Top, Left, Width, Height: Word;
+  Top, Left, Width, Height, StepLeft: Word;
   DataFieldType:TDataFieldTypeType;
 end;
 
@@ -192,7 +192,7 @@ TDropBox=record
 end;
 
 RKeyBookMarks=Record
-  KeyField, KeyValue, DialogName, Title: String;
+  KeyField, KeyValue, Title: String;
 End;
 
 TKeyBookmarks=record
@@ -313,6 +313,7 @@ begin
   // Field.Top:=0; Field.Left:=0;
   Field.Width:=0;
   Field.Height:=0;
+  Field.StepLeft:=0;
 end;
 
 procedure ResetChooseValue(var Val:TReturnFormValue);
@@ -344,9 +345,9 @@ end;
 
 Initialization
 
-TDataGrid:=[dctMainGrid..dctLookupGrid];
-TDataFields:=[dctFields..dctFieldsStep];
-DefaultOrientation:=oVertical;
-TBlobFields:=[ftBytes, ftVarBytes, ftBlob, ftGraphic, ftMemo, ftFmtMemo, ftTypedBinary, ftWideMemo];
+  TDataGrid:=[dctMainGrid..dctLookupGrid];
+  TDataFields:=[dctFields..dctFieldsStep];
+  DefaultOrientation:=oVertical;
+  TBlobFields:=[ftBytes, ftVarBytes, ftBlob, ftGraphic, ftMemo, ftFmtMemo, ftTypedBinary, ftWideMemo];
 
 end.

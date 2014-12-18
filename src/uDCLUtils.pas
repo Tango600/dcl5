@@ -4,7 +4,7 @@ unit uDCLUtils;
 interface
 
 uses
-  SysUtils, Forms, ExtCtrls,
+  SysUtils, Forms, ExtCtrls, StrUtils,
 {$IFDEF MSWINDOWS}
   Windows, ShellApi, nb30, WinSock, Variants, ShlObj,
   ActiveX, ComObj,
@@ -19,12 +19,13 @@ uses
 
 
 function ValidObject(const AObj: TObject): Boolean;
-Procedure GetParamsStructure;
+Procedure GetParamsStructure(Params:TStringList);
 Procedure DebugProc(ActionStr: String);
 Function KeyState(Key: Integer): Boolean;
 Function CompareString(S1, S2: String): Boolean;
 Function ShowErrorMessage(ErrorCode: Integer; AddText: String=''): Integer;
 Function StrToIntEx(St: String): LongInt;
+Function StrToFloatEx(St: String): Real;
 Function HexToInt(HexStr: String): Int64;
 Function Pow(const Base:Cardinal; PowNum: Word): Cardinal; overload;
 Function Pow(Const Base: Real; PowNum: Word): Real; overload;
@@ -35,6 +36,7 @@ Function TimeToStr_(Time: TDateTime): String;
 Function DateToStr_(Date: TDate): String;
 Function LeadingZero(Const aVal: Word): String;
 Function CopyCut(Var S: String; From, Count: Word): String;
+//Function FindInArray(KeyWord:String; SourceArray:Array);
 
 Function ExecAndWait(Const FileName: ShortString; Const WinState: Word): Boolean;
 Procedure Exec(Const FileName, Directory: String);
@@ -55,12 +57,11 @@ function GetIcon: TIcon;
 Function FindDisableAction(Action: String): Boolean;
 Function TranslateDigitToUserLevel(Level: byte): TUserLevelsType; overload;
 Function TranslateDigitToUserLevel(Level: String): TUserLevelsType; overload;
-Procedure TranslateProc(Var CallProc: String; Var Factor: Word);
+Procedure TranslateProc(Var CallProc: String; Var Factor: Word; Query: TDCLDialogQuery);
 Function IsDigit(S: String): TIsDigitType; // 0-Строка  1-Число  2-Hex  3-Цвет
 
 Function ExtractFileNameEx(FileName: String): String;
 Function GetFileNameToTranslite(Const FullFileName: String): String;
-
 function PosInSet(SimbolsSet, SourceStr: String): Cardinal;
 Function ShiftDown: Boolean;
 Function GetTempFileName(Ext: String): String;
@@ -100,7 +101,7 @@ procedure LoadMainFormPos(FDCLLogOn:TDCLLogOn; var FForm:TDBForm; DialogName:Str
 implementation
 
 uses
-  SumProps, uDCLResources, MD5;
+  SumProps, uDCLResources, uDCLDBUtils, MD5;
 
 function ValidObject(const AObj: TObject): Boolean;
 begin
@@ -717,9 +718,11 @@ Begin
   If CompareString(BMPType, 'new') or CompareString(BMPType, 'append') Then
     MS.Write(Bitmap_New, Length(Bitmap_New));
 
+  If CompareString(BMPType, 'tools') Then
+    MS.Write(Tools16, Length(Tools16));
+
   If CompareString(BMPType, 'Cancel') or CompareString(BMPType, 'CancelClose') Then
     MS.Write(Bitmap_Cancel, Length(Bitmap_Cancel));
-
   If CompareString(BMPType, 'Post') or CompareString(BMPType, 'PostClose') Then
     MS.Write(Bitmap_Post, Length(Bitmap_Post));
 
@@ -747,7 +750,7 @@ Begin
     Result:=TBitmap.Create;
     MS.Position:=BMPPos;
     Result.LoadFromStream(MS);
-    Result.TransparentColor:=Result.Canvas.Pixels[0, 0]; // clWhite;
+    Result.TransparentColor:=Result.Canvas.Pixels[0, 0];
     Result.TransparentMode:=tmFixed; // tmAuto;
     Result.Transparent:=True;
   End
@@ -1102,7 +1105,8 @@ Begin
 {$ENDIF}
 End;
 
-Procedure TranslateProc(Var CallProc: String; Var Factor: Word);
+
+Procedure TranslateProc(Var CallProc: String; Var Factor: Word; Query: TDCLDialogQuery);
 Const
   ProcCount=27;
   ProcNames: Array [1..ProcCount] Of String=('ConvertOraDates', 'ConvertToOraDates', 'ToFloat', // 3
@@ -1111,12 +1115,13 @@ Const
     'GetTempFileName', 'DaysInAMonth', 'GetMonthName', 'LeadingZero', 'GetAccessLevelByName', // 20
     'DaysInMonth', 'MonthByDate', 'Upper', 'Lower', 'MD5File', 'MD5String', 'Eval'); // 27
 Var
-  ReplaseProc, Param, TmpStr, TmpStr2, TmpStr3, Sign: String;
+  ReplaseProc, Param, TmpStr, TmpStr2, TmpStr3: String;
   StartSel, ParamLen, StartSearch, pv1, pv2, pv3, pv4, FindProcNum, Skobki, VarNameLength,
     MaxMatch: Word;
   FindVar: Boolean;
   FunctionParams: Array Of String;
   FunctionParamsCount: byte;
+  Sign:TSigns;
 Begin
   Inc(Factor);
   StartSearch:=Pos(ProcPrefix, CallProc);
@@ -1208,7 +1213,7 @@ Begin
       MaxMatch:=pv1;
 
       Param:=Copy(CallProc, pv2, pv1-pv2-1);
-      TranslateProc(Param, Factor);
+      TranslateProc(Param, Factor, Query);
 
       FunctionParamsCount:=ParamsCount(Param);
       SetLength(FunctionParams, FunctionParamsCount+1);
@@ -1293,7 +1298,11 @@ Begin
         // SumWrite
         8:
         Begin
-          TmpStr:=MoneyToString(StrToFloatEx(FunctionParams[1]), True, False);
+          TmpStr2:=FunctionParams[1];
+          If Length(FunctionParams)>2 then
+            If FunctionParams[2]<>'' then
+              TmpStr2:=FunctionParams[1]+'.'+FunctionParams[2];
+          TmpStr:=MoneyToString(StrToFloatEx(TmpStr2), True, False);
         End;
 
         // ByIndex
@@ -1355,69 +1364,70 @@ Begin
 
         14: // NVL
         Begin
-          { If FunctionParamsCount=2 Then
+          If FunctionParamsCount=2 Then
+          If Assigned(Query) then
+          If Query.Active then
             If GetFieldFromParam(FunctionParams[1], Query)<>nil then
             Begin
-            If GetFieldFromParam(FunctionParams[1], Query).IsNull then
-            TmpStr:=FunctionParams[2]
-            Else
-            TmpStr:=GetFieldFromParam(FunctionParams[1], Query).AsString;
-            End; }
+              If GetFieldFromParam(FunctionParams[1], Query).IsNull then
+                TmpStr:=FunctionParams[2]
+              Else
+                TmpStr:=GetFieldFromParam(FunctionParams[1], Query).AsString;
+            End;
         End;
 
         15: // iif
         Begin
           If FunctionParamsCount=3 Then
           Begin
-            pv1:=PosInSet('<>=', FunctionParams[1]);
+            pv1:=LastDelimiter('<>=', FunctionParams[1]);
             If pv1<>0 then
             Begin
-              pv2:=pv1+1;
-              If FunctionParams[1][pv2] in ['>', '<', '='] then
-                Inc(pv2);
-              Sign:=Copy(FunctionParams[1], pv1, pv2-pv1);
+              Sign:=TSigns(AnsiIndexStr(FunctionParams[1], Signs));
 
+              pv1:=Pos(Signs[Sign], FunctionParams[1]);
+              pv2:=Length(Signs[Sign]);
               TmpStr2:=Copy(FunctionParams[1], 1, pv1-1);
-              TmpStr3:=Copy(FunctionParams[1], pv2, Length(FunctionParams[1]));
+              TmpStr3:=Copy(FunctionParams[1], pv1+pv2+1, Length(FunctionParams[1]));
               TmpStr2:=Trim(AnsiLowerCase(TmpStr2));
               TmpStr3:=Trim(AnsiLowerCase(TmpStr3));
 
-              If Sign='=' then
+              If Sign=sEquals then
               Begin
                 If TmpStr2=TmpStr3 then
                   TmpStr:=FunctionParams[2]
                 Else
                   TmpStr:=FunctionParams[3];
               End
-              Else If Sign='>' then
+              Else If Sign=sLess then
               Begin
                 If TmpStr2>TmpStr3 then
                   TmpStr:=FunctionParams[2]
                 Else
                   TmpStr:=FunctionParams[3];
               End
-              Else If Sign='<' then
+              Else If Sign=sGreater then
               Begin
                 If TmpStr2<TmpStr3 then
                   TmpStr:=FunctionParams[2]
                 Else
                   TmpStr:=FunctionParams[3];
               End
-              Else If Sign='<>' then
+              Else If Sign=sNotEqual then
               Begin
                 If TmpStr2<>TmpStr3 then
                   TmpStr:=FunctionParams[2]
                 Else
                   TmpStr:=FunctionParams[3];
               End
-              Else If Sign='<=' then
+              Else If Sign=sGreaterEq then
               Begin
                 If TmpStr2<=TmpStr3 then
                   TmpStr:=FunctionParams[2]
                 Else
                   TmpStr:=FunctionParams[3];
               End
-              Else If Sign='>=' then
+              Else If Sign=sLessEq then
               Begin
                 If TmpStr2>=TmpStr3 then
                   TmpStr:=FunctionParams[2]
@@ -1494,6 +1504,7 @@ Begin
   Dec(Factor);
 End;
 
+
 Function IsDigit(S: String): TIsDigitType;
 Var
   iI: Word;
@@ -1541,7 +1552,7 @@ Begin
     Logger.WriteLog(ActionStr);
 End;
 
-Procedure GetParamsStructure;
+Procedure GetParamsStructure(Params:TStringList);
 Var
   i: Word;
 Begin
@@ -1562,23 +1573,7 @@ Begin
         If PosEx('DEFAULTDRIVER=', Params[i])=1 Then
           GPT.DEFAULT_DRIVER:=FindParam('DEFAULTDRIVER=', Params[i]);
 {$ENDIF}
-{$IFDEF IB}
-        If PosEx('SQLDialect=', Params[i])=1 Then
-          GPT.SQLDialect:=StrToIntEx(FindParam('SQLDialect=', Params[i]));
-        If PosEx('CodePage=', Params[i])=1 Then
-          GPT.ServerCodePage:=FindParam('CodePage=', Params[i]);
-{$ENDIF}
-{$IFDEF BDE_or_IB}
-        If PosEx('UserName=', Params[i])=1 Then
-          GPT.DBUserName:=FindParam('UserName=', Params[i]);
-        If PosEx('Password=', Params[i])=1 Then
-          GPT.DBPassword:=FindParam('Password=', Params[i]);
-        If PosEx('DBPath=', Params[i])=1 Then
-          GPT.DBPath:=FindParam('DBPath=', Params[i]);
-        If PosEx('ServerName=', Params[i])=1 Then
-          GPT.ServerName:=FindParam('ServerName=', Params[i]);
-{$ENDIF}
-{$IFDEF ZEOS}
+{$IFDEF SERVERDB}
         If PosEx('UserName=', Params[i])=1 Then
           GPT.DBUserName:=FindParam('UserName=', Params[i]);
         If PosEx('Password=', Params[i])=1 Then
@@ -1591,24 +1586,13 @@ Begin
           GPT.Port:=StrToIntEx(FindParam('Port=', Params[i]));
         If PosEx('DBType=', Params[i])=1 Then
           GPT.DBType:=FindParam('DBType=', Params[i]);
-        If PosEx('CodePage=', Params[i])=1 Then
-          GPT.ServerCodePage:=FindParam('CodePage=', Params[i]);
-{$ENDIF}
-{$IFDEF SQLdbIB}
-        If PosEx('UserName=', Params[i])=1 Then
-          GPT.DBUserName:=FindParam('UserName=', Params[i]);
-        If PosEx('Password=', Params[i])=1 Then
-          GPT.DBPassword:=FindParam('Password=', Params[i]);
-        If PosEx('DBPath=', Params[i])=1 Then
-          GPT.DBPath:=FindParam('DBPath=', Params[i]);
-        If PosEx('ServerName=', Params[i])=1 Then
-          GPT.ServerName:=FindParam('ServerName=', Params[i]);
         If PosEx('SQLDialect=', Params[i])=1 Then
           GPT.SQLDialect:=StrToIntEx(FindParam('SQLDialect=', Params[i]));
+{$ENDIF}
+        If PosEx('DBTypeIB=', Params[i])=1 Then
+          GPT.IBAll:=FindParam('DBTypeIB=', Params[i])='1';
         If PosEx('CodePage=', Params[i])=1 Then
           GPT.ServerCodePage:=FindParam('CodePage=', Params[i]);
-{$ENDIF}
-
         If PosEx('StringTypeChar=', Params[i])=1 Then
           GPT.StringTypeChar:=Trim(FindParam('StringTypeChar=', Params[i]));
         If PosEx('Viewer=', Params[i])=1 Then
@@ -1873,7 +1857,9 @@ End;
 Function IsFullPath(Path: String): Boolean;
 Begin
   If Length(Path)>1 then
-    Result:=((Pos(':\', Path)=2)or(Path[1]='/')or(Path[1]='~')) and (PosInSet('/\', Path)<>0);
+    Result:=((Pos(':\', Path)=2)or(Path[1]='/')or(Path[1]='~')) and (LastDelimiter('/\', Path)<>0)
+  Else
+    Result:=False;
 End;
 
 Function IsUNCPath(Path: String): Boolean;
@@ -2153,7 +2139,7 @@ begin
     IntToStr(FForm.ClientHeight)+';Width='+IntToStr(FForm.Width)+';';
 end;
 
-procedure SaveFormPosINI_OLD(FForm:TDBForm; DialogName:String);
+procedure SaveMainFormPosINI(FForm:TDBForm; DialogName:String);
 Var
   DialogsParams: TStringList;
   i: Byte;
@@ -2192,7 +2178,7 @@ Begin
     Result:=IniUserFieldName+'='+UserID+' and ';
 End;
 
-procedure SaveFormPosBase_OLD(FDCLLogOn:TDCLLogOn; FForm:TDBForm; DialogName:String);
+procedure SaveMainFormPosBase(FDCLLogOn:TDCLLogOn; FForm:TDBForm; DialogName:String);
 Var
   DCLQueryL: TDCLDialogQuery;
   i: Byte;
@@ -2234,59 +2220,18 @@ procedure SaveMainFormPos(FDCLLogOn:TDCLLogOn; FForm:TDBForm; DialogName:String)
 begin
   Case GPT.FormPosInDB Of
   isDisk:
-  SaveFormPosINI_OLD(FForm, DialogName);
+  SaveMainFormPosINI(FForm, DialogName);
   isBase:
-  SaveFormPosBase_OLD(FDCLLogOn, FForm, DialogName);
+  SaveMainFormPosBase(FDCLLogOn, FForm, DialogName);
   isDiskAndBase:
   Begin
-    SaveFormPosINI_OLD(FForm, DialogName);
-    SaveFormPosBase_OLD(FDCLLogOn, FForm, DialogName);
+    SaveMainFormPosINI(FForm, DialogName);
+    SaveMainFormPosBase(FDCLLogOn, FForm, DialogName);
   End;
   End;
 end;
 
-procedure LoadFormPosINI(var DCLForm:TDCLForm; DialogName:String);
-Var
-  FileParams, DialogsParams: TStringList;
-  ParamsCounter: Word;
-  g:Integer;
-  S:String;
-Begin
-  If DialogName<>'' Then
-    If GPT.DialogsSettings Then
-    Begin
-      If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini') Then
-      Begin
-        g:=-1;
-        FileParams:=TStringList.Create;
-        FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini');
-        DialogsParams:=CopyStrings('['+DialogName+']', '[END '+DialogName+']', FileParams);
-
-        If DialogsParams.Count>0 then
-          For ParamsCounter:=0 To DialogsParams.Count-1 Do
-          Begin
-            S:=Trim(DialogsParams[ParamsCounter]);
-            If PosEx('FormTop=', S)=1 then
-              DCLForm.Form.Top:=StrToInt(FindParam('FormTop=', S));
-            If PosEx('FormLeft=', S)=1 then
-              DCLForm.Form.Left:=StrToInt(FindParam('FormLeft=', S));
-            If PosEx('FormHeight=', S)=1 then
-              DCLForm.Form.Height:=StrToInt(FindParam('FormHeight=', S));
-            If PosEx('FormWidth=', S)=1 then
-              DCLForm.Form.Width:=StrToInt(FindParam('FormWidth=', S));
-
-            If PosEx('[Page]', S)=1 then
-              Inc(g);
-            If PosEx('SplitterPos=', S)=1 then
-              If g>-1 then
-                DCLForm.Tables[g].GridPanel.Height:=StrToInt(FindParam('SplitterPos=', S));
-          End;
-
-      End;
-    End;
-End;
-
-procedure LoadFormPosINI_OLD(var FForm:TDBForm; DialogName:String);
+procedure LoadMainFormPosINI(var FForm:TDBForm; DialogName:String);
 Var
   DialogsParams: TStringList;
   ParamsCounter: Word;
@@ -2314,7 +2259,7 @@ Begin
     End;
 end;
 
-procedure LoadFormPosBase_OLD(FDCLLogOn:TDCLLogOn; var FForm:TDBForm; DialogName:String);
+procedure LoadMainFormPosBase(FDCLLogOn:TDCLLogOn; var FForm:TDBForm; DialogName:String);
 Var
   DCLQueryL: TDCLDialogQuery;
   IniVal: String;
@@ -2350,13 +2295,13 @@ procedure LoadMainFormPos(FDCLLogOn:TDCLLogOn; var FForm:TDBForm; DialogName:Str
 begin
   Case GPT.FormPosInDB of
   isDisk:
-  LoadFormPosINI_OLD(FForm, DialogName);
+  LoadMainFormPosINI(FForm, DialogName);
   isBase:
-  LoadFormPosBase_OLD(FDCLLogOn, FForm, DialogName);
+  LoadMainFormPosBase(FDCLLogOn, FForm, DialogName);
   isDiskAndBase:
   Begin
-    LoadFormPosINI_OLD(FForm, DialogName);
-    LoadFormPosBase_OLD(FDCLLogOn, FForm, DialogName);
+    LoadMainFormPosINI(FForm, DialogName);
+    LoadMainFormPosBase(FDCLLogOn, FForm, DialogName);
   End;
   End;
 end;

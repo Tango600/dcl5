@@ -4,6 +4,9 @@
 interface
 
 uses
+{$IFNDEF FPC}
+  VCLFixPack, ControlsAtomFix,
+{$ENDIF}
 {$IFDEF MSWINDOWS} Windows, Messages, {$ENDIF} SysUtils, Classes,
   Controls, Forms, Dialogs,
 {$IFDEF FPC}
@@ -50,6 +53,7 @@ begin
   AboutMenuItem:
   uUDL.DCLMainLogOn.About(nil);
   LockMenuItem:DCLMainLogOn.Lock;
+{$IFNDEF NEWDELPHI}
   SC_MINIMIZE:
   begin
     ShowWindow(OldMainWin, SW_HIDE);
@@ -67,6 +71,7 @@ begin
         ShowWindow(Screen.Forms[i].Handle, SW_RESTORE);
     Message.Result:=0;
   end;
+{$ENDIF}
 Else
 inherited;
   End;

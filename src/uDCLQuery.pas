@@ -5,39 +5,56 @@ interface
 
 uses
   SysUtils, Classes, uStringParams,
-  Dialogs,
+  Dialogs, StrUtils,
 {$IFDEF ADO}
   WideStrings, ADODB, ADOConst, ADOInt,
 {$ENDIF}
 {$IFDEF BDE}
   BDE, DBClient, DBTables, Bdeconst,
 {$ENDIF}
-{$IFDEF IB}
+{$IFDEF IBX}
+{$IFDEF NEWDELPHI}
+  IBX.IBDatabase, IBX.IBTable, IBX.IBCustomDataSet, IBX.IBSQL, IBX.IBQuery,
+  IBX.IBVisualConst, IBX.IBXConst, 
+{$ELSE}
   IBDatabase, IBTable, IBCustomDataSet, IBSQL, IBQuery,
   IBVisualConst, IBXConst,
+{$ENDIF}
+  uIBUpdateSQLW,
+{$ENDIF}
+{$IFDEF SQLdbFamily}
+  BufDataset, dbconst, sqldb,
 {$ENDIF}
 {$IFDEF ZEOS}
   // ZConnection, ZDataset, ZSqlUpdate,
 {$ENDIF}
-  DB, uDCLTypes, uDCLConst;
+  DB, uDCLTypes, uDCLData, uDCLConst;
 
 type
+  TTransactionType=(trtWrite, trtRead);
+  TUpdateKind=(ukAll, ukKeys);
   TOperationsTypes=Array of TNotAllowedOperations;
+  {$IFDEF UPDATESQLDB}
+  TUpdateSQLObj=TUpdateObj;
+  {$ELSE}
+  TUpdateSQLObj=TDCLDialogQuery;
+  {$ENDIF}
 
   { TDCLQuery }
-
   TDCLQuery=class(TDCLDialogQuery)
   private
 {$IFDEF CACHEON}
     ShadowQuery: TDCLDialogQuery;
-    {$IFNDEF SQLdbIB}
-    FUpdateSQL: UpdateObj;
+    {$IFDEF UPDATESQLDB}
+    FUpdateSQL: TUpdateSQLObj;
     {$ELSE}
     FUpdateSQL: TDCLDialogQuery;
     {$ENDIF}
     FRefreshSQL:String;
+    {$IFDEF TRANSACTIONDB}
+    WriteTransaction:TTransaction;
+    {$ENDIF}
 {$ENDIF}
-    FNoRefreshSQL:Boolean;
     FMainTable, FKeyField: string;
     FAfterPost, FAfterCancel, FAfterOpen, FBeforePost, FBeforeInsert, FAfterDelete,
       FAfterInsert: TDataSetNotifyEvent;
@@ -46,6 +63,10 @@ type
     {$IFDEF ZEOS}
     FFieldsDefsDefined:Boolean;
     FieldsDefs:Array of TField;
+    {$ENDIF}
+
+    {$IFDEF TRANSACTIONDB}
+    function CreateTR(RW:TTransactionType):TTransaction;
     {$ENDIF}
 
     function GetPrimaryKeyField(TableName: string): string;
@@ -85,7 +106,6 @@ type
 
     Function FindNotAllowedOperation(Value: TNotAllowedOperations): Boolean;
 
-    procedure SetNoRefreshSQL(Value:Boolean);
   public
     constructor Create(DatabaseObj: TDBLogOn);
     destructor Destroy; override;
@@ -96,6 +116,7 @@ type
     procedure Edit;
     procedure Delete;
     procedure SetUpdateSQL(TableName, KeyField: String);
+    procedure ExecSQL;
 
     procedure SaveDB;
     procedure CancelDB;
@@ -103,7 +124,6 @@ type
     property NotAllowOperations: TOperationsTypes read GetOperations write SetOperations;
     property KeyField: String read FKeyField;
     property MainTable: String read FMainTable;
-    property NoRefreshSQL:Boolean read FNoRefreshSQL write SetNoRefreshSQL;
   published
     property SQL:{$IFDEF ADO}TWideStrings{$ELSE}TStringList{$ENDIF} read GetSQL write SetSQL;
     property AfterDelete: TDataSetNotifyEvent read GetAfterDeleteEvent write SetAfterDeleteEvent;
@@ -118,7 +138,8 @@ type
 
 implementation
 
-uses uDCLUtils;
+uses
+  uDCLUtils;
 
 { TDCLQuery }
 
@@ -143,9 +164,11 @@ begin
 end;
 
 procedure TDCLQuery.AfterOpenData(Data: TDataSet);
+{$IFDEF ZEOS}
 var
   i, j:Integer;
   LocalAfterOpen:TDataSetNotifyEvent;
+{$ENDIF}
 begin
 {
     ftCursor,
@@ -253,6 +276,7 @@ begin
     End;
     FieldDefs.Update;
     inherited Open;
+    AfterOpen:=LocalAfterOpen;
   end;
 {$ENDIF}
 
@@ -286,16 +310,14 @@ end;
 
 procedure TDCLQuery.CancelDB;
 begin
-{$IFDEF CACHEON}
-  CancelUpdates;
+{$IFDEF CACHEDDB}
+  If RowsAffected<>-1 then
+    CancelUpdates;
 {$ENDIF}
 {$IFDEF ZEOS}
   If not Connection.AutoCommit then
-    Connection.Commit;
+    Connection.Rollback;
 {$ELSE}
-{$IFDEF IBALL}
-  Transaction.CommitRetaining;
-{$ENDIF}
 {$ENDIF}
 end;
 
@@ -304,9 +326,6 @@ begin
   inherited Create(nil);
   Name:='DCLQuery'+IntToStr(UpTime);
   FUpdateSQLDefined:=False;
-{$IFDEF IBALL}
-  FNoRefreshSQL:=False;
-{$ENDIF}
 {$IFDEF ZEOS}
   FFieldsDefsDefined:=False;
   Connection:=DatabaseObj;
@@ -317,9 +336,15 @@ begin
 {$IFDEF ADO}
   Connection:=DatabaseObj;
 {$ENDIF}
-{$IFDEF IB}
+{$IFDEF IBX}
   Database:=DatabaseObj;
-  Transaction:=Database.DefaultTransaction;
+{$ENDIF}
+{$IFDEF SQLdbFamily}
+  Database:=DatabaseObj;
+{$ENDIF}
+{$IFDEF TRANSACTIONDB}
+  Transaction:=CreateTR(trtRead);
+  WriteTransaction:=CreateTR(trtWrite);
 {$ENDIF}
   inherited AfterDelete:=AfterDeleteData;
   inherited AfterInsert:=AfterInsertData;
@@ -328,32 +353,34 @@ begin
   inherited AfterOpen:=AfterOpenData;
   inherited BeforePost:=BeforePostData;
   inherited BeforeInsert:=BeforeInsertData;
-
 {$IFDEF CACHEON}
   ShadowQuery:=TDCLDialogQuery.Create(nil);
+{$IFDEF TRANSACTIONDB}
+  ShadowQuery.Transaction:=WriteTransaction;
+{$ENDIF}
 {$IFDEF BDE}
   ShadowQuery.Database:=DatabaseObj;
 {$ENDIF}
 {$IFDEF ZEOS}
   ShadowQuery.Connection:=DatabaseObj;
 {$ENDIF}
-{$IFDEF IB}
+{$IFDEF IBX}
   ShadowQuery.Database:=DatabaseObj;
-  ShadowQuery.Transaction:=Database.DefaultTransaction;
 {$ENDIF}
-{$IFDEF SQLdbIB}
+{$IFDEF SQLdbFamily}
   ShadowQuery.Database:=DatabaseObj;
-  ShadowQuery.Transaction:=DatabaseObj.Transaction;
 {$ENDIF}
   ShadowQuery.Name:='ShadowQueryDCLQuery_'+IntToStr(UpTime);
 {$ENDIF}
 end;
 
-procedure TDCLQuery.FillDatasetUpdateSQL(KeyField, TableName: String; ToOpen: Boolean);
+Procedure TDCLQuery.FillDatasetUpdateSQL(KeyField, TableName: String;
+  ToOpen: Boolean);
 var
   UpdatesFieldsSet, KeyFieldsSet: String;
   v1, v2: Integer;
   KeyFields, UpdateFields: Array of String;
+  UpdateKind:TUpdateKind;
 Begin
   If TableName<>'' Then
   Begin
@@ -374,51 +401,72 @@ Begin
       If Active Then
         Close;
 
-      {$IFNDEF SQLdbIB}
-      FUpdateSQL:=UpdateObj.Create(Nil);
-      FUpdateSQL.Name:='UpdateSQL_'+TableName;
+      {$IFDEF TRANSACTIONDB}
+      If not Assigned(WriteTransaction) then
+        WriteTransaction:=CreateTR(trtWrite);
+      {$ENDIF}
+      {$IFDEF UPDATESQLDB}
+      If not Assigned(FUpdateSQL) then
+      Begin
+        FUpdateSQL:=TUpdateSQLObj.Create(Self);
+        {$IFDEF TRANSACTIONDB}
+        FUpdateSQL.UpdateTransaction:=WriteTransaction;
+        {$ENDIF}
+      End;
       UpdateObject:=FUpdateSQL;
-      CachedUpdates:=True;
       {$ELSE}
       FUpdateSQL:=Self;
       {$ENDIF}
+      {$IFDEF CACHEDDB}
+      {$IFDEF BDE}
+      CachedUpdates:=True;
+      {$ENDIF}{$ENDIF}
 
       ShadowQuery.SQL.Text:='select * from '+TableName+' where 1=0';
       ShadowQuery.Open;
 
       If KeyField='' then
       Begin
+        UpdateKind:=ukAll;
         SetLength(KeyFields, ShadowQuery.FieldCount);
         For v1:=1 to ShadowQuery.FieldCount do
-          KeyFields[v1-1]:=ShadowQuery.Fields[v1-1].FieldName;
+          KeyFields[v1-1]:=LowerCase(ShadowQuery.Fields[v1-1].FieldName);
       End
       Else
       Begin
         v1:=ParamsCount(KeyField);
+        UpdateKind:=ukKeys;
         If v1>1 then
         Begin
           SetLength(KeyFields, v1);
           For v2:=1 to v1 do
           Begin
-            KeyFields[v2-1]:=SortParams(KeyField, v2);
+            KeyFields[v2-1]:=LowerCase(SortParams(KeyField, v2));
           End;
         End
         Else
         Begin
           SetLength(KeyFields, 1);
-          KeyFields[0]:=KeyField;
+          KeyFields[0]:=LowerCase(KeyField);
         end;
       End;
 
       SetLength(UpdateFields, ShadowQuery.FieldCount);
       For v1:=1 to ShadowQuery.FieldCount do
-        UpdateFields[v1-1]:=ShadowQuery.Fields[v1-1].FieldName;
+        UpdateFields[v1-1]:=LowerCase(ShadowQuery.Fields[v1-1].FieldName);
 
       ShadowQuery.Close;
 
       UpdatesFieldsSet:='';
       For v1:=1 to Length(UpdateFields) do
-        UpdatesFieldsSet:=UpdatesFieldsSet+UpdateFields[v1-1]+'=:'+UpdateFields[v1-1]+',';
+        If UpdateKind=ukKeys then
+        Begin
+          If not AnsiMatchStr(UpdateFields[v1-1], KeyFields) then
+            UpdatesFieldsSet:=UpdatesFieldsSet+UpdateFields[v1-1]+'=:'+UpdateFields[v1-1]+',';
+        End
+        Else
+          UpdatesFieldsSet:=UpdatesFieldsSet+UpdateFields[v1-1]+'=:'+UpdateFields[v1-1]+',';
+
       If UpdatesFieldsSet<>'' then
         System.Delete(UpdatesFieldsSet, Length(UpdatesFieldsSet), 1);
 
@@ -429,12 +477,13 @@ Begin
         System.Delete(KeyFieldsSet, Length(KeyFieldsSet)-4, 4);
 
       If not FindNotAllowedOperation(dsoEdit) then
-        FUpdateSQL.{$IFNDEF SQLdbIB}ModifySQL{$ELSE}UpdateSQL{$ENDIF}.Text:='update '+TableName+' set '+UpdatesFieldsSet+' where '+
+        FUpdateSQL.{$IFNDEF SQLdbFamily}ModifySQL{$ELSE}UpdateSQL{$ENDIF}.Text:='update '+TableName+' set '+UpdatesFieldsSet+' where '+
           KeyFieldsSet;
 
       UpdatesFieldsSet:='';
       For v1:=1 To Length(UpdateFields) Do
         UpdatesFieldsSet:=UpdatesFieldsSet+UpdateFields[v1-1]+',';
+
       If UpdatesFieldsSet<>'' then
         System.Delete(UpdatesFieldsSet, Length(UpdatesFieldsSet), 1);
 
@@ -457,8 +506,7 @@ Begin
       If not FindNotAllowedOperation(dsoDelete) then
         FUpdateSQL.DeleteSQL.Text:='delete from '+TableName+' where '+KeyFieldsSet;
 
-{$IFDEF IBALL}
-{$IFNDEF SQLdbIB}
+{$IFDEF REFRESHSQLDB}
       KeyFieldsSet:='';
       For v1:=1 To Length(KeyFields) Do
         KeyFieldsSet:=KeyFieldsSet+KeyFields[v1-1]+'=:'+KeyFields[v1-1]+' and ';
@@ -472,9 +520,8 @@ Begin
         System.Delete(UpdatesFieldsSet, Length(UpdatesFieldsSet)-4, 5);
 
       FRefreshSQL:='select * from '+TableName+' where (('+KeyFieldsSet+') or ('+UpdatesFieldsSet+'))';
-      If not FNoRefreshSQL then
-        FUpdateSQL.RefreshSQL.Text:=FRefreshSQL;
-{$ENDIF}{$ENDIF}
+      FUpdateSQL.RefreshSQL.Text:=FRefreshSQL;
+{$ENDIF}
       // Query.FieldList.Update;
       If not Active Then
         If SQL.Text<>'' Then
@@ -486,7 +533,7 @@ Begin
     End;
 {$ENDIF}
   end;
-{$IFDEF IBALL}
+{$IFDEF FREQUIREDDB}
     If ToOpen then
       If not Active then
         If SQL.Text<>'' then
@@ -503,7 +550,8 @@ Begin
         inherited Open;
 End;
 
-function TDCLQuery.FindNotAllowedOperation(Value: TNotAllowedOperations): Boolean;
+Function TDCLQuery.FindNotAllowedOperation(Value: TNotAllowedOperations
+  ): Boolean;
 Var
   l, i: Byte;
 Begin
@@ -520,24 +568,17 @@ Begin
     End;
 end;
 
-procedure TDCLQuery.SetNoRefreshSQL(Value: Boolean);
-begin
-{$IFDEF IBALL}
-  FNoRefreshSQL:=Value;
-  If Assigned(FUpdateSQL) then
-  Begin
-    If Value then
-      FUpdateSQL.RefreshSQL.Text:=''
-    Else
-      FUpdateSQL.RefreshSQL.Text:=FRefreshSQL;
-  End;
-{$ENDIF}
-end;
-
 destructor TDCLQuery.Destroy;
 begin
-{$IFDEF CACHEON}
+{$IFDEF TRANSACTIONDB}
+  If Assigned(WriteTransaction) then
+    FreeAndNil(WriteTransaction);
+{$ENDIF}
+{$IFDEF UPDATESQLDB}
   FreeAndNil(FUpdateSQL);
+{$ENDIF}
+{$IFDEF CACHEON}
+  FreeAndNil(ShadowQuery);
 {$ENDIF}
 end;
 
@@ -611,7 +652,7 @@ begin
   End;
 end;
 
-function TDCLQuery.GetOperations: TOperationsTypes;
+Function TDCLQuery.GetOperations: TOperationsTypes;
 begin
   Result:=FNotAllowOperations;
 end;
@@ -628,30 +669,59 @@ begin
   Result:={$IFDEF ADO}TWideStrings{$ELSE}TStringList{$ENDIF}(inherited SQL);
 end;
 
+{$IFDEF TRANSACTIONDB}
+function TDCLQuery.CreateTR(RW:TTransactionType): TTransaction;
+begin
+  Result:=TTransaction.Create(Self);
+  //Result.Name:='tmp_WTR_'+IntToStr(UpTime);
+  {$IFDEF IBX}
+  Result.DefaultDatabase:=Database;
+  Result.DefaultAction:=TACommit;
+  {$ENDIF}
+  {$IFDEF SQLdbFamily}
+  Result.Database:=Database;
+  Result.Action:=caCommit;
+  {$ENDIF}
+  Result.Params.Clear;
+  Case RW of
+  trtWrite:Begin
+    Result.Params.Append('nowait');
+  End;
+  trtRead:Begin
+    Result.Params.Append('read');
+  End;
+  End;
+  Result.Params.Append('read_committed');
+  If GPT.IBAll then
+    Result.Params.Append('rec_version');
+end;
+{$ENDIF}
+
 function TDCLQuery.GetPrimaryKeyField(TableName: string): string;
 begin
   Result:='';
-{$IFDEF IBALL}
-  If TableName<>'' then
+  If GPT.IBAll then
   Begin
-    ShadowQuery.SQL.Text:='select RDB$FIELD_NAME '+
-      'from RDB$RELATION_CONSTRAINTS C, RDB$INDICES I, RDB$INDEX_SEGMENTS S '+
-      'where UPPER(C.RDB$RELATION_NAME) = UPPER('''+TableName+''') and '+
-      'C.RDB$CONSTRAINT_TYPE = ''PRIMARY KEY'' and I.RDB$UNIQUE_FLAG = 1 and '+
-      '((I.RDB$INDEX_INACTIVE = 0) or (I.RDB$INDEX_INACTIVE is null)) and '+
-      'C.RDB$RELATION_NAME = I.RDB$RELATION_NAME and I.RDB$INDEX_NAME = C.RDB$INDEX_NAME and '+
-      'I.RDB$UNIQUE_FLAG = 1 and S.RDB$INDEX_NAME = I.RDB$INDEX_NAME';
-    ShadowQuery.Open;
-    while not ShadowQuery.Eof do
+    If TableName<>'' then
     Begin
-      Result:=Result+Trim(ShadowQuery.Fields[0].AsString)+',';
-      ShadowQuery.Next;
+      ShadowQuery.SQL.Text:='select RDB$FIELD_NAME '+
+        'from RDB$RELATION_CONSTRAINTS C, RDB$INDICES I, RDB$INDEX_SEGMENTS S '+
+        'where UPPER(C.RDB$RELATION_NAME) = UPPER('''+TableName+''') and '+
+        'C.RDB$CONSTRAINT_TYPE = ''PRIMARY KEY'' and I.RDB$UNIQUE_FLAG = 1 and '+
+        '((I.RDB$INDEX_INACTIVE = 0) or (I.RDB$INDEX_INACTIVE is null)) and '+
+        'C.RDB$RELATION_NAME = I.RDB$RELATION_NAME and I.RDB$INDEX_NAME = C.RDB$INDEX_NAME and '+
+        'I.RDB$UNIQUE_FLAG = 1 and S.RDB$INDEX_NAME = I.RDB$INDEX_NAME';
+      ShadowQuery.Open;
+      while not ShadowQuery.Eof do
+      Begin
+        Result:=Result+Trim(ShadowQuery.Fields[0].AsString)+',';
+        ShadowQuery.Next;
+      End;
+      ShadowQuery.Close;
+      If Result<>'' then
+        Result:=Copy(Result, 1, Length(Result)-1);
     End;
-    ShadowQuery.Close;
-    If Result<>'' then
-      Result:=Copy(Result, 1, Length(Result)-1);
   End;
-{$ENDIF}
 end;
 
 procedure TDCLQuery.Open;
@@ -683,28 +753,44 @@ begin
      inherited Edit;
 end;
 
+procedure TDCLQuery.ExecSQL;
+begin
+{$IFDEF UPDATESQLDB}
+  If Assigned(ShadowQuery) then
+  Begin
+    ShadowQuery.SQL.Text:=SQL.Text;
+    ShadowQuery.ExecSQL;
+  End;
+{$ENDIF}
+end;
+
 procedure TDCLQuery.Delete;
 begin
   If not FindNotAllowedOperation(dsoDelete) then
-     inherited Delete;
+    inherited Delete;
 end;
 
 procedure TDCLQuery.SaveDB;
 begin
-{$IFDEF CACHEON}
-  ApplyUpdates;
+{$IFDEF CACHEDDB}
+  If UpdatesPending then
+    If CachedUpdates then
+      ApplyUpdates;
 {$IFDEF BDE}
   CommitUpdates;
 {$ENDIF}
 {$IFDEF ZEOS}
-  CommitUpdates;
+  If Active then
+    CommitUpdates;
   If not Connection.AutoCommit then
     Connection.Commit;
-{$ELSE}
-{$IFDEF IBALL}
-  Transaction.CommitRetaining;
 {$ENDIF}
 {$ENDIF}
+{$IFDEF TRANSACTIONDB}
+{$IFDEF IBX}
+  If WriteTransaction.InTransaction then
+{$ENDIF}
+    WriteTransaction.Commit;
 {$ENDIF}
 end;
 
@@ -750,7 +836,7 @@ begin
     FBeforePost:=Event;
 end;
 
-procedure TDCLQuery.SetOperations(Value: TOperationsTypes);
+Procedure TDCLQuery.SetOperations(Value: TOperationsTypes);
 begin
   FNotAllowOperations:=Value;
 end;
@@ -759,7 +845,7 @@ procedure TDCLQuery.SetRequiredFields;
 Var
   v1: Word;
 Begin
-{$IFDEF BDE_or_IB}
+{$IFDEF FREQUIREDDB}
   If Active then
     For v1:=1 to FieldCount do
       Fields[v1-1].Required:=False;

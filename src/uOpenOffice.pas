@@ -2994,13 +2994,13 @@ uses SysUtils, ComServ;
 function MakePV(ServiceManager: Variant; PropertyName: string; PropertyValue: Variant): Variant;
 begin
   Result:=ServiceManager.Bridge_GetStruct('com.sun.star.beans.PropertyValue');
-  case VarType(PropertyName) of
+  case Variants.VarType(PropertyName) of
   varString, $0102 { varUString } :
   Result.Name:=VarAsType(PropertyName, varOleStr);
 else
 Result.Name:=PropertyName;
   end;
-  case VarType(PropertyValue) of
+  case Variants.VarType(PropertyValue) of
   varString, $0102 { varUString } :
   Result.Value:=VarAsType(PropertyValue, varOleStr);
 else
@@ -4103,7 +4103,7 @@ begin
   begin
     try
       SM:=CreateOleObject('com.sun.star.ServiceManager');
-      if (VarType(SM)=varDispatch) then
+      if (Variants.VarType(SM)=varDispatch) then
         FDesktop:=SM.CreateInstance('com.sun.star.frame.Desktop');
     except
       FDesktop:=Unassigned;
@@ -4820,7 +4820,7 @@ begin
   OldCellName:='';
   OldCellX:=-1;
   OldCellY:=-1;
-  if VarType(FCell.CellObj)=varDispatch then
+  if Variants.VarType(FCell.CellObj)=varDispatch then
   begin
     OldCellName:=FCell.CellObj.AbsoluteName;
     OldCellX:=FCell.CellObj.Position.X;

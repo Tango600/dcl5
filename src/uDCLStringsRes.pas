@@ -15,7 +15,8 @@ type
     msStructure, msGotoBookmark, msOldFormat, msOldBookmarkFormat, msVersionsGap, msOldVersion,
     msChangePassord, msOldM, msNewM, msPassword, msConfirm, msHashed, msToHashing, msToAll, msIn,
     msLogonToSystem, msUserName, msNoYes, msDenyMessage, msAccessLevelsSet, msNotifyActionsSet,
-    msCodePage, msLock, msUnLock, msChoose, msEditings);
+    msCodePage, msLock, msUnLock, msChoose, msEditings, msData, msReset, msSettings, msFields,
+    msBookmarks);
 
 function GetDCLMessageString(MesID: TStringMessages): String;
 
@@ -87,7 +88,7 @@ begin
   msText:
   Result:='Текст';
   msAll:
-  Result:='Все';
+  Result:='все';
   msFormated:
   Result:='Форматированный';
   msConfigurationFile:
@@ -149,7 +150,9 @@ begin
   msPast:
   Result:='Вставить';
   msBookmark:
-  Result:='Закладка';
+  Result:='закладка';
+  msBookmarks:
+  Result:='закладки';
   msStructure:
   Result:='Структура';
   msGotoBookmark:
@@ -202,10 +205,14 @@ begin
   Result:='Выбрать';
   msEditings:
   Result:='изменения';
-//  Result:='';
-//  Result:='';
-//  Result:='';
-//  Result:='';
+  msData:
+  Result:='Данные';
+  msReset:
+  Result:='Сбросить';
+  msSettings:
+  Result:='настройки';
+  msFields:
+  Result:='полей';
 //  Result:='';
 //  Result:='';
 //  Result:='';

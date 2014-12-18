@@ -5,8 +5,7 @@ interface
 uses
   uDCLConst
 {$IFDEF MSWINDOWS}
-    , Variants, Classes, ComObj, SysUtils, ActiveX, uStringParams,
-  uDCLUtils
+    , Variants, Classes, ComObj, SysUtils, uDCLUtils
 {$ENDIF};
 
 {$IFDEF MSWINDOWS}
@@ -85,17 +84,17 @@ end;
 Function MakePropertyValue(ServiceManager, PropertyName, PropertyValue: Variant): Variant;
 Begin
   Result:=ServiceManager.Bridge_GetStruct('com.sun.star.beans.PropertyValue');
-  Case VarType(PropertyName) Of
+  Case Variants.VarType(PropertyName) Of
   varString, $0102 { varUString } :
   Result.Name:=VarAsType(PropertyName, varOleStr);
-Else
-Result.Name:=PropertyName;
+  Else
+    Result.Name:=PropertyName;
   End;
-  Case VarType(PropertyValue) Of
+  Case Variants.VarType(PropertyValue) Of
   varString, $0102 { varUString } :
   Result.Value:=VarAsType(PropertyValue, varOleStr);
-Else
-Result.Value:=PropertyValue;
+  Else
+    Result.Value:=PropertyValue;
   End;
 End;
 
@@ -103,7 +102,8 @@ Function FileNameToURL(FileName: String): Variant;
 type
   TCharToUTF8Table=array [0..255] of PChar;
 const
-  ArrayCP1251ToUTF8: TCharToUTF8Table=(#0, // #0
+  ArrayCP1251ToUTF8: TCharToUTF8Table=(
+    #0, // #0
     #1, // #1
     #2, // #2
     #3, // #3

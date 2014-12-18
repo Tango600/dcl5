@@ -17,13 +17,14 @@ const
 {$IFDEF BDE}
   DBEngineType='BDE';
 {$ENDIF}
-{$IFDEF IB}
-  DBEngineType='IB';
+{$IFDEF IBX}
+  DBEngineType='IBX';
 {$ENDIF}
 {$IFDEF ZEOS}
   DBEngineType='ZEOS';
   DefaultIBPort=3050;
   DefaultDBType='firebird-2.5';
+  DefaultDBTInterBaseType='interbase-6';
   {$IFDEF MSWINDOWS}
   DefaultLibraryLocation='gds32.dll';
   {$ENDIF}
@@ -34,9 +35,12 @@ const
 {$IFDEF SQLdbIB}
   DBEngineType='SQLdbIB';
 {$ENDIF}
-  Version='10.0.0.165';
+{$IFDEF SQLdb}
+  DBEngineType='SQLdb';
+{$ENDIF}
+  Version='10.0.7.219';
 
-  CompotableVersion='9.1.125.303';
+  CompotableVersion='9.1.127.305';
 
   JPEGCompressionQuality=85;
 
@@ -71,11 +75,13 @@ const
   ToolLeftInterval=15;
 
 {$IFDEF FPC}
-  CalendarLeft={$IFDEF ZVComponents}20{$ELSE}30{$ENDIF};
+  CalendarLeft={$IFDEF ZVComponents}25{$ELSE}35{$ENDIF};
   AddHeight=20;
+  DateBoxAddWidth={$IFDEF ZVComponents}20{$ELSE}30{$ENDIF};
 {$ELSE}
   AddHeight=0;
   CalendarLeft=15;
+  DateBoxAddWidth=0;
 {$ENDIF}
   ToolButtonPanelHeight=29;
   ToolButtonHeight=25;
@@ -137,6 +143,9 @@ const
   DefaultFormWidth=MaxAllFieldsWidth+10;
 
   CharWidth=7;
+
+  DBTypeFirebird='firebird';
+  DBTypeInterbase='interbase';
 
   UserAdminField='ACCESSLEVEL';
 
@@ -306,9 +315,10 @@ const
 
   QCount=20;
   PCount=40;
+  KeyMarksItems=3;
 
 Type
-  TReliseStatus=(rsAlpha, rsBeta, rsUnstable, rsStable);
+  TReliseStatus=(rsAlpha, rsBetta, rsPreRelase, rsUnstable, rsStable);
   TUserLevelsType=(ulDeny, ulReadOnly, ulWrite, ulExecute, ulLevel1, ulLevel2, ulLevel3, ulLevel4,
     ulDeveloper, ulUndefined);
   TPageType=(ptMainPage, ptTablePart);
@@ -344,10 +354,13 @@ Type
   TNewQueryMode=(nqmNew, nqmFromGrid);
   TChooseMode=(chmNone, chmChoose, chmChooseAndClose);
   TMessageType=(mbtError=0, mbtWarning=1, mbtInformation=9, mbtConfirmation=10);
+  TSigns=(sEquals, sGreater, sLess, sNotEqual, sGreaterEq, sLessEq);
+
 
 const
-  ReleaseStatus=rsAlpha;
-  ReliseStatues:Array[TReliseStatus] of String=('Alpha', 'Beta', 'Unstable', 'Stable');
+  ReleaseStatus=rsBetta;
+  ReliseStatues:Array[TReliseStatus] of String=('Alpha', 'Betta', 'PreRelase', 'Unstable', 'Stable');
+  Signs:Array[TSigns] of String=('=', '<', '>', '<>', '<=', '>=');
 
 
 implementation

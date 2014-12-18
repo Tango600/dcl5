@@ -292,6 +292,8 @@ Procedure DecompressProc(Var Arc, Data: TByteFile);
 Var
   NewCode, OldCode: Word;
 Begin
+  If Arc.Position>=Arc.Size then
+    Exit;
   TestMode:=False;
   BeginRead;
   InitDict;

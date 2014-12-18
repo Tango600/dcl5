@@ -5,28 +5,42 @@ interface
 
 Uses
   Controls,
-  StdCtrls, ComCtrls, dbctrls, Buttons,
+  StdCtrls, ComCtrls, dbctrls, Buttons, DBGrids,
+{$IFNDEF FPC}
+  ThemedDBGrid,
+{$ENDIF}
 {$IFDEF ADO}
   ADODB, ADOConst, ADOInt,
 {$ENDIF}
 {$IFDEF BDE}
   BDE, DBClient, DBTables, Bdeconst,
 {$ENDIF}
-{$IFDEF IB}
+{$IFDEF IBX}
+{$IFDEF NEWDELPHI}
+  IBX.IBDatabase, IBX.IBTable, IBX.IBCustomDataSet, IBX.IBSQL, IBX.IBQuery,
+  IBX.IBVisualConst, IBX.IBXConst, IBX.IBUpdateSQL, 
+{$ELSE}
   IBDatabase, IBTable, IBCustomDataSet, IBSQL, IBQuery, IBUpdateSQL,
   IBVisualConst, IBXConst,
+{$ENDIF}
+  uIBUpdateSQLW,
 {$ENDIF}
 {$IFDEF ZEOS}
   ZConnection, ZDataset, ZSqlUpdate,
 {$ENDIF}
-{$IFDEF SQLdbIB}
-  IBConnection, sqldb,
+{$IFDEF SQLdbFamily}
+  IBConnection, sqldb, db,
 {$ENDIF}
   Forms;
 
 type
   TDBForm=TForm;
   TDialogButton=TBitBtn;
+  {$IFNDEF FPC}
+  TDCLDBGrid=TThemeDBGrid;
+  {$ELSE}
+  TDCLDBGrid=TDBGrid;
+  {$ENDIF}
 
 {$IFDEF ADO}
   TDCLDialogQuery=TADOQuery;
@@ -38,27 +52,35 @@ type
   TDCLDialogQuery=TQuery;
   TReportQuery=TQuery;
   TDBLogOn=TDatabase;
-  UpdateObj=TUpdateSQL;
+  TUpdateObj=TUpdateSQL;
 {$ENDIF}
-{$IFDEF IB}
+{$IFDEF IBX}
   TDCLDialogQuery=TIBQuery;
   TReportQuery=TIBQuery;
   TDBLogOn=TIBDatabase;
   TCommandQuery=TIBQuery;
   TTransaction=TIBTransaction;
-  UpdateObj=TIBUpdateSQL;
+  TUpdateObj=TIBUpdateSQLW;
+//  UpdateObj=TIBUpdateSQL;
 {$ENDIF}
 {$IFDEF ZEOS}
   TDBLogOn=TZConnection;
   TReportQuery=TZQuery;
   TDCLDialogQuery=TZQuery;
-  UpdateObj=TZUpdateSQL;
+  TUpdateObj=TZUpdateSQL;
   TCommandQuery=TZReadOnlyQuery;
 {$ENDIF}
 {$IFDEF SQLdbIB}
   TDCLDialogQuery=TSQLQuery;
   TReportQuery=TSQLQuery;
   TDBLogOn=TIBConnection;
+  TCommandQuery=TSQLQuery;
+  TTransaction=TSQLTransaction;
+{$ENDIF}
+{$IFDEF SQLdb}
+  TDCLDialogQuery=TSQLQuery;
+  TReportQuery=TSQLQuery;
+  TDBLogOn=TSQLConnector;
   TCommandQuery=TSQLQuery;
   TTransaction=TSQLTransaction;
 {$ENDIF}

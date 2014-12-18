@@ -378,7 +378,7 @@ end;
 
 procedure TAeroGlass.EnableAeroGlass(Sender: TObject);
 begin
-  if SheetOfGlass=True then
+  if SheetOfGlass then
     SetAeroGlass(-1, -1, -1, -1)
   else
     SetAeroGlass(MarginLeft, MarginTop, MarginRight, MarginBottom);
@@ -404,12 +404,12 @@ var
 begin
   bActiveLayer:=False;
 
-  if ((hDWMDLL<>0)and(Assigned(fDwmIsCompositionEnabled)=True)and
+  if ((hDWMDLL<>0) and Assigned(fDwmIsCompositionEnabled)and
     (Assigned(fSetLayeredWindowAttributesFunc)=True)) then
   begin
     fDwmIsCompositionEnabled(@bCmpEnable);
 
-    if bCmpEnable=True then
+    if bCmpEnable then
     begin
       SetWindowLong(FForm.Handle, GWL_EXSTYLE, FOldExStyle or WS_EX_LAYERED);
       fSetLayeredWindowAttributesFunc(FForm.Handle, cKey, 0, LWA_COLORKEY);
@@ -417,7 +417,7 @@ begin
     end;
   end;
 
-  if bActiveLayer=False then
+  if not bActiveLayer then
     SetWindowLong(FForm.Handle, GWL_EXSTYLE, FOldExStyle);
 end;
 
@@ -427,12 +427,12 @@ var
   mgn: TMargins;
 
 begin
-  if ((hDWMDLL<>0)and(Assigned(fDwmIsCompositionEnabled)=True)and
-    (Assigned(fDwmExtendFrameIntoClientArea)=True)) then
+  if ((hDWMDLL<>0)and Assigned(fDwmIsCompositionEnabled) and
+    Assigned(fDwmExtendFrameIntoClientArea)) then
   begin
     fDwmIsCompositionEnabled(@bCmpEnable);
 
-    if bCmpEnable=True then
+    if bCmpEnable then
     begin
       ZeroMemory(@mgn, SizeOf(mgn));
       mgn.cxLeftWidth:=left;
@@ -518,7 +518,7 @@ end;
 
 procedure TDoBlurThread.Execute;
 begin
-  if ((Terminated=False)and(Assigned(FOnExecute)=True)) then
+  if (not Terminated) and Assigned(FOnExecute) then
     FOnExecute(Self);
 
   Terminate;

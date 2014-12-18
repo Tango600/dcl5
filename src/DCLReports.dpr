@@ -1,7 +1,5 @@
 program DCLReports;
-{$IFDEF FPC}
-  {$mode objfpc}{$H+}
-{$ENDIF}
+{$I DefineType.pas}
 
 uses
   {$IFDEF UNIX}{$IFDEF UseCThreads}
@@ -11,34 +9,30 @@ uses
   Interfaces,
   {$ENDIF}
   Forms,
-  {$IFNDEF FPC}
-  DBCtrls in 'units\DBCtrls.pas',
-  DBGrids in 'units\DBGrids.pas',
-  {$ENDIF}
   fReport in 'fReport.pas' {MainForm},
-  FileBuffer in 'FileBuffer.pas',
-  SumProps in 'SumProps.pas',
-  uDCLConst in 'uDCLConst.pas',
+  uUDL in 'uUDL.pas',
+  uStringParams in 'uStringParams.pas',
   uDCLData in 'uDCLData.pas',
-  uDCLDBUtils in 'uDCLDBUtils.pas',
-  uDCLDownloader in 'uDCLDownloader.pas',
+  uDCLConst in 'uDCLConst.pas',
+  uDCLUtils in 'uDCLUtils.pas',
+  uDCLTypes in 'uDCLTypes.pas',
+  uDCLStringsRes in 'uDCLStringsRes.pas',
+  SumProps in 'SumProps.pas',
   uDCLMessageForm in 'uDCLMessageForm.pas',
-  uDCLOfficeUtils in 'uDCLOfficeUtils.pas',
+  uDCLDBUtils in 'uDCLDBUtils.pas',
   uDCLOLE in 'uDCLOLE.pas',
-  uDCLQuery in 'uDCLQuery.pas',
+  uDCLOfficeUtils in 'uDCLOfficeUtils.pas',
+  uLogging in 'uLogging.pas',
   uDCLResources in 'uDCLResources.pas',
   uDCLSQLMonitor in 'uDCLSQLMonitor.pas',
-  uDCLStringsRes in 'uDCLStringsRes.pas',
-  uDCLTypes in 'uDCLTypes.pas',
-  uDCLUtils in 'uDCLUtils.pas',
-  uGlass in 'uGlass.pas',
-  uLogging in 'uLogging.pas',
-  uLZW in 'uLZW.pas'
+  uDCLDownloader in 'uDCLDownloader.pas',
+  uLZW in 'uLZW.pas',
+  FileBuffer in 'FileBuffer.pas',
+  uDCLQuery in 'uDCLQuery.pas'
   {$IFDEF MSWINDOWS}
   ,uOpenOffice In 'uOpenOffice.pas',
-  uOfficeDocs in 'uOfficeDocs.pas', {$ENDIF}
-  uStringParams in 'uStringParams.pas',
-  uUDL in 'uUDL.pas';
+  uOfficeDocs in 'uOfficeDocs.pas'{$ENDIF}
+  {$IFDEF FPC}{$IFDEF ZEOS}, zcomponent{$ENDIF}{$ENDIF};
 
 {$R *.res}
 

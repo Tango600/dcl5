@@ -1,7 +1,5 @@
 program DCLRun;
-{$IFDEF FPC}
-  {$mode objfpc}{$H+}
-{$ENDIF}
+{$I DefineType.pas}
 
 uses
   {$IFDEF UNIX}{$IFDEF UseCThreads}
@@ -12,8 +10,15 @@ uses
   {$ENDIF}
   Forms,
   {$IFNDEF FPC}
+  VCLFixPack in 'VCLFixPack.pas',
+  ThemedDBGrid in 'ThemedDBGrid.pas',
+  {$IFNDEF NEWDELPHI}
   DBCtrls in 'units\DBCtrls.pas',
   DBGrids in 'units\DBGrids.pas',
+  {$ELSE}
+  DBCtrls in 'unitsXE\DBCtrls.pas',
+  DBGrids in 'unitsXE\DBGrids.pas',
+  {$ENDIF}
   {$ENDIF}
   fMainForm in 'fMainForm.pas' {MainForm},
   uUDL in 'uUDL.pas',
@@ -38,7 +43,7 @@ uses
   {$IFDEF MSWINDOWS}
   ,uOpenOffice In 'uOpenOffice.pas',
   uOfficeDocs in 'uOfficeDocs.pas'{$ENDIF}
-  {$IFDEF FPC}, zcomponent{$ENDIF};
+  {$IFDEF FPC}{$IFDEF ZEOS}, zcomponent{$ENDIF}{$ENDIF};
 
 {$R DCLRun.res}
 
@@ -52,6 +57,4 @@ begin
   Application.Initialize;
   Application.CreateForm(TMainForm, MainForm);
   Application.Run;
-
-  EndDCL;
 end.

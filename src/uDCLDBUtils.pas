@@ -23,7 +23,7 @@ Function GetFieldValue(Table, Field, Where: string): string;
 implementation
 
 uses
-  uStringParams, uDCLUtils;
+  uDCLUtils;
 
 Function QueryIsEmpty(Query: TDCLDialogQuery): Boolean;
 Begin

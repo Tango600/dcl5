@@ -1,10 +1,11 @@
-{ ******************************************************* }
-{ }
-{ Borland Delphi Visual Component Library }
-{ }
-{ Copyright (c) 1995,99 Inprise Corporation }
-{ }
-{ ******************************************************* }
+
+{*************************************************************}
+{                                                             }
+{       Borland Delphi Visual Component Library               }
+{                                                             }
+{       Copyright (c) 1995-2005 Borland Software Corporation  }
+{                                                             }
+{*************************************************************}
 
 unit DBCtrls;
 
@@ -12,17 +13,17 @@ unit DBCtrls;
 
 interface
 
-uses Variants, Windows, SysUtils, Messages, Controls, Forms, Classes, Graphics,
-  Menus, StdCtrls, ExtCtrls, Mask, Buttons, ComCtrls, DB;
+uses Variants, Windows, SysUtils, Messages, Controls, Forms, Classes, 
+     Graphics, Menus, StdCtrls, ExtCtrls, Mask, Buttons, ComCtrls, DB;
 
 type
 
-  { TFieldDataLink }
+{ TFieldDataLink }
 
-  TFieldDataLink=class(TDataLink)
+  TFieldDataLink = class(TDataLink)
   private
     FField: TField;
-    FFieldName: string;
+    FFieldName: WideString;
     FControl: TComponent;
     FEditing: Boolean;
     FModified: Boolean;
@@ -33,7 +34,7 @@ type
     function GetCanModify: Boolean;
     procedure SetEditing(Value: Boolean);
     procedure SetField(Value: TField);
-    procedure SetFieldName(const Value: string);
+    procedure SetFieldName(const Value: Widestring);
     procedure UpdateField;
     procedure UpdateRightToLeft;
   protected
@@ -53,16 +54,16 @@ type
     property Control: TComponent read FControl write FControl;
     property Editing: Boolean read FEditing;
     property Field: TField read FField;
-    property FieldName: string read FFieldName write SetFieldName;
+    property FieldName: WideString read FFieldName write SetFieldName;
     property OnDataChange: TNotifyEvent read FOnDataChange write FOnDataChange;
     property OnEditingChange: TNotifyEvent read FOnEditingChange write FOnEditingChange;
     property OnUpdateData: TNotifyEvent read FOnUpdateData write FOnUpdateData;
     property OnActiveChange: TNotifyEvent read FOnActiveChange write FOnActiveChange;
   end;
 
-  { TPaintControl }
+{ TPaintControl }
 
-  TPaintControl=class
+  TPaintControl = class
   private
     FOwner: TWinControl;
     FClassName: string;
@@ -77,13 +78,13 @@ type
     constructor Create(AOwner: TWinControl; const ClassName: string);
     destructor Destroy; override;
     procedure DestroyHandle;
-    property Ctl3DButton: Boolean read FCtl3dButton write SetCtl3DButton;
+    property Ctl3DButton: Boolean read FCtl3dButton write SetCtl3dButton;
     property Handle: HWnd read GetHandle;
   end;
 
-  { TDBEdit }
+{ TDBEdit }
 
-  TDBEdit=class(TCustomMaskEdit)
+  TDBEdit = class(TCustomMaskEdit)
   private
     FDataLink: TFieldDataLink;
     FCanvas: TControlCanvas;
@@ -92,13 +93,13 @@ type
     procedure ActiveChange(Sender: TObject);
     procedure DataChange(Sender: TObject);
     procedure EditingChange(Sender: TObject);
-    function GetDataField: string;
+    function GetDataField: WideString;
     function GetDataSource: TDataSource;
     function GetField: TField;
     function GetReadOnly: Boolean;
     function GetTextMargins: TPoint;
     procedure ResetMaxLength;
-    procedure SetDataField(const Value: string);
+    procedure SetDataField(const Value: WideString);
     procedure SetDataSource(Value: TDataSource);
     procedure SetFocused(Value: Boolean);
     procedure SetReadOnly(Value: Boolean);
@@ -116,7 +117,8 @@ type
     procedure KeyDown(var Key: Word; Shift: TShiftState); override;
     procedure KeyPress(var Key: Char); override;
     procedure Loaded; override;
-    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
+    procedure Notification(AComponent: TComponent;
+      Operation: TOperation); override;
     procedure Reset; override;
   public
     constructor Create(AOwner: TComponent); override;
@@ -126,6 +128,7 @@ type
     function UseRightToLeftAlignment: Boolean; override;
     property Field: TField read GetField;
   published
+    property Align;
     property Anchors;
     property AutoSelect;
     property AutoSize;
@@ -140,7 +143,7 @@ type
     property Color;
     property Constraints;
     property Ctl3D;
-    property DataField: string read GetDataField write SetDataField;
+    property DataField: WideString read GetDataField write SetDataField;
     property DataSource: TDataSource read GetDataSource write SetDataSource;
     property DragCursor;
     property DragKind;
@@ -175,30 +178,34 @@ type
     property OnKeyDown;
     property OnKeyPress;
     property OnKeyUp;
+    property OnMouseActivate;
     property OnMouseDown;
+    property OnMouseEnter;
+    property OnMouseLeave;
     property OnMouseMove;
     property OnMouseUp;
     property OnStartDock;
     property OnStartDrag;
   end;
 
-  { TDBText }
+{ TDBText }
 
-  TDBText=class(TCustomLabel)
+  TDBText = class(TCustomLabel)
   private
     FDataLink: TFieldDataLink;
     procedure DataChange(Sender: TObject);
-    function GetDataField: string;
+    function GetDataField: WideString;
     function GetDataSource: TDataSource;
     function GetField: TField;
     function GetFieldText: string;
-    procedure SetDataField(const Value: string);
+    procedure SetDataField(const Value: WideString);
     procedure SetDataSource(Value: TDataSource);
     procedure CMGetDataLink(var Message: TMessage); message CM_GETDATALINK;
   protected
     function GetLabelText: string; override;
     procedure Loaded; override;
-    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
+    procedure Notification(AComponent: TComponent;
+      Operation: TOperation); override;
     procedure SetAutoSize(Value: Boolean); override;
   public
     constructor Create(AOwner: TComponent); override;
@@ -215,7 +222,7 @@ type
     property BiDiMode;
     property Color;
     property Constraints;
-    property DataField: string read GetDataField write SetDataField;
+    property DataField: WideString read GetDataField write SetDataField;
     property DataSource: TDataSource read GetDataSource write SetDataSource;
     property DragCursor;
     property DragKind;
@@ -238,28 +245,31 @@ type
     property OnDragOver;
     property OnEndDock;
     property OnEndDrag;
+    property OnMouseActivate;
     property OnMouseDown;
+    property OnMouseEnter;
+    property OnMouseLeave;
     property OnMouseMove;
     property OnMouseUp;
     property OnStartDock;
     property OnStartDrag;
   end;
 
-  { TDBCheckBox }
+{ TDBCheckBox }
 
-  TDBCheckBox=class(TCustomCheckBox)
+  TDBCheckBox = class(TCustomCheckBox)
   private
     FDataLink: TFieldDataLink;
     FValueCheck: string;
     FValueUncheck: string;
     FPaintControl: TPaintControl;
     procedure DataChange(Sender: TObject);
-    function GetDataField: string;
+    function GetDataField: WideString;
     function GetDataSource: TDataSource;
     function GetField: TField;
     function GetFieldState: TCheckBoxState;
     function GetReadOnly: Boolean;
-    procedure SetDataField(const Value: string);
+    procedure SetDataField(const Value: WIdeString);
     procedure SetDataSource(Value: TDataSource);
     procedure SetReadOnly(Value: Boolean);
     procedure SetValueCheck(const Value: string);
@@ -272,7 +282,8 @@ type
   protected
     procedure Toggle; override;
     procedure KeyPress(var Key: Char); override;
-    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
+    procedure Notification(AComponent: TComponent;
+      Operation: TOperation); override;
     procedure WndProc(var Message: TMessage); override;
   public
     constructor Create(AOwner: TComponent); override;
@@ -285,6 +296,7 @@ type
     property State;
   published
     property Action;
+    property Align;
     property Alignment;
     property AllowGrayed;
     property Anchors;
@@ -293,7 +305,7 @@ type
     property Color;
     property Constraints;
     property Ctl3D;
-    property DataField: string read GetDataField write SetDataField;
+    property DataField: WideString read GetDataField write SetDataField;
     property DataSource: TDataSource read GetDataSource write SetDataSource;
     property DragCursor;
     property DragKind;
@@ -325,28 +337,31 @@ type
     property OnKeyDown;
     property OnKeyPress;
     property OnKeyUp;
+    property OnMouseActivate;
     property OnMouseDown;
+    property OnMouseEnter;
+    property OnMouseLeave;
     property OnMouseMove;
     property OnMouseUp;
     property OnStartDock;
     property OnStartDrag;
   end;
 
-  { TDBComboBox }
+{ TDBComboBox }
 
-  TDBComboBox=class(TCustomComboBox)
+  TDBComboBox = class(TCustomComboBox)
   private
     FDataLink: TFieldDataLink;
     FPaintControl: TPaintControl;
     procedure DataChange(Sender: TObject);
     procedure EditingChange(Sender: TObject);
     function GetComboText: string;
-    function GetDataField: string;
+    function GetDataField: WideString;
     function GetDataSource: TDataSource;
     function GetField: TField;
     function GetReadOnly: Boolean;
     procedure SetComboText(const Value: string);
-    procedure SetDataField(const Value: string);
+    procedure SetDataField(const Value: WideString);
     procedure SetDataSource(Value: TDataSource);
     procedure SetEditReadOnly;
     procedure SetReadOnly(Value: Boolean);
@@ -358,13 +373,15 @@ type
   protected
     procedure Change; override;
     procedure Click; override;
-    procedure ComboWndProc(var Message: TMessage; ComboWnd: HWnd; ComboProc: Pointer); override;
+    procedure ComboWndProc(var Message: TMessage; ComboWnd: HWnd;
+      ComboProc: Pointer); override;
     procedure CreateWnd; override;
     procedure DropDown; override;
     procedure KeyDown(var Key: Word; Shift: TShiftState); override;
     procedure KeyPress(var Key: Char); override;
     procedure Loaded; override;
-    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
+    procedure Notification(AComponent: TComponent;
+      Operation: TOperation); override;
     procedure SetItems(const Value: TStrings); override;
     procedure SetStyle(Value: TComboboxStyle); override;
     procedure WndProc(var Message: TMessage); override;
@@ -377,7 +394,8 @@ type
     property Field: TField read GetField;
     property Text;
   published
-    property Style; { Must be published before Items }
+    property Style; {Must be published before Items}
+    property Align;
     property Anchors;
     property AutoComplete;
     property AutoDropDown;
@@ -391,7 +409,7 @@ type
     property Color;
     property Constraints;
     property Ctl3D;
-    property DataField: string read GetDataField write SetDataField;
+    property DataField: WideString read GetDataField write SetDataField;
     property DataSource: TDataSource read GetDataSource write SetDataSource;
     property DragCursor;
     property DragKind;
@@ -431,22 +449,24 @@ type
     property OnKeyPress;
     property OnKeyUp;
     property OnMeasureItem;
+    property OnMouseEnter;
+    property OnMouseLeave;
     property OnStartDock;
     property OnStartDrag;
   end;
 
-  { TDBListBox }
+{ TDBListBox }
 
-  TDBListBox=class(TCustomListBox)
+  TDBListBox = class(TCustomListBox)
   private
     FDataLink: TFieldDataLink;
     procedure DataChange(Sender: TObject);
     procedure UpdateData(Sender: TObject);
-    function GetDataField: string;
+    function GetDataField: WideString;
     function GetDataSource: TDataSource;
     function GetField: TField;
     function GetReadOnly: Boolean;
-    procedure SetDataField(const Value: string);
+    procedure SetDataField(const Value: WideString);
     procedure SetDataSource(Value: TDataSource);
     procedure SetReadOnly(Value: Boolean);
     procedure SetItems(Value: TStrings);
@@ -457,7 +477,8 @@ type
     procedure Click; override;
     procedure KeyDown(var Key: Word; Shift: TShiftState); override;
     procedure KeyPress(var Key: Char); override;
-    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
+    procedure Notification(AComponent: TComponent;
+      Operation: TOperation); override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -468,7 +489,7 @@ type
   published
     property Align;
     property Anchors;
-    property AutoComplete;
+    property AutoComplete;    
     property BevelEdges;
     property BevelInner;
     property BevelOuter;
@@ -479,7 +500,7 @@ type
     property Color;
     property Constraints;
     property Ctl3D default True;
-    property DataField: string read GetDataField write SetDataField;
+    property DataField: WideString read GetDataField write SetDataField;
     property DataSource: TDataSource read GetDataSource write SetDataSource;
     property DragCursor;
     property DragKind;
@@ -517,16 +538,19 @@ type
     property OnKeyPress;
     property OnKeyUp;
     property OnMeasureItem;
+    property OnMouseActivate;
     property OnMouseDown;
+    property OnMouseEnter;
+    property OnMouseLeave;
     property OnMouseMove;
     property OnMouseUp;
     property OnStartDock;
     property OnStartDrag;
   end;
 
-  { TDBRadioGroup }
+{ TDBRadioGroup }
 
-  TDBRadioGroup=class(TCustomRadioGroup)
+  TDBRadioGroup = class(TCustomRadioGroup)
   private
     FDataLink: TFieldDataLink;
     FValue: string;
@@ -535,12 +559,12 @@ type
     FOnChange: TNotifyEvent;
     procedure DataChange(Sender: TObject);
     procedure UpdateData(Sender: TObject);
-    function GetDataField: string;
+    function GetDataField: WideString;
     function GetDataSource: TDataSource;
     function GetField: TField;
     function GetReadOnly: Boolean;
     function GetButtonValue(Index: Integer): string;
-    procedure SetDataField(const Value: string);
+    procedure SetDataField(const Value: WideString);
     procedure SetDataSource(Value: TDataSource);
     procedure SetReadOnly(Value: Boolean);
     procedure SetValue(const Value: string);
@@ -553,7 +577,8 @@ type
     procedure Click; override;
     procedure KeyPress(var Key: Char); override;
     function CanModify: Boolean; override;
-    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
+    procedure Notification(AComponent: TComponent;
+      Operation: TOperation); override;
     property DataLink: TFieldDataLink read FDataLink;
   public
     constructor Create(AOwner: TComponent); override;
@@ -573,7 +598,7 @@ type
     property Columns;
     property Constraints;
     property Ctl3D;
-    property DataField: string read GetDataField write SetDataField;
+    property DataField: WideString read GetDataField write SetDataField;
     property DataSource: TDataSource read GetDataSource write SetDataSource;
     property DragCursor;
     property DragKind;
@@ -581,6 +606,7 @@ type
     property Enabled;
     property Font;
     property Items write SetItems;
+    property ParentBackground;
     property ParentBiDiMode;
     property ParentColor;
     property ParentCtl3D;
@@ -602,13 +628,15 @@ type
     property OnEndDrag;
     property OnEnter;
     property OnExit;
+    property OnMouseEnter;
+    property OnMouseLeave;
     property OnStartDock;
     property OnStartDrag;
   end;
 
-  { TDBMemo }
+{ TDBMemo }
 
-  TDBMemo=class(TCustomMemo)
+  TDBMemo = class(TCustomMemo)
   private
     FDataLink: TFieldDataLink;
     FAutoDisplay: Boolean;
@@ -617,11 +645,11 @@ type
     FPaintControl: TPaintControl;
     procedure DataChange(Sender: TObject);
     procedure EditingChange(Sender: TObject);
-    function GetDataField: string;
+    function GetDataField: WideString;
     function GetDataSource: TDataSource;
     function GetField: TField;
     function GetReadOnly: Boolean;
-    procedure SetDataField(const Value: string);
+    procedure SetDataField(const Value: WideString);
     procedure SetDataSource(Value: TDataSource);
     procedure SetReadOnly(Value: Boolean);
     procedure SetAutoDisplay(Value: Boolean);
@@ -640,7 +668,8 @@ type
     procedure KeyDown(var Key: Word; Shift: TShiftState); override;
     procedure KeyPress(var Key: Char); override;
     procedure Loaded; override;
-    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
+    procedure Notification(AComponent: TComponent;
+      Operation: TOperation); override;
     procedure WndProc(var Message: TMessage); override;
   public
     constructor Create(AOwner: TComponent); override;
@@ -665,14 +694,14 @@ type
     property Color;
     property Constraints;
     property Ctl3D;
-    property DataField: string read GetDataField write SetDataField;
+    property DataField: WideString read GetDataField write SetDataField;
     property DataSource: TDataSource read GetDataSource write SetDataSource;
     property DragCursor;
     property DragKind;
     property DragMode;
     property Enabled;
     property Font;
-    property HideSelection;
+    property HideSelection;    
     property ImeMode;
     property ImeName;
     property MaxLength;
@@ -704,16 +733,19 @@ type
     property OnKeyDown;
     property OnKeyPress;
     property OnKeyUp;
+    property OnMouseActivate;
     property OnMouseDown;
+    property OnMouseEnter;
+    property OnMouseLeave;
     property OnMouseMove;
     property OnMouseUp;
     property OnStartDock;
     property OnStartDrag;
   end;
 
-  { TDBImage }
+{ TDBImage }
 
-  TDBImage=class(TCustomControl)
+  TDBImage = class(TCustomControl)
   private
     FDataLink: TFieldDataLink;
     FPicture: TPicture;
@@ -724,7 +756,7 @@ type
     FPictureLoaded: Boolean;
     FQuickDraw: Boolean;
     procedure DataChange(Sender: TObject);
-    function GetDataField: string;
+    function GetDataField: WideString;
     function GetDataSource: TDataSource;
     function GetField: TField;
     function GetReadOnly: Boolean;
@@ -732,7 +764,7 @@ type
     procedure SetAutoDisplay(Value: Boolean);
     procedure SetBorderStyle(Value: TBorderStyle);
     procedure SetCenter(Value: Boolean);
-    procedure SetDataField(const Value: string);
+    procedure SetDataField(const Value: WideString);
     procedure SetDataSource(Value: TDataSource);
     procedure SetPicture(Value: TPicture);
     procedure SetReadOnly(Value: Boolean);
@@ -753,7 +785,8 @@ type
     function GetPalette: HPALETTE; override;
     procedure KeyDown(var Key: Word; Shift: TShiftState); override;
     procedure KeyPress(var Key: Char); override;
-    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
+    procedure Notification(AComponent: TComponent;
+      Operation: TOperation); override;
     procedure Paint; override;
   public
     constructor Create(AOwner: TComponent); override;
@@ -775,7 +808,7 @@ type
     property Color;
     property Constraints;
     property Ctl3D;
-    property DataField: string read GetDataField write SetDataField;
+    property DataField: WideString read GetDataField write SetDataField;
     property DataSource: TDataSource read GetDataSource write SetDataSource;
     property DragCursor;
     property DragKind;
@@ -806,7 +839,10 @@ type
     property OnKeyDown;
     property OnKeyPress;
     property OnKeyUp;
+    property OnMouseActivate;
     property OnMouseDown;
+    property OnMouseEnter;
+    property OnMouseLeave;
     property OnMouseMove;
     property OnMouseUp;
     property OnStartDock;
@@ -814,28 +850,28 @@ type
   end;
 
 const
-  InitRepeatPause=400; { pause before repeat timer (ms) }
-  RepeatPause=100; { pause before hint window displays (ms) }
-  SpaceSize=5; { size of space between special buttons }
+  InitRepeatPause = 400;  { pause before repeat timer (ms) }
+  RepeatPause     = 100;  { pause before hint window displays (ms)}
+  SpaceSize       =  5;   { size of space between special buttons }
 
 type
-  TNavButton=class;
-  TNavDataLink=class;
+  TNavButton = class;
+  TNavDataLink = class;
 
-  TNavGlyph=(ngEnabled, ngDisabled);
-  TNavigateBtn=(nbFirst, nbPrior, nbNext, nbLast, nbInsert, nbDelete, nbEdit, nbPost, nbCancel,
-    nbRefresh);
-  TButtonSet=set of TNavigateBtn;
-  TNavButtonStyle=set of (nsAllowTimer, nsFocusRect);
+  TNavGlyph = (ngEnabled, ngDisabled);
+  TNavigateBtn = (nbFirst, nbPrior, nbNext, nbLast,
+                  nbInsert, nbDelete, nbEdit, nbPost, nbCancel, nbRefresh);
+  TNavButtonSet = set of TNavigateBtn;
+  TNavButtonStyle = set of (nsAllowTimer, nsFocusRect);
 
-  ENavClick=procedure(Sender: TObject; Button: TNavigateBtn) of object;
+  ENavClick = procedure (Sender: TObject; Button: TNavigateBtn) of object;
 
-  { TDBNavigator }
+{ TDBNavigator }
 
-  TDBNavigator=class(TCustomPanel)
+  TDBNavigator = class (TCustomPanel)
   private
     FDataLink: TNavDataLink;
-    FVisibleButtons: TButtonSet;
+    FVisibleButtons: TNavButtonSet;
     FHints: TStrings;
     FDefHints: TStrings;
     ButtonWidth: Integer;
@@ -845,8 +881,8 @@ type
     FocusedButton: TNavigateBtn;
     FConfirmDelete: Boolean;
     FFlat: Boolean;
-    procedure BtnMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState;
-      X, Y: Integer);
+    procedure BtnMouseDown (Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
     procedure ClickHandler(Sender: TObject);
     function GetDataSource: TDataSource;
     function GetHints: TStrings;
@@ -857,21 +893,22 @@ type
     procedure SetFlat(Value: Boolean);
     procedure SetHints(Value: TStrings);
     procedure SetSize(var W: Integer; var H: Integer);
-    procedure SetVisible(Value: TButtonSet);
-    procedure WMSize(var Message: TWMSize); message WM_SIZE;
+    procedure SetVisible(Value: TNavButtonSet);
+    procedure WMSize(var Message: TWMSize);  message WM_SIZE;
     procedure WMSetFocus(var Message: TWMSetFocus); message WM_SETFOCUS;
     procedure WMKillFocus(var Message: TWMKillFocus); message WM_KILLFOCUS;
     procedure WMGetDlgCode(var Message: TWMGetDlgCode); message WM_GETDLGCODE;
     procedure CMEnabledChanged(var Message: TMessage); message CM_ENABLEDCHANGED;
     procedure WMWindowPosChanging(var Message: TWMWindowPosChanging); message WM_WINDOWPOSCHANGING;
   protected
-    Buttons: array [TNavigateBtn] of TNavButton;
+    Buttons: array[TNavigateBtn] of TNavButton;
     procedure DataChanged;
     procedure EditingChanged;
     procedure ActiveChanged;
     procedure Loaded; override;
     procedure KeyDown(var Key: Word; Shift: TShiftState); override;
-    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
+    procedure Notification(AComponent: TComponent;
+      Operation: TOperation); override;
     procedure GetChildren(Proc: TGetChildProc; Root: TComponent); override;
     procedure CalcMinSize(var W, H: Integer);
   public
@@ -881,9 +918,9 @@ type
     procedure BtnClick(Index: TNavigateBtn); virtual;
   published
     property DataSource: TDataSource read GetDataSource write SetDataSource;
-    property VisibleButtons: TButtonSet read FVisibleButtons write SetVisible
-      default [nbFirst, nbPrior, nbNext, nbLast, nbInsert, nbDelete, nbEdit, nbPost, nbCancel,
-      nbRefresh];
+    property VisibleButtons: TNavButtonSet read FVisibleButtons write SetVisible
+      default [nbFirst, nbPrior, nbNext, nbLast, nbInsert, nbDelete,
+        nbEdit, nbPost, nbCancel, nbRefresh];
     property Align;
     property Anchors;
     property Constraints;
@@ -917,9 +954,9 @@ type
     property OnStartDrag;
   end;
 
-  { TNavButton }
+{ TNavButton }
 
-  TNavButton=class(TSpeedButton)
+  TNavButton = class(TSpeedButton)
   private
     FIndex: TNavigateBtn;
     FNavStyle: TNavButtonStyle;
@@ -927,17 +964,19 @@ type
     procedure TimerExpired(Sender: TObject);
   protected
     procedure Paint; override;
-    procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
-    procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
+    procedure MouseDown(Button: TMouseButton; Shift: TShiftState;
+      X, Y: Integer); override;
+    procedure MouseUp(Button: TMouseButton; Shift: TShiftState;
+      X, Y: Integer); override;
   public
     destructor Destroy; override;
     property NavStyle: TNavButtonStyle read FNavStyle write FNavStyle;
-    property Index: TNavigateBtn read FIndex write FIndex;
+    property Index : TNavigateBtn read FIndex write FIndex;
   end;
 
-  { TNavDataLink }
+{ TNavDataLink }
 
-  TNavDataLink=class(TDataLink)
+  TNavDataLink = class(TDataLink)
   private
     FNavigator: TDBNavigator;
   protected
@@ -949,11 +988,11 @@ type
     destructor Destroy; override;
   end;
 
-  { TDBLookupControl }
+{ TDBLookupControl }
 
-  TDBLookupControl=class;
+  TDBLookupControl = class;
 
-  TDataSourceLink=class(TDataLink)
+  TDataSourceLink = class(TDataLink)
   private
     FDBLookupControl: TDBLookupControl;
   protected
@@ -965,7 +1004,7 @@ type
     constructor Create;
   end;
 
-  TListSourceLink=class(TDataLink)
+  TListSourceLink = class(TDataLink)
   private
     FDBLookupControl: TDBLookupControl;
   protected
@@ -976,12 +1015,12 @@ type
     constructor Create;
   end;
 
-  TDBLookupControl=class(TCustomControl)
+  TDBLookupControl = class(TCustomControl)
   private
     FLookupSource: TDataSource;
     FDataLink: TDataSourceLink;
     FListLink: TListSourceLink;
-    FDataFieldName: string;
+    FDataFieldName: WideString;
     FKeyFieldName: string;
     FListFieldName: string;
     FListFieldIndex: Integer;
@@ -995,6 +1034,7 @@ type
     FLookupMode: Boolean;
     FListActive: Boolean;
     FHasFocus: Boolean;
+    FListDataChanging: Integer;
     FNullValueKey: TShortCut;
     procedure CheckNotCircular;
     procedure CheckNotLookup;
@@ -1003,7 +1043,7 @@ type
     function GetKeyFieldName: string;
     function GetListSource: TDataSource;
     function GetReadOnly: Boolean;
-    procedure SetDataFieldName(const Value: string);
+    procedure SetDataFieldName(const Value: WideString);
     procedure SetDataSource(Value: TDataSource);
     procedure SetKeyFieldName(const Value: string);
     procedure SetKeyValue(const Value: Variant);
@@ -1012,7 +1052,7 @@ type
     procedure SetLookupMode(Value: Boolean);
     procedure SetReadOnly(Value: Boolean);
     procedure WMGetDlgCode(var Message: TMessage); message WM_GETDLGCODE;
-    procedure WMKeyDown(var Message: TWMKeyDown); message WM_KEYDOWN;
+    procedure WMKeyDown(var Message: TWMKeyDown); message WM_KEYDOWN;    
     procedure WMKillFocus(var Message: TMessage); message WM_KILLFOCUS;
     procedure WMSetFocus(var Message: TMessage); message WM_SETFOCUS;
     procedure CMEnabledChanged(var Message: TMessage); message CM_ENABLEDCHANGED;
@@ -1024,12 +1064,13 @@ type
     procedure KeyValueChanged; virtual;
     procedure ListLinkDataChanged; virtual;
     function LocateKey: Boolean; virtual;
-    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
+    procedure Notification(AComponent: TComponent;
+      Operation: TOperation); override;
     procedure ProcessSearchKey(Key: Char); virtual;
     procedure SelectKeyValue(const Value: Variant); virtual;
     procedure UpdateDataFields; virtual;
     procedure UpdateListFields; virtual;
-    property DataField: string read FDataFieldName write SetDataFieldName;
+    property DataField: WideString read FDataFieldName write SetDataFieldName;
     property DataLink: TDataSourceLink read FDataLink;
     property DataSource: TDataSource read GetDataSource write SetDataSource;
     property HasFocus: Boolean read FHasFocus;
@@ -1041,7 +1082,7 @@ type
     property ListFields: TList read FListFields;
     property ListLink: TListSourceLink read FListLink;
     property ListSource: TDataSource read GetListSource write SetListSource;
-    property NullValueKey: TShortCut read FNullValueKey write FNullValueKey default 0;
+    property NullValueKey: TShortCut read FNullValueKey write FNullValueKey default 0;    
     property ParentColor default False;
     property ReadOnly: Boolean read GetReadOnly write SetReadOnly default False;
     property SearchText: string read FSearchText write FSearchText;
@@ -1054,9 +1095,9 @@ type
     property Field: TField read FDataField;
   end;
 
-  { TDBLookupListBox }
+{ TDBLookupListBox }
 
-  TDBLookupListBox=class(TDBLookupControl)
+  TDBLookupListBox = class(TDBLookupControl)
   private
     FRecordIndex: Integer;
     FRecordCount: Integer;
@@ -1090,9 +1131,11 @@ type
     procedure KeyPress(var Key: Char); override;
     procedure KeyValueChanged; override;
     procedure ListLinkDataChanged; override;
-    procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
+    procedure MouseDown(Button: TMouseButton; Shift: TShiftState;
+      X, Y: Integer); override;
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
-    procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
+    procedure MouseUp(Button: TMouseButton; Shift: TShiftState;
+      X, Y: Integer); override;
     procedure Paint; override;
     procedure UpdateListFields; override;
   public
@@ -1154,27 +1197,30 @@ type
     property OnKeyDown;
     property OnKeyPress;
     property OnKeyUp;
+    property OnMouseActivate;
     property OnMouseDown;
+    property OnMouseEnter;
+    property OnMouseLeave;
     property OnMouseMove;
     property OnMouseUp;
     property OnStartDock;
     property OnStartDrag;
   end;
 
-  { TDBLookupComboBox }
+{ TDBLookupComboBox }
 
-  TPopupDataList=class(TDBLookupListBox)
+  TPopupDataList = class(TDBLookupListBox)
   private
-    procedure WMMouseActivate(var Message: TMessage); message WM_MOUSEACTIVATE;
+    procedure WMMouseActivate(var Message: TWMMouseActivate); message WM_MOUSEACTIVATE;
   protected
     procedure CreateParams(var Params: TCreateParams); override;
   public
     constructor Create(AOwner: TComponent); override;
   end;
 
-  TDropDownAlign=(daLeft, daRight, daCenter);
+  TDropDownAlign = (daLeft, daRight, daCenter);
 
-  TDBLookupComboBox=class(TDBLookupControl)
+  TDBLookupComboBox = class(TDBLookupControl)
   private
     FDataList: TPopupDataList;
     FButtonWidth: Integer;
@@ -1190,7 +1236,8 @@ type
     FMouseInControl: Boolean;
     FOnDropDown: TNotifyEvent;
     FOnCloseUp: TNotifyEvent;
-    procedure ListMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure ListMouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
     procedure StopTracking;
     procedure TrackButton(X, Y: Integer);
     procedure CMDialogKey(var Message: TCMDialogKey); message CM_DIALOGKEY;
@@ -1209,9 +1256,12 @@ type
     procedure KeyDown(var Key: Word; Shift: TShiftState); override;
     procedure KeyPress(var Key: Char); override;
     procedure KeyValueChanged; override;
-    procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
+    procedure ListLinkDataChanged; override;
+    procedure MouseDown(Button: TMouseButton; Shift: TShiftState;
+      X, Y: Integer); override;
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
-    procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
+    procedure MouseUp(Button: TMouseButton; Shift: TShiftState;
+      X, Y: Integer); override;
     procedure UpdateListFields; override;
   public
     constructor Create(AOwner: TComponent); override;
@@ -1225,6 +1275,7 @@ type
     property ListVisible: Boolean read FListVisible;
     property Text: string read FText;
   published
+    property Align;
     property Anchors;
     property BevelEdges;
     property BevelInner;
@@ -1251,7 +1302,7 @@ type
     property ListField;
     property ListFieldIndex;
     property ListSource;
-    property NullValueKey;
+    property NullValueKey;    
     property ParentBiDiMode;
     property ParentColor;
     property ParentCtl3D;
@@ -1276,16 +1327,19 @@ type
     property OnKeyDown;
     property OnKeyPress;
     property OnKeyUp;
+    property OnMouseActivate;
     property OnMouseDown;
+    property OnMouseEnter;
+    property OnMouseLeave;
     property OnMouseMove;
     property OnMouseUp;
     property OnStartDock;
     property OnStartDrag;
   end;
 
-  { TDBRichEdit }
+{ TDBRichEdit }
 
-  TDBRichEdit=class(TCustomRichEdit)
+  TDBRichEdit = class(TCustomRichEdit)
   private
     FDataLink: TFieldDataLink;
     FAutoDisplay: Boolean;
@@ -1295,11 +1349,11 @@ type
     procedure BeginEditing;
     procedure DataChange(Sender: TObject);
     procedure EditingChange(Sender: TObject);
-    function GetDataField: string;
+    function GetDataField: WIdeString;
     function GetDataSource: TDataSource;
     function GetField: TField;
     function GetReadOnly: Boolean;
-    procedure SetDataField(const Value: string);
+    procedure SetDataField(const Value: WideString);
     procedure SetDataSource(Value: TDataSource);
     procedure SetReadOnly(Value: Boolean);
     procedure SetAutoDisplay(Value: Boolean);
@@ -1316,7 +1370,8 @@ type
     procedure KeyDown(var Key: Word; Shift: TShiftState); override;
     procedure KeyPress(var Key: Char); override;
     procedure Loaded; override;
-    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
+    procedure Notification(AComponent: TComponent;
+      Operation: TOperation); override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -1340,7 +1395,7 @@ type
     property Color;
     property Constraints;
     property Ctl3D;
-    property DataField: string read GetDataField write SetDataField;
+    property DataField: WideString read GetDataField write SetDataField;
     property DataSource: TDataSource read GetDataSource write SetDataSource;
     property DragCursor;
     property DragKind;
@@ -1381,7 +1436,10 @@ type
     property OnKeyDown;
     property OnKeyPress;
     property OnKeyUp;
+    property OnMouseActivate;
     property OnMouseDown;
+    property OnMouseEnter;
+    property OnMouseLeave;
     property OnMouseMove;
     property OnMouseUp;
     property OnResizeRequest;
@@ -1397,23 +1455,36 @@ function DBUseRightToLeftAlignment(AControl: TControl; AField: TField): Boolean;
 
 implementation
 
-uses DBLogDlg, DBPWDlg, Clipbrd, DBConsts, VDBConsts, Dialogs, Math, Themes;
+uses DBLogDlg, DBPWDlg, Clipbrd, DBConsts, VDBConsts, Dialogs, Math, Themes, Types;
 
 {$R DBCtrls.res}
+
 { BiDiMode support routines }
 
-function OkToChangeFieldAlignment(AField: TField; Alignment: TAlignment): Boolean;
-begin
+const
   { dont change the alignment for these fields:
     ftSmallInt     ftInteger      ftWord         ftFloat        ftCurrency
     ftBCD          ftDate         ftTime         ftDateTime     ftAutoInc
-    ftTimeStamp    ftFMTBcd }
+    ftTimeStamp    ftFMTBcd}
+  FieldAlignmentTbl: array[TFieldType] of Boolean= (
+    True,  True,  False, False,  { ftUnknown, ftString, ftSmallint, ftInteger }
+    False, True,  False, False,  { ftWord,  ftBoolean,  ftFloat,   ftCurrency }
+    False, False, False, False,  { ftBCD,   ftDate,     ftTime,    ftDateTime }
+    True,  True,  False, True,   { ftBytes, ftVarBytes, ftAutoInc, ftBlob }
+    True,  True,  True,  True,   { ftMemo,  ftGraphic,  ftFmtMemo, ftParadoxOle }
+    True,  True,  True,  True,   { ftDBaseOle,   ftTypedBinary, ftCursor, ftFixedChar }
+    True,  True,  True,  True,   { ftWideString, ftLargeInt,    ftADT,    ftArray }
+    True,  True,  True,  True,   { ftReference, ftDataSet,   ftOraBlob,   ftOraClob }
+    True,  True,  True,  True,   { ftVariant,   ftInterface, ftIDispatch, ftGuid }
+    True,  False, True,  True,   { ftTimeStamp, ftFMTBcd, ftFixedWideChar, ftWideMemo}
+    True,  True);               { ftstOraTimeStamp, ftstOraInterval }
+
+function OkToChangeFieldAlignment(AField: TField; Alignment: TAlignment): Boolean;
+begin
   if Assigned(AField) then
-    with AField do
-      Result:=(DataType<ftSmallInt)or(DataType=ftBoolean)or
-        ((DataType>ftDateTime)and(DataType<>ftAutoInc)and(DataType<>ftFMTBcd))
+    Result := FieldAlignmentTbl[AField.DataType]
   else
-    Result:=Alignment<>taCenter;
+    Result := Alignment <> taCenter;
 end;
 
 { AField is needed because TDBLookupComboBox, for its combobox, uses FListField
@@ -1423,10 +1494,10 @@ var
   AAlignment: TAlignment;
 begin
   if Assigned(AField) then
-    AAlignment:=AField.Alignment
+    AAlignment := AField.Alignment
   else
-    AAlignment:=taLeftJustify;
-  Result:=(SysLocale.MiddleEast)and(AControl.BiDiMode=bdRightToLeft)and
+    AAlignment := taLeftJustify;
+  Result := (SysLocale.MiddleEast) and (AControl.BiDiMode = bdRightToLeft) and
     (OkToChangeFieldAlignment(AField, AAlignment));
 end;
 
@@ -1435,34 +1506,33 @@ end;
 constructor TFieldDataLink.Create;
 begin
   inherited Create;
-  VisualControl:=True;
+  VisualControl := True;
 end;
 
 procedure TFieldDataLink.SetEditing(Value: Boolean);
 begin
-  if FEditing<>Value then
+  if FEditing <> Value then
   begin
-    FEditing:=Value;
-    FModified:=False;
-    if Assigned(FOnEditingChange) then
-      FOnEditingChange(Self);
+    FEditing := Value;
+    FModified := False;
+    if Assigned(FOnEditingChange) then FOnEditingChange(Self);
   end;
 end;
 
-procedure TFieldDataLink.SetFieldName(const Value: string);
+procedure TFieldDataLink.SetFieldName(const Value: WideString);
 begin
-  if FFieldName<>Value then
+  if FFieldName <> Value then
   begin
-    FFieldName:=Value;
+    FFieldName :=  Value;
     UpdateField;
   end;
 end;
 
 procedure TFieldDataLink.SetField(Value: TField);
 begin
-  if FField<>Value then
+  if FField <> Value then
   begin
-    FField:=Value;
+    FField := Value;
     EditingChanged;
     RecordChanged(nil);
     UpdateRightToLeft;
@@ -1471,15 +1541,13 @@ end;
 
 procedure TFieldDataLink.UpdateField;
 begin
-  if Active and(FFieldName<>'') then
+  if Active and (FFieldName <> '') then
   begin
-    FField:=nil;
+    FField := nil;
     if Assigned(FControl) then
-      SetField(GetFieldProperty(DataSource.DataSet, FControl, FFieldName))
-    else
+      SetField(GetFieldProperty(DataSource.DataSet, FControl, FFieldName)) else
       SetField(DataSource.DataSet.FieldByName(FFieldName));
-  end
-  else
+  end else
     SetField(nil);
 end;
 
@@ -1488,33 +1556,34 @@ var
   IsRightAligned: Boolean;
   AUseRightToLeftAlignment: Boolean;
 begin
-  if Assigned(FControl)and(FControl is TWinControl) then
+  if Assigned(FControl) and (FControl is TWinControl) then
     with FControl as TWinControl do
       if IsRightToLeft then
       begin
-        IsRightAligned:=(GetWindowLong(Handle, GWL_EXSTYLE)and WS_EX_RIGHT)=WS_EX_RIGHT;
-        AUseRightToLeftAlignment:=DBUseRightToLeftAlignment(TControl(FControl), Field);
-        if (IsRightAligned and(not AUseRightToLeftAlignment))or
-          ((not IsRightAligned)and AUseRightToLeftAlignment) then
+        IsRightAligned :=
+          (GetWindowLong(Handle, GWL_EXSTYLE) and WS_EX_RIGHT) = WS_EX_RIGHT;
+        AUseRightToLeftAlignment :=
+          DBUseRightToLeftAlignment(TControl(FControl), Field);
+        if (IsRightAligned and (not AUseRightToLeftAlignment)) or
+           ((not IsRightAligned) and AUseRightToLeftAlignment) then
           Perform(CM_RECREATEWND, 0, 0);
-      end;
+      end;    
 end;
 
 function TFieldDataLink.Edit: Boolean;
 begin
-  if CanModify then
-    inherited Edit;
-  Result:=FEditing;
+  if CanModify then inherited Edit;
+  Result := FEditing;
 end;
 
 function TFieldDataLink.GetCanModify: Boolean;
 begin
-  Result:=not ReadOnly and(Field<>nil)and Field.CanModify;
+  Result := not ReadOnly and (Field <> nil) and Field.CanModify;
 end;
 
 procedure TFieldDataLink.Modified;
 begin
-  FModified:=True;
+  FModified := True;
 end;
 
 procedure TFieldDataLink.Reset;
@@ -1525,8 +1594,7 @@ end;
 procedure TFieldDataLink.ActiveChanged;
 begin
   UpdateField;
-  if Assigned(FOnActiveChange) then
-    FOnActiveChange(Self);
+  if Assigned(FOnActiveChange) then FOnActiveChange(Self);
 end;
 
 procedure TFieldDataLink.EditingChanged;
@@ -1536,21 +1604,20 @@ end;
 
 procedure TFieldDataLink.FocusControl(Field: TFieldRef);
 begin
-  if (Field^<>nil)and(Field^=FField)and(FControl is TWinControl) then
+  if (Field^ <> nil) and (Field^ = FField) and (FControl is TWinControl) then
     if TWinControl(FControl).CanFocus then
     begin
-      Field^:=nil;
+      Field^ := nil;
       TWinControl(FControl).SetFocus;
     end;
 end;
 
 procedure TFieldDataLink.RecordChanged(Field: TField);
 begin
-  if (Field=nil)or(Field=FField) then
+  if (Field = nil) or (Field = FField) then
   begin
-    if Assigned(FOnDataChange) then
-      FOnDataChange(Self);
-    FModified:=False;
+    if Assigned(FOnDataChange) then FOnDataChange(Self);
+    FModified := False;
   end;
 end;
 
@@ -1563,33 +1630,32 @@ procedure TFieldDataLink.UpdateData;
 begin
   if FModified then
   begin
-    if (Field<>nil)and Assigned(FOnUpdateData) then
-      FOnUpdateData(Self);
-    FModified:=False;
+    if (Field <> nil) and Assigned(FOnUpdateData) then FOnUpdateData(Self);
+    FModified := False;
   end;
 end;
 
 procedure TFieldDataLink.DataEvent(Event: TDataEvent; Info: Integer);
 begin
   inherited;
-  if Event=deDisabledStateChange then
+  if Event = deDisabledStateChange then
   begin
     if Boolean(Info) then
       UpdateField
     else
-      FField:=nil;
+      FField := nil;
   end;
 end;
 
 { TPaintControl }
 
 type
-  TWinControlAccess=class(TWinControl);
+  TWinControlAccess = class(TWinControl);
 
 constructor TPaintControl.Create(AOwner: TWinControl; const ClassName: string);
 begin
-  FOwner:=AOwner;
-  FClassName:=ClassName;
+  FOwner := AOwner;
+  FClassName := ClassName;
 end;
 
 destructor TPaintControl.Destroy;
@@ -1599,46 +1665,45 @@ end;
 
 procedure TPaintControl.DestroyHandle;
 begin
-  if FHandle<>0 then
-    DestroyWindow(FHandle);
+  if FHandle <> 0 then DestroyWindow(FHandle);
   FreeObjectInstance(FObjectInstance);
-  FHandle:=0;
-  FObjectInstance:=nil;
+  FHandle := 0;
+  FObjectInstance := nil;
 end;
 
 function TPaintControl.GetHandle: HWnd;
 var
   Params: TCreateParams;
 begin
-  if FHandle=0 then
+  if FHandle = 0 then
   begin
-    FObjectInstance:=MakeObjectInstance(WndProc);
+    FObjectInstance := MakeObjectInstance(WndProc);
     TWinControlAccess(FOwner).CreateParams(Params);
-    Params.Style:=Params.Style and not (WS_HSCROLL or WS_VSCROLL);
+    Params.Style := Params.Style and not (WS_HSCROLL or WS_VSCROLL);
     with Params do
-      FHandle:=CreateWindowEx(ExStyle, PChar(FClassName), PChar(TWinControlAccess(FOwner).Text),
-        Style or WS_VISIBLE, X, Y, Width, Height, Application.Handle, 0, HInstance, nil);
-    FDefWindowProc:=Pointer(GetWindowLong(FHandle, GWL_WNDPROC));
+      FHandle := CreateWindowEx(ExStyle, PChar(FClassName),
+        PChar(TWinControlAccess(FOwner).Text), Style or WS_VISIBLE,
+        X, Y, Width, Height, Application.Handle, 0, HInstance, nil);
+    FDefWindowProc := Pointer(GetWindowLong(FHandle, GWL_WNDPROC));
     SetWindowLong(FHandle, GWL_WNDPROC, Integer(FObjectInstance));
-    SendMessage(FHandle, WM_SETFONT, TWinControlAccess(FOwner).Font.Handle, 1);
+    SendMessage(FHandle, WM_SETFONT,
+      TWinControlAccess(FOwner).Font.Handle, 1);
   end;
-  Result:=FHandle;
+  Result := FHandle;
 end;
 
 procedure TPaintControl.SetCtl3DButton(Value: Boolean);
 begin
-  if FHandle<>0 then
-    DestroyHandle;
-  FCtl3dButton:=Value;
+  if FHandle <> 0 then DestroyHandle;
+  FCtl3DButton := Value;
 end;
 
 procedure TPaintControl.WndProc(var Message: TMessage);
 begin
-  with message do
-    if (Msg>=CN_CTLCOLORMSGBOX)and(Msg<=CN_CTLCOLORSTATIC) then
-      Result:=FOwner.Perform(Msg, WParam, LParam)
-    else
-      Result:=CallWindowProc(FDefWindowProc, FHandle, Msg, WParam, LParam);
+  with Message do
+    if (Msg >= CN_CTLCOLORMSGBOX) and (Msg <= CN_CTLCOLORSTATIC) then
+      Result := FOwner.Perform(Msg, WParam, LParam) else
+      Result := CallWindowProc(FDefWindowProc, FHandle, Msg, WParam, LParam);
 end;
 
 { TDBEdit }
@@ -1647,31 +1712,31 @@ procedure TDBEdit.ResetMaxLength;
 var
   F: TField;
 begin
-  if (MaxLength>0)and Assigned(DataSource)and Assigned(DataSource.DataSet) then
+  if (MaxLength > 0) and Assigned(DataSource) and Assigned(DataSource.DataSet) then
   begin
-    F:=DataSource.DataSet.FindField(DataField);
-    if Assigned(F)and(F.DataType in [ftString, ftWideString])and(F.Size=MaxLength) then
-      MaxLength:=0;
+    F := DataSource.DataSet.FindField(DataField);
+    if Assigned(F) and (F.DataType in [ftString, ftWideString]) and (F.Size = MaxLength) then
+      MaxLength := 0;
   end;
 end;
 
 constructor TDBEdit.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  inherited ReadOnly:=True;
-  ControlStyle:=ControlStyle+[csReplicatable];
-  FDataLink:=TFieldDataLink.Create;
-  FDataLink.Control:=Self;
-  FDataLink.OnDataChange:=DataChange;
-  FDataLink.OnEditingChange:=EditingChange;
-  FDataLink.OnUpdateData:=UpdateData;
-  FDataLink.OnActiveChange:=ActiveChange;
+  inherited ReadOnly := True;
+  ControlStyle := ControlStyle + [csReplicatable];
+  FDataLink := TFieldDataLink.Create;
+  FDataLink.Control := Self;
+  FDataLink.OnDataChange := DataChange;
+  FDataLink.OnEditingChange := EditingChange;
+  FDataLink.OnUpdateData := UpdateData;
+  FDataLink.OnActiveChange := ActiveChange;
 end;
 
 destructor TDBEdit.Destroy;
 begin
   FDataLink.Free;
-  FDataLink:=nil;
+  FDataLink := nil;
   FCanvas.Free;
   inherited Destroy;
 end;
@@ -1680,52 +1745,53 @@ procedure TDBEdit.Loaded;
 begin
   inherited Loaded;
   ResetMaxLength;
-  if (csDesigning in ComponentState) then
-    DataChange(Self);
+  if (csDesigning in ComponentState) then DataChange(Self);
 end;
 
-procedure TDBEdit.Notification(AComponent: TComponent; Operation: TOperation);
+procedure TDBEdit.Notification(AComponent: TComponent;
+  Operation: TOperation);
 begin
   inherited Notification(AComponent, Operation);
-  if (Operation=opRemove)and(FDataLink<>nil)and(AComponent=DataSource) then
-    DataSource:=nil;
+  if (Operation = opRemove) and (FDataLink <> nil) and
+    (AComponent = DataSource) then DataSource := nil;
 end;
 
 function TDBEdit.UseRightToLeftAlignment: Boolean;
 begin
-  Result:=DBUseRightToLeftAlignment(Self, Field);
+  Result := DBUseRightToLeftAlignment(Self, Field);
 end;
 
 procedure TDBEdit.KeyDown(var Key: Word; Shift: TShiftState);
 begin
   inherited KeyDown(Key, Shift);
-  if (Key=VK_DELETE)or((Key=VK_INSERT)and(ssShift in Shift)) then
+  if (Key = VK_DELETE) or ((Key = VK_INSERT) and (ssShift in Shift)) then
     FDataLink.Edit;
 end;
 
 procedure TDBEdit.KeyPress(var Key: Char);
 begin
   inherited KeyPress(Key);
-  if (Key in [#32..#255])and(FDataLink.Field<>nil)and not FDataLink.Field.IsValidChar(Key) then
+  if (Key in [#32..#255]) and (FDataLink.Field <> nil) and
+    not FDataLink.Field.IsValidChar(Key) then
   begin
     MessageBeep(0);
-    Key:=#0;
+    Key := #0;
   end;
   case Key of
-  ^H, ^V, ^X, #32..#255:
-  FDataLink.Edit;
-  #27:
-  begin
-    FDataLink.Reset;
-    SelectAll;
-    Key:=#0;
-  end;
+    ^H, ^V, ^X, #32..#255:
+      FDataLink.Edit;
+    #27:
+      begin
+        FDataLink.Reset;
+        SelectAll;
+        Key := #0;
+      end;
   end;
 end;
 
 function TDBEdit.EditCanModify: Boolean;
 begin
-  Result:=FDataLink.Edit;
+  Result := FDataLink.Edit;
 end;
 
 procedure TDBEdit.Reset;
@@ -1736,11 +1802,10 @@ end;
 
 procedure TDBEdit.SetFocused(Value: Boolean);
 begin
-  if FFocused<>Value then
+  if FFocused <> Value then
   begin
-    FFocused:=Value;
-    if (FAlignment<>taLeftJustify)and not IsMasked then
-      Invalidate;
+    FFocused := Value;
+    if (FAlignment <> taLeftJustify) and not IsMasked then Invalidate;
     FDataLink.Reset;
   end;
 end;
@@ -1753,42 +1818,41 @@ end;
 
 function TDBEdit.GetDataSource: TDataSource;
 begin
-  Result:=FDataLink.DataSource;
+  Result := FDataLink.DataSource;
 end;
 
 procedure TDBEdit.SetDataSource(Value: TDataSource);
 begin
-  if not (FDataLink.DataSourceFixed and(csLoading in ComponentState)) then
-    FDataLink.DataSource:=Value;
-  if Value<>nil then
-    Value.FreeNotification(Self);
+  if not (FDataLink.DataSourceFixed and (csLoading in ComponentState)) then
+    FDataLink.DataSource := Value;
+  if Value <> nil then Value.FreeNotification(Self);
 end;
 
-function TDBEdit.GetDataField: string;
+function TDBEdit.GetDataField: WideString;
 begin
-  Result:=FDataLink.FieldName;
+  Result := FDataLink.FieldName;
 end;
 
-procedure TDBEdit.SetDataField(const Value: string);
+procedure TDBEdit.SetDataField(const Value: WideString);
 begin
   if not (csDesigning in ComponentState) then
     ResetMaxLength;
-  FDataLink.FieldName:=Value;
+  FDataLink.FieldName := Value;
 end;
 
 function TDBEdit.GetReadOnly: Boolean;
 begin
-  Result:=FDataLink.ReadOnly;
+  Result := FDataLink.ReadOnly;
 end;
 
 procedure TDBEdit.SetReadOnly(Value: Boolean);
 begin
-  FDataLink.ReadOnly:=Value;
+  FDataLink.ReadOnly := Value;
 end;
 
 function TDBEdit.GetField: TField;
 begin
-  Result:=FDataLink.Field;
+  Result := FDataLink.Field;
 end;
 
 procedure TDBEdit.ActiveChange(Sender: TObject);
@@ -1798,49 +1862,47 @@ end;
 
 procedure TDBEdit.DataChange(Sender: TObject);
 begin
-  if FDataLink.Field<>nil then
+  if FDataLink.Field <> nil then
   begin
-    if FAlignment<>FDataLink.Field.Alignment then
+    if FAlignment <> FDataLink.Field.Alignment then
     begin
-      EditText:=''; { forces update }
-      FAlignment:=FDataLink.Field.Alignment;
+      EditText := '';  {forces update}
+      FAlignment := FDataLink.Field.Alignment;
     end;
-    EditMask:=FDataLink.Field.EditMask;
+    EditMask := FDataLink.Field.EditMask;
     if not (csDesigning in ComponentState) then
     begin
-      if (FDataLink.Field.DataType in [ftString, ftWideString])and(MaxLength=0) then
-        MaxLength:=FDataLink.Field.Size;
+      if (FDataLink.Field.DataType in [ftString, ftWideString]) and (MaxLength = 0) then
+        MaxLength := FDataLink.Field.Size;
     end;
     if FFocused and FDataLink.CanModify then
-      Text:=FDataLink.Field.Text
+      Text := FDataLink.Field.Text
     else
     begin
-      EditText:=FDataLink.Field.DisplayText;
+      EditText := FDataLink.Field.DisplayText;
       if FDataLink.Editing and FDataLink.FModified then
-        Modified:=True;
+        Modified := True;
     end;
-  end
-  else
+  end else
   begin
-    FAlignment:=taLeftJustify;
-    EditMask:='';
+    FAlignment := taLeftJustify;
+    EditMask := '';
     if csDesigning in ComponentState then
-      EditText:=Name
-    else
-      EditText:='';
+      EditText := Name else
+      EditText := '';
   end;
 end;
 
 procedure TDBEdit.EditingChange(Sender: TObject);
 begin
-  inherited ReadOnly:=not FDataLink.Editing;
+  inherited ReadOnly := not FDataLink.Editing;
 end;
 
 procedure TDBEdit.UpdateData(Sender: TObject);
 begin
   ValidateEdit;
-  if FDataLink.DataSource.State in [dsInsert, dsEdit] then
-    FDataLink.Field.Text:=Text;
+  if FDataLink.DataSource.State in [dsInsert, dsEdit] then //Tango
+    FDataLink.Field.Text := Text;
 end;
 
 procedure TDBEdit.WMUndo(var Message: TMessage);
@@ -1866,7 +1928,7 @@ begin
   SetFocused(True);
   inherited;
   if SysLocale.FarEast and FDataLink.CanModify then
-    inherited ReadOnly:=False;
+    inherited ReadOnly := False;
 end;
 
 procedure TDBEdit.CMExit(var Message: TCMExit);
@@ -1885,7 +1947,8 @@ end;
 
 procedure TDBEdit.WMPaint(var Message: TWMPaint);
 const
-  AlignStyle: array [Boolean, TAlignment] of DWORD=((WS_EX_LEFT, WS_EX_RIGHT, WS_EX_LEFT),
+  AlignStyle : array[Boolean, TAlignment] of DWORD =
+   ((WS_EX_LEFT, WS_EX_RIGHT, WS_EX_LEFT),
     (WS_EX_RIGHT, WS_EX_LEFT, WS_EX_LEFT));
 var
   Left: Integer;
@@ -1897,89 +1960,79 @@ var
   AAlignment: TAlignment;
   ExStyle: DWORD;
 begin
-  AAlignment:=FAlignment;
-  if UseRightToLeftAlignment then
-    ChangeBiDiModeAlignment(AAlignment);
-  if ((AAlignment=taLeftJustify)or FFocused)and not (csPaintCopy in ControlState) then
+  AAlignment := FAlignment;
+  if UseRightToLeftAlignment then ChangeBiDiModeAlignment(AAlignment);
+  if ((AAlignment = taLeftJustify) or FFocused) and
+    not (csPaintCopy in ControlState) then
   begin
-    if SysLocale.MiddleEast and HandleAllocated and(IsRightToLeft) then
+    if SysLocale.MiddleEast and HandleAllocated and (IsRightToLeft) then
     begin { This keeps the right aligned text, right aligned }
-      ExStyle:=DWORD(GetWindowLong(Handle, GWL_EXSTYLE))and(not WS_EX_RIGHT)and
-        (not WS_EX_RTLREADING)and(not WS_EX_LEFTSCROLLBAR);
-      if UseRightToLeftReading then
-        ExStyle:=ExStyle or WS_EX_RTLREADING;
-      if UseRightToLeftScrollbar then
-        ExStyle:=ExStyle or WS_EX_LEFTSCROLLBAR;
-      ExStyle:=ExStyle or AlignStyle[UseRightToLeftAlignment, AAlignment];
-      if DWORD(GetWindowLong(Handle, GWL_EXSTYLE))<>ExStyle then
+      ExStyle := DWORD(GetWindowLong(Handle, GWL_EXSTYLE)) and (not WS_EX_RIGHT) and
+        (not WS_EX_RTLREADING) and (not WS_EX_LEFTSCROLLBAR);
+      if UseRightToLeftReading then ExStyle := ExStyle or WS_EX_RTLREADING;
+      if UseRightToLeftScrollbar then ExStyle := ExStyle or WS_EX_LEFTSCROLLBAR;
+      ExStyle := ExStyle or
+        AlignStyle[UseRightToLeftAlignment, AAlignment];
+      if DWORD(GetWindowLong(Handle, GWL_EXSTYLE)) <> ExStyle then
         SetWindowLong(Handle, GWL_EXSTYLE, ExStyle);
     end;
     inherited;
     Exit;
   end;
-  { Since edit controls do not handle justification unless multi-line (and
-    then only poorly) we will draw right and center justify manually unless
-    the edit has the focus. }
-  if FCanvas=nil then
+{ Since edit controls do not handle justification unless multi-line (and
+  then only poorly) we will draw right and center justify manually unless
+  the edit has the focus. }
+  if FCanvas = nil then
   begin
-    FCanvas:=TControlCanvas.Create;
-    FCanvas.Control:=Self;
+    FCanvas := TControlCanvas.Create;
+    FCanvas.Control := Self;
   end;
-  DC:=message.DC;
-  if DC=0 then
-    DC:=BeginPaint(Handle, PS);
-  FCanvas.Handle:=DC;
+  DC := Message.DC;
+  if DC = 0 then DC := BeginPaint(Handle, PS);
+  FCanvas.Handle := DC;
   try
-    FCanvas.Font:=Font;
+    FCanvas.Font := Font;
     with FCanvas do
     begin
-      R:=ClientRect;
-      if not (NewStyleControls and Ctl3D)and(BorderStyle=bsSingle) then
+      R := ClientRect;
+      if not (NewStyleControls and Ctl3D) and (BorderStyle = bsSingle) then
       begin
-        Brush.Color:=clWindowFrame;
+        Brush.Color := clWindowFrame;
         FrameRect(R);
-        InflateRect(R, - 1, - 1);
+        InflateRect(R, -1, -1);
       end;
-      Brush.Color:=Color;
+      Brush.Color := Color;
       if not Enabled then
-        Font.Color:=clGrayText;
-      if (csPaintCopy in ControlState)and(FDataLink.Field<>nil) then
+        Font.Color := clGrayText;
+      if (csPaintCopy in ControlState) and (FDataLink.Field <> nil) then
       begin
-        S:=FDataLink.Field.DisplayText;
+        S := FDataLink.Field.DisplayText;
         case CharCase of
-        ecUpperCase:
-        S:=AnsiUpperCase(S);
-        ecLowerCase:
-        S:=AnsiLowerCase(S);
+          ecUpperCase: S := AnsiUpperCase(S);
+          ecLowerCase: S := AnsiLowerCase(S);
         end;
-      end
-      else
-        S:=EditText;
-      if PasswordChar<>#0 then
-        FillChar(S[1], Length(S), PasswordChar);
-      Margins:=GetTextMargins;
+      end else
+        S := EditText;
+      if PasswordChar <> #0 then FillChar(S[1], Length(S), PasswordChar);
+      Margins := GetTextMargins;
       case AAlignment of
-      taLeftJustify:
-      Left:=Margins.X;
-      taRightJustify:
-      Left:=ClientWidth-TextWidth(S)-Margins.X-1;
-    else
-    Left:=(ClientWidth-TextWidth(S))div 2;
+        taLeftJustify: Left := Margins.X;
+        taRightJustify: Left := ClientWidth - TextWidth(S) - Margins.X - 1;
+      else
+        Left := (ClientWidth - TextWidth(S)) div 2;
       end;
-      if SysLocale.MiddleEast then
-        UpdateTextFlags;
+      if SysLocale.MiddleEast then UpdateTextFlags;
       TextRect(R, Left, Margins.Y, S);
     end;
   finally
-    FCanvas.Handle:=0;
-    if message.DC=0 then
-      EndPaint(Handle, PS);
+    FCanvas.Handle := 0;
+    if Message.DC = 0 then EndPaint(Handle, PS);
   end;
 end;
 
 procedure TDBEdit.CMGetDataLink(var Message: TMessage);
 begin
-  message.Result:=Integer(FDataLink);
+  Message.Result := Integer(FDataLink);
 end;
 
 function TDBEdit.GetTextMargins: TPoint;
@@ -1991,45 +2044,39 @@ var
 begin
   if NewStyleControls then
   begin
-    if BorderStyle=bsNone then
-      I:=0
-    else if Ctl3D then
-      I:=1
-    else
-      I:=2;
-    Result.X:=SendMessage(Handle, EM_GETMARGINS, 0, 0)and $0000FFFF+I;
-    Result.Y:=I;
-  end
-  else
+    if BorderStyle = bsNone then I := 0 else
+      if Ctl3D then I := 1 else I := 2;
+    Result.X := SendMessage(Handle, EM_GETMARGINS, 0, 0) and $0000FFFF + I;
+    Result.Y := I;
+  end else
   begin
-    if BorderStyle=bsNone then
-      I:=0
-    else
+    if BorderStyle = bsNone then I := 0 else
     begin
-      DC:=GetDC(0);
+      DC := GetDC(0);
       GetTextMetrics(DC, SysMetrics);
-      SaveFont:=SelectObject(DC, Font.Handle);
+      SaveFont := SelectObject(DC, Font.Handle);
       GetTextMetrics(DC, Metrics);
       SelectObject(DC, SaveFont);
       ReleaseDC(0, DC);
-      I:=SysMetrics.tmHeight;
-      if I>Metrics.tmHeight then
-        I:=Metrics.tmHeight;
-      I:=I div 4;
+      I := SysMetrics.tmHeight;
+      if I > Metrics.tmHeight then I := Metrics.tmHeight;
+      I := I div 4;
     end;
-    Result.X:=I;
-    Result.Y:=I;
+    Result.X := I;
+    Result.Y := I;
   end;
 end;
 
 function TDBEdit.ExecuteAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited ExecuteAction(Action)or(FDataLink<>nil)and FDataLink.ExecuteAction(Action);
+  Result := inherited ExecuteAction(Action) or (FDataLink <> nil) and
+    FDataLink.ExecuteAction(Action);
 end;
 
 function TDBEdit.UpdateAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited UpdateAction(Action)or(FDataLink<>nil)and FDataLink.UpdateAction(Action);
+  Result := inherited UpdateAction(Action) or (FDataLink <> nil) and
+    FDataLink.UpdateAction(Action);
 end;
 
 { TDBText }
@@ -2037,114 +2084,111 @@ end;
 constructor TDBText.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  ControlStyle:=ControlStyle+[csReplicatable];
-  AutoSize:=False;
-  ShowAccelChar:=False;
-  FDataLink:=TFieldDataLink.Create;
-  FDataLink.Control:=Self;
-  FDataLink.OnDataChange:=DataChange;
+  ControlStyle := ControlStyle + [csReplicatable];
+  AutoSize := False;
+  ShowAccelChar := False;
+  FDataLink := TFieldDataLink.Create;
+  FDataLink.Control := Self;
+  FDataLink.OnDataChange := DataChange;
 end;
 
 destructor TDBText.Destroy;
 begin
   FDataLink.Free;
-  FDataLink:=nil;
+  FDataLink := nil;
   inherited Destroy;
 end;
 
 procedure TDBText.Loaded;
 begin
   inherited Loaded;
-  if (csDesigning in ComponentState) then
-    DataChange(Self);
+  if (csDesigning in ComponentState) then DataChange(Self);
 end;
 
-procedure TDBText.Notification(AComponent: TComponent; Operation: TOperation);
+procedure TDBText.Notification(AComponent: TComponent;
+  Operation: TOperation);
 begin
   inherited Notification(AComponent, Operation);
-  if (Operation=opRemove)and(FDataLink<>nil)and(AComponent=DataSource) then
-    DataSource:=nil;
+  if (Operation = opRemove) and (FDataLink <> nil) and
+    (AComponent = DataSource) then DataSource := nil;
 end;
 
 function TDBText.UseRightToLeftAlignment: Boolean;
 begin
-  Result:=DBUseRightToLeftAlignment(Self, Field);
+  Result := DBUseRightToLeftAlignment(Self, Field);
 end;
 
 procedure TDBText.SetAutoSize(Value: Boolean);
 begin
-  if AutoSize<>Value then
+  if AutoSize <> Value then
   begin
-    if Value and FDataLink.DataSourceFixed then
-      DatabaseError(SDataSourceFixed);
+    if Value and FDataLink.DataSourceFixed then DatabaseError(SDataSourceFixed);
     inherited SetAutoSize(Value);
   end;
 end;
 
 function TDBText.GetDataSource: TDataSource;
 begin
-  Result:=FDataLink.DataSource;
+  Result := FDataLink.DataSource;
 end;
 
 procedure TDBText.SetDataSource(Value: TDataSource);
 begin
-  if not (FDataLink.DataSourceFixed and(csLoading in ComponentState)) then
-    FDataLink.DataSource:=Value;
-  if Value<>nil then
-    Value.FreeNotification(Self);
+  if not (FDataLink.DataSourceFixed and (csLoading in ComponentState)) then
+    FDataLink.DataSource := Value;
+  if Value <> nil then Value.FreeNotification(Self);
 end;
 
-function TDBText.GetDataField: string;
+function TDBText.GetDataField: WIdeString;
 begin
-  Result:=FDataLink.FieldName;
+  Result := FDataLink.FieldName;
 end;
 
-procedure TDBText.SetDataField(const Value: string);
+procedure TDBText.SetDataField(const Value: WideString);
 begin
-  FDataLink.FieldName:=Value;
+  FDataLink.FieldName := Value;
 end;
 
 function TDBText.GetField: TField;
 begin
-  Result:=FDataLink.Field;
+  Result := FDataLink.Field;
 end;
 
 function TDBText.GetFieldText: string;
 begin
-  if FDataLink.Field<>nil then
-    Result:=FDataLink.Field.DisplayText
-  else if csDesigning in ComponentState then
-    Result:=Name
+  if FDataLink.Field <> nil then
+    Result := FDataLink.Field.DisplayText
   else
-    Result:='';
+    if csDesigning in ComponentState then Result := Name else Result := '';
 end;
 
 procedure TDBText.DataChange(Sender: TObject);
 begin
-  Caption:=GetFieldText;
+  Caption := GetFieldText;
 end;
 
 function TDBText.GetLabelText: string;
 begin
   if csPaintCopy in ControlState then
-    Result:=GetFieldText
-  else
-    Result:=Caption;
+    Result := GetFieldText else
+    Result := Caption;
 end;
 
 procedure TDBText.CMGetDataLink(var Message: TMessage);
 begin
-  message.Result:=Integer(FDataLink);
+  Message.Result := Integer(FDataLink);
 end;
 
 function TDBText.ExecuteAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited ExecuteAction(Action)or(FDataLink<>nil)and FDataLink.ExecuteAction(Action);
+  Result := inherited ExecuteAction(Action) or (FDataLink <> nil) and
+    FDataLink.ExecuteAction(Action);
 end;
 
 function TDBText.UpdateAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited UpdateAction(Action)or(FDataLink<>nil)and FDataLink.UpdateAction(Action);
+  Result := inherited UpdateAction(Action) or (FDataLink <> nil) and
+    FDataLink.UpdateAction(Action);
 end;
 
 { TDBCheckBox }
@@ -2152,66 +2196,65 @@ end;
 constructor TDBCheckBox.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  ControlStyle:=ControlStyle+[csReplicatable];
-  State:=cbUnchecked;
-  FValueCheck:=STextTrue;
-  FValueUncheck:=STextFalse;
-  FDataLink:=TFieldDataLink.Create;
-  FDataLink.Control:=Self;
-  FDataLink.OnDataChange:=DataChange;
-  FDataLink.OnUpdateData:=UpdateData;
-  FPaintControl:=TPaintControl.Create(Self, 'BUTTON');
-  FPaintControl.Ctl3DButton:=True;
+  ControlStyle := ControlStyle + [csReplicatable];
+  State := cbUnchecked;
+  FValueCheck := STextTrue;
+  FValueUncheck := STextFalse;
+  FDataLink := TFieldDataLink.Create;
+  FDataLink.Control := Self;
+  FDataLink.OnDataChange := DataChange;
+  FDataLink.OnUpdateData := UpdateData;
+  FPaintControl := TPaintControl.Create(Self, 'BUTTON');
+  FPaintControl.Ctl3DButton := True;
 end;
 
 destructor TDBCheckBox.Destroy;
 begin
   FPaintControl.Free;
   FDataLink.Free;
-  FDataLink:=nil;
+  FDataLink := nil;
   inherited Destroy;
 end;
 
-procedure TDBCheckBox.Notification(AComponent: TComponent; Operation: TOperation);
+procedure TDBCheckBox.Notification(AComponent: TComponent;
+  Operation: TOperation);
 begin
   inherited Notification(AComponent, Operation);
-  if (Operation=opRemove)and(FDataLink<>nil)and(AComponent=DataSource) then
-    DataSource:=nil;
+  if (Operation = opRemove) and (FDataLink <> nil) and
+    (AComponent = DataSource) then DataSource := nil;
 end;
 
 function TDBCheckBox.UseRightToLeftAlignment: Boolean;
 begin
-  Result:=DBUseRightToLeftAlignment(Self, Field);
+  Result := DBUseRightToLeftAlignment(Self, Field);
 end;
 
 function TDBCheckBox.GetFieldState: TCheckBoxState;
 var
   Text: string;
 begin
-  if FDataLink.Field<>nil then
+  if FDatalink.Field <> nil then
     if FDataLink.Field.IsNull then
-      Result:=cbGrayed
-    else if FDataLink.Field.DataType=ftBoolean then
+      Result := cbGrayed
+    else if FDataLink.Field.DataType = ftBoolean then
       if FDataLink.Field.AsBoolean then
-        Result:=cbChecked
+        Result := cbChecked
       else
-        Result:=cbUnchecked
+        Result := cbUnchecked
     else
     begin
-      Result:=cbGrayed;
-      Text:=FDataLink.Field.Text;
-      if ValueMatch(FValueCheck, Text) then
-        Result:=cbChecked
-      else if ValueMatch(FValueUncheck, Text) then
-        Result:=cbUnchecked;
+      Result := cbGrayed;
+      Text := FDataLink.Field.Text;
+      if ValueMatch(FValueCheck, Text) then Result := cbChecked else
+        if ValueMatch(FValueUncheck, Text) then Result := cbUnchecked;
     end
   else
-    Result:=cbUnchecked;
+    Result := cbUnchecked;
 end;
 
 procedure TDBCheckBox.DataChange(Sender: TObject);
 begin
-  State:=GetFieldState;
+  State := GetFieldState;
 end;
 
 procedure TDBCheckBox.UpdateData(Sender: TObject);
@@ -2219,31 +2262,29 @@ var
   Pos: Integer;
   S: string;
 begin
-  if State=cbGrayed then
+  if State = cbGrayed then
     FDataLink.Field.Clear
-  else if FDataLink.Field.DataType=ftBoolean then
-    FDataLink.Field.AsBoolean:=Checked
   else
-  begin
-    if Checked then
-      S:=FValueCheck
+    if FDataLink.Field.DataType = ftBoolean then
+      FDataLink.Field.AsBoolean := Checked
     else
-      S:=FValueUncheck;
-    Pos:=1;
-    FDataLink.Field.Text:=ExtractFieldName(S, Pos);
-  end;
+    begin
+      if Checked then S := FValueCheck else S := FValueUncheck;
+      Pos := 1;
+      FDataLink.Field.Text := ExtractFieldName(S, Pos);
+    end;
 end;
 
 function TDBCheckBox.ValueMatch(const ValueList, Value: string): Boolean;
 var
   Pos: Integer;
 begin
-  Result:=False;
-  Pos:=1;
-  while Pos<=Length(ValueList) do
-    if AnsiCompareText(ExtractFieldName(ValueList, Pos), Value)=0 then
+  Result := False;
+  Pos := 1;
+  while Pos <= Length(ValueList) do
+    if AnsiCompareText(ExtractFieldName(ValueList, Pos), Value) = 0 then
     begin
-      Result:=True;
+      Result := True;
       Break;
     end;
 end;
@@ -2259,81 +2300,79 @@ end;
 
 function TDBCheckBox.GetDataSource: TDataSource;
 begin
-  Result:=FDataLink.DataSource;
+  Result := FDataLink.DataSource;
 end;
 
 procedure TDBCheckBox.SetDataSource(Value: TDataSource);
 begin
-  if not (FDataLink.DataSourceFixed and(csLoading in ComponentState)) then
-    FDataLink.DataSource:=Value;
-  if Value<>nil then
-    Value.FreeNotification(Self);
+  if not (FDataLink.DataSourceFixed and (csLoading in ComponentState)) then
+    FDataLink.DataSource := Value;
+  if Value <> nil then Value.FreeNotification(Self);
 end;
 
-function TDBCheckBox.GetDataField: string;
+function TDBCheckBox.GetDataField: WideString;
 begin
-  Result:=FDataLink.FieldName;
+  Result := FDataLink.FieldName;
 end;
 
-procedure TDBCheckBox.SetDataField(const Value: string);
+procedure TDBCheckBox.SetDataField(const Value: WideString);
 begin
-  FDataLink.FieldName:=Value;
+  FDataLink.FieldName := Value;
 end;
 
 function TDBCheckBox.GetReadOnly: Boolean;
 begin
-  Result:=FDataLink.ReadOnly;
+  Result := FDataLink.ReadOnly;
 end;
 
 procedure TDBCheckBox.SetReadOnly(Value: Boolean);
 begin
-  FDataLink.ReadOnly:=Value;
+  FDataLink.ReadOnly := Value;
 end;
 
 function TDBCheckBox.GetField: TField;
 begin
-  Result:=FDataLink.Field;
+  Result := FDataLink.Field;
 end;
 
 procedure TDBCheckBox.KeyPress(var Key: Char);
 begin
   inherited KeyPress(Key);
   case Key of
-  #8, ' ':
-  FDataLink.Edit;
-  #27:
-  FDataLink.Reset;
+    #8, ' ':
+      FDataLink.Edit;
+    #27:
+      FDataLink.Reset;
   end;
 end;
 
 procedure TDBCheckBox.SetValueCheck(const Value: string);
 begin
-  FValueCheck:=Value;
+  FValueCheck := Value;
   DataChange(Self);
 end;
 
 procedure TDBCheckBox.SetValueUncheck(const Value: string);
 begin
-  FValueUncheck:=Value;
+  FValueUncheck := Value;
   DataChange(Self);
 end;
 
 procedure TDBCheckBox.WndProc(var Message: TMessage);
 begin
-  with message do
-    if (Msg=WM_CREATE)or(Msg=WM_WINDOWPOSCHANGED)or(Msg=CM_TEXTCHANGED)or(Msg=CM_FONTCHANGED) then
+  with Message do
+    if (Msg = WM_CREATE) or (Msg = WM_WINDOWPOSCHANGED) or
+      (Msg = CM_TEXTCHANGED) or (Msg = CM_FONTCHANGED) then
       FPaintControl.DestroyHandle;
   inherited;
 end;
 
 procedure TDBCheckBox.WMPaint(var Message: TWMPaint);
 begin
-  if not (csPaintCopy in ControlState) then
-    inherited
-  else
+  if not (csPaintCopy in ControlState) then inherited else
   begin
     SendMessage(FPaintControl.Handle, BM_SETCHECK, Ord(GetFieldState), 0);
-    SendMessage(FPaintControl.Handle, WM_PAINT, message.DC, 0);
+    SendMessage(FPaintControl.Handle, WM_PAINT, Message.DC, 0);
   end;
 end;
 
@@ -2350,17 +2389,19 @@ end;
 
 procedure TDBCheckBox.CMGetDataLink(var Message: TMessage);
 begin
-  message.Result:=Integer(FDataLink);
+  Message.Result := Integer(FDataLink);
 end;
 
 function TDBCheckBox.ExecuteAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited ExecuteAction(Action)or(FDataLink<>nil)and FDataLink.ExecuteAction(Action);
+  Result := inherited ExecuteAction(Action) or (FDataLink <> nil) and
+    FDataLink.ExecuteAction(Action);
 end;
 
 function TDBCheckBox.UpdateAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited UpdateAction(Action)or(FDataLink<>nil)and FDataLink.UpdateAction(Action);
+  Result := inherited UpdateAction(Action) or (FDataLink <> nil) and
+    FDataLink.UpdateAction(Action);
 end;
 
 { TDBComboBox }
@@ -2368,35 +2409,35 @@ end;
 constructor TDBComboBox.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  ControlStyle:=ControlStyle+[csReplicatable];
-  FDataLink:=TFieldDataLink.Create;
-  FDataLink.Control:=Self;
-  FDataLink.OnDataChange:=DataChange;
-  FDataLink.OnUpdateData:=UpdateData;
-  FDataLink.OnEditingChange:=EditingChange;
-  FPaintControl:=TPaintControl.Create(Self, 'COMBOBOX');
+  ControlStyle := ControlStyle + [csReplicatable];
+  FDataLink := TFieldDataLink.Create;
+  FDataLink.Control := Self;
+  FDataLink.OnDataChange := DataChange;
+  FDataLink.OnUpdateData := UpdateData;
+  FDataLink.OnEditingChange := EditingChange;
+  FPaintControl := TPaintControl.Create(Self, 'COMBOBOX');
 end;
 
 destructor TDBComboBox.Destroy;
 begin
   FPaintControl.Free;
   FDataLink.Free;
-  FDataLink:=nil;
+  FDataLink := nil;
   inherited Destroy;
 end;
 
 procedure TDBComboBox.Loaded;
 begin
   inherited Loaded;
-  if (csDesigning in ComponentState) then
-    DataChange(Self);
+  if (csDesigning in ComponentState) then DataChange(Self);
 end;
 
-procedure TDBComboBox.Notification(AComponent: TComponent; Operation: TOperation);
+procedure TDBComboBox.Notification(AComponent: TComponent;
+  Operation: TOperation);
 begin
   inherited Notification(AComponent, Operation);
-  if (Operation=opRemove)and(FDataLink<>nil)and(AComponent=DataSource) then
-    DataSource:=nil;
+  if (Operation = opRemove) and (FDataLink <> nil) and
+    (AComponent = DataSource) then DataSource := nil;
 end;
 
 procedure TDBComboBox.CreateWnd;
@@ -2407,19 +2448,19 @@ end;
 
 procedure TDBComboBox.DataChange(Sender: TObject);
 begin
-  if not (Style=csSimple)and DroppedDown then
-    Exit;
-  if FDataLink.Field<>nil then
+  if not (Style = csSimple) and DroppedDown then Exit;
+  if FDataLink.Field <> nil then
     SetComboText(FDataLink.Field.Text)
-  else if csDesigning in ComponentState then
-    SetComboText(Name)
   else
-    SetComboText('');
+    if csDesigning in ComponentState then
+      SetComboText(Name)
+    else
+      SetComboText('');
 end;
 
 procedure TDBComboBox.UpdateData(Sender: TObject);
 begin
-  FDataLink.Field.Text:=GetComboText;
+  FDataLink.Field.Text := GetComboText;
 end;
 
 procedure TDBComboBox.SetComboText(const Value: string);
@@ -2427,19 +2468,15 @@ var
   I: Integer;
   Redraw: Boolean;
 begin
-  if Value<>GetComboText then
+  if Value <> GetComboText then
   begin
-    if Style<>csDropDown then
+    if Style <> csDropDown then
     begin
-      Redraw:=(Style<>csSimple)and HandleAllocated;
-      if Redraw then
-        SendMessage(Handle, WM_SETREDRAW, 0, 0);
+      Redraw := (Style <> csSimple) and HandleAllocated;
+      if Redraw then SendMessage(Handle, WM_SETREDRAW, 0, 0);
       try
-        if Value='' then
-          I:= - 1
-        else
-          I:=Items.IndexOf(Value);
-        ItemIndex:=I;
+        if Value = '' then I := -1 else I := Items.IndexOf(Value);
+        ItemIndex := I;
       finally
         if Redraw then
         begin
@@ -2447,11 +2484,9 @@ begin
           Invalidate;
         end;
       end;
-      if I>=0 then
-        Exit;
+      if I >= 0 then Exit;
     end;
-    if Style in [csDropDown, csSimple] then
-      Text:=Value;
+    if Style in [csDropDown, csSimple] then Text := Value;
   end;
 end;
 
@@ -2459,15 +2494,10 @@ function TDBComboBox.GetComboText: string;
 var
   I: Integer;
 begin
-  if Style in [csDropDown, csSimple] then
-    Result:=Text
-  else
+  if Style in [csDropDown, csSimple] then Result := Text else
   begin
-    I:=ItemIndex;
-    if I<0 then
-      Result:=''
-    else
-      Result:=Items[I];
+    I := ItemIndex;
+    if I < 0 then Result := '' else Result := Items[I];
   end;
 end;
 
@@ -2492,40 +2522,39 @@ end;
 
 function TDBComboBox.GetDataSource: TDataSource;
 begin
-  Result:=FDataLink.DataSource;
+  Result := FDataLink.DataSource;
 end;
 
 procedure TDBComboBox.SetDataSource(Value: TDataSource);
 begin
-  if not (FDataLink.DataSourceFixed and(csLoading in ComponentState)) then
-    FDataLink.DataSource:=Value;
-  if Value<>nil then
-    Value.FreeNotification(Self);
+  if not (FDataLink.DataSourceFixed and (csLoading in ComponentState)) then
+    FDataLink.DataSource := Value;
+  if Value <> nil then Value.FreeNotification(Self);
 end;
 
-function TDBComboBox.GetDataField: string;
+function TDBComboBox.GetDataField: WideString;
 begin
-  Result:=FDataLink.FieldName;
+  Result := FDataLink.FieldName;
 end;
 
-procedure TDBComboBox.SetDataField(const Value: string);
+procedure TDBComboBox.SetDataField(const Value: WideString);
 begin
-  FDataLink.FieldName:=Value;
+  FDataLink.FieldName := Value;
 end;
 
 function TDBComboBox.GetReadOnly: Boolean;
 begin
-  Result:=FDataLink.ReadOnly;
+  Result := FDataLink.ReadOnly;
 end;
 
 procedure TDBComboBox.SetReadOnly(Value: Boolean);
 begin
-  FDataLink.ReadOnly:=Value;
+  FDataLink.ReadOnly := Value;
 end;
 
 function TDBComboBox.GetField: TField;
 begin
-  Result:=FDataLink.Field;
+  Result := FDataLink.Field;
 end;
 
 procedure TDBComboBox.KeyDown(var Key: Word; Shift: TShiftState);
@@ -2533,27 +2562,28 @@ begin
   inherited KeyDown(Key, Shift);
   if Key in [VK_BACK, VK_DELETE, VK_UP, VK_DOWN, 32..255] then
   begin
-    if not FDataLink.Edit and(Key in [VK_UP, VK_DOWN]) then
-      Key:=0;
+    if not FDataLink.Edit and (Key in [VK_UP, VK_DOWN]) then
+      Key := 0;
   end;
 end;
 
 procedure TDBComboBox.KeyPress(var Key: Char);
 begin
   inherited KeyPress(Key);
-  if (Key in [#32..#255])and(FDataLink.Field<>nil)and not FDataLink.Field.IsValidChar(Key) then
+  if (Key in [#32..#255]) and (FDataLink.Field <> nil) and
+    not FDataLink.Field.IsValidChar(Key) then
   begin
     MessageBeep(0);
-    Key:=#0;
+    Key := #0;
   end;
   case Key of
-  ^H, ^V, ^X, #32..#255:
-  FDataLink.Edit;
-  #27:
-  begin
-    FDataLink.Reset;
-    SelectAll;
-  end;
+    ^H, ^V, ^X, #32..#255:
+      FDataLink.Edit;
+    #27:
+      begin
+        FDataLink.Reset;
+        SelectAll;
+      end;
   end;
 end;
 
@@ -2564,43 +2594,43 @@ end;
 
 procedure TDBComboBox.SetEditReadOnly;
 begin
-  if (Style in [csDropDown, csSimple])and HandleAllocated then
+  if (Style in [csDropDown, csSimple]) and HandleAllocated then
     SendMessage(EditHandle, EM_SETREADONLY, Ord(not FDataLink.Editing), 0);
 end;
 
 procedure TDBComboBox.WndProc(var Message: TMessage);
 begin
   if not (csDesigning in ComponentState) then
-    case message.Msg of
-    WM_COMMAND:
-    if TWMCommand(message).NotifyCode=CBN_SELCHANGE then
-      if not FDataLink.Edit then
-      begin
-        if Style<>csSimple then
-          PostMessage(Handle, CB_SHOWDROPDOWN, 0, 0);
-        Exit;
-      end;
-    CB_SHOWDROPDOWN:
-    if message.WParam<>0 then
-      FDataLink.Edit
-    else if not FDataLink.Editing then
-      DataChange(Self); { Restore text }
-    WM_CREATE, WM_WINDOWPOSCHANGED, CM_FONTCHANGED:
-    FPaintControl.DestroyHandle;
+    case Message.Msg of
+      WM_COMMAND:
+        if TWMCommand(Message).NotifyCode = CBN_SELCHANGE then
+          if not FDataLink.Edit then
+          begin
+            if Style <> csSimple then
+              PostMessage(Handle, CB_SHOWDROPDOWN, 0, 0);
+            Exit;
+          end;
+      CB_SHOWDROPDOWN:
+        if Message.WParam <> 0 then FDataLink.Edit else
+          if not FDataLink.Editing then DataChange(Self); {Restore text}
+      WM_CREATE,
+      WM_WINDOWPOSCHANGED,
+      CM_FONTCHANGED:
+        FPaintControl.DestroyHandle;
     end;
-  inherited WndProc(message);
+  inherited WndProc(Message);
 end;
 
-procedure TDBComboBox.ComboWndProc(var Message: TMessage; ComboWnd: HWnd; ComboProc: Pointer);
+procedure TDBComboBox.ComboWndProc(var Message: TMessage; ComboWnd: HWnd;
+  ComboProc: Pointer);
 begin
   if not (csDesigning in ComponentState) then
-    case message.Msg of
-    WM_LBUTTONDOWN:
-    if (Style=csSimple)and(ComboWnd<>EditHandle) then
-      if not FDataLink.Edit then
-        Exit;
+    case Message.Msg of
+      WM_LBUTTONDOWN:
+        if (Style = csSimple) and (ComboWnd <> EditHandle) then
+          if not FDataLink.Edit then Exit;
     end;
-  inherited ComboWndProc(message, ComboWnd, ComboProc);
+  inherited ComboWndProc(Message, ComboWnd, ComboProc);
 end;
 
 procedure TDBComboBox.CMEnter(var Message: TCMEnter);
@@ -2627,41 +2657,36 @@ var
   S: string;
   R: TRect;
   P: TPoint;
-  Child: HWnd;
+  Child: HWND;
 begin
   if csPaintCopy in ControlState then
   begin
-    if FDataLink.Field<>nil then
-      S:=FDataLink.Field.Text
-    else
-      S:='';
-    if Style=csDropDown then
+    if FDataLink.Field <> nil then S := FDataLink.Field.Text else S := '';
+    if Style = csDropDown then
     begin
       SendMessage(FPaintControl.Handle, WM_SETTEXT, 0, Longint(PChar(S)));
-      SendMessage(FPaintControl.Handle, WM_PAINT, message.DC, 0);
-      Child:=GetWindow(FPaintControl.Handle, GW_CHILD);
-      if Child<>0 then
+      SendMessage(FPaintControl.Handle, WM_PAINT, Message.DC, 0);
+      Child := GetWindow(FPaintControl.Handle, GW_CHILD);
+      if Child <> 0 then
       begin
         Windows.GetClientRect(Child, R);
         Windows.MapWindowPoints(Child, FPaintControl.Handle, R.TopLeft, 2);
-        GetWindowOrgEx(message.DC, P);
-        SetWindowOrgEx(message.DC, P.X-R.Left, P.Y-R.Top, nil);
-        IntersectClipRect(message.DC, 0, 0, R.Right-R.Left, R.Bottom-R.Top);
-        SendMessage(Child, WM_PAINT, message.DC, 0);
+        GetWindowOrgEx(Message.DC, P);
+        SetWindowOrgEx(Message.DC, P.X - R.Left, P.Y - R.Top, nil);
+        IntersectClipRect(Message.DC, 0, 0, R.Right - R.Left, R.Bottom - R.Top);
+        SendMessage(Child, WM_PAINT, Message.DC, 0);
       end;
-    end
-    else
+    end else
     begin
       SendMessage(FPaintControl.Handle, CB_RESETCONTENT, 0, 0);
-      if Items.IndexOf(S)<> - 1 then
+      if Items.IndexOf(S) <> -1 then
       begin
         SendMessage(FPaintControl.Handle, CB_ADDSTRING, 0, Longint(PChar(S)));
         SendMessage(FPaintControl.Handle, CB_SETCURSEL, 0, 0);
       end;
-      SendMessage(FPaintControl.Handle, WM_PAINT, message.DC, 0);
+      SendMessage(FPaintControl.Handle, WM_PAINT, Message.DC, 0);
     end;
-  end
-  else
+  end else
     inherited;
 end;
 
@@ -2671,31 +2696,33 @@ begin
   DataChange(Self);
 end;
 
-procedure TDBComboBox.SetStyle(Value: TComboboxStyle);
+procedure TDBCombobox.SetStyle(Value: TComboboxStyle);
 begin
-  if (Value=csSimple)and Assigned(FDataLink)and FDataLink.DataSourceFixed then
+  if (Value = csSimple) and Assigned(FDatalink) and FDatalink.DatasourceFixed then
     DatabaseError(SNotReplicatable);
   inherited SetStyle(Value);
 end;
 
 function TDBComboBox.UseRightToLeftAlignment: Boolean;
 begin
-  Result:=DBUseRightToLeftAlignment(Self, Field);
+  Result := DBUseRightToLeftAlignment(Self, Field);
 end;
 
-procedure TDBComboBox.CMGetDataLink(var Message: TMessage);
+procedure TDBCombobox.CMGetDatalink(var Message: TMessage);
 begin
-  message.Result:=Integer(FDataLink);
+  Message.Result := Integer(FDataLink);
 end;
 
 function TDBComboBox.ExecuteAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited ExecuteAction(Action)or(FDataLink<>nil)and FDataLink.ExecuteAction(Action);
+  Result := inherited ExecuteAction(Action) or (FDataLink <> nil) and
+    FDataLink.ExecuteAction(Action);
 end;
 
 function TDBComboBox.UpdateAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited UpdateAction(Action)or(FDataLink<>nil)and FDataLink.UpdateAction(Action);
+  Result := inherited UpdateAction(Action) or (FDataLink <> nil) and
+    FDataLink.UpdateAction(Action);
 end;
 
 { TDBListBox }
@@ -2703,45 +2730,44 @@ end;
 constructor TDBListBox.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  FDataLink:=TFieldDataLink.Create;
-  FDataLink.Control:=Self;
-  FDataLink.OnDataChange:=DataChange;
-  FDataLink.OnUpdateData:=UpdateData;
+  FDataLink := TFieldDataLink.Create;
+  FDataLink.Control := Self;
+  FDataLink.OnDataChange := DataChange;
+  FDataLink.OnUpdateData := UpdateData;
 end;
 
 destructor TDBListBox.Destroy;
 begin
   FDataLink.Free;
-  FDataLink:=nil;
+  FDataLink := nil;
   inherited Destroy;
 end;
 
-procedure TDBListBox.Notification(AComponent: TComponent; Operation: TOperation);
+procedure TDBListBox.Notification(AComponent: TComponent;
+  Operation: TOperation);
 begin
   inherited Notification(AComponent, Operation);
-  if (Operation=opRemove)and(FDataLink<>nil)and(AComponent=DataSource) then
-    DataSource:=nil;
+  if (Operation = opRemove) and (FDataLink <> nil) and
+    (AComponent = DataSource) then DataSource := nil;
 end;
 
 function TDBListBox.UseRightToLeftAlignment: Boolean;
 begin
-  Result:=DBUseRightToLeftAlignment(Self, Field);
+  Result := DBUseRightToLeftAlignment(Self, Field);
 end;
 
 procedure TDBListBox.DataChange(Sender: TObject);
 begin
-  if FDataLink.Field<>nil then
-    ItemIndex:=Items.IndexOf(FDataLink.Field.Text)
-  else
-    ItemIndex:= - 1;
+  if FDataLink.Field <> nil then
+    ItemIndex := Items.IndexOf(FDataLink.Field.Text) else
+    ItemIndex := -1;
 end;
 
 procedure TDBListBox.UpdateData(Sender: TObject);
 begin
-  if ItemIndex>=0 then
-    FDataLink.Field.Text:=Items[ItemIndex]
-  else
-    FDataLink.Field.Text:='';
+  if ItemIndex >= 0 then
+    FDataLink.Field.Text := Items[ItemIndex] else
+    FDataLink.Field.Text := '';
 end;
 
 procedure TDBListBox.Click;
@@ -2755,69 +2781,66 @@ end;
 
 function TDBListBox.GetDataSource: TDataSource;
 begin
-  Result:=FDataLink.DataSource;
+  Result := FDataLink.DataSource;
 end;
 
 procedure TDBListBox.SetDataSource(Value: TDataSource);
 begin
-  FDataLink.DataSource:=Value;
-  if Value<>nil then
-    Value.FreeNotification(Self);
+  FDataLink.DataSource := Value;
+  if Value <> nil then Value.FreeNotification(Self);
 end;
 
-function TDBListBox.GetDataField: string;
+function TDBListBox.GetDataField: WideString;
 begin
-  Result:=FDataLink.FieldName;
+  Result := FDataLink.FieldName;
 end;
 
-procedure TDBListBox.SetDataField(const Value: string);
+procedure TDBListBox.SetDataField(const Value: WideString);
 begin
-  FDataLink.FieldName:=Value;
+  FDataLink.FieldName := Value;
 end;
 
 function TDBListBox.GetReadOnly: Boolean;
 begin
-  Result:=FDataLink.ReadOnly;
+  Result := FDataLink.ReadOnly;
 end;
 
 procedure TDBListBox.SetReadOnly(Value: Boolean);
 begin
-  FDataLink.ReadOnly:=Value;
+  FDataLink.ReadOnly := Value;
 end;
 
 function TDBListBox.GetField: TField;
 begin
-  Result:=FDataLink.Field;
+  Result := FDataLink.Field;
 end;
 
 procedure TDBListBox.KeyDown(var Key: Word; Shift: TShiftState);
 begin
   inherited KeyDown(Key, Shift);
-  if Key in [VK_PRIOR, VK_NEXT, VK_END, VK_HOME, VK_LEFT, VK_UP, VK_RIGHT, VK_DOWN] then
-    if not FDataLink.Edit then
-      Key:=0;
+  if Key in [VK_PRIOR, VK_NEXT, VK_END, VK_HOME, VK_LEFT, VK_UP,
+    VK_RIGHT, VK_DOWN] then
+    if not FDataLink.Edit then Key := 0;
 end;
 
 procedure TDBListBox.KeyPress(var Key: Char);
 begin
   inherited KeyPress(Key);
   case Key of
-  #32..#255:
-  if not FDataLink.Edit then
-    Key:=#0;
-  #27:
-  FDataLink.Reset;
+    #32..#255:
+      if not FDataLink.Edit then Key := #0;
+    #27:
+      FDataLink.Reset;
   end;
 end;
 
 procedure TDBListBox.WMLButtonDown(var Message: TWMLButtonDown);
 begin
-  if FDataLink.Edit then
-    inherited
+  if FDataLink.Edit then inherited
   else
   begin
     SetFocus;
-    with message do
+    with Message do
       MouseDown(mbLeft, KeysToShiftState(Keys), XPos, YPos);
   end;
 end;
@@ -2835,7 +2858,7 @@ end;
 
 procedure TDBListBox.CMGetDataLink(var Message: TMessage);
 begin
-  message.Result:=Integer(FDataLink);
+  Message.Result := Integer(FDataLink);
 end;
 
 procedure TDBListBox.SetItems(Value: TStrings);
@@ -2846,12 +2869,14 @@ end;
 
 function TDBListBox.ExecuteAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited ExecuteAction(Action)or(FDataLink<>nil)and FDataLink.ExecuteAction(Action);
+  Result := inherited ExecuteAction(Action) or (FDataLink <> nil) and
+    FDataLink.ExecuteAction(Action);
 end;
 
 function TDBListBox.UpdateAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited UpdateAction(Action)or(FDataLink<>nil)and FDataLink.UpdateAction(Action);
+  Result := inherited UpdateAction(Action) or (FDataLink <> nil) and
+    FDataLink.UpdateAction(Action);
 end;
 
 { TDBRadioGroup }
@@ -2859,92 +2884,90 @@ end;
 constructor TDBRadioGroup.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  FDataLink:=TFieldDataLink.Create;
-  FDataLink.Control:=Self;
-  FDataLink.OnDataChange:=DataChange;
-  FDataLink.OnUpdateData:=UpdateData;
-  FValues:=TStringList.Create;
+  FDataLink := TFieldDataLink.Create;
+  FDataLink.Control := Self;
+  FDataLink.OnDataChange := DataChange;
+  FDataLink.OnUpdateData := UpdateData;
+  FValues := TStringList.Create;
 end;
 
 destructor TDBRadioGroup.Destroy;
 begin
   FDataLink.Free;
-  FDataLink:=nil;
+  FDataLink := nil;
   FValues.Free;
   inherited Destroy;
 end;
 
-procedure TDBRadioGroup.Notification(AComponent: TComponent; Operation: TOperation);
+procedure TDBRadioGroup.Notification(AComponent: TComponent;
+  Operation: TOperation);
 begin
   inherited Notification(AComponent, Operation);
-  if (Operation=opRemove)and(FDataLink<>nil)and(AComponent=DataSource) then
-    DataSource:=nil;
+  if (Operation = opRemove) and (FDataLink <> nil) and
+    (AComponent = DataSource) then DataSource := nil;
 end;
 
 function TDBRadioGroup.UseRightToLeftAlignment: Boolean;
 begin
-  Result:=inherited UseRightToLeftAlignment;
+  Result := inherited UseRightToLeftAlignment;
 end;
 
 procedure TDBRadioGroup.DataChange(Sender: TObject);
 begin
-  if FDataLink.Field<>nil then
-    Value:=FDataLink.Field.Text
-  else
-    Value:='';
+  if FDataLink.Field <> nil then
+    Value := FDataLink.Field.Text else
+    Value := '';
 end;
 
 procedure TDBRadioGroup.UpdateData(Sender: TObject);
 begin
-  if FDataLink.Field<>nil then
-    FDataLink.Field.Text:=Value;
+  if FDataLink.Field <> nil then FDataLink.Field.Text := Value;
 end;
 
 function TDBRadioGroup.GetDataSource: TDataSource;
 begin
-  Result:=FDataLink.DataSource;
+  Result := FDataLink.DataSource;
 end;
 
 procedure TDBRadioGroup.SetDataSource(Value: TDataSource);
 begin
-  FDataLink.DataSource:=Value;
-  if Value<>nil then
-    Value.FreeNotification(Self);
+  FDataLink.DataSource := Value;
+  if Value <> nil then Value.FreeNotification(Self);
 end;
 
-function TDBRadioGroup.GetDataField: string;
+function TDBRadioGroup.GetDataField: WideString;
 begin
-  Result:=FDataLink.FieldName;
+  Result := FDataLink.FieldName;
 end;
 
-procedure TDBRadioGroup.SetDataField(const Value: string);
+procedure TDBRadioGroup.SetDataField(const Value: WideString);
 begin
-  FDataLink.FieldName:=Value;
+  FDataLink.FieldName := Value;
 end;
 
 function TDBRadioGroup.GetReadOnly: Boolean;
 begin
-  Result:=FDataLink.ReadOnly;
+  Result := FDataLink.ReadOnly;
 end;
 
 procedure TDBRadioGroup.SetReadOnly(Value: Boolean);
 begin
-  FDataLink.ReadOnly:=Value;
+  FDataLink.ReadOnly := Value;
 end;
 
 function TDBRadioGroup.GetField: TField;
 begin
-  Result:=FDataLink.Field;
+  Result := FDataLink.Field;
 end;
 
 function TDBRadioGroup.GetButtonValue(Index: Integer): string;
 begin
-  if (Index<FValues.Count)and(FValues[Index]<>'') then
-    Result:=FValues[Index]
-  else if Index<Items.Count then
-    Result:=Items[Index]
+  if (Index < FValues.Count) and (FValues[Index] <> '') then
+    Result := FValues[Index]
+  else if Index < Items.Count then
+    Result := Items[Index]
   else
-    Result:='';
+    Result := '';
 end;
 
 procedure TDBRadioGroup.SetValue(const Value: string);
@@ -2952,26 +2975,26 @@ var
   WasFocused: Boolean;
   I, Index: Integer;
 begin
-  if FValue<>Value then
+  if FValue <> Value then
   begin
-    FInSetValue:=True;
+    FInSetValue := True;
     try
-      WasFocused:=(ItemIndex> - 1)and(Buttons[ItemIndex].Focused);
-      Index:= - 1;
-      for I:=0 to Items.Count-1 do
-        if Value=GetButtonValue(I) then
+      WasFocused := (ItemIndex > -1) and (Buttons[ItemIndex].Focused);
+      Index := -1;
+      for I := 0 to Items.Count - 1 do
+        if Value = GetButtonValue(I) then
         begin
-          Index:=I;
+          Index := I;
           Break;
         end;
-      ItemIndex:=Index;
+      ItemIndex := Index;
       // Move the focus rect along with the selected index
-      if WasFocused then
+      if WasFocused and (ItemIndex <> -1) then
         Buttons[ItemIndex].SetFocus;
     finally
-      FInSetValue:=False;
+      FInSetValue := False;
     end;
-    FValue:=Value;
+    FValue := Value;
     Change;
   end;
 end;
@@ -2981,9 +3004,8 @@ begin
   try
     FDataLink.UpdateRecord;
   except
-    if ItemIndex>=0 then
-      TRadioButton(Controls[ItemIndex]).SetFocus
-    else
+    if ItemIndex >= 0 then
+      TRadioButton(Controls[ItemIndex]).SetFocus else
       TRadioButton(Controls[0]).SetFocus;
     raise;
   end;
@@ -2992,7 +3014,7 @@ end;
 
 procedure TDBRadioGroup.CMGetDataLink(var Message: TMessage);
 begin
-  message.Result:=Integer(FDataLink);
+  Message.Result := Integer(FDataLink);
 end;
 
 procedure TDBRadioGroup.Click;
@@ -3000,10 +3022,8 @@ begin
   if not FInSetValue then
   begin
     inherited Click;
-    if ItemIndex>=0 then
-      Value:=GetButtonValue(ItemIndex);
-    if FDataLink.Editing then
-      FDataLink.Modified;
+    if ItemIndex >= 0 then Value := GetButtonValue(ItemIndex);
+    if FDataLink.Editing then FDataLink.Modified;
   end;
 end;
 
@@ -3021,34 +3041,33 @@ end;
 
 procedure TDBRadioGroup.Change;
 begin
-  if Assigned(FOnChange) then
-    FOnChange(Self);
+  if Assigned(FOnChange) then FOnChange(Self);
 end;
 
 procedure TDBRadioGroup.KeyPress(var Key: Char);
 begin
   inherited KeyPress(Key);
   case Key of
-  #8, ' ':
-  FDataLink.Edit;
-  #27:
-  FDataLink.Reset;
+    #8, ' ': FDataLink.Edit;
+    #27: FDataLink.Reset;
   end;
 end;
 
 function TDBRadioGroup.CanModify: Boolean;
 begin
-  Result:=FDataLink.Edit;
+  Result := FDataLink.Edit;
 end;
 
 function TDBRadioGroup.ExecuteAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited ExecuteAction(Action)or(DataLink<>nil)and DataLink.ExecuteAction(Action);
+  Result := inherited ExecuteAction(Action) or (DataLink <> nil) and
+    DataLink.ExecuteAction(Action);
 end;
 
 function TDBRadioGroup.UpdateAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited UpdateAction(Action)or(DataLink<>nil)and DataLink.UpdateAction(Action);
+  Result := inherited UpdateAction(Action) or (DataLink <> nil) and
+    DataLink.UpdateAction(Action);
 end;
 
 { TDBMemo }
@@ -3056,42 +3075,42 @@ end;
 constructor TDBMemo.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  inherited ReadOnly:=True;
-  ControlStyle:=ControlStyle+[csReplicatable];
-  FAutoDisplay:=True;
-  FDataLink:=TFieldDataLink.Create;
-  FDataLink.Control:=Self;
-  FDataLink.OnDataChange:=DataChange;
-  FDataLink.OnEditingChange:=EditingChange;
-  FDataLink.OnUpdateData:=UpdateData;
-  FPaintControl:=TPaintControl.Create(Self, 'EDIT');
+  inherited ReadOnly := True;
+  ControlStyle := ControlStyle + [csReplicatable];
+  FAutoDisplay := True;
+  FDataLink := TFieldDataLink.Create;
+  FDataLink.Control := Self;
+  FDataLink.OnDataChange := DataChange;
+  FDataLink.OnEditingChange := EditingChange;
+  FDataLink.OnUpdateData := UpdateData;
+  FPaintControl := TPaintControl.Create(Self, 'EDIT');
 end;
 
 destructor TDBMemo.Destroy;
 begin
   FPaintControl.Free;
   FDataLink.Free;
-  FDataLink:=nil;
+  FDataLink := nil;
   inherited Destroy;
 end;
 
 procedure TDBMemo.Loaded;
 begin
   inherited Loaded;
-  if (csDesigning in ComponentState) then
-    DataChange(Self);
+  if (csDesigning in ComponentState) then DataChange(Self);
 end;
 
-procedure TDBMemo.Notification(AComponent: TComponent; Operation: TOperation);
+procedure TDBMemo.Notification(AComponent: TComponent;
+  Operation: TOperation);
 begin
   inherited Notification(AComponent, Operation);
-  if (Operation=opRemove)and(FDataLink<>nil)and(AComponent=DataSource) then
-    DataSource:=nil;
+  if (Operation = opRemove) and (FDataLink <> nil) and
+    (AComponent = DataSource) then DataSource := nil;
 end;
 
 function TDBMemo.UseRightToLeftAlignment: Boolean;
 begin
-  Result:=DBUseRightToLeftAlignment(Self, Field);
+  Result := DBUseRightToLeftAlignment(Self, Field);
 end;
 
 procedure TDBMemo.KeyDown(var Key: Word; Shift: TShiftState);
@@ -3099,7 +3118,7 @@ begin
   inherited KeyDown(Key, Shift);
   if FMemoLoaded then
   begin
-    if (Key=VK_DELETE)or((Key=VK_INSERT)and(ssShift in Shift)) then
+    if (Key = VK_DELETE) or ((Key = VK_INSERT) and (ssShift in Shift)) then
       FDataLink.Edit;
   end;
 end;
@@ -3109,83 +3128,80 @@ begin
   inherited KeyPress(Key);
   if FMemoLoaded then
   begin
-    if (Key in [#32..#255])and(FDataLink.Field<>nil)and not FDataLink.Field.IsValidChar(Key) then
+    if (Key in [#32..#255]) and (FDataLink.Field <> nil) and
+      not FDataLink.Field.IsValidChar(Key) then
     begin
       MessageBeep(0);
-      Key:=#0;
+      Key := #0;
     end;
     case Key of
-    ^H, ^I, ^J, ^M, ^V, ^X, #32..#255:
-    FDataLink.Edit;
-    #27:
-    FDataLink.Reset;
+      ^H, ^I, ^J, ^M, ^V, ^X, #32..#255:
+        FDataLink.Edit;
+      #27:
+        FDataLink.Reset;
     end;
-  end
-  else
+  end else
   begin
-    if Key=#13 then
-      LoadMemo;
-    Key:=#0;
+    if Key = #13 then LoadMemo;
+    Key := #0;
   end;
 end;
 
 procedure TDBMemo.Change;
 begin
-  if FMemoLoaded then
-    FDataLink.Modified;
-  FMemoLoaded:=True;
+  if FMemoLoaded then FDataLink.Modified;
+  FMemoLoaded := True;
   inherited Change;
 end;
 
 function TDBMemo.GetDataSource: TDataSource;
 begin
-  Result:=FDataLink.DataSource;
+  Result := FDataLink.DataSource;
 end;
 
 procedure TDBMemo.SetDataSource(Value: TDataSource);
 begin
-  if not (FDataLink.DataSourceFixed and(csLoading in ComponentState)) then
-    FDataLink.DataSource:=Value;
-  if Value<>nil then
-    Value.FreeNotification(Self);
+  if not (FDataLink.DataSourceFixed and (csLoading in ComponentState)) then
+    FDataLink.DataSource := Value;
+  if Value <> nil then Value.FreeNotification(Self);
 end;
 
-function TDBMemo.GetDataField: string;
+function TDBMemo.GetDataField: Widestring;
 begin
-  Result:=FDataLink.FieldName;
+  Result := FDataLink.FieldName;
 end;
 
-procedure TDBMemo.SetDataField(const Value: string);
+procedure TDBMemo.SetDataField(const Value: WideString);
 begin
-  FDataLink.FieldName:=Value;
+  FDataLink.FieldName := Value;
 end;
 
 function TDBMemo.GetReadOnly: Boolean;
 begin
-  Result:=FDataLink.ReadOnly;
+  Result := FDataLink.ReadOnly;
 end;
 
 procedure TDBMemo.SetReadOnly(Value: Boolean);
 begin
-  FDataLink.ReadOnly:=Value;
+  FDataLink.ReadOnly := Value;
 end;
 
 function TDBMemo.GetField: TField;
 begin
-  Result:=FDataLink.Field;
+  Result := FDataLink.Field;
 end;
 
 procedure TDBMemo.LoadMemo;
 begin
-  if not FMemoLoaded and Assigned(FDataLink.Field)and FDataLink.Field.IsBlob then
+  if not FMemoLoaded and Assigned(FDataLink.Field) and FDataLink.Field.IsBlob then
   begin
     try
-      Lines.Text:=FDataLink.Field.AsString;
-      FMemoLoaded:=True;
+      Lines.Text := FDataLink.Field.AsString;
+      FMemoLoaded := True;
     except
       { Memo too large }
-      on E: EInvalidOperation do
-        Lines.Text:=Format('(%s)', [E.Message]);
+      on E:EInvalidOperation do
+        Lines.Text := Format('(%s)', [E.Message]);
     end;
     EditingChange(Self);
   end;
@@ -3193,36 +3209,31 @@ end;
 
 procedure TDBMemo.DataChange(Sender: TObject);
 begin
-  if FDataLink.Field<>nil then
+  if FDataLink.Field <> nil then
     if FDataLink.Field.IsBlob then
     begin
-      if FAutoDisplay or(FDataLink.Editing and FMemoLoaded) then
+      if FAutoDisplay or (FDataLink.Editing and FMemoLoaded) then
       begin
-        FMemoLoaded:=False;
+        FMemoLoaded := False;
         LoadMemo;
-      end
-      else
+      end else
       begin
-        Text:=Format('(%s)', [FDataLink.Field.DisplayLabel]);
-        FMemoLoaded:=False;
+        Text := Format('(%s)', [FDataLink.Field.DisplayLabel]);
+        FMemoLoaded := False;
         EditingChange(Self);
       end;
-    end
-    else
+    end else
     begin
       if FFocused and FDataLink.CanModify then
-        Text:=FDataLink.Field.Text
+        Text := FDataLink.Field.Text
       else
-        Text:=FDataLink.Field.DisplayText;
-      FMemoLoaded:=True;
+        Text := FDataLink.Field.DisplayText;
+      FMemoLoaded := True;
     end
   else
   begin
-    if csDesigning in ComponentState then
-      Text:=Name
-    else
-      Text:='';
-    FMemoLoaded:=False;
+    if csDesigning in ComponentState then Text := Name else Text := '';
+    FMemoLoaded := False;
   end;
   if HandleAllocated then
     RedrawWindow(Handle, nil, 0, RDW_INVALIDATE or RDW_ERASE or RDW_FRAME);
@@ -3230,29 +3241,29 @@ end;
 
 procedure TDBMemo.EditingChange(Sender: TObject);
 begin
-  inherited ReadOnly:=not (FDataLink.Editing and FMemoLoaded);
+  inherited ReadOnly := not (FDataLink.Editing and FMemoLoaded);
 end;
 
 procedure TDBMemo.UpdateData(Sender: TObject);
 begin
-  FDataLink.Field.AsString:=Text;
+  FDataLink.Field.AsString := Text;
 end;
 
 procedure TDBMemo.SetFocused(Value: Boolean);
 begin
-  if FFocused<>Value then
+  if FFocused <> Value then
   begin
-    FFocused:=Value;
-    if not Assigned(FDataLink.Field)or not FDataLink.Field.IsBlob then
+    FFocused := Value;
+    if not Assigned(FDataLink.Field) or not FDataLink.Field.IsBlob then
       FDataLink.Reset;
   end;
 end;
 
 procedure TDBMemo.WndProc(var Message: TMessage);
 begin
-  with message do
-    if (Msg=WM_CREATE)or(Msg=WM_WINDOWPOSCHANGED)or(Msg=CM_FONTCHANGED) then
-      FPaintControl.DestroyHandle;
+  with Message do
+    if (Msg = WM_CREATE) or (Msg = WM_WINDOWPOSCHANGED) or
+      (Msg = CM_FONTCHANGED) then FPaintControl.DestroyHandle;
   inherited;
 end;
 
@@ -3261,7 +3272,7 @@ begin
   SetFocused(True);
   inherited;
   if SysLocale.FarEast and FDataLink.CanModify then
-    inherited ReadOnly:=False;
+    inherited ReadOnly := False;
 end;
 
 procedure TDBMemo.CMExit(var Message: TCMExit);
@@ -3278,20 +3289,16 @@ end;
 
 procedure TDBMemo.SetAutoDisplay(Value: Boolean);
 begin
-  if FAutoDisplay<>Value then
+  if FAutoDisplay <> Value then
   begin
-    FAutoDisplay:=Value;
-    if Value then
-      LoadMemo;
+    FAutoDisplay := Value;
+    if Value then LoadMemo;
   end;
 end;
 
 procedure TDBMemo.WMLButtonDblClk(var Message: TWMLButtonDblClk);
 begin
-  if not FMemoLoaded then
-    LoadMemo
-  else
-    inherited;
+  if not FMemoLoaded then LoadMemo else inherited;
 end;
 
 procedure TDBMemo.WMCut(var Message: TMessage);
@@ -3314,41 +3321,39 @@ end;
 
 procedure TDBMemo.CMGetDataLink(var Message: TMessage);
 begin
-  message.Result:=Integer(FDataLink);
+  Message.Result := Integer(FDataLink);
 end;
 
 procedure TDBMemo.WMPaint(var Message: TWMPaint);
 var
   S: string;
 begin
-  if not (csPaintCopy in ControlState) then
-    inherited
-  else
+  if not (csPaintCopy in ControlState) then inherited else
   begin
-    if FDataLink.Field<>nil then
+    if FDataLink.Field <> nil then
       if FDataLink.Field.IsBlob then
       begin
         if FAutoDisplay then
-          S:=AdjustLineBreaks(FDataLink.Field.AsString)
-        else
-          S:=Format('(%s)', [FDataLink.Field.DisplayLabel]);
-      end
-      else
-        S:=FDataLink.Field.DisplayText;
+          S := AdjustLineBreaks(FDataLink.Field.AsString) else
+          S := Format('(%s)', [FDataLink.Field.DisplayLabel]);
+      end else
+        S := FDataLink.Field.DisplayText;
     SendMessage(FPaintControl.Handle, WM_SETTEXT, 0, Integer(PChar(S)));
-    SendMessage(FPaintControl.Handle, WM_ERASEBKGND, message.DC, 0);
-    SendMessage(FPaintControl.Handle, WM_PAINT, message.DC, 0);
+    SendMessage(FPaintControl.Handle, WM_ERASEBKGND, Message.DC, 0);
+    SendMessage(FPaintControl.Handle, WM_PAINT, Message.DC, 0);
   end;
 end;
 
 function TDBMemo.ExecuteAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited ExecuteAction(Action)or(FDataLink<>nil)and FDataLink.ExecuteAction(Action);
+  Result := inherited ExecuteAction(Action) or (FDataLink <> nil) and
+    FDataLink.ExecuteAction(Action);
 end;
 
 function TDBMemo.UpdateAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited UpdateAction(Action)or(FDataLink<>nil)and FDataLink.UpdateAction(Action);
+  Result := inherited UpdateAction(Action) or (FDataLink <> nil) and
+    FDataLink.UpdateAction(Action);
 end;
 
 { TDBImage }
@@ -3356,102 +3361,99 @@ end;
 constructor TDBImage.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  ControlStyle:=ControlStyle+[csOpaque, csReplicatable, csNeedsBorderPaint];
-  if not NewStyleControls then
-    ControlStyle:=ControlStyle+[csFramed];
-  Width:=105;
-  Height:=105;
-  TabStop:=True;
-  ParentColor:=False;
-  FPicture:=TPicture.Create;
-  FPicture.OnChange:=PictureChanged;
-  FBorderStyle:=bsSingle;
-  FAutoDisplay:=True;
-  FCenter:=True;
-  FDataLink:=TFieldDataLink.Create;
-  FDataLink.Control:=Self;
-  FDataLink.OnDataChange:=DataChange;
-  FDataLink.OnUpdateData:=UpdateData;
-  FQuickDraw:=True;
+  ControlStyle := ControlStyle + [csOpaque, csReplicatable, csNeedsBorderPaint];
+  if not NewStyleControls then ControlStyle := ControlStyle + [csFramed];
+  Width := 105;
+  Height := 105;
+  TabStop := True;
+  ParentColor := False;
+  FPicture := TPicture.Create;
+  FPicture.OnChange := PictureChanged;
+  FBorderStyle := bsSingle;
+  FAutoDisplay := True;
+  FCenter := True;
+  FDataLink := TFieldDataLink.Create;
+  FDataLink.Control := Self;
+  FDataLink.OnDataChange := DataChange;
+  FDataLink.OnUpdateData := UpdateData;
+  FQuickDraw := True;
 end;
 
 destructor TDBImage.Destroy;
 begin
   FPicture.Free;
   FDataLink.Free;
-  FDataLink:=nil;
+  FDataLink := nil;
   inherited Destroy;
 end;
 
 function TDBImage.GetDataSource: TDataSource;
 begin
-  Result:=FDataLink.DataSource;
+  Result := FDataLink.DataSource;
 end;
 
 procedure TDBImage.SetDataSource(Value: TDataSource);
 begin
-  if not (FDataLink.DataSourceFixed and(csLoading in ComponentState)) then
-    FDataLink.DataSource:=Value;
-  if Value<>nil then
-    Value.FreeNotification(Self);
+  if not (FDataLink.DataSourceFixed and (csLoading in ComponentState)) then
+    FDataLink.DataSource := Value;
+  if Value <> nil then Value.FreeNotification(Self);
 end;
 
-function TDBImage.GetDataField: string;
+function TDBImage.GetDataField: WideString;
 begin
-  Result:=FDataLink.FieldName;
+  Result := FDataLink.FieldName;
 end;
 
-procedure TDBImage.SetDataField(const Value: string);
+procedure TDBImage.SetDataField(const Value: WideString);
 begin
-  FDataLink.FieldName:=Value;
+  FDataLink.FieldName := Value;
 end;
 
 function TDBImage.GetReadOnly: Boolean;
 begin
-  Result:=FDataLink.ReadOnly;
+  Result := FDataLink.ReadOnly;
 end;
 
 procedure TDBImage.SetReadOnly(Value: Boolean);
 begin
-  FDataLink.ReadOnly:=Value;
+  FDataLink.ReadOnly := Value;
 end;
 
 function TDBImage.GetField: TField;
 begin
-  Result:=FDataLink.Field;
+  Result := FDataLink.Field;
 end;
 
 function TDBImage.GetPalette: HPALETTE;
 begin
-  Result:=0;
+  Result := 0;
   if FPicture.Graphic is TBitmap then
-    Result:=TBitmap(FPicture.Graphic).Palette;
+    Result := TBitmap(FPicture.Graphic).Palette;
 end;
 
 procedure TDBImage.SetAutoDisplay(Value: Boolean);
 begin
-  if FAutoDisplay<>Value then
+  if FAutoDisplay <> Value then
   begin
-    FAutoDisplay:=Value;
-    if Value then
-      LoadPicture;
+    FAutoDisplay := Value;
+    if Value then LoadPicture;
   end;
 end;
 
 procedure TDBImage.SetBorderStyle(Value: TBorderStyle);
 begin
-  if FBorderStyle<>Value then
+  if FBorderStyle <> Value then
   begin
-    FBorderStyle:=Value;
+    FBorderStyle := Value;
     RecreateWnd;
   end;
 end;
 
 procedure TDBImage.SetCenter(Value: Boolean);
 begin
-  if FCenter<>Value then
+  if FCenter <> Value then
   begin
-    FCenter:=Value;
+    FCenter := Value;
     Invalidate;
   end;
 end;
@@ -3463,9 +3465,9 @@ end;
 
 procedure TDBImage.SetStretch(Value: Boolean);
 begin
-  if FStretch<>Value then
+  if FStretch <> Value then
   begin
-    FStretch:=Value;
+    FStretch := Value;
     Invalidate;
   end;
 end;
@@ -3477,70 +3479,69 @@ var
   S: string;
   DrawPict: TPicture;
   Form: TCustomForm;
-  Pal: HPALETTE;
+  Pal: HPalette;
 begin
   with Canvas do
   begin
-    Brush.Style:=bsSolid;
-    Brush.Color:=Color;
-    if FPictureLoaded or(csPaintCopy in ControlState) then
+    Brush.Style := bsSolid;
+    Brush.Color := Color;
+    if FPictureLoaded or (csPaintCopy in ControlState) then
     begin
-      DrawPict:=TPicture.Create;
-      Pal:=0;
+      DrawPict := TPicture.Create;
+      Pal := 0;
       try
-        if (csPaintCopy in ControlState)and Assigned(FDataLink.Field)and FDataLink.Field.IsBlob then
+        if (csPaintCopy in ControlState) and
+          Assigned(FDataLink.Field) and FDataLink.Field.IsBlob then
         begin
           DrawPict.Assign(FDataLink.Field);
           if DrawPict.Graphic is TBitmap then
-            DrawPict.Bitmap.IgnorePalette:=QuickDraw;
+            DrawPict.Bitmap.IgnorePalette := QuickDraw;
         end
         else
         begin
           DrawPict.Assign(Picture);
-          if Focused and(DrawPict.Graphic<>nil)and(DrawPict.Graphic.Palette<>0) then
+          if Focused and (DrawPict.Graphic <> nil) and (DrawPict.Graphic.Palette <> 0) then
           begin { Control has focus, so realize the bitmap palette in foreground }
-            Pal:=SelectPalette(Handle, DrawPict.Graphic.Palette, False);
+            Pal := SelectPalette(Handle, DrawPict.Graphic.Palette, False);
             RealizePalette(Handle);
           end;
         end;
         if Stretch then
-          if (DrawPict.Graphic=nil)or DrawPict.Graphic.Empty then
+          if (DrawPict.Graphic = nil) or DrawPict.Graphic.Empty then
             FillRect(ClientRect)
           else
             StretchDraw(ClientRect, DrawPict.Graphic)
         else
         begin
           SetRect(R, 0, 0, DrawPict.Width, DrawPict.Height);
-          if Center then
-            OffsetRect(R, (ClientWidth-DrawPict.Width)div 2, (ClientHeight-DrawPict.Height)div 2);
+          if Center then OffsetRect(R, (ClientWidth - DrawPict.Width) div 2,
+            (ClientHeight - DrawPict.Height) div 2);
           StretchDraw(R, DrawPict.Graphic);
           ExcludeClipRect(Handle, R.Left, R.Top, R.Right, R.Bottom);
           FillRect(ClientRect);
           SelectClipRgn(Handle, 0);
         end;
       finally
-        if Pal<>0 then
-          SelectPalette(Handle, Pal, True);
+        if Pal <> 0 then SelectPalette(Handle, Pal, True);
         DrawPict.Free;
       end;
     end
-    else
-    begin
-      Font:=Self.Font;
-      if FDataLink.Field<>nil then
-        S:=FDataLink.Field.DisplayLabel
-      else
-        S:=Name;
-      S:='('+S+')';
-      Size:=TextExtent(S);
-      R:=ClientRect;
-      TextRect(R, (R.Right-Size.cx)div 2, (R.Bottom-Size.cy)div 2, S);
+    else begin
+      Font := Self.Font;
+      if FDataLink.Field <> nil then
+        S := FDataLink.Field.DisplayLabel
+      else S := Name;
+      S := '(' + S + ')';
+      Size := TextExtent(S);
+      R := ClientRect;
+      TextRect(R, (R.Right - Size.cx) div 2, (R.Bottom - Size.cy) div 2, S);
     end;
-    Form:=GetParentForm(Self);
-    if (Form<>nil)and(Form.ActiveControl=Self)and not (csDesigning in ComponentState)and
+    Form := GetParentForm(Self);
+    if (Form <> nil) and (Form.ActiveControl = Self) and
+      not (csDesigning in ComponentState) and
       not (csPaintCopy in ControlState) then
     begin
-      Brush.Color:=clWindowFrame;
+      Brush.Color := clWindowFrame;
       FrameRect(ClientRect);
     end;
   end;
@@ -3548,60 +3549,58 @@ end;
 
 procedure TDBImage.PictureChanged(Sender: TObject);
 begin
-  if FPictureLoaded then
-    FDataLink.Modified;
-  FPictureLoaded:=True;
+  if FPictureLoaded then FDataLink.Modified;
+  FPictureLoaded := True;
   Invalidate;
 end;
 
-procedure TDBImage.Notification(AComponent: TComponent; Operation: TOperation);
+procedure TDBImage.Notification(AComponent: TComponent;
+  Operation: TOperation);
 begin
   inherited Notification(AComponent, Operation);
-  if (Operation=opRemove)and(FDataLink<>nil)and(AComponent=DataSource) then
-    DataSource:=nil;
+  if (Operation = opRemove) and (FDataLink <> nil) and
+    (AComponent = DataSource) then DataSource := nil;
 end;
 
 procedure TDBImage.LoadPicture;
 begin
-  if not FPictureLoaded and(not Assigned(FDataLink.Field)or FDataLink.Field.IsBlob) then
+  if not FPictureLoaded and (not Assigned(FDataLink.Field) or
+    FDataLink.Field.IsBlob) then
     Picture.Assign(FDataLink.Field);
 end;
 
 procedure TDBImage.DataChange(Sender: TObject);
 begin
-  Picture.Graphic:=nil;
-  FPictureLoaded:=False;
-  if FAutoDisplay then
-    LoadPicture;
+  Picture.Graphic := nil;
+  FPictureLoaded := False;
+  if FAutoDisplay then LoadPicture;
 end;
 
 procedure TDBImage.UpdateData(Sender: TObject);
 begin
   if Picture.Graphic is TBitmap then
-    FDataLink.Field.Assign(Picture.Graphic)
-  else
-    FDataLink.Field.Clear;
+     FDataLink.Field.Assign(Picture.Graphic) else
+     FDataLink.Field.Clear;
 end;
 
 procedure TDBImage.CopyToClipboard;
 begin
-  if Picture.Graphic<>nil then
-    Clipboard.Assign(Picture);
+  if Picture.Graphic <> nil then Clipboard.Assign(Picture);
 end;
 
 procedure TDBImage.CutToClipboard;
 begin
-  if Picture.Graphic<>nil then
+  if Picture.Graphic <> nil then
     if FDataLink.Edit then
     begin
       CopyToClipboard;
-      Picture.Graphic:=nil;
+      Picture.Graphic := nil;
     end;
 end;
 
 procedure TDBImage.PasteFromClipboard;
 begin
-  if Clipboard.HasFormat(CF_BITMAP)and FDataLink.Edit then
+  if Clipboard.HasFormat(CF_BITMAP) and FDataLink.Edit then
     Picture.Bitmap.Assign(Clipboard);
 end;
 
@@ -3610,12 +3609,12 @@ begin
   inherited CreateParams(Params);
   with Params do
   begin
-    if FBorderStyle=bsSingle then
+    if FBorderStyle = bsSingle then
       if NewStyleControls and Ctl3D then
-        ExStyle:=ExStyle or WS_EX_CLIENTEDGE
+        ExStyle := ExStyle or WS_EX_CLIENTEDGE
       else
-        Style:=Style or WS_BORDER;
-    WindowClass.Style:=WindowClass.Style and not (CS_HREDRAW or CS_VREDRAW);
+        Style := Style or WS_BORDER;
+    WindowClass.style := WindowClass.style and not (CS_HREDRAW or CS_VREDRAW);
   end;
 end;
 
@@ -3623,14 +3622,11 @@ procedure TDBImage.KeyDown(var Key: Word; Shift: TShiftState);
 begin
   inherited KeyDown(Key, Shift);
   case Key of
-  VK_INSERT:
-  if ssShift in Shift then
-    PasteFromClipboard
-  else if ssCtrl in Shift then
-    CopyToClipboard;
-  VK_DELETE:
-  if ssShift in Shift then
-    CutToClipboard;
+    VK_INSERT:
+      if ssShift in Shift then PasteFromClipBoard else
+        if ssCtrl in Shift then CopyToClipBoard;
+    VK_DELETE:
+      if ssShift in Shift then CutToClipBoard;
   end;
 end;
 
@@ -3638,22 +3634,17 @@ procedure TDBImage.KeyPress(var Key: Char);
 begin
   inherited KeyPress(Key);
   case Key of
-  ^X:
-  CutToClipboard;
-  ^C:
-  CopyToClipboard;
-  ^V:
-  PasteFromClipboard;
-  #13:
-  LoadPicture;
-  #27:
-  FDataLink.Reset;
+    ^X: CutToClipBoard;
+    ^C: CopyToClipBoard;
+    ^V: PasteFromClipBoard;
+    #13: LoadPicture;
+    #27: FDataLink.Reset;
   end;
 end;
 
 procedure TDBImage.CMGetDataLink(var Message: TMessage);
 begin
-  message.Result:=Integer(FDataLink);
+  Message.Result := Integer(FDataLink);
 end;
 
 procedure TDBImage.CMEnter(var Message: TCMEnter);
@@ -3665,8 +3656,8 @@ end;
 procedure TDBImage.CMExit(var Message: TCMExit);
 begin
   try
-    if Assigned(DataSource)and Assigned(DataSource.DataSet)and
-      (DataSource.DataSet.State in [dsInsert, dsEdit]) then
+    if Assigned(DataSource) and Assigned(DataSource.DataSet) and
+       (DataSource.DataSet.State in [dsInsert, dsEdit]) then
       FDataLink.UpdateRecord;
   except
     SetFocus;
@@ -3679,14 +3670,12 @@ end;
 procedure TDBImage.CMTextChanged(var Message: TMessage);
 begin
   inherited;
-  if not FPictureLoaded then
-    Invalidate;
+  if not FPictureLoaded then Invalidate;
 end;
 
 procedure TDBImage.WMLButtonDown(var Message: TWMLButtonDown);
 begin
-  if TabStop and CanFocus then
-    SetFocus;
+  if TabStop and CanFocus then SetFocus;
   inherited;
 end;
 
@@ -3719,63 +3708,45 @@ end;
 
 function TDBImage.ExecuteAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited ExecuteAction(Action)or(FDataLink<>nil)and FDataLink.ExecuteAction(Action);
+  Result := inherited ExecuteAction(Action) or (FDataLink <> nil) and
+    FDataLink.ExecuteAction(Action);
 end;
 
 function TDBImage.UpdateAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited UpdateAction(Action)or(FDataLink<>nil)and FDataLink.UpdateAction(Action);
+  Result := inherited UpdateAction(Action) or (FDataLink <> nil) and
+    FDataLink.UpdateAction(Action);
 end;
 
 { TDBNavigator }
 
 var
-  BtnTypeName: array [TNavigateBtn] of PChar=(
-    'FIRST',
-    'PRIOR',
-    'NEXT',
-    'LAST',
-    'INSERT',
-    'DELETE',
-    'EDIT',
-    'POST',
-    'CANCEL',
-    'REFRESH'
-  );
-  BtnHintId: array [TNavigateBtn] of Pointer=(
-    @SFirstRecord,
-    @SPriorRecord,
-    @SNextRecord,
-    @SLastRecord,
-    @SInsertRecord,
-    @SDeleteRecord,
-    @SEditRecord,
-    @SPostEdit,
-    @SCancelEdit,
-    @SRefreshRecord
-  );
+  BtnTypeName: array[TNavigateBtn] of PChar = ('FIRST', 'PRIOR', 'NEXT',
+    'LAST', 'INSERT', 'DELETE', 'EDIT', 'POST', 'CANCEL', 'REFRESH');
+  BtnHintId: array[TNavigateBtn] of Pointer = (@SFirstRecord, @SPriorRecord,
+    @SNextRecord, @SLastRecord, @SInsertRecord, @SDeleteRecord, @SEditRecord,
+    @SPostEdit, @SCancelEdit, @SRefreshRecord);
 
 constructor TDBNavigator.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  ControlStyle:=ControlStyle-[csAcceptsControls, csSetCaption]+[csOpaque];
-  if not NewStyleControls then
-    ControlStyle:=ControlStyle+[csFramed];
-  FDataLink:=TNavDataLink.Create(Self);
-  FVisibleButtons:=[nbFirst, nbPrior, nbNext, nbLast, nbInsert, nbDelete, nbEdit, nbPost, nbCancel,
-    nbRefresh];
-  FHints:=TStringList.Create;
-  TStringList(FHints).OnChange:=HintsChanged;
+  ControlStyle := ControlStyle - [csAcceptsControls, csSetCaption] + [csOpaque];
+  if not NewStyleControls then ControlStyle := ControlStyle + [csFramed];
+  FDataLink := TNavDataLink.Create(Self);
+  FVisibleButtons := [nbFirst, nbPrior, nbNext, nbLast, nbInsert,
+    nbDelete, nbEdit, nbPost, nbCancel, nbRefresh];
+  FHints := TStringList.Create;
+  TStringList(FHints).OnChange := HintsChanged;
   InitButtons;
   InitHints;
-  BevelOuter:=bvNone;
-  BevelInner:=bvNone;
-  Width:=241;
-  Height:=25;
-  ButtonWidth:=0;
-  FocusedButton:=nbFirst;
-  FConfirmDelete:=True;
-  FullRepaint:=False;
+  BevelOuter := bvNone;
+  BevelInner := bvNone;
+  Width := 241;
+  Height := 25;
+  ButtonWidth := 0;
+  FocusedButton := nbFirst;
+  FConfirmDelete := True;
+  FullRepaint := False;
 end;
 
 destructor TDBNavigator.Destroy;
@@ -3783,7 +3754,7 @@ begin
   FDefHints.Free;
   FDataLink.Free;
   FHints.Free;
-  FDataLink:=nil;
+  FDataLink := nil;
   inherited Destroy;
 end;
 
@@ -3794,29 +3765,29 @@ var
   X: Integer;
   ResName: string;
 begin
-  MinBtnSize:=Point(20, 18);
-  X:=0;
-  for I:=Low(Buttons) to High(Buttons) do
+  MinBtnSize := Point(20, 18);
+  X := 0;
+  for I := Low(Buttons) to High(Buttons) do
   begin
-    Btn:=TNavButton.Create(Self);
-    Btn.Flat:=Flat;
-    Btn.Index:=I;
-    Btn.Visible:=I in FVisibleButtons;
-    Btn.Enabled:=True;
-    Btn.SetBounds(X, 0, MinBtnSize.X, MinBtnSize.Y);
+    Btn := TNavButton.Create (Self);
+    Btn.Flat := Flat;
+    Btn.Index := I;
+    Btn.Visible := I in FVisibleButtons;
+    Btn.Enabled := True;
+    Btn.SetBounds (X, 0, MinBtnSize.X, MinBtnSize.Y);
     FmtStr(ResName, 'dbn_%s', [BtnTypeName[I]]);
     Btn.Glyph.LoadFromResourceName(HInstance, ResName);
-    Btn.NumGlyphs:=2;
-    Btn.Enabled:=False;
-    Btn.Enabled:=True;
-    Btn.OnClick:=ClickHandler;
-    Btn.OnMouseDown:=BtnMouseDown;
-    Btn.Parent:=Self;
-    Buttons[I]:=Btn;
-    X:=X+MinBtnSize.X;
+    Btn.NumGlyphs := 2;
+    Btn.Enabled := False;
+    Btn.Enabled := True;
+    Btn.OnClick := ClickHandler;
+    Btn.OnMouseDown := BtnMouseDown;
+    Btn.Parent := Self;
+    Buttons[I] := Btn;
+    X := X + MinBtnSize.X;
   end;
-  Buttons[nbPrior].NavStyle:=Buttons[nbPrior].NavStyle+[nsAllowTimer];
-  Buttons[nbNext].NavStyle:=Buttons[nbNext].NavStyle+[nsAllowTimer];
+  Buttons[nbPrior].NavStyle := Buttons[nbPrior].NavStyle + [nsAllowTimer];
+  Buttons[nbNext].NavStyle  := Buttons[nbNext].NavStyle + [nsAllowTimer];
 end;
 
 procedure TDBNavigator.InitHints;
@@ -3826,19 +3797,17 @@ var
 begin
   if not Assigned(FDefHints) then
   begin
-    FDefHints:=TStringList.Create;
-    for J:=Low(Buttons) to High(Buttons) do
+    FDefHints := TStringList.Create;
+    for J := Low(Buttons) to High(Buttons) do
       FDefHints.Add(LoadResString(BtnHintId[J]));
   end;
-  for J:=Low(Buttons) to High(Buttons) do
-    Buttons[J].Hint:=FDefHints[Ord(J)];
-  J:=Low(Buttons);
-  for I:=0 to (FHints.Count-1) do
+  for J := Low(Buttons) to High(Buttons) do
+    Buttons[J].Hint := FDefHints[Ord(J)];
+  J := Low(Buttons);
+  for I := 0 to (FHints.Count - 1) do
   begin
-    if FHints.Strings[I]<>'' then
-      Buttons[J].Hint:=FHints.Strings[I];
-    if J=High(Buttons) then
-      Exit;
+    if FHints.Strings[I] <> '' then Buttons[J].Hint := FHints.Strings[I];
+    if J = High(Buttons) then Exit;
     Inc(J);
   end;
 end;
@@ -3852,55 +3821,54 @@ procedure TDBNavigator.SetFlat(Value: Boolean);
 var
   I: TNavigateBtn;
 begin
-  if FFlat<>Value then
+  if FFlat <> Value then
   begin
-    FFlat:=Value;
-    for I:=Low(Buttons) to High(Buttons) do
-      Buttons[I].Flat:=Value;
+    FFlat := Value;
+    for I := Low(Buttons) to High(Buttons) do
+      Buttons[I].Flat := Value;
   end;
 end;
 
 procedure TDBNavigator.SetHints(Value: TStrings);
 begin
-  if Value.Text=FDefHints.Text then
-    FHints.Clear
-  else
+  if Value.Text = FDefHints.Text then
+    FHints.Clear else
     FHints.Assign(Value);
 end;
 
 function TDBNavigator.GetHints: TStrings;
 begin
-  if (csDesigning in ComponentState)and not (csWriting in ComponentState)and
-    not (csReading in ComponentState)and(FHints.Count=0) then
-    Result:=FDefHints
-  else
-    Result:=FHints;
+  if (csDesigning in ComponentState) and not (csWriting in ComponentState) and
+     not (csReading in ComponentState) and (FHints.Count = 0) then
+    Result := FDefHints else
+    Result := FHints;
 end;
 
 procedure TDBNavigator.GetChildren(Proc: TGetChildProc; Root: TComponent);
 begin
 end;
 
-procedure TDBNavigator.Notification(AComponent: TComponent; Operation: TOperation);
+procedure TDBNavigator.Notification(AComponent: TComponent;
+  Operation: TOperation);
 begin
   inherited Notification(AComponent, Operation);
-  if (Operation=opRemove)and(FDataLink<>nil)and(AComponent=DataSource) then
-    DataSource:=nil;
+  if (Operation = opRemove) and (FDataLink <> nil) and
+    (AComponent = DataSource) then DataSource := nil;
 end;
 
-procedure TDBNavigator.SetVisible(Value: TButtonSet);
+procedure TDBNavigator.SetVisible(Value: TNavButtonSet);
 var
   I: TNavigateBtn;
   W, H: Integer;
 begin
-  W:=Width;
-  H:=Height;
-  FVisibleButtons:=Value;
-  for I:=Low(Buttons) to High(Buttons) do
-    Buttons[I].Visible:=I in FVisibleButtons;
+  W := Width;
+  H := Height;
+  FVisibleButtons := Value;
+  for I := Low(Buttons) to High(Buttons) do
+    Buttons[I].Visible := I in FVisibleButtons;
   SetSize(W, H);
-  if (W<>Width)or(H<>Height) then
-    inherited SetBounds(Left, Top, W, H);
+  if (W <> Width) or (H <> Height) then
+    inherited SetBounds (Left, Top, W, H);
   Invalidate;
 end;
 
@@ -3909,23 +3877,19 @@ var
   Count: Integer;
   I: TNavigateBtn;
 begin
-  if (csLoading in ComponentState) then
-    Exit;
-  if Buttons[nbFirst]=nil then
-    Exit;
+  if (csLoading in ComponentState) then Exit;
+  if Buttons[nbFirst] = nil then Exit;
 
-  Count:=0;
-  for I:=Low(Buttons) to High(Buttons) do
+  Count := 0;
+  for I := Low(Buttons) to High(Buttons) do
     if Buttons[I].Visible then
       Inc(Count);
-  if Count=0 then
-    Inc(Count);
+  if Count = 0 then Inc(Count);
 
-  W:=Max(W, Count*MinBtnSize.X);
-  H:=Max(H, MinBtnSize.Y);
+  W := Max(W, Count * MinBtnSize.X);
+  H := Max(H, MinBtnSize.Y);
 
-  if Align=alNone then
-    W:=(W div Count)*Count;
+  if Align = alNone then W := (W div Count) * Count;
 end;
 
 procedure TDBNavigator.SetSize(var W: Integer; var H: Integer);
@@ -3935,47 +3899,43 @@ var
   Space, Temp, Remain: Integer;
   X: Integer;
 begin
-  if (csLoading in ComponentState) then
-    Exit;
-  if Buttons[nbFirst]=nil then
-    Exit;
+  if (csLoading in ComponentState) then Exit;
+  if Buttons[nbFirst] = nil then Exit;
 
   CalcMinSize(W, H);
 
-  Count:=0;
-  for I:=Low(Buttons) to High(Buttons) do
+  Count := 0;
+  for I := Low(Buttons) to High(Buttons) do
     if Buttons[I].Visible then
       Inc(Count);
-  if Count=0 then
-    Inc(Count);
+  if Count = 0 then Inc(Count);
 
-  ButtonWidth:=W div Count;
-  Temp:=Count*ButtonWidth;
-  if Align=alNone then
-    W:=Temp;
+  ButtonWidth := W div Count;
+  Temp := Count * ButtonWidth;
+  if Align = alNone then W := Temp;
 
-  X:=0;
-  Remain:=W-Temp;
-  Temp:=Count div 2;
-  for I:=Low(Buttons) to High(Buttons) do
+  X := 0;
+  Remain := W - Temp;
+  Temp := Count div 2;
+  for I := Low(Buttons) to High(Buttons) do
   begin
     if Buttons[I].Visible then
     begin
-      Space:=0;
-      if Remain<>0 then
+      Space := 0;
+      if Remain <> 0 then
       begin
         Dec(Temp, Remain);
-        if Temp<0 then
+        if Temp < 0 then
         begin
           Inc(Temp, Count);
-          Space:=1;
+          Space := 1;
         end;
       end;
-      Buttons[I].SetBounds(X, 0, ButtonWidth+Space, Height);
-      Inc(X, ButtonWidth+Space);
+      Buttons[I].SetBounds(X, 0, ButtonWidth + Space, Height);
+      Inc(X, ButtonWidth + Space);
     end
     else
-      Buttons[I].SetBounds(Width+1, 0, ButtonWidth, Height);
+      Buttons[I].SetBounds (Width + 1, 0, ButtonWidth, Height);
   end;
 end;
 
@@ -3983,11 +3943,10 @@ procedure TDBNavigator.SetBounds(ALeft, ATop, AWidth, AHeight: Integer);
 var
   W, H: Integer;
 begin
-  W:=AWidth;
-  H:=AHeight;
-  if not HandleAllocated then
-    SetSize(W, H);
-  inherited SetBounds(ALeft, ATop, W, H);
+  W := AWidth;
+  H := AHeight;
+  if not HandleAllocated then SetSize(W, H);
+  inherited SetBounds (ALeft, ATop, W, H);
 end;
 
 procedure TDBNavigator.WMSize(var Message: TWMSize);
@@ -3995,78 +3954,69 @@ var
   W, H: Integer;
 begin
   inherited;
-  W:=Width;
-  H:=Height;
+  W := Width;
+  H := Height;
   SetSize(W, H);
 end;
 
 procedure TDBNavigator.WMWindowPosChanging(var Message: TWMWindowPosChanging);
 begin
   inherited;
-  if (SWP_NOSIZE and message.WindowPos.Flags)=0 then
-    CalcMinSize(message.WindowPos.cx, message.WindowPos.cy);
+  if (SWP_NOSIZE and Message.WindowPos.Flags) = 0 then
+    CalcMinSize(Message.WindowPos.cx, Message.WindowPos.cy);
 end;
 
 procedure TDBNavigator.ClickHandler(Sender: TObject);
 begin
-  BtnClick(TNavButton(Sender).Index);
+  BtnClick (TNavButton (Sender).Index);
 end;
 
-procedure TDBNavigator.BtnMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState;
-  X, Y: Integer);
+procedure TDBNavigator.BtnMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
 var
   OldFocus: TNavigateBtn;
 begin
-  OldFocus:=FocusedButton;
-  FocusedButton:=TNavButton(Sender).Index;
-  if TabStop and(GetFocus<>Handle)and CanFocus then
+  OldFocus := FocusedButton;
+  FocusedButton := TNavButton (Sender).Index;
+  if TabStop and (GetFocus <> Handle) and CanFocus then
   begin
     SetFocus;
-    if (GetFocus<>Handle) then
+    if (GetFocus <> Handle) then
       Exit;
   end
-  else if TabStop and(GetFocus=Handle)and(OldFocus<>FocusedButton) then
+  else if TabStop and (GetFocus = Handle) and (OldFocus <> FocusedButton) then
   begin
     Buttons[OldFocus].Invalidate;
     Buttons[FocusedButton].Invalidate;
   end;
 end;
 
-// !!! Убранно стандартная реакция на nbRefresh
 procedure TDBNavigator.BtnClick(Index: TNavigateBtn);
 begin
-  if (DataSource<>nil)and(DataSource.State<>dsInactive) then
+  if (DataSource <> nil) and (DataSource.State <> dsInactive) then
   begin
-    if not (csDesigning in ComponentState)and Assigned(FBeforeAction) then
+    if not (csDesigning in ComponentState) and Assigned(FBeforeAction) then
       FBeforeAction(Self, Index);
     with DataSource.DataSet do
     begin
       case Index of
-      nbPrior:
-      Prior;
-      nbNext:
-      Next;
-      nbFirst:
-      First;
-      nbLast:
-      Last;
-      nbInsert:
-      Insert;
-      nbEdit:
-      Edit;
-      nbCancel:
-      Cancel;
-      nbPost:
-      Post;
-      // nbRefresh: Refresh;
-      nbDelete:
-      if not FConfirmDelete or(MessageDlg(SDeleteRecordQuestion, mtConfirmation, mbOKCancel, 0)<>
-        idCancel) then
-        Delete;
+        nbPrior: Prior;
+        nbNext: Next;
+        nbFirst: First;
+        nbLast: Last;
+        nbInsert: Insert;
+        nbEdit: Edit;
+        nbCancel: Cancel;
+        nbPost: Post;
+        //nbRefresh: Refresh; // !!! Убранно стандартная реакция на nbRefresh  //Tango
+        nbDelete:
+          if not FConfirmDelete or
+            (MessageDlg(SDeleteRecordQuestion, mtConfirmation,
+            mbOKCancel, 0) <> idCancel) then Delete;
       end;
     end;
   end;
-  if not (csDesigning in ComponentState)and Assigned(FOnNavClick) then
+  if not (csDesigning in ComponentState) and Assigned(FOnNavClick) then
     FOnNavClick(Self, Index);
 end;
 
@@ -4085,62 +4035,63 @@ var
   NewFocus: TNavigateBtn;
   OldFocus: TNavigateBtn;
 begin
-  OldFocus:=FocusedButton;
+  OldFocus := FocusedButton;
   case Key of
-  VK_RIGHT:
-  begin
-    if OldFocus<High(Buttons) then
-    begin
-      NewFocus:=OldFocus;
-      repeat
-        NewFocus:=Succ(NewFocus);
-      until (NewFocus=High(Buttons))or(Buttons[NewFocus].Visible);
-      if Buttons[NewFocus].Visible then
+    VK_RIGHT:
       begin
-        FocusedButton:=NewFocus;
-        Buttons[OldFocus].Invalidate;
-        Buttons[NewFocus].Invalidate;
+        if OldFocus < High(Buttons) then
+        begin
+          NewFocus := OldFocus;
+          repeat
+            NewFocus := Succ(NewFocus);
+          until (NewFocus = High(Buttons)) or (Buttons[NewFocus].Visible);
+          if Buttons[NewFocus].Visible then
+          begin
+            FocusedButton := NewFocus;
+            Buttons[OldFocus].Invalidate;
+            Buttons[NewFocus].Invalidate;
+          end;
+        end;
       end;
-    end;
-  end;
-  VK_LEFT:
-  begin
-    NewFocus:=FocusedButton;
-    repeat
-      if NewFocus>Low(Buttons) then
-        NewFocus:=Pred(NewFocus);
-    until (NewFocus=Low(Buttons))or(Buttons[NewFocus].Visible);
-    if NewFocus<>FocusedButton then
-    begin
-      FocusedButton:=NewFocus;
-      Buttons[OldFocus].Invalidate;
-      Buttons[FocusedButton].Invalidate;
-    end;
-  end;
-  VK_SPACE:
-  begin
-    if Buttons[FocusedButton].Enabled then
-      Buttons[FocusedButton].Click;
-  end;
+    VK_LEFT:
+      begin
+        NewFocus := FocusedButton;
+        repeat
+          if NewFocus > Low(Buttons) then
+            NewFocus := Pred(NewFocus);
+        until (NewFocus = Low(Buttons)) or (Buttons[NewFocus].Visible);
+        if NewFocus <> FocusedButton then
+        begin
+          FocusedButton := NewFocus;
+          Buttons[OldFocus].Invalidate;
+          Buttons[FocusedButton].Invalidate;
+        end;
+      end;
+    VK_SPACE:
+      begin
+        if Buttons[FocusedButton].Enabled then
+          Buttons[FocusedButton].Click;
+      end;
   end;
 end;
 
 procedure TDBNavigator.WMGetDlgCode(var Message: TWMGetDlgCode);
 begin
-  message.Result:=DLGC_WANTARROWS;
+  Message.Result := DLGC_WANTARROWS;
 end;
 
 procedure TDBNavigator.DataChanged;
 var
   UpEnable, DnEnable: Boolean;
 begin
-  UpEnable:=Enabled and FDataLink.Active and not FDataLink.DataSet.BOF;
-  DnEnable:=Enabled and FDataLink.Active and not FDataLink.DataSet.EOF;
-  Buttons[nbFirst].Enabled:=UpEnable;
-  Buttons[nbPrior].Enabled:=UpEnable;
-  Buttons[nbNext].Enabled:=DnEnable;
-  Buttons[nbLast].Enabled:=DnEnable;
-  Buttons[nbDelete].Enabled:=Enabled and FDataLink.Active and FDataLink.DataSet.CanModify and
+  UpEnable := Enabled and FDataLink.Active and not FDataLink.DataSet.BOF;
+  DnEnable := Enabled and FDataLink.Active and not FDataLink.DataSet.EOF;
+  Buttons[nbFirst].Enabled := UpEnable;
+  Buttons[nbPrior].Enabled := UpEnable;
+  Buttons[nbNext].Enabled := DnEnable;
+  Buttons[nbLast].Enabled := DnEnable;
+  Buttons[nbDelete].Enabled := Enabled and FDataLink.Active and
+    FDataLink.DataSet.CanModify and
     not (FDataLink.DataSet.BOF and FDataLink.DataSet.EOF);
 end;
 
@@ -4148,12 +4099,12 @@ procedure TDBNavigator.EditingChanged;
 var
   CanModify: Boolean;
 begin
-  CanModify:=Enabled and FDataLink.Active and FDataLink.DataSet.CanModify;
-  Buttons[nbInsert].Enabled:=CanModify;
-  Buttons[nbEdit].Enabled:=CanModify and not FDataLink.Editing;
-  Buttons[nbPost].Enabled:=CanModify and FDataLink.Editing;
-  Buttons[nbCancel].Enabled:=CanModify and FDataLink.Editing;
-  Buttons[nbRefresh].Enabled:=CanModify;
+  CanModify := Enabled and FDataLink.Active and FDataLink.DataSet.CanModify;
+  Buttons[nbInsert].Enabled := CanModify;
+  Buttons[nbEdit].Enabled := CanModify and not FDataLink.Editing;
+  Buttons[nbPost].Enabled := CanModify and FDataLink.Editing;
+  Buttons[nbCancel].Enabled := CanModify and FDataLink.Editing;
+  Buttons[nbRefresh].Enabled := CanModify;
 end;
 
 procedure TDBNavigator.ActiveChanged;
@@ -4161,8 +4112,8 @@ var
   I: TNavigateBtn;
 begin
   if not (Enabled and FDataLink.Active) then
-    for I:=Low(Buttons) to High(Buttons) do
-      Buttons[I].Enabled:=False
+    for I := Low(Buttons) to High(Buttons) do
+      Buttons[I].Enabled := False
   else
   begin
     DataChanged;
@@ -4179,16 +4130,15 @@ end;
 
 procedure TDBNavigator.SetDataSource(Value: TDataSource);
 begin
-  FDataLink.DataSource:=Value;
+  FDataLink.DataSource := Value;
   if not (csLoading in ComponentState) then
     ActiveChanged;
-  if Value<>nil then
-    Value.FreeNotification(Self);
+  if Value <> nil then Value.FreeNotification(Self);
 end;
 
 function TDBNavigator.GetDataSource: TDataSource;
 begin
-  Result:=FDataLink.DataSource;
+  Result := FDataLink.DataSource;
 end;
 
 procedure TDBNavigator.Loaded;
@@ -4196,54 +4146,56 @@ var
   W, H: Integer;
 begin
   inherited Loaded;
-  W:=Width;
-  H:=Height;
+  W := Width;
+  H := Height;
   SetSize(W, H);
-  if (W<>Width)or(H<>Height) then
-    inherited SetBounds(Left, Top, W, H);
+  if (W <> Width) or (H <> Height) then
+    inherited SetBounds (Left, Top, W, H);
   InitHints;
   ActiveChanged;
 end;
 
-{ TNavButton }
+{TNavButton}
 
 destructor TNavButton.Destroy;
 begin
-  if FRepeatTimer<>nil then
+  if FRepeatTimer <> nil then
     FRepeatTimer.Free;
   inherited Destroy;
 end;
 
-procedure TNavButton.MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+procedure TNavButton.MouseDown(Button: TMouseButton; Shift: TShiftState;
+  X, Y: Integer);
 begin
-  inherited MouseDown(Button, Shift, X, Y);
+  inherited MouseDown (Button, Shift, X, Y);
   if nsAllowTimer in FNavStyle then
   begin
-    if FRepeatTimer=nil then
-      FRepeatTimer:=TTimer.Create(Self);
+    if FRepeatTimer = nil then
+      FRepeatTimer := TTimer.Create(Self);
 
-    FRepeatTimer.OnTimer:=TimerExpired;
-    FRepeatTimer.Interval:=InitRepeatPause;
-    FRepeatTimer.Enabled:=True;
+    FRepeatTimer.OnTimer := TimerExpired;
+    FRepeatTimer.Interval := InitRepeatPause;
+    FRepeatTimer.Enabled  := True;
   end;
 end;
 
-procedure TNavButton.MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+procedure TNavButton.MouseUp(Button: TMouseButton; Shift: TShiftState;
+                                  X, Y: Integer);
 begin
-  inherited MouseUp(Button, Shift, X, Y);
-  if FRepeatTimer<>nil then
-    FRepeatTimer.Enabled:=False;
+  inherited MouseUp (Button, Shift, X, Y);
+  if FRepeatTimer <> nil then
+    FRepeatTimer.Enabled  := False;
 end;
 
 procedure TNavButton.TimerExpired(Sender: TObject);
 begin
-  FRepeatTimer.Interval:=RepeatPause;
-  if (FState=bsDown)and MouseCapture then
+  FRepeatTimer.Interval := RepeatPause;
+  if (FState = bsDown) and MouseCapture then
   begin
     try
       Click;
     except
-      FRepeatTimer.Enabled:=False;
+      FRepeatTimer.Enabled := False;
       raise;
     end;
   end;
@@ -4254,14 +4206,15 @@ var
   R: TRect;
 begin
   inherited Paint;
-  if (GetFocus=Parent.Handle)and(FIndex=TDBNavigator(Parent).FocusedButton) then
+  if (GetFocus = Parent.Handle) and
+     (FIndex = TDBNavigator (Parent).FocusedButton) then
   begin
-    R:=Bounds(0, 0, Width, Height);
-    InflateRect(R, - 3, - 3);
-    if FState=bsDown then
+    R := Bounds(0, 0, Width, Height);
+    InflateRect(R, -3, -3);
+    if FState = bsDown then
       OffsetRect(R, 1, 1);
-    Canvas.Brush.Style:=bsSolid;
-    Font.Color:=clBtnShadow;
+    Canvas.Brush.Style := bsSolid;
+    Font.Color := clBtnShadow;
     DrawFocusRect(Canvas.Handle, R);
   end;
 end;
@@ -4271,32 +4224,29 @@ end;
 constructor TNavDataLink.Create(ANav: TDBNavigator);
 begin
   inherited Create;
-  FNavigator:=ANav;
-  VisualControl:=True;
+  FNavigator := ANav;
+  VisualControl := True;
 end;
 
 destructor TNavDataLink.Destroy;
 begin
-  FNavigator:=nil;
+  FNavigator := nil;
   inherited Destroy;
 end;
 
 procedure TNavDataLink.EditingChanged;
 begin
-  if FNavigator<>nil then
-    FNavigator.EditingChanged;
+  if FNavigator <> nil then FNavigator.EditingChanged;
 end;
 
 procedure TNavDataLink.DataSetChanged;
 begin
-  if FNavigator<>nil then
-    FNavigator.DataChanged;
+  if FNavigator <> nil then FNavigator.DataChanged;
 end;
 
 procedure TNavDataLink.ActiveChanged;
 begin
-  if FNavigator<>nil then
-    FNavigator.ActiveChanged;
+  if FNavigator <> nil then FNavigator.ActiveChanged;
 end;
 
 { TDataSourceLink }
@@ -4304,35 +4254,32 @@ end;
 constructor TDataSourceLink.Create;
 begin
   inherited Create;
-  VisualControl:=True;
+  VisualControl := True;
 end;
 
 procedure TDataSourceLink.ActiveChanged;
 begin
-  if FDBLookupControl<>nil then
-    FDBLookupControl.UpdateDataFields;
+  if FDBLookupControl <> nil then FDBLookupControl.UpdateDataFields;
 end;
 
 procedure TDataSourceLink.FocusControl(Field: TFieldRef);
 begin
-  if (Field^<>nil)and(Field^=FDBLookupControl.Field)and(FDBLookupControl<>nil)and FDBLookupControl.CanFocus
-  then
+  if (Field^ <> nil) and (Field^ = FDBLookupControl.Field) and
+    (FDBLookupControl <> nil) and FDBLookupControl.CanFocus then
   begin
-    Field^:=nil;
+    Field^ := nil;
     FDBLookupControl.SetFocus;
   end;
 end;
 
 procedure TDataSourceLink.LayoutChanged;
 begin
-  if FDBLookupControl<>nil then
-    FDBLookupControl.UpdateDataFields;
+  if FDBLookupControl <> nil then FDBLookupControl.UpdateDataFields;
 end;
 
 procedure TDataSourceLink.RecordChanged(Field: TField);
 begin
-  if FDBLookupControl<>nil then
-    FDBLookupControl.DataLinkRecordChanged(Field);
+  if FDBLookupControl <> nil then FDBLookupControl.DataLinkRecordChanged(Field);
 end;
 
 { TListSourceLink }
@@ -4340,80 +4287,77 @@ end;
 constructor TListSourceLink.Create;
 begin
   inherited Create;
-  VisualControl:=True;
+  VisualControl := True;
 end;
 
 procedure TListSourceLink.ActiveChanged;
 begin
-  if FDBLookupControl<>nil then
-    FDBLookupControl.UpdateListFields;
+  if FDBLookupControl <> nil then FDBLookupControl.UpdateListFields;
 end;
 
 procedure TListSourceLink.DataSetChanged;
 begin
-  if FDBLookupControl<>nil then
-    FDBLookupControl.ListLinkDataChanged;
+  if FDBLookupControl <> nil then FDBLookupControl.ListLinkDataChanged;
 end;
 
 procedure TListSourceLink.LayoutChanged;
 begin
-  if FDBLookupControl<>nil then
-    FDBLookupControl.UpdateListFields;
+  if FDBLookupControl <> nil then FDBLookupControl.UpdateListFields;
 end;
 
 { TDBLookupControl }
 
 function VarEquals(const V1, V2: Variant): Boolean;
 begin
-  Result:=False;
+  Result := False;
   try
-    Result:=V1=V2;
+    Result := V1 = V2;
   except
   end;
 end;
 
 var
-  SearchTickCount: Integer=0;
+  SearchTickCount: Integer = 0;
 
 constructor TDBLookupControl.Create(AOwner: TComponent);
 const
-  LookupStyle=[csOpaque, csNeedsBorderPaint];
+  LookupStyle = [csOpaque, csNeedsBorderPaint];
 begin
   inherited Create(AOwner);
   if NewStyleControls then
-    ControlStyle:=LookupStyle
+    ControlStyle := LookupStyle
   else
-    ControlStyle:=LookupStyle+[csFramed];
-  ParentColor:=False;
-  TabStop:=True;
-  FLookupSource:=TDataSource.Create(Self);
-  FDataLink:=TDataSourceLink.Create;
-  FDataLink.FDBLookupControl:=Self;
-  FListLink:=TListSourceLink.Create;
-  FListLink.FDBLookupControl:=Self;
-  FListFields:=TList.Create;
-  FKeyValue:=Null;
+    ControlStyle := LookupStyle + [csFramed];
+  ParentColor := False;
+  TabStop := True;
+  FLookupSource := TDataSource.Create(Self);
+  FDataLink := TDataSourceLink.Create;
+  FDataLink.FDBLookupControl := Self;
+  FListLink := TListSourceLink.Create;
+  FListLink.FDBLookupControl := Self;
+  FListFields := TList.Create;
+  FKeyValue := Null;
 end;
 
 destructor TDBLookupControl.Destroy;
 begin
   inherited Destroy;
   FListFields.Free;
-  FListFields:=nil;
-  if FListLink<>nil then
-    FListLink.FDBLookupControl:=nil;
+  FListFields := nil;
+  if FListLink <> nil then
+    FListLink.FDBLookupControl := nil;
   FListLink.Free;
-  FListLink:=nil;
-  if FDataLink<>nil then
-    FDataLink.FDBLookupControl:=nil;
+  FListLink := nil;
+  if FDataLink <> nil then
+    FDataLink.FDBLookupControl := nil;
   FDataLink.Free;
-  FDataLink:=nil;
+  FDataLink := nil;
 end;
 
 function TDBLookupControl.CanModify: Boolean;
 begin
-  Result:=FListActive and not ReadOnly and((FDataLink.DataSource=nil)or(FMasterField<>nil)and
-    FMasterField.CanModify);
+  Result := FListActive and not ReadOnly and ((FDataLink.DataSource = nil) or
+    (FMasterField <> nil) and FMasterField.CanModify);
 end;
 
 procedure TDBLookupControl.CheckNotCircular;
@@ -4424,35 +4368,32 @@ end;
 
 procedure TDBLookupControl.CheckNotLookup;
 begin
-  if FLookupMode then
-    DatabaseError(SPropDefByLookup);
-  if FDataLink.DataSourceFixed then
-    DatabaseError(SDataSourceFixed);
+  if FLookupMode then DatabaseError(SPropDefByLookup);
+  if FDataLink.DataSourceFixed then DatabaseError(SDataSourceFixed);
 end;
 
 procedure TDBLookupControl.UpdateDataFields;
 begin
-  FDataField:=nil;
-  FMasterField:=nil;
-  if FDataLink.Active and(FDataFieldName<>'') then
+  FDataField := nil;
+  FMasterField := nil;
+  if FDataLink.Active and (FDataFieldName <> '') then
   begin
     CheckNotCircular;
-    FDataField:=GetFieldProperty(FDataLink.DataSet, Self, FDataFieldName);
-    if FDataField.FieldKind=fkLookup then
-      FMasterField:=GetFieldProperty(FDataLink.DataSet, Self, FDataField.KeyFields)
+    FDataField := GetFieldProperty(FDataLink.DataSet, Self, FDataFieldName);
+    if FDataField.FieldKind = fkLookup then
+      FMasterField := GetFieldProperty(FDataLink.DataSet, Self, FDataField.KeyFields)
     else
-      FMasterField:=FDataField;
+      FMasterField := FDataField;
   end;
-  SetLookupMode((FDataField<>nil)and(FDataField.FieldKind=fkLookup));
+  SetLookupMode((FDataField <> nil) and (FDataField.FieldKind = fkLookup));
   DataLinkRecordChanged(nil);
 end;
 
 procedure TDBLookupControl.DataLinkRecordChanged(Field: TField);
 begin
-  if (Field=nil)or(Field=FMasterField) then
-    if FMasterField<>nil then
-      SetKeyValue(FMasterField.Value)
-    else
+  if (Field = nil) or (Field = FMasterField) then
+    if FMasterField <> nil then
+      SetKeyValue(FMasterField.Value) else
       SetKeyValue(Null);
 end;
 
@@ -4464,33 +4405,27 @@ begin
   CreateParams(Params);
   SetRect(R, 0, 0, 0, 0);
   AdjustWindowRectEx(R, Params.Style, False, Params.ExStyle);
-  Result:=R.Bottom-R.Top;
+  Result := R.Bottom - R.Top;
 end;
 
 function TDBLookupControl.GetDataSource: TDataSource;
 begin
-  Result:=FDataLink.DataSource;
+  Result := FDataLink.DataSource;
 end;
 
 function TDBLookupControl.GetKeyFieldName: string;
 begin
-  if FLookupMode then
-    Result:=''
-  else
-    Result:=FKeyFieldName;
+  if FLookupMode then Result := '' else Result := FKeyFieldName;
 end;
 
 function TDBLookupControl.GetListSource: TDataSource;
 begin
-  if FLookupMode then
-    Result:=nil
-  else
-    Result:=FListLink.DataSource;
+  if FLookupMode then Result := nil else Result := FListLink.DataSource;
 end;
 
 function TDBLookupControl.GetReadOnly: Boolean;
 begin
-  Result:=FDataLink.ReadOnly;
+  Result := FDataLink.ReadOnly;
 end;
 
 function TDBLookupControl.GetTextHeight: Integer;
@@ -4499,12 +4434,12 @@ var
   SaveFont: HFont;
   Metrics: TTextMetric;
 begin
-  DC:=GetDC(0);
-  SaveFont:=SelectObject(DC, Font.Handle);
+  DC := GetDC(0);
+  SaveFont := SelectObject(DC, Font.Handle);
   GetTextMetrics(DC, Metrics);
   SelectObject(DC, SaveFont);
   ReleaseDC(0, DC);
-  Result:=Metrics.tmHeight;
+  Result := Metrics.tmHeight;
 end;
 
 procedure TDBLookupControl.KeyValueChanged;
@@ -4516,15 +4451,15 @@ var
   DataSet: TDataSet;
   ResultField: TField;
 begin
-  FListActive:=False;
-  FKeyField:=nil;
-  FListField:=nil;
+  FListActive := False;
+  FKeyField := nil;
+  FListField := nil;
   FListFields.Clear;
-  if FListLink.Active and(FKeyFieldName<>'') then
+  if FListLink.Active and (FKeyFieldName <> '') then
   begin
     CheckNotCircular;
-    DataSet:=FListLink.DataSet;
-    FKeyField:=GetFieldProperty(DataSet, Self, FKeyFieldName);
+    DataSet := FListLink.DataSet;
+    FKeyField := GetFieldProperty(DataSet, Self, FKeyFieldName);
     try
       DataSet.GetFieldList(FListFields, FListFieldName);
     except
@@ -4532,21 +4467,18 @@ begin
     end;
     if FLookupMode then
     begin
-      ResultField:=GetFieldProperty(DataSet, Self, FDataField.LookupResultField);
-      if FListFields.IndexOf(ResultField)<0 then
+      ResultField := GetFieldProperty(DataSet, Self, FDataField.LookupResultField);
+      if FListFields.IndexOf(ResultField) < 0 then
         FListFields.Insert(0, ResultField);
-      FListField:=ResultField;
-    end
-    else
+      FListField := ResultField;
+    end else
     begin
-      if FListFields.Count=0 then
-        FListFields.Add(FKeyField);
-      if (FListFieldIndex>=0)and(FListFieldIndex<FListFields.Count) then
-        FListField:=FListFields[FListFieldIndex]
-      else
-        FListField:=FListFields[0];
+      if FListFields.Count = 0 then FListFields.Add(FKeyField);
+      if (FListFieldIndex >= 0) and (FListFieldIndex < FListFields.Count) then
+        FListField := FListFields[FListFieldIndex] else
+        FListField := FListFields[0];
     end;
-    FListActive:=True;
+    FListActive := True;
   end;
 end;
 
@@ -4558,28 +4490,32 @@ function TDBLookupControl.LocateKey: Boolean;
 var
   KeySave: Variant;
 begin
-  Result:=False;
+  Result := False;
   try
-    KeySave:=FKeyValue;
-    if not VarIsNull(FKeyValue)and FListLink.DataSet.Active and
-      FListLink.DataSet.Locate(FKeyFieldName, FKeyValue, []) then
-    begin
-      Result:=True;
-      FKeyValue:=KeySave;
+    Inc(FListDataChanging);
+    try
+      KeySave := FKeyValue;
+      if not VarIsNull(FKeyValue) and FListLink.DataSet.Active and
+        FListLink.DataSet.Locate(FKeyFieldName, FKeyValue, []) then
+      begin
+        Result := True;
+        FKeyValue := KeySave;
+      end;
+    except
     end;
-  except
+  finally
+    Dec(FListDataChanging);
   end;
 end;
 
-procedure TDBLookupControl.Notification(AComponent: TComponent; Operation: TOperation);
+procedure TDBLookupControl.Notification(AComponent: TComponent;
+  Operation: TOperation);
 begin
   inherited Notification(AComponent, Operation);
-  if Operation=opRemove then
+  if Operation = opRemove then
   begin
-    if (FDataLink<>nil)and(AComponent=DataSource) then
-      DataSource:=nil;
-    if (FListLink<>nil)and(AComponent=ListSource) then
-      ListSource:=nil;
+    if (FDataLink <> nil) and (AComponent = DataSource) then DataSource := nil;
+    if (FListLink <> nil) and (AComponent = ListSource) then ListSource := nil;
   end;
 end;
 
@@ -4589,86 +4525,82 @@ var
   S: string;
   CharMsg: TMsg;
 begin
-  if (FListField<>nil)and(FListField.FieldKind in [fkData, fkInternalCalc])and
+  if (FListField <> nil) and (FListField.FieldKind in [fkData, fkInternalCalc]) and
     (FListField.DataType in [ftString, ftWideString]) then
     case Key of
-    #8, #27:
-    SearchText:='';
-    #32..#255:
-    if CanModify then
-    begin
-      TickCount:=GetTickCount;
-      if TickCount-SearchTickCount>2000 then
-        SearchText:='';
-      SearchTickCount:=TickCount;
-      if SysLocale.FarEast and(Key in LeadBytes) then
-        if PeekMessage(CharMsg, Handle, WM_CHAR, WM_CHAR, PM_REMOVE) then
+      #8, #27: SearchText := '';
+      #32..#255:
+        if CanModify then
         begin
-          if CharMsg.Message=WM_Quit then
+          TickCount := GetTickCount;
+          if TickCount - SearchTickCount > 2000 then SearchText := '';
+          SearchTickCount := TickCount;
+          if SysLocale.FarEast and (Key in LeadBytes) then
+            if PeekMessage(CharMsg, Handle, WM_CHAR, WM_CHAR, PM_REMOVE) then
+            begin
+              if CharMsg.Message = WM_Quit then
+              begin
+                PostQuitMessage(CharMsg.wparam);
+                Exit;
+              end;
+              SearchText := SearchText + Key;
+              Key := Char(CharMsg.wParam);
+            end;
+          if Length(SearchText) < 32 then
           begin
-            PostQuitMessage(CharMsg.WParam);
-            Exit;
+            S := SearchText + Key;
+            try
+              if FListLink.DataSet.Locate(FListField.FieldName, S,
+                [loCaseInsensitive, loPartialKey]) then
+              begin
+                SelectKeyValue(FKeyField.Value);
+                SearchText := S;
+              end;
+            except
+              { If you attempt to search for a string larger than what the field
+                can hold, and exception will be raised.  Just trap it and
+                reset the SearchText back to the old value. }
+              SearchText := S;
+            end;
           end;
-          SearchText:=SearchText+Key;
-          Key:=Char(CharMsg.WParam);
         end;
-      if Length(SearchText)<32 then
-      begin
-        S:=SearchText+Key;
-        try
-          if FListLink.DataSet.Locate(FListField.FieldName, S, [loCaseInsensitive, loPartialKey])
-          then
-          begin
-            SelectKeyValue(FKeyField.Value);
-            SearchText:=S;
-          end;
-        except
-          { If you attempt to search for a string larger than what the field
-            can hold, and exception will be raised.  Just trap it and
-            reset the SearchText back to the old value. }
-          SearchText:=S;
-        end;
-      end;
-    end;
     end;
 end;
 
 procedure TDBLookupControl.SelectKeyValue(const Value: Variant);
 begin
-  if FMasterField<>nil then
+  if FMasterField <> nil then
   begin
     if FDataLink.Edit then
-      FMasterField.Value:=Value;
-  end
-  else
+      FMasterField.Value := Value;
+  end else
     SetKeyValue(Value);
   Repaint;
   Click;
 end;
 
-procedure TDBLookupControl.SetDataFieldName(const Value: string);
+procedure TDBLookupControl.SetDataFieldName(const Value: WideString);
 begin
-  if FDataFieldName<>Value then
+  if FDataFieldName <> Value then
   begin
-    FDataFieldName:=Value;
+    FDataFieldName := Value;
     UpdateDataFields;
   end;
 end;
 
 procedure TDBLookupControl.SetDataSource(Value: TDataSource);
 begin
-  if not (FDataLink.DataSourceFixed and(csLoading in ComponentState)) then
-    FDataLink.DataSource:=Value;
-  if Value<>nil then
-    Value.FreeNotification(Self);
+  if not (FDataLink.DataSourceFixed and (csLoading in ComponentState)) then
+    FDataLink.DataSource := Value;
+  if Value <> nil then Value.FreeNotification(Self);
 end;
 
 procedure TDBLookupControl.SetKeyFieldName(const Value: string);
 begin
   CheckNotLookup;
-  if FKeyFieldName<>Value then
+  if FKeyFieldName <> Value then
   begin
-    FKeyFieldName:=Value;
+    FKeyFieldName := Value;
     UpdateListFields;
   end;
 end;
@@ -4677,16 +4609,16 @@ procedure TDBLookupControl.SetKeyValue(const Value: Variant);
 begin
   if not VarEquals(FKeyValue, Value) then
   begin
-    FKeyValue:=Value;
+    FKeyValue := Value;
     KeyValueChanged;
   end;
 end;
 
 procedure TDBLookupControl.SetListFieldName(const Value: string);
 begin
-  if FListFieldName<>Value then
+  if FListFieldName <> Value then
   begin
-    FListFieldName:=Value;
+    FListFieldName := Value;
     UpdateListFields;
   end;
 end;
@@ -4694,53 +4626,51 @@ end;
 procedure TDBLookupControl.SetListSource(Value: TDataSource);
 begin
   CheckNotLookup;
-  FListLink.DataSource:=Value;
-  if Value<>nil then
-    Value.FreeNotification(Self);
+  FListLink.DataSource := Value;
+  if Value <> nil then Value.FreeNotification(Self);
 end;
 
 procedure TDBLookupControl.SetLookupMode(Value: Boolean);
 begin
-  if FLookupMode<>Value then
+  if FLookupMode <> Value then
     if Value then
     begin
-      FMasterField:=GetFieldProperty(FDataField.DataSet, Self, FDataField.KeyFields);
-      FLookupSource.DataSet:=FDataField.LookupDataSet;
-      FKeyFieldName:=FDataField.LookupKeyFields;
-      FLookupMode:=True;
-      FListLink.DataSource:=FLookupSource;
-    end
-    else
+      FMasterField := GetFieldProperty(FDataField.DataSet, Self, FDataField.KeyFields);
+      FLookupSource.DataSet := FDataField.LookupDataSet;
+      FKeyFieldName := FDataField.LookupKeyFields;
+      FLookupMode := True;
+      FListLink.DataSource := FLookupSource;
+    end else
     begin
-      FListLink.DataSource:=nil;
-      FLookupMode:=False;
-      FKeyFieldName:='';
-      FLookupSource.DataSet:=nil;
-      FMasterField:=FDataField;
+      FListLink.DataSource := nil;
+      FLookupMode := False;
+      FKeyFieldName := '';
+      FLookupSource.DataSet := nil;
+      FMasterField := FDataField;
     end;
 end;
 
 procedure TDBLookupControl.SetReadOnly(Value: Boolean);
 begin
-  FDataLink.ReadOnly:=Value;
+  FDataLink.ReadOnly := Value;
 end;
 
 procedure TDBLookupControl.WMGetDlgCode(var Message: TMessage);
 begin
-  message.Result:=DLGC_WANTARROWS or DLGC_WANTCHARS;
+  Message.Result := DLGC_WANTARROWS or DLGC_WANTCHARS;
 end;
 
 procedure TDBLookupControl.WMKillFocus(var Message: TMessage);
 begin
-  FHasFocus:=False;
+  FHasFocus := False;
   inherited;
   Invalidate;
 end;
 
 procedure TDBLookupControl.WMSetFocus(var Message: TMessage);
 begin
-  SearchText:='';
-  FHasFocus:=True;
+  SearchText := '';
+  FHasFocus := True;
   inherited;
   Invalidate;
 end;
@@ -4753,27 +4683,29 @@ end;
 
 procedure TDBLookupControl.CMGetDataLink(var Message: TMessage);
 begin
-  message.Result:=Integer(FDataLink);
+  Message.Result := Integer(FDataLink);
 end;
 
 function TDBLookupControl.ExecuteAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited ExecuteAction(Action)or(FDataLink<>nil)and FDataLink.ExecuteAction(Action);
+  Result := inherited ExecuteAction(Action) or (FDataLink <> nil) and
+    FDataLink.ExecuteAction(Action);
 end;
 
 function TDBLookupControl.UpdateAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited UpdateAction(Action)or(FDataLink<>nil)and FDataLink.UpdateAction(Action);
+  Result := inherited UpdateAction(Action) or (FDataLink <> nil) and
+    FDataLink.UpdateAction(Action);
 end;
 
 procedure TDBLookupControl.WMKeyDown(var Message: TWMKeyDown);
 begin
-  if (FNullValueKey<>0)and CanModify and
-    (FNullValueKey=ShortCut(message.CharCode, KeyDataToShiftState(message.KeyData))) then
+  if (FNullValueKey <> 0) and CanModify and (FNullValueKey = ShortCut(Message.CharCode,
+     KeyDataToShiftState(Message.KeyData))) then
   begin
     FDataLink.Edit;
     Field.Clear;
-    message.CharCode:=0;
+    Message.CharCode := 0;
   end;
   inherited;
 end;
@@ -4783,21 +4715,21 @@ end;
 constructor TDBLookupListBox.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  ControlStyle:=ControlStyle+[csDoubleClicks];
-  Width:=121;
-  FBorderStyle:=bsSingle;
-  RowCount:=7;
+  ControlStyle := ControlStyle + [csDoubleClicks];
+  Width := 121;
+  FBorderStyle := bsSingle;
+  RowCount := 7;
 end;
 
 procedure TDBLookupListBox.CreateParams(var Params: TCreateParams);
 begin
   inherited CreateParams(Params);
   with Params do
-    if FBorderStyle=bsSingle then
+    if FBorderStyle = bsSingle then
       if NewStyleControls and Ctl3D then
-        ExStyle:=ExStyle or WS_EX_CLIENTEDGE
+        ExStyle := ExStyle or WS_EX_CLIENTEDGE
       else
-        Style:=Style or WS_BORDER;
+        Style := Style or WS_BORDER;
 end;
 
 procedure TDBLookupListBox.CreateWnd;
@@ -4811,15 +4743,14 @@ var
   FieldValue: Variant;
 begin
   if not VarIsNull(FKeyValue) then
-    for Result:=0 to FRecordCount-1 do
+    for Result := 0 to FRecordCount - 1 do
     begin
-      ListLink.ActiveRecord:=Result;
-      FieldValue:=FKeyField.Value;
-      ListLink.ActiveRecord:=FRecordIndex;
-      if VarEquals(FieldValue, FKeyValue) then
-        Exit;
+      ListLink.ActiveRecord := Result;
+      FieldValue := FKeyField.Value;
+      ListLink.ActiveRecord := FRecordIndex;
+      if VarEquals(FieldValue, FKeyValue) then Exit;
     end;
-  Result:= - 1;
+  Result := -1;
 end;
 
 procedure TDBLookupListBox.KeyDown(var Key: Word; Shift: TShiftState);
@@ -4829,40 +4760,31 @@ begin
   inherited KeyDown(Key, Shift);
   if CanModify then
   begin
-    Delta:=0;
+    Delta := 0;
     case Key of
-    VK_UP, VK_LEFT:
-    Delta:= - 1;
-    VK_DOWN, VK_RIGHT:
-    Delta:=1;
-    VK_PRIOR:
-    Delta:=1-FRowCount;
-    VK_NEXT:
-    Delta:=FRowCount-1;
-    VK_HOME:
-    Delta:= - Maxint;
-    VK_END:
-    Delta:=Maxint;
+      VK_UP, VK_LEFT: Delta := -1;
+      VK_DOWN, VK_RIGHT: Delta := 1;
+      VK_PRIOR: Delta := 1 - FRowCount;
+      VK_NEXT: Delta := FRowCount - 1;
+      VK_HOME: Delta := -Maxint;
+      VK_END: Delta := Maxint;
     end;
-    if Delta<>0 then
+    if Delta <> 0 then
     begin
-      SearchText:='';
-      if Delta= - Maxint then
-        ListLink.DataSet.First
-      else if Delta=Maxint then
-        ListLink.DataSet.Last
-      else
-      begin
-        KeyIndex:=GetKeyIndex;
-        if KeyIndex>=0 then
-          ListLink.DataSet.MoveBy(KeyIndex-FRecordIndex)
-        else
+      SearchText := '';
+      if Delta = -Maxint then ListLink.DataSet.First else
+        if Delta = Maxint then ListLink.DataSet.Last else
         begin
-          KeyValueChanged;
-          Delta:=0;
+          KeyIndex := GetKeyIndex;
+          if KeyIndex >= 0 then
+            ListLink.DataSet.MoveBy(KeyIndex - FRecordIndex)
+          else
+          begin
+            KeyValueChanged;
+            Delta := 0;
+          end;
+          ListLink.DataSet.MoveBy(Delta);
         end;
-        ListLink.DataSet.MoveBy(Delta);
-      end;
       SelectCurrent;
     end;
   end;
@@ -4877,12 +4799,10 @@ end;
 procedure TDBLookupListBox.KeyValueChanged;
 begin
   if ListActive and not FLockPosition then
-    if not LocateKey then
-      ListLink.DataSet.First;
-  if FListField<>nil then
-    FSelectedItem:=FListField.DisplayText
-  else
-    FSelectedItem:='';
+    if not LocateKey then ListLink.DataSet.First;
+  if FListField <> nil then
+    FSelectedItem := FListField.DisplayText else
+    FSelectedItem := '';
 end;
 
 procedure TDBLookupListBox.UpdateListFields;
@@ -4890,10 +4810,7 @@ begin
   try
     inherited;
   finally
-    if ListActive then
-      KeyValueChanged
-    else
-      ListLinkDataChanged;
+    if ListActive then KeyValueChanged else ListLinkDataChanged;
   end;
 end;
 
@@ -4901,15 +4818,15 @@ procedure TDBLookupListBox.ListLinkDataChanged;
 begin
   if ListActive then
   begin
-    FRecordIndex:=ListLink.ActiveRecord;
-    FRecordCount:=ListLink.RecordCount;
-    FKeySelected:=not VarIsNull(FKeyValue)or not ListLink.DataSet.BOF;
-  end
-  else
+    FRecordIndex := ListLink.ActiveRecord;
+    FRecordCount := ListLink.RecordCount;
+    FKeySelected := not VarIsNull(FKeyValue) or
+      not ListLink.DataSet.BOF;
+  end else
   begin
-    FRecordIndex:=0;
-    FRecordCount:=0;
-    FKeySelected:=False;
+    FRecordIndex := 0;
+    FRecordCount := 0;
+    FKeySelected := False;
   end;
   if HandleAllocated then
   begin
@@ -4918,27 +4835,25 @@ begin
   end;
 end;
 
-procedure TDBLookupListBox.MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+procedure TDBLookupListBox.MouseDown(Button: TMouseButton; Shift: TShiftState;
+  X, Y: Integer);
 begin
-  if Button=mbLeft then
+  if Button = mbLeft then
   begin
-    SearchText:='';
+    SearchText := '';
     if not FPopup then
     begin
       SetFocus;
-      if not HasFocus then
-        Exit;
+      if not HasFocus then Exit;
     end;
     if CanModify then
       if ssDouble in Shift then
       begin
-        if FRecordIndex=Y div GetTextHeight then
-          DblClick;
-      end
-      else
+        if FRecordIndex = Y div GetTextHeight then DblClick;
+      end else
       begin
-        MouseCapture:=True;
-        FTracking:=True;
+        MouseCapture := True;
+        FTracking := True;
         SelectItemAt(X, Y);
       end;
   end;
@@ -4950,13 +4865,14 @@ begin
   if FTracking then
   begin
     SelectItemAt(X, Y);
-    FMousePos:=Y;
+    FMousePos := Y;
     TimerScroll;
   end;
   inherited MouseMove(Shift, X, Y);
 end;
 
-procedure TDBLookupListBox.MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+procedure TDBLookupListBox.MouseUp(Button: TMouseButton; Shift: TShiftState;
+  X, Y: Integer);
 begin
   if FTracking then
   begin
@@ -4975,85 +4891,76 @@ var
   Field: TField;
   AAlignment: TAlignment;
 begin
-  Canvas.Font:=Font;
-  TextWidth:=Canvas.TextWidth('0');
-  TextHeight:=Canvas.TextHeight('0');
-  LastFieldIndex:=ListFields.Count-1;
-  if ColorToRGB(Color)<>ColorToRGB(clBtnFace) then
-    Canvas.Pen.Color:=clBtnFace
-  else
-    Canvas.Pen.Color:=clBtnShadow;
-  for I:=0 to FRowCount-1 do
+  Canvas.Font := Font;
+  TextWidth := Canvas.TextWidth('0');
+  TextHeight := Canvas.TextHeight('0');
+  LastFieldIndex := ListFields.Count - 1;
+  if ColorToRGB(Color) <> ColorToRGB(clBtnFace) then
+    Canvas.Pen.Color := clBtnFace else
+    Canvas.Pen.Color := clBtnShadow;
+  for I := 0 to FRowCount - 1 do
   begin
     if Enabled then
-      Canvas.Font.Color:=Font.Color
-    else
-      Canvas.Font.Color:=clGrayText;
-    Canvas.Brush.Color:=Color;
-    Selected:=not FKeySelected and(I=0);
-    R.Top:=I*TextHeight;
-    R.Bottom:=R.Top+TextHeight;
-    if I<FRecordCount then
+      Canvas.Font.Color := Font.Color else
+      Canvas.Font.Color := clGrayText;
+    Canvas.Brush.Color := Color;
+    Selected := not FKeySelected and (I = 0);
+    R.Top := I * TextHeight;
+    R.Bottom := R.Top + TextHeight;
+    if I < FRecordCount then
     begin
-      ListLink.ActiveRecord:=I;
-      if not VarIsNull(FKeyValue)and VarEquals(FKeyField.Value, FKeyValue) then
+      ListLink.ActiveRecord := I;
+      if not VarIsNull(FKeyValue) and
+        VarEquals(FKeyField.Value, FKeyValue) then
       begin
-        Canvas.Font.Color:=clHighlightText;
-        Canvas.Brush.Color:=clHighlight;
-        Selected:=True;
+        Canvas.Font.Color := clHighlightText;
+        Canvas.Brush.Color := clHighlight;
+        Selected := True;
       end;
-      R.Right:=0;
-      for J:=0 to LastFieldIndex do
+      R.Right := 0;
+      for J := 0 to LastFieldIndex do
       begin
-        Field:=ListFields[J];
-        if J<LastFieldIndex then
-          W:=Field.DisplayWidth*TextWidth+4
-        else
-          W:=ClientWidth-R.Right;
-        S:=Field.DisplayText;
-        X:=2;
-        AAlignment:=Field.Alignment;
-        if UseRightToLeftAlignment then
-          ChangeBiDiModeAlignment(AAlignment);
+        Field := ListFields[J];
+        if J < LastFieldIndex then
+          W := Field.DisplayWidth * TextWidth + 4 else
+          W := ClientWidth - R.Right;
+        S := Field.DisplayText;
+        X := 2;
+        AAlignment := Field.Alignment;
+        if UseRightToLeftAlignment then ChangeBiDiModeAlignment(AAlignment);
         case AAlignment of
-        taRightJustify:
-        X:=W-Canvas.TextWidth(S)-3;
-        taCenter:
-        X:=(W-Canvas.TextWidth(S))div 2;
+          taRightJustify: X := W - Canvas.TextWidth(S) - 3;
+          taCenter: X := (W - Canvas.TextWidth(S)) div 2;
         end;
-        R.Left:=R.Right;
-        R.Right:=R.Right+W;
-        if SysLocale.MiddleEast then
-          TControlCanvas(Canvas).UpdateTextFlags;
-        Canvas.TextRect(R, R.Left+X, R.Top, S);
-        if J<LastFieldIndex then
+        R.Left := R.Right;
+        R.Right := R.Right + W;
+        if SysLocale.MiddleEast then TControlCanvas(Canvas).UpdateTextFlags;
+        Canvas.TextRect(R, R.Left + X, R.Top, S);
+        if J < LastFieldIndex then
         begin
           Canvas.MoveTo(R.Right, R.Top);
           Canvas.LineTo(R.Right, R.Bottom);
           Inc(R.Right);
-          if R.Right>=ClientWidth then
-            Break;
+          if R.Right >= ClientWidth then Break;
         end;
       end;
     end;
-    R.Left:=0;
-    R.Right:=ClientWidth;
-    if I>=FRecordCount then
-      Canvas.FillRect(R);
-    if Selected and(HasFocus or FPopup) then
+    R.Left := 0;
+    R.Right := ClientWidth;
+    if I >= FRecordCount then Canvas.FillRect(R);
+    if Selected and (HasFocus or FPopup) then
       Canvas.DrawFocusRect(R);
   end;
-  if FRecordCount<>0 then
-    ListLink.ActiveRecord:=FRecordIndex;
+  if FRecordCount <> 0 then ListLink.ActiveRecord := FRecordIndex;
 end;
 
 procedure TDBLookupListBox.SelectCurrent;
 begin
-  FLockPosition:=True;
+  FLockPosition := True;
   try
     SelectKeyValue(FKeyField.Value);
   finally
-    FLockPosition:=False;
+    FLockPosition := False;
   end;
 end;
 
@@ -5061,22 +4968,25 @@ procedure TDBLookupListBox.SelectItemAt(X, Y: Integer);
 var
   Delta: Integer;
 begin
-  if Y<0 then
-    Y:=0;
-  if Y>=ClientHeight then
-    Y:=ClientHeight-1;
-  Delta:=Y div GetTextHeight-FRecordIndex;
-  ListLink.DataSet.MoveBy(Delta);
-  SelectCurrent;
+  Inc(FListDataChanging);
+  try
+    if Y < 0 then Y := 0;
+    if Y >= ClientHeight then Y := ClientHeight - 1;
+    Delta := Y div GetTextHeight - FRecordIndex;
+    ListLink.DataSet.MoveBy(Delta);
+    SelectCurrent;
+  finally
+    Dec(FListDataChanging);
+  end;
 end;
 
 procedure TDBLookupListBox.SetBorderStyle(Value: TBorderStyle);
 begin
-  if FBorderStyle<>Value then
+  if FBorderStyle <> Value then
   begin
-    FBorderStyle:=Value;
+    FBorderStyle := Value;
     RecreateWnd;
-    RowCount:=RowCount;
+    RowCount := RowCount;
   end;
 end;
 
@@ -5084,32 +4994,29 @@ procedure TDBLookupListBox.SetBounds(ALeft, ATop, AWidth, AHeight: Integer);
 var
   BorderSize, TextHeight, Rows: Integer;
 begin
-  BorderSize:=GetBorderSize;
-  TextHeight:=GetTextHeight;
-  Rows:=(AHeight-BorderSize)div TextHeight;
-  if Rows<1 then
-    Rows:=1;
-  FRowCount:=Rows;
-  if ListLink.BufferCount<>Rows then
+  BorderSize := GetBorderSize;
+  TextHeight := GetTextHeight;
+  Rows := (AHeight - BorderSize) div TextHeight;
+  if Rows < 1 then Rows := 1;
+  FRowCount := Rows;
+  if ListLink.BufferCount <> Rows then
   begin
-    ListLink.BufferCount:=Rows;
+    ListLink.BufferCount := Rows;
     ListLinkDataChanged;
   end;
-  inherited SetBounds(ALeft, ATop, AWidth, Rows*TextHeight+BorderSize);
+  inherited SetBounds(ALeft, ATop, AWidth, Rows * TextHeight + BorderSize);
 end;
 
 function TDBLookupListBox.UseRightToLeftAlignment: Boolean;
 begin
-  Result:=DBUseRightToLeftAlignment(Self, Field);
+  Result := DBUseRightToLeftAlignment(Self, Field);
 end;
 
 procedure TDBLookupListBox.SetRowCount(Value: Integer);
 begin
-  if Value<1 then
-    Value:=1;
-  if Value>100 then
-    Value:=100;
-  Height:=Value*GetTextHeight+GetBorderSize;
+  if Value < 1 then Value := 1;
+  if Value > 100 then Value := 100;
+  Height := Value * GetTextHeight + GetBorderSize;
 end;
 
 procedure TDBLookupListBox.StopTimer;
@@ -5117,7 +5024,7 @@ begin
   if FTimerActive then
   begin
     KillTimer(Handle, 1);
-    FTimerActive:=False;
+    FTimerActive := False;
   end;
 end;
 
@@ -5126,8 +5033,8 @@ begin
   if FTracking then
   begin
     StopTimer;
-    FTracking:=False;
-    MouseCapture:=False;
+    FTracking := False;
+    MouseCapture := False;
   end;
 end;
 
@@ -5135,29 +5042,30 @@ procedure TDBLookupListBox.TimerScroll;
 var
   Delta, Distance, Interval: Integer;
 begin
-  Delta:=0;
-  Distance:=0;
-  if FMousePos<0 then
+  Delta := 0;
+  Distance := 0;
+  if FMousePos < 0 then
   begin
-    Delta:= - 1;
-    Distance:= - FMousePos;
+    Delta := -1;
+    Distance := -FMousePos;
   end;
-  if FMousePos>=ClientHeight then
+  if FMousePos >= ClientHeight then
   begin
-    Delta:=1;
-    Distance:=FMousePos-ClientHeight+1;
+    Delta := 1;
+    Distance := FMousePos - ClientHeight + 1;
   end;
-  if Delta=0 then
-    StopTimer
-  else
+  if Delta = 0 then StopTimer else
   begin
-    if ListLink.DataSet.MoveBy(Delta)<>0 then
-      SelectCurrent;
-    Interval:=200-Distance*15;
-    if Interval<0 then
-      Interval:=0;
-    SetTimer(Handle, 1, Interval, nil);
-    FTimerActive:=True;
+    Inc(FListDataChanging);
+    try
+      if ListLink.DataSet.MoveBy(Delta) <> 0 then SelectCurrent;
+      Interval := 200 - Distance * 15;
+      if Interval < 0 then Interval := 0;
+      SetTimer(Handle, 1, Interval, nil);
+      FTimerActive := True;
+    finally
+      Dec(FListDataChanging);
+    end;
   end;
 end;
 
@@ -5166,35 +5074,32 @@ var
   Pos, Max: Integer;
   ScrollInfo: TScrollInfo;
 begin
-  Pos:=0;
-  Max:=0;
-  if FRecordCount=FRowCount then
+  Pos := 0;
+  Max := 0;
+  if FRecordCount = FRowCount then
   begin
-    Max:=4;
+    Max := 4;
     if not ListLink.DataSet.BOF then
-      if not ListLink.DataSet.EOF then
-        Pos:=2
-      else
-        Pos:=4;
+      if not ListLink.DataSet.EOF then Pos := 2 else Pos := 4;
   end;
-  ScrollInfo.cbSize:=SizeOf(TScrollInfo);
-  ScrollInfo.fMask:=SIF_POS or SIF_RANGE;
-  if not GetScrollInfo(Handle, SB_VERT, ScrollInfo)or(ScrollInfo.nPos<>Pos)or(ScrollInfo.nMax<>Max)
-  then
+  ScrollInfo.cbSize := SizeOf(TScrollInfo);
+  ScrollInfo.fMask := SIF_POS or SIF_RANGE;
+  if not GetScrollInfo(Handle, SB_VERT, ScrollInfo) or
+    (ScrollInfo.nPos <> Pos) or (ScrollInfo.nMax <> Max) then
   begin
-    ScrollInfo.nMin:=0;
-    ScrollInfo.nMax:=Max;
-    ScrollInfo.nPos:=Pos;
+    ScrollInfo.nMin := 0;
+    ScrollInfo.nMax := Max;
+    ScrollInfo.nPos := Pos;
     SetScrollInfo(Handle, SB_VERT, ScrollInfo, True);
   end;
 end;
 
 procedure TDBLookupListBox.CMCtl3DChanged(var Message: TMessage);
 begin
-  if NewStyleControls and(FBorderStyle=bsSingle) then
+  if NewStyleControls and (FBorderStyle = bsSingle) then
   begin
     RecreateWnd;
-    RowCount:=RowCount;
+    RowCount := RowCount;
   end;
   inherited;
 end;
@@ -5202,7 +5107,7 @@ end;
 procedure TDBLookupListBox.CMFontChanged(var Message: TMessage);
 begin
   inherited;
-  Height:=Height;
+  Height := Height;
 end;
 
 procedure TDBLookupListBox.WMCancelMode(var Message: TMessage);
@@ -5218,49 +5123,45 @@ end;
 
 procedure TDBLookupListBox.WMVScroll(var Message: TWMVScroll);
 begin
-  SearchText:='';
-  if ListLink.DataSet=nil then
+  SearchText := '';
+  if ListLink.DataSet = nil then
     Exit;
-  with message, ListLink.DataSet do
-    case ScrollCode of
-    SB_LINEUP:
-    MoveBy( - FRecordIndex-1);
-    SB_LINEDOWN:
-    MoveBy(FRecordCount-FRecordIndex);
-    SB_PAGEUP:
-    MoveBy( - FRecordIndex-FRecordCount+1);
-    SB_PAGEDOWN:
-    MoveBy(FRecordCount-FRecordIndex+FRecordCount-2);
-    SB_THUMBPOSITION:
-    begin
-      case Pos of
-      0:
-      First;
-      1:
-      MoveBy( - FRecordIndex-FRecordCount+1);
-      2:
-      Exit;
-      3:
-      MoveBy(FRecordCount-FRecordIndex+FRecordCount-2);
-      4:
-      Last;
+  Inc(FListDataChanging);
+  try
+    with Message, ListLink.DataSet do
+      case ScrollCode of
+        SB_LINEUP: MoveBy(-FRecordIndex - 1);
+        SB_LINEDOWN: MoveBy(FRecordCount - FRecordIndex);
+        SB_PAGEUP: MoveBy(-FRecordIndex - FRecordCount + 1);
+        SB_PAGEDOWN: MoveBy(FRecordCount - FRecordIndex + FRecordCount - 2);
+        SB_THUMBPOSITION:
+          begin
+            case Pos of
+              0: First;
+              1: MoveBy(-FRecordIndex - FRecordCount + 1);
+              2: Exit;
+              3: MoveBy(FRecordCount - FRecordIndex + FRecordCount - 2);
+              4: Last;
+            end;
+          end;
+        SB_BOTTOM: Last;
+        SB_TOP: First;
       end;
-    end;
-    SB_BOTTOM:
-    Last;
-    SB_TOP:
-    First;
-    end;
+  finally
+    Dec(FListDataChanging);
+  end;
 end;
 
 function TDBLookupListBox.ExecuteAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited ExecuteAction(Action)or(FDataLink<>nil)and FDataLink.ExecuteAction(Action);
+  Result := inherited ExecuteAction(Action) or (FDataLink <> nil) and
+    FDataLink.ExecuteAction(Action);
 end;
 
 function TDBLookupListBox.UpdateAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited UpdateAction(Action)or(FDataLink<>nil)and FDataLink.UpdateAction(Action);
+  Result := inherited UpdateAction(Action) or (FDataLink <> nil) and
+    FDataLink.UpdateAction(Action);
 end;
 
 { TPopupDataList }
@@ -5268,8 +5169,8 @@ end;
 constructor TPopupDataList.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  ControlStyle:=ControlStyle+[csNoDesignVisible, csReplicatable];
-  FPopup:=True;
+  ControlStyle := ControlStyle + [csNoDesignVisible, csReplicatable];
+  FPopup := True;
 end;
 
 procedure TPopupDataList.CreateParams(var Params: TCreateParams);
@@ -5277,16 +5178,16 @@ begin
   inherited CreateParams(Params);
   with Params do
   begin
-    Style:=WS_POPUP or WS_BORDER;
-    ExStyle:=WS_EX_TOOLWINDOW;
+    Style := WS_POPUP or WS_BORDER;
+    ExStyle := WS_EX_TOOLWINDOW;
     AddBiDiModeExStyle(ExStyle);
-    WindowClass.Style:=CS_SAVEBITS;
+    WindowClass.Style := CS_SAVEBITS;
   end;
 end;
 
-procedure TPopupDataList.WMMouseActivate(var Message: TMessage);
+procedure TPopupDataList.WMMouseActivate(var Message: TWMMouseActivate);
 begin
-  message.Result:=MA_NOACTIVATE;
+  Message.Result := MA_NOACTIVATE;
 end;
 
 { TDBLookupComboBox }
@@ -5294,15 +5195,15 @@ end;
 constructor TDBLookupComboBox.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  ControlStyle:=ControlStyle+[csReplicatable];
-  Width:=145;
-  Height:=0;
-  FDataList:=TPopupDataList.Create(Self);
-  FDataList.Visible:=False;
-  FDataList.Parent:=Self;
-  FDataList.OnMouseUp:=ListMouseUp;
-  FButtonWidth:=GetSystemMetrics(SM_CXVSCROLL);
-  FDropDownRows:=7;
+  ControlStyle := ControlStyle + [csReplicatable];
+  Width := 145;
+  Height := 0;
+  FDataList := TPopupDataList.Create(Self);
+  FDataList.Visible := False;
+  FDataList.Parent := Self;
+  FDataList.OnMouseUp := ListMouseUp;
+  FButtonWidth := GetSystemMetrics(SM_CXVSCROLL);
+  FDropDownRows := 7;
 end;
 
 procedure TDBLookupComboBox.CloseUp(Accept: Boolean);
@@ -5311,37 +5212,33 @@ var
 begin
   if FListVisible then
   begin
-    if GetCapture<>0 then
-      SendMessage(GetCapture, WM_CANCELMODE, 0, 0);
+    if GetCapture <> 0 then SendMessage(GetCapture, WM_CANCELMODE, 0, 0);
     SetFocus;
-    ListValue:=FDataList.KeyValue;
-    SetWindowPos(FDataList.Handle, 0, 0, 0, 0, 0, SWP_NOZORDER or SWP_NOMOVE or SWP_NOSIZE or
-      SWP_NOACTIVATE or SWP_HIDEWINDOW);
-    FListVisible:=False;
-    FDataList.ListSource:=nil;
+    ListValue := FDataList.KeyValue;
+    SetWindowPos(FDataList.Handle, 0, 0, 0, 0, 0, SWP_NOZORDER or
+      SWP_NOMOVE or SWP_NOSIZE or SWP_NOACTIVATE or SWP_HIDEWINDOW);
+    FListVisible := False;
+    FDataList.ListSource := nil;
     Invalidate;
-    SearchText:='';
-    if Accept and CanModify then
-      SelectKeyValue(ListValue);
-    if Assigned(FOnCloseUp) then
-      FOnCloseUp(Self);
+    SearchText := '';
+    if Accept and CanModify then SelectKeyValue(ListValue);
+    if Assigned(FOnCloseUp) then FOnCloseUp(Self);
   end;
 end;
 
 procedure TDBLookupComboBox.CMBiDiModeChanged(var Message: TMessage);
 begin
   inherited;
-  FDataList.BiDiMode:=BiDiMode;
+  FDataList.BiDiMode := BiDiMode;
 end;
 
 procedure TDBLookupComboBox.CMDialogKey(var Message: TCMDialogKey);
 begin
-  if (message.CharCode in [VK_RETURN, VK_ESCAPE])and FListVisible then
+  if (Message.CharCode in [VK_RETURN, VK_ESCAPE]) and FListVisible then
   begin
-    CloseUp(message.CharCode=VK_RETURN);
-    message.Result:=1;
-  end
-  else
+    CloseUp(Message.CharCode = VK_RETURN);
+    Message.Result := 1;
+  end else
     inherited;
 end;
 
@@ -5350,9 +5247,9 @@ begin
   inherited CreateParams(Params);
   with Params do
     if NewStyleControls and Ctl3D then
-      ExStyle:=ExStyle or WS_EX_CLIENTEDGE
+      ExStyle := ExStyle or WS_EX_CLIENTEDGE
     else
-      Style:=Style or WS_BORDER;
+      Style := Style or WS_BORDER;
 end;
 
 procedure TDBLookupComboBox.DropDown;
@@ -5362,51 +5259,51 @@ var
   S: string;
   ADropDownAlign: TDropDownAlign;
 begin
-  if not FListVisible and ListActive then
-  begin
-    if Assigned(FOnDropDown) then
-      FOnDropDown(Self);
-    FDataList.Color:=Color;
-    FDataList.Font:=Font;
-    if FDropDownWidth>0 then
-      FDataList.Width:=FDropDownWidth
-    else
-      FDataList.Width:=Width;
-    FDataList.ReadOnly:=not CanModify;
-    if (ListLink.DataSet.RecordCount>0)and(FDropDownRows>ListLink.DataSet.RecordCount) then
-      FDataList.RowCount:=ListLink.DataSet.RecordCount
-    else
-      FDataList.RowCount:=FDropDownRows;
-    FDataList.KeyField:=FKeyFieldName;
-    for I:=0 to ListFields.Count-1 do
-      S:=S+TField(ListFields[I]).FieldName+';';
-    FDataList.ListField:=S;
-    FDataList.ListFieldIndex:=ListFields.IndexOf(FListField);
-    FDataList.ListSource:=ListLink.DataSource;
-    FDataList.KeyValue:=KeyValue;
-    P:=Parent.ClientToScreen(Point(Left, Top));
-    Y:=P.Y+Height;
-    if Y+FDataList.Height>Screen.Height then
-      Y:=P.Y-FDataList.Height;
-    ADropDownAlign:=FDropDownAlign;
-    { This alignment is for the ListField, not the control }
-    if DBUseRightToLeftAlignment(Self, FListField) then
+  Inc(FListDataChanging);
+  try
+    if not FListVisible and ListActive then
     begin
-      if ADropDownAlign=daLeft then
-        ADropDownAlign:=daRight
-      else if ADropDownAlign=daRight then
-        ADropDownAlign:=daLeft;
+      if Assigned(FOnDropDown) then FOnDropDown(Self);
+      FDataList.Color := Color;
+      FDataList.Font := Font;
+      if FDropDownWidth > 0 then
+        FDataList.Width := FDropDownWidth else
+        FDataList.Width := Width;
+      FDataList.ReadOnly := not CanModify;
+      if (ListLink.DataSet.RecordCount > 0) and
+         (FDropDownRows > ListLink.DataSet.RecordCount) then
+        FDataList.RowCount := ListLink.DataSet.RecordCount else
+        FDataList.RowCount := FDropDownRows;
+      FDataList.KeyField := FKeyFieldName;
+      for I := 0 to ListFields.Count - 1 do
+        S := S + TField(ListFields[I]).FieldName + ';';
+      FDataList.ListField := S;
+      FDataList.ListFieldIndex := ListFields.IndexOf(FListField);
+      FDataList.ListSource := ListLink.DataSource;
+      FDataList.KeyValue := KeyValue;
+      P := Parent.ClientToScreen(Point(Left, Top));
+      Y := P.Y + Height;
+      if Y + FDataList.Height > Screen.Height then Y := P.Y - FDataList.Height;
+      ADropDownAlign := FDropDownAlign;
+      { This alignment is for the ListField, not the control }
+      if DBUseRightToLeftAlignment(Self, FListField) then
+      begin
+        if ADropDownAlign = daLeft then
+          ADropDownAlign := daRight
+        else if ADropDownAlign = daRight then
+          ADropDownAlign := daLeft;
+      end;
+      case ADropDownAlign of
+        daRight: Dec(P.X, FDataList.Width - Width);
+        daCenter: Dec(P.X, (FDataList.Width - Width) div 2);
+      end;
+      SetWindowPos(FDataList.Handle, HWND_TOP, P.X, Y, 0, 0,
+        SWP_NOSIZE or SWP_NOACTIVATE or SWP_SHOWWINDOW);
+      FListVisible := True;
+      Repaint;
     end;
-    case ADropDownAlign of
-    daRight:
-    Dec(P.X, FDataList.Width-Width);
-    daCenter:
-    Dec(P.X, (FDataList.Width-Width)div 2);
-    end;
-    SetWindowPos(FDataList.Handle, HWND_TOP, P.X, Y, 0, 0, SWP_NOSIZE or SWP_NOACTIVATE or
-      SWP_SHOWWINDOW);
-    FListVisible:=True;
-    Repaint;
+  finally
+    Dec(FListDataChanging);
   end;
 end;
 
@@ -5414,33 +5311,31 @@ procedure TDBLookupComboBox.KeyDown(var Key: Word; Shift: TShiftState);
 var
   Delta: Integer;
 begin
-  inherited KeyDown(Key, Shift);
-  if ListActive and((Key=VK_UP)or(Key=VK_DOWN)) then
-    if ssAlt in Shift then
-    begin
-      if FListVisible then
-        CloseUp(True)
-      else
-        DropDown;
-      Key:=0;
-    end
-    else if not FListVisible then
-    begin
-      if not LocateKey then
-        ListLink.DataSet.First
-      else
+  Inc(FListDataChanging);
+  try
+    inherited KeyDown(Key, Shift);
+    if ListActive and ((Key = VK_UP) or (Key = VK_DOWN)) then
+      if ssAlt in Shift then
       begin
-        if Key=VK_UP then
-          Delta:= - 1
-        else
-          Delta:=1;
-        ListLink.DataSet.MoveBy(Delta);
-      end;
-      SelectKeyValue(FKeyField.Value);
-      Key:=0;
-    end;
-  if (Key<>0)and FListVisible then
-    FDataList.KeyDown(Key, Shift);
+        if FListVisible then CloseUp(True) else DropDown;
+        Key := 0;
+      end else
+        if not FListVisible then
+        begin
+          if not LocateKey then
+            ListLink.DataSet.First
+          else
+          begin
+            if Key = VK_UP then Delta := -1 else Delta := 1;
+            ListLink.DataSet.MoveBy(Delta);
+          end;
+          SelectKeyValue(FKeyField.Value);
+          Key := 0;
+        end;
+    if (Key <> 0) and FListVisible then FDataList.KeyDown(Key, Shift);
+  finally
+    Dec(FListDataChanging);
+  end;
 end;
 
 procedure TDBLookupComboBox.KeyPress(var Key: Char);
@@ -5448,7 +5343,7 @@ begin
   inherited KeyPress(Key);
   if FListVisible then
     if Key in [#13, #27] then
-      CloseUp(Key=#13)
+      CloseUp(Key = #13)
     else
       FDataList.KeyPress(Key)
   else
@@ -5459,18 +5354,17 @@ procedure TDBLookupComboBox.KeyValueChanged;
 begin
   if FLookupMode then
   begin
-    FText:=FDataField.DisplayText;
-    FAlignment:=FDataField.Alignment;
-  end
-  else if ListActive and LocateKey then
+    FText := FDataField.DisplayText;
+    FAlignment := FDataField.Alignment;
+  end else
+  if ListActive and LocateKey then
   begin
-    FText:=FListField.DisplayText;
-    FAlignment:=FListField.Alignment;
-  end
-  else
+    FText := FListField.DisplayText;
+    FAlignment := FListField.Alignment;
+  end else
   begin
-    FText:='';
-    FAlignment:=taLeftJustify;
+    FText := '';
+    FAlignment := taLeftJustify;
   end;
   Invalidate;
 end;
@@ -5481,29 +5375,28 @@ begin
   KeyValueChanged;
 end;
 
-procedure TDBLookupComboBox.ListMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState;
-  X, Y: Integer);
+procedure TDBLookupComboBox.ListMouseUp(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
 begin
-  if Button=mbLeft then
+  if Button = mbLeft then
     CloseUp(PtInRect(FDataList.ClientRect, Point(X, Y)));
 end;
 
-procedure TDBLookupComboBox.MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+procedure TDBLookupComboBox.MouseDown(Button: TMouseButton; Shift: TShiftState;
+  X, Y: Integer);
 begin
-  if Button=mbLeft then
+  if Button = mbLeft then
   begin
     SetFocus;
-    if not HasFocus then
-      Exit;
-    if FListVisible then
-      CloseUp(False)
-    else if ListActive then
-    begin
-      MouseCapture:=True;
-      FTracking:=True;
-      TrackButton(X, Y);
-      DropDown;
-    end;
+    if not HasFocus then Exit;
+    if FListVisible then CloseUp(False) else
+      if ListActive then
+      begin
+        MouseCapture := True;
+        FTracking := True;
+        TrackButton(X, Y);
+        DropDown;
+      end;
   end;
   inherited MouseDown(Button, Shift, X, Y);
 end;
@@ -5518,11 +5411,11 @@ begin
     TrackButton(X, Y);
     if FListVisible then
     begin
-      ListPos:=FDataList.ScreenToClient(ClientToScreen(Point(X, Y)));
+      ListPos := FDataList.ScreenToClient(ClientToScreen(Point(X, Y)));
       if PtInRect(FDataList.ClientRect, ListPos) then
       begin
         StopTracking;
-        MousePos:=PointToSmallPoint(ListPos);
+        MousePos := PointToSmallPoint(ListPos);
         SendMessage(FDataList.Handle, WM_LBUTTONDOWN, 0, Integer(MousePos));
         Exit;
       end;
@@ -5531,7 +5424,8 @@ begin
   inherited MouseMove(Shift, X, Y);
 end;
 
-procedure TDBLookupComboBox.MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+procedure TDBLookupComboBox.MouseUp(Button: TMouseButton; Shift: TShiftState;
+  X, Y: Integer);
 begin
   StopTracking;
   inherited MouseUp(Button, Shift, X, Y);
@@ -5544,105 +5438,102 @@ var
   AAlignment: TAlignment;
   Selected: Boolean;
   R: TRect;
-  State: TThemedComboBox;
+  State : TThemedComboBox;
   Details: TThemedElementDetails;
 begin
-  Canvas.Font:=Font;
-  Canvas.Brush.Color:=Color;
-  Selected:=HasFocus and not FListVisible and not (csPaintCopy in ControlState);
+  Canvas.Font := Font;
+  Canvas.Brush.Color := Color;
+  Selected := HasFocus and not FListVisible and
+    not (csPaintCopy in ControlState);
   if Enabled then
-    Canvas.Font.Color:=Font.Color
+    Canvas.Font.Color := Font.Color
   else
-    Canvas.Font.Color:=clGrayText;
+    Canvas.Font.Color := clGrayText;
   if Selected then
   begin
-    Canvas.Font.Color:=clHighlightText;
-    Canvas.Brush.Color:=clHighlight;
+    Canvas.Font.Color := clHighlightText;
+    Canvas.Brush.Color := clHighlight;
   end;
-  if (csPaintCopy in ControlState)and(FDataField<>nil)and(FDataField.Lookup) then
+  if (csPaintCopy in ControlState) and (FDataField <> nil) and
+    (FDataField.Lookup) then
   begin
-    Text:=FDataField.DisplayText;
-    AAlignment:=FDataField.Alignment;
-  end
-  else
+    Text := FDataField.DisplayText;
+    AAlignment := FDataField.Alignment;
+  end else
   begin
-    if (csDesigning in ComponentState)and(FDataField=nil) then
-      Text:=Name
-    else
-      Text:=FText;
-    AAlignment:=FAlignment;
+    if (csDesigning in ComponentState) and (FDataField = nil) then
+      Text := Name else
+      Text := FText;
+    AAlignment := FAlignment;
   end;
-  if UseRightToLeftAlignment then
-    ChangeBiDiModeAlignment(AAlignment);
-  W:=ClientWidth-FButtonWidth;
-  X:=2;
+  if UseRightToLeftAlignment then ChangeBiDiModeAlignment(AAlignment);
+  W := ClientWidth - FButtonWidth;
+  X := 2;
   case AAlignment of
-  taRightJustify:
-  X:=W-Canvas.TextWidth(Text)-3;
-  taCenter:
-  X:=(W-Canvas.TextWidth(Text))div 2;
+    taRightJustify: X := W - Canvas.TextWidth(Text) - 3;
+    taCenter: X := (W - Canvas.TextWidth(Text)) div 2;
   end;
-  SetRect(R, 1, 1, W-1, ClientHeight-1);
-  if (SysLocale.MiddleEast)and(BiDiMode=bdRightToLeft) then
+  SetRect(R, 1, 1, W - 1, ClientHeight - 1);
+  if (SysLocale.MiddleEast) and (BiDiMode = bdRightToLeft) then
   begin
     Inc(X, FButtonWidth);
     Inc(R.Left, FButtonWidth);
-    R.Right:=ClientWidth;
+    R.Right := ClientWidth;
   end;
-  if SysLocale.MiddleEast then
-    TControlCanvas(Canvas).UpdateTextFlags;
+  if SysLocale.MiddleEast then TControlCanvas(Canvas).UpdateTextFlags;
   Canvas.TextRect(R, X, 2, Text);
-  if Selected then
-    Canvas.DrawFocusRect(R);
+  if Selected then Canvas.DrawFocusRect(R);
   SetRect(R, W, 0, ClientWidth, ClientHeight);
-  if (SysLocale.MiddleEast)and(BiDiMode=bdRightToLeft) then
+  if (SysLocale.MiddleEast) and (BiDiMode = bdRightToLeft) then
   begin
-    R.Left:=0;
-    R.Right:=FButtonWidth;
+    R.Left := 0;
+    R.Right:= FButtonWidth;
   end;
 
   if ThemeServices.ThemesEnabled then
   begin
-    if not ListActive then
-      State:=tcDropDownButtonDisabled
-    else if FPressed then
-      State:=tcDropDownButtonPressed
-    else if FMouseInControl and not FListVisible then
-      State:=tcDropDownButtonHot
+    if not (ListActive and Enabled) then
+      State := tcDropDownButtonDisabled
     else
-      State:=tcDropDownButtonNormal;
-    Details:=ThemeServices.GetElementDetails(State);
+      if FPressed then
+        State := tcDropDownButtonPressed
+      else
+        if FMouseInControl and not FListVisible then
+          State := tcDropDownButtonHot
+        else
+          State := tcDropDownButtonNormal;
+    Details := ThemeServices.GetElementDetails(State);
     ThemeServices.DrawElement(Canvas.Handle, Details, R);
   end
   else
   begin
     if not (ListActive and Enabled) then
-      Flags:=DFCS_SCROLLCOMBOBOX or DFCS_INACTIVE
+      Flags := DFCS_SCROLLCOMBOBOX or DFCS_INACTIVE
     else if FPressed then
-      Flags:=DFCS_SCROLLCOMBOBOX or DFCS_FLAT or DFCS_PUSHED
+      Flags := DFCS_SCROLLCOMBOBOX or DFCS_FLAT or DFCS_PUSHED
     else
-      Flags:=DFCS_SCROLLCOMBOBOX;
+      Flags := DFCS_SCROLLCOMBOBOX;
     DrawFrameControl(Canvas.Handle, R, DFC_SCROLL, Flags);
   end;
 end;
 
 procedure TDBLookupComboBox.SetBounds(ALeft, ATop, AWidth, AHeight: Integer);
 begin
-  inherited SetBounds(ALeft, ATop, AWidth, GetTextHeight+GetBorderSize+4);
+  inherited SetBounds(ALeft, ATop, AWidth, GetTextHeight + GetBorderSize + 4);
 end;
 
 function TDBLookupComboBox.UseRightToLeftAlignment: Boolean;
 begin
-  Result:=DBUseRightToLeftAlignment(Self, Field);
+  Result := DBUseRightToLeftAlignment(Self, Field);
 end;
 
 procedure TDBLookupComboBox.StopTracking;
 begin
   if FTracking then
   begin
-    TrackButton( - 1, - 1);
-    FTracking:=False;
-    MouseCapture:=False;
+    TrackButton(-1, -1);
+    FTracking := False;
+    MouseCapture := False;
   end;
 end;
 
@@ -5650,17 +5541,18 @@ procedure TDBLookupComboBox.TrackButton(X, Y: Integer);
 var
   NewState: Boolean;
 begin
-  NewState:=PtInRect(Rect(ClientWidth-FButtonWidth, 0, ClientWidth, ClientHeight), Point(X, Y));
-  if FPressed<>NewState then
+  NewState := PtInRect(Rect(ClientWidth - FButtonWidth, 0, ClientWidth,
+    ClientHeight), Point(X, Y));
+  if FPressed <> NewState then
   begin
-    FPressed:=NewState;
+    FPressed := NewState;
     Repaint;
   end;
 end;
 
 procedure TDBLookupComboBox.CMCancelMode(var Message: TCMCancelMode);
 begin
-  if (message.Sender<>Self)and(message.Sender<>FDataList) then
+  if (Message.Sender <> Self) and (Message.Sender <> FDataList) then
     CloseUp(False);
 end;
 
@@ -5669,7 +5561,7 @@ begin
   if NewStyleControls then
   begin
     RecreateWnd;
-    Height:=0;
+    Height := 0;
   end;
   inherited;
 end;
@@ -5677,12 +5569,12 @@ end;
 procedure TDBLookupComboBox.CMFontChanged(var Message: TMessage);
 begin
   inherited;
-  Height:=0;
+  Height := 0;
 end;
 
 procedure TDBLookupComboBox.CMGetDataLink(var Message: TMessage);
 begin
-  message.Result:=Integer(FDataLink);
+  Message.Result := Integer(FDataLink);
 end;
 
 procedure TDBLookupComboBox.WMCancelMode(var Message: TMessage);
@@ -5699,22 +5591,23 @@ end;
 
 function TDBLookupComboBox.ExecuteAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited ExecuteAction(Action)or(FDataLink<>nil)and FDataLink.ExecuteAction(Action);
+  Result := inherited ExecuteAction(Action) or (FDataLink <> nil) and
+    FDataLink.ExecuteAction(Action);
 end;
 
 function TDBLookupComboBox.UpdateAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited UpdateAction(Action)or(FDataLink<>nil)and FDataLink.UpdateAction(Action);
+  Result := inherited UpdateAction(Action) or (FDataLink <> nil) and
+    FDataLink.UpdateAction(Action);
 end;
 
 procedure TDBLookupComboBox.CMMouseEnter(var Message: TMessage);
 begin
   inherited;
-  { Windows XP themes use hot track states, hence we have to update the drop down button. }
-  if ThemeServices.ThemesEnabled and not (FMouseInControl)and not (csDesigning in ComponentState)
-  then
+  {Windows XP themes use hot track states, hence we have to update the drop down button.}
+  if ThemeServices.ThemesEnabled and not (FMouseInControl) and not (csDesigning in ComponentState) then
   begin
-    FMouseInControl:=True;
+    FMouseInControl := True;
     Invalidate;
   end;
 end;
@@ -5724,8 +5617,18 @@ begin
   inherited;
   if ThemeServices.ThemesEnabled and FMouseInControl then
   begin
-    FMouseInControl:=False;
+    FMouseInControl := False;
     Invalidate;
+  end;
+end;
+
+procedure TDBLookupComboBox.ListLinkDataChanged;
+begin
+  { Fix for Defect# 204311, Non-bound control should clear when list datasource changes }
+  if (FDataField = nil) and ListActive and (FListDataChanging = 0) and
+     (FDataList.FListDataChanging = 0) and ListLink.DataSet.BOF then
+  begin
+    SetKeyValue(Null);
   end;
 end;
 
@@ -5734,51 +5637,51 @@ end;
 constructor TDBRichEdit.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  inherited ReadOnly:=True;
-  FAutoDisplay:=True;
-  FDataLink:=TFieldDataLink.Create;
-  FDataLink.Control:=Self;
-  FDataLink.OnDataChange:=DataChange;
-  FDataLink.OnEditingChange:=EditingChange;
-  FDataLink.OnUpdateData:=UpdateData;
+  inherited ReadOnly := True;
+  FAutoDisplay := True;
+  FDataLink := TFieldDataLink.Create;
+  FDataLink.Control := Self;
+  FDataLink.OnDataChange := DataChange;
+  FDataLink.OnEditingChange := EditingChange;
+  FDataLink.OnUpdateData := UpdateData;
 end;
 
 destructor TDBRichEdit.Destroy;
 begin
   FDataLink.Free;
-  FDataLink:=nil;
+  FDataLink := nil;
   inherited Destroy;
 end;
 
 procedure TDBRichEdit.Loaded;
 begin
   inherited Loaded;
-  if (csDesigning in ComponentState) then
-    DataChange(Self);
+  if (csDesigning in ComponentState) then DataChange(Self);
 end;
 
-procedure TDBRichEdit.Notification(AComponent: TComponent; Operation: TOperation);
+procedure TDBRichEdit.Notification(AComponent: TComponent;
+  Operation: TOperation);
 begin
   inherited Notification(AComponent, Operation);
-  if (Operation=opRemove)and(FDataLink<>nil)and(AComponent=DataSource) then
-    DataSource:=nil;
+  if (Operation = opRemove) and (FDataLink <> nil) and
+    (AComponent = DataSource) then DataSource := nil;
 end;
 
 function TDBRichEdit.UseRightToLeftAlignment: Boolean;
 begin
-  Result:=DBUseRightToLeftAlignment(Self, Field);
+  Result := DBUseRightToLeftAlignment(Self, Field);
 end;
 
 procedure TDBRichEdit.BeginEditing;
 begin
   if not FDataLink.Editing then
-    try
-      if FDataLink.Field.IsBlob then
-        FDataSave:=FDataLink.Field.AsString;
-      FDataLink.Edit;
-    finally
-      FDataSave:='';
-    end;
+  try
+    if FDataLink.Field.IsBlob then
+      FDataSave := FDataLink.Field.AsString;
+    FDataLink.Edit;
+  finally
+    FDataSave := '';
+  end;
 end;
 
 procedure TDBRichEdit.KeyDown(var Key: Word; Shift: TShiftState);
@@ -5786,8 +5689,9 @@ begin
   inherited KeyDown(Key, Shift);
   if FMemoLoaded then
   begin
-    if (Key=VK_DELETE)or(Key=VK_BACK)or((Key=VK_INSERT)and(ssShift in Shift))or
-      (((Key=Ord('V'))or(Key=Ord('X')))and(ssCtrl in Shift)) then
+    if (Key = VK_DELETE) or (Key = VK_BACK) or
+      ((Key = VK_INSERT) and (ssShift in Shift)) or
+      (((Key = Ord('V')) or (Key = Ord('X'))) and (ssCtrl in Shift)) then
       BeginEditing;
   end;
 end;
@@ -5797,82 +5701,86 @@ begin
   inherited KeyPress(Key);
   if FMemoLoaded then
   begin
-    if (Key in [#32..#255])and(FDataLink.Field<>nil)and not FDataLink.Field.IsValidChar(Key) then
+    if (Key in [#32..#255]) and (FDataLink.Field <> nil) and
+      not FDataLink.Field.IsValidChar(Key) then
     begin
       MessageBeep(0);
-      Key:=#0;
+      Key := #0;
     end;
     case Key of
-    ^H, ^I, ^J, ^M, ^V, ^X, #32..#255:
-    BeginEditing;
-    #27:
-    FDataLink.Reset;
+      ^H, ^I, ^J, ^M, ^V, ^X, #32..#255:
+        BeginEditing;
+      #27:
+        FDataLink.Reset;
     end;
-  end
-  else
+  end else
   begin
-    if Key=#13 then
-      LoadMemo;
-    Key:=#0;
+    if Key = #13 then LoadMemo;
+    Key := #0;
   end;
 end;
 
 procedure TDBRichEdit.Change;
 begin
-  if FMemoLoaded then
-    FDataLink.Modified;
-  FMemoLoaded:=True;
+  if FMemoLoaded then FDataLink.Modified;
+  FMemoLoaded := True;
   inherited Change;
 end;
 
 function TDBRichEdit.GetDataSource: TDataSource;
 begin
-  Result:=FDataLink.DataSource;
+  Result := FDataLink.DataSource;
 end;
 
 procedure TDBRichEdit.SetDataSource(Value: TDataSource);
 begin
-  FDataLink.DataSource:=Value;
-  if Value<>nil then
-    Value.FreeNotification(Self);
+  FDataLink.DataSource := Value;
+  if Value <> nil then Value.FreeNotification(Self);
 end;
 
-function TDBRichEdit.GetDataField: string;
+function TDBRichEdit.GetDataField: WideString;
 begin
-  Result:=FDataLink.FieldName;
+  Result := FDataLink.FieldName;
 end;
 
-procedure TDBRichEdit.SetDataField(const Value: string);
+procedure TDBRichEdit.SetDataField(const Value: WideString);
 begin
-  FDataLink.FieldName:=Value;
+  FDataLink.FieldName := Value;
 end;
 
 function TDBRichEdit.GetReadOnly: Boolean;
 begin
-  Result:=FDataLink.ReadOnly;
+  Result := FDataLink.ReadOnly;
 end;
 
 procedure TDBRichEdit.SetReadOnly(Value: Boolean);
 begin
-  FDataLink.ReadOnly:=Value;
+  FDataLink.ReadOnly := Value;
 end;
 
 function TDBRichEdit.GetField: TField;
 begin
-  Result:=FDataLink.Field;
+  Result := FDataLink.Field;
 end;
 
 procedure TDBRichEdit.LoadMemo;
+var
+  Stream: TStringStream;
 begin
-  if not FMemoLoaded and Assigned(FDataLink.Field)and FDataLink.Field.IsBlob then
+  if not FMemoLoaded and Assigned(FDataLink.Field) and FDataLink.Field.IsBlob then
   begin
     try
-      Lines.Assign(FDataLink.Field);
-      FMemoLoaded:=True;
+      Stream := TStringStream.create(FDataLink.Field.AsString);
+      try
+        Lines.LoadFromStream(Stream);
+      finally
+        Stream.Free;
+      end;
+      FMemoLoaded := True;
     except
       { Rich Edit Load failure }
-      on E: EOutOfResources do
-        Lines.Text:=Format('(%s)', [E.Message]);
+      on E:EOutOfResources do
+        Lines.Text := Format('(%s)', [E.Message]);
     end;
     EditingChange(Self);
   end;
@@ -5880,38 +5788,32 @@ end;
 
 procedure TDBRichEdit.DataChange(Sender: TObject);
 begin
-  if FDataLink.Field<>nil then
+  if FDataLink.Field <> nil then
     if FDataLink.Field.IsBlob then
     begin
-      if FAutoDisplay or(FDataLink.Editing and FMemoLoaded) then
+      if FAutoDisplay or (FDataLink.Editing and FMemoLoaded) then
       begin
         { Check if the data has changed since we read it the first time }
-        if (FDataSave<>'')and(FDataSave=FDataLink.Field.AsString) then
-          Exit;
-        FMemoLoaded:=False;
+        if (FDataSave <> '') and (FDataSave = FDataLink.Field.AsString) then Exit;
+        FMemoLoaded := False;
         LoadMemo;
-      end
-      else
+      end else
       begin
-        Text:=Format('(%s)', [FDataLink.Field.DisplayLabel]);
-        FMemoLoaded:=False;
+        Text := Format('(%s)', [FDataLink.Field.DisplayLabel]);
+        FMemoLoaded := False;
       end;
-    end
-    else
+    end else
     begin
       if FFocused and FDataLink.CanModify then
-        Text:=FDataLink.Field.Text
+        Text := FDataLink.Field.Text
       else
-        Text:=FDataLink.Field.DisplayText;
-      FMemoLoaded:=True;
+        Text := FDataLink.Field.DisplayText;
+      FMemoLoaded := True;
     end
   else
   begin
-    if csDesigning in ComponentState then
-      Text:=Name
-    else
-      Text:='';
-    FMemoLoaded:=False;
+    if csDesigning in ComponentState then Text := Name else Text := '';
+    FMemoLoaded := False;
   end;
   if HandleAllocated then
     RedrawWindow(Handle, nil, 0, RDW_INVALIDATE or RDW_ERASE or RDW_FRAME);
@@ -5919,23 +5821,32 @@ end;
 
 procedure TDBRichEdit.EditingChange(Sender: TObject);
 begin
-  inherited ReadOnly:=not (FDataLink.Editing and FMemoLoaded);
+  inherited ReadOnly := not (FDataLink.Editing and FMemoLoaded);
 end;
 
 procedure TDBRichEdit.UpdateData(Sender: TObject);
+var
+  Stream: TStringStream;
 begin
   if FDataLink.Field.IsBlob then
-    FDataLink.Field.Assign(Lines)
-  else
-    FDataLink.Field.AsString:=Text;
+  begin
+    Stream := TStringStream.Create('');
+    try
+      Lines.SaveToStream(Stream);
+      FDataLink.Field.AsString := Stream.DataString;
+    finally
+      Stream.Free;
+    end;
+  end else
+    FDataLink.Field.AsString := Text;
 end;
 
 procedure TDBRichEdit.SetFocused(Value: Boolean);
 begin
-  if FFocused<>Value then
+  if FFocused <> Value then
   begin
-    FFocused:=Value;
-    if not Assigned(FDataLink.Field)or not FDataLink.Field.IsBlob then
+    FFocused := Value;
+    if not Assigned(FDataLink.Field) or not FDataLink.Field.IsBlob then
       FDataLink.Reset;
   end;
 end;
@@ -5945,7 +5856,7 @@ begin
   SetFocused(True);
   inherited;
   if SysLocale.FarEast and FDataLink.CanModify then
-    inherited ReadOnly:=False;
+    inherited ReadOnly := False;
 end;
 
 procedure TDBRichEdit.CMExit(var Message: TCMExit);
@@ -5962,20 +5873,16 @@ end;
 
 procedure TDBRichEdit.SetAutoDisplay(Value: Boolean);
 begin
-  if FAutoDisplay<>Value then
+  if FAutoDisplay <> Value then
   begin
-    FAutoDisplay:=Value;
-    if Value then
-      LoadMemo;
+    FAutoDisplay := Value;
+    if Value then LoadMemo;
   end;
 end;
 
 procedure TDBRichEdit.WMLButtonDblClk(var Message: TWMLButtonDblClk);
 begin
-  if not FMemoLoaded then
-    LoadMemo
-  else
-    inherited;
+  if not FMemoLoaded then LoadMemo else inherited;
 end;
 
 procedure TDBRichEdit.WMCut(var Message: TMessage);
@@ -5992,21 +5899,24 @@ end;
 
 procedure TDBRichEdit.CMGetDataLink(var Message: TMessage);
 begin
-  message.Result:=Integer(FDataLink);
+  Message.Result := Integer(FDataLink);
 end;
+
 
 function TDBRichEdit.ExecuteAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited ExecuteAction(Action)or(FDataLink<>nil)and FDataLink.ExecuteAction(Action);
+  Result := inherited ExecuteAction(Action) or (FDataLink <> nil) and
+    FDataLink.ExecuteAction(Action);
 end;
 
 function TDBRichEdit.UpdateAction(Action: TBasicAction): Boolean;
 begin
-  Result:=inherited UpdateAction(Action)or(FDataLink<>nil)and FDataLink.UpdateAction(Action);
+  Result := inherited UpdateAction(Action) or (FDataLink <> nil) and
+    FDataLink.UpdateAction(Action);
 end;
 
 type
-  TVCLScreenApplication=class(TInterfacedObject, IDBScreen, IDBApplication)
+  TVCLScreenApplication = class(TInterfacedObject, IDBScreen, IDBApplication)
     function GetCursor: TDBScreenCursor;
     procedure SetCursor(Cursor: TDBScreenCursor);
     function GetTitle: string;
@@ -6014,25 +5924,22 @@ type
     procedure SetTitle(const Value: string);
   end;
 
-  { TVCLScreenApplication }
+{ TVCLScreenApplication }
 
 function TVCLScreenApplication.GetCursor: TDBScreenCursor;
 begin
   case Forms.Screen.Cursor of
-  crDefault:
-  Result:=dcrDefault;
-  crHourGlass:
-  Result:=dcrHourGlass;
-  crSQLWait:
-  Result:=dcrSQLWait;
-else
-Result:=dcrOther;
+    crDefault: Result := dcrDefault;
+    crHourGlass: Result := dcrHourGlass;
+    crSQLWait: Result := dcrSQLWait;
+  else
+    Result := dcrOther;
   end;
 end;
 
 function TVCLScreenApplication.GetTitle: string;
 begin
-  Result:=Forms.Application.Title;
+  Result := Forms.Application.Title;
 end;
 
 procedure TVCLScreenApplication.ProcessMessages;
@@ -6043,28 +5950,23 @@ end;
 procedure TVCLScreenApplication.SetCursor(Cursor: TDBScreenCursor);
 begin
   case Cursor of
-  dcrDefault:
-  Forms.Screen.Cursor:=crDefault;
-  dcrHourGlass:
-  Forms.Screen.Cursor:=crHourGlass;
-  dcrSQLWait:
-  Forms.Screen.Cursor:=crSQLWait;
+    dcrDefault: Forms.Screen.Cursor := crDefault;
+    dcrHourGlass: Forms.Screen.Cursor := crHourGlass;
+    dcrSQLWait: Forms.Screen.Cursor := crSQLWait;
   end;
 end;
 
 procedure TVCLScreenApplication.SetTitle(const Value: string);
 begin
-  Forms.Application.Title:=Value;
+  Forms.Application.Title := Value;
 end;
 
 initialization
-
-DB.DBScreen:=TVCLScreenApplication.Create as IDBScreen;
-DB.DBApplication:=DB.DBScreen as IDBApplication;
+  DB.DBScreen := TVCLScreenApplication.Create as IDBScreen;
+  DB.DBApplication := DB.DBScreen as IDBApplication;
 
 finalization
-
-DB.DBScreen:=nil;
-DB.DBApplication:=nil;
-
+  DB.DBScreen := nil;
+  DB.DBApplication := nil;
+  
 end.
