@@ -26,7 +26,7 @@ uses
   BufDataset, dbconst, sqldb,
 {$ENDIF}
 {$IFDEF ZEOS}
-  // ZConnection, ZDataset, ZSqlUpdate,
+  //ZConnection, ZDataset, ZSqlUpdate,
 {$ENDIF}
   DB, uDCLTypes, uDCLData, uDCLConst;
 
@@ -101,8 +101,8 @@ type
     Procedure SetOperations(Value: TOperationsTypes);
     Function GetOperations: TOperationsTypes;
 
-    procedure SetSQL(const AValue: {$IFDEF ADO}TWideStrings{$ELSE}TStringList{$ENDIF});
-    function GetSQL: {$IFDEF ADO}TWideStrings{$ELSE}TStringList{$ENDIF};
+    procedure SetSQL(const AValue: {$IFDEF WITH_WIDEDATASET}TWideStrings{$ELSE}TStringList{$ENDIF});
+    function GetSQL: {$IFDEF WITH_WIDEDATASET}TWideStrings{$ELSE}TStringList{$ENDIF};
 
     Function FindNotAllowedOperation(Value: TNotAllowedOperations): Boolean;
 
@@ -125,7 +125,7 @@ type
     property KeyField: String read FKeyField;
     property MainTable: String read FMainTable;
   published
-    property SQL:{$IFDEF ADO}TWideStrings{$ELSE}TStringList{$ENDIF} read GetSQL write SetSQL;
+    property SQL:{$IFDEF WITH_WIDEDATASET}TWideStrings{$ELSE}TStringList{$ENDIF} read GetSQL write SetSQL;
     property AfterDelete: TDataSetNotifyEvent read GetAfterDeleteEvent write SetAfterDeleteEvent;
     property AfterPost: TDataSetNotifyEvent read GetAfterPostEvent write SetAfterPostEvent;
     property AfterCancel: TDataSetNotifyEvent read GetAfterCancelEvent write SetAfterCancelEvent;
@@ -657,16 +657,16 @@ begin
   Result:=FNotAllowOperations;
 end;
 
-procedure TDCLQuery.SetSQL(const AValue: {$IFDEF ADO}TWideStrings{$ELSE}TStringList{$ENDIF});
+procedure TDCLQuery.SetSQL(const AValue: {$IFDEF WITH_WIDEDATASET}TWideStrings{$ELSE}TStringList{$ENDIF});
 begin
   FUpdateSQLDefined:=False;
   inherited Close;
   inherited SQL.Assign(AValue);
 end;
 
-function TDCLQuery.GetSQL: {$IFDEF ADO}TWideStrings{$ELSE}TStringList{$ENDIF};
+function TDCLQuery.GetSQL: {$IFDEF WITH_WIDEDATASET}TWideStrings{$ELSE}TStringList{$ENDIF};
 begin
-  Result:={$IFDEF ADO}TWideStrings{$ELSE}TStringList{$ENDIF}(inherited SQL);
+  Result:={$IFDEF WITH_WIDEDATASET}TWideStrings{$ELSE}TStringList{$ENDIF}(inherited SQL);
 end;
 
 {$IFDEF TRANSACTIONDB}

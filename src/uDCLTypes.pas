@@ -61,7 +61,6 @@ type
   TCommandQuery=TIBQuery;
   TTransaction=TIBTransaction;
   TUpdateObj=TIBUpdateSQLW;
-//  UpdateObj=TIBUpdateSQL;
 {$ENDIF}
 {$IFDEF ZEOS}
   TDBLogOn=TZConnection;
@@ -70,19 +69,17 @@ type
   TUpdateObj=TZUpdateSQL;
   TCommandQuery=TZReadOnlyQuery;
 {$ENDIF}
-{$IFDEF SQLdbIB}
+{$IFDEF SQLdbFamily}
   TDCLDialogQuery=TSQLQuery;
   TReportQuery=TSQLQuery;
-  TDBLogOn=TIBConnection;
   TCommandQuery=TSQLQuery;
   TTransaction=TSQLTransaction;
+{$IFDEF SQLdbIB}
+  TDBLogOn=TIBConnection;
 {$ENDIF}
 {$IFDEF SQLdb}
-  TDCLDialogQuery=TSQLQuery;
-  TReportQuery=TSQLQuery;
   TDBLogOn=TSQLConnector;
-  TCommandQuery=TSQLQuery;
-  TTransaction=TSQLTransaction;
+{$ENDIF}
 {$ENDIF}
 
   TDCLMainPanel=TScrollBox;

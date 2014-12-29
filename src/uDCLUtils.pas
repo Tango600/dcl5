@@ -76,7 +76,6 @@ Function ToDOSf(Buf: String): String;
 Function FakeFileExt(Const FileName, Ext: String): String;
 Function AddToFileName(Const FileName, AddStr: String): String;
 Function ExtractSection(Var SectionStr: String): String;
-Function ConvertOfficeType(OfficeType: String): TOfficeDocumentFormat;
 function GetGraficFileType(FileName: string): TGraficFileType;
 function GetExtByType(FileType:TGraficFileType):String;
 {$IFNDEF FPC}
@@ -2076,16 +2075,6 @@ Begin
     Result:=Copy(SectionStr, 1, PosD-1);
     Delete(SectionStr, 1, PosD);
   End;
-End;
-
-Function ConvertOfficeType(OfficeType: String): TOfficeDocumentFormat;
-Begin
-  If LowerCase(OfficeType)='oo' then
-    Result:=odtOO
-  Else If LowerCase(OfficeType)='mso' then
-    Result:=odtMSO
-  Else
-    Result:=odtPossible;
 End;
 
 function GetGraficFileType(FileName: string): TGraficFileType;

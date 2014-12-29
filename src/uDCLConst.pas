@@ -15,13 +15,13 @@ const
   DBEngineType='ADODB';
 {$ENDIF}
 {$IFDEF BDE}
-  DBEngineType='BDE';
+  DBEngineType='BDE (Universal)';
 {$ENDIF}
 {$IFDEF IBX}
   DBEngineType='IBX';
 {$ENDIF}
 {$IFDEF ZEOS}
-  DBEngineType='ZEOS';
+  DBEngineType='ZEOS (Universal)';
   DefaultIBPort=3050;
   DefaultDBType='firebird-2.5';
   DefaultDBTInterBaseType='interbase-6';
@@ -33,12 +33,12 @@ const
   {$ENDIF}
 {$ENDIF}
 {$IFDEF SQLdbIB}
-  DBEngineType='SQLdbIB';
+  DBEngineType='SQLdb IB';
 {$ENDIF}
 {$IFDEF SQLdb}
-  DBEngineType='SQLdb';
+  DBEngineType='SQLdb (Universal)';
 {$ENDIF}
-  Version='10.0.7.219';
+  Version='10.0.7.221';
 
   CompotableVersion='9.1.127.305';
 

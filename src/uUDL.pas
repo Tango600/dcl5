@@ -4250,6 +4250,8 @@ begin
         TranslateVal(ScrStr, True);
         tmpSQL:=InitCap(FindParam('caption=', ScrStr));
         FForm.Caption:=tmpSQL;
+        If GPT.MainFormCaption<>'' then
+          FForm.Caption:=FForm.Caption+' \'+Trim(SystemToInterface(GPT.MainFormCaption))+'\';
       end;
 
       If PosEx('Style=', ScrStr)=1 Then
@@ -5574,6 +5576,7 @@ begin
             If Assigned(FDCLForm.Tables[ - 1].DBFilters[v1-1].Edit) Then
               FDCLForm.Tables[ - 1].DBFilters[v1-1].Edit.Clear;
         end;
+    Executed:=True;
   end;
 
   If CompareString(Command, 'About')or CompareString(Command, 'Version') Then
@@ -6642,6 +6645,58 @@ begin
             If GetRaightsByContext(InContext)>ulReadOnly Then
               If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
                 FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Edit;
+          end;
+
+          If PosEx('Next_part;', ScrStr)=1 Then
+          begin
+            If GetRaightsByContext(InContext)>ulReadOnly Then
+              If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
+                FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Next;
+          end;
+
+          If PosEx('Prior_part;', ScrStr)=1 Then
+          begin
+            If GetRaightsByContext(InContext)>ulReadOnly Then
+              If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
+                FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Prior;
+          end;
+
+          If PosEx('First_part;', ScrStr)=1 Then
+          begin
+            If GetRaightsByContext(InContext)>ulReadOnly Then
+              If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
+                FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.First;
+          end;
+
+          If PosEx('Last_part;', ScrStr)=1 Then
+          begin
+            If GetRaightsByContext(InContext)>ulReadOnly Then
+              If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
+                FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Last;
+          end;
+
+          If PosEx('Next;', ScrStr)=1 Then
+          begin
+            If GetRaightsByContext(InContext)>ulReadOnly Then
+              FDCLForm.CurrentQuery.Next;
+          end;
+
+          If PosEx('Prior;', ScrStr)=1 Then
+          begin
+            If GetRaightsByContext(InContext)>ulReadOnly Then
+              FDCLForm.CurrentQuery.Prior;
+          end;
+
+          If PosEx('First;', ScrStr)=1 Then
+          begin
+            If GetRaightsByContext(InContext)>ulReadOnly Then
+              FDCLForm.CurrentQuery.First;
+          end;
+
+          If PosEx('Last;', ScrStr)=1 Then
+          begin
+            If GetRaightsByContext(InContext)>ulReadOnly Then
+              FDCLForm.CurrentQuery.Last;
           end;
 
           If PosEx('Edit;', ScrStr)=1 Then

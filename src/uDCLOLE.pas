@@ -6,7 +6,7 @@ interface
 uses
   Variants, ComObj, ActiveX
 {$IFDEF FPC}
-    , types
+  , types
 {$ENDIF};
 {$ENDIF}
 

@@ -5,7 +5,7 @@ interface
 uses
   uDCLConst
 {$IFDEF MSWINDOWS}
-    , Variants, Classes, ComObj, SysUtils, uDCLUtils
+  , Variants, Classes, ComObj, SysUtils, uDCLUtils
 {$ENDIF};
 
 {$IFDEF MSWINDOWS}
@@ -15,31 +15,34 @@ Procedure WordInsert(var MsWord: OleVariant; Data, info: Variant;
   _bold, _italic, _StrikeThrough, _Underline: Integer; _Size: Integer; _center: Boolean);
 Procedure WordOpen(var MsWord: OleVariant; FileName: OleVariant);
 Procedure WordClose(var MsWord: OleVariant);
-Function CloseDoc(var MsWord: OleVariant): Boolean;
-Function SaveDocAs(var MsWord: OleVariant; FileName: String): Boolean;
+Function CloseDocument(var MsWord: OleVariant): Boolean;
+Function SaveDocumentAs(var MsWord: OleVariant; FileName: String): Boolean;
 Procedure WordRun(var MsWord: OleVariant);
 Procedure OOExportToFormat(var Document: Variant; FileName, Format: String);
+Procedure OOCloseDocument(var Document: Variant);
 Procedure OOClosePreview(var Document: Variant);
 Procedure OOShowPreview(var Document: Variant);
 Procedure OOSetVisible(var Document: Variant; Const Value: Boolean);
 Function OOGetVisible(var Document: Variant): Boolean;
 Procedure InsertTextByXY(var Sheet, Cell: Variant; Const Text: String; row, col: Integer);
+Function GetTextByXY(var Sheet, Cell: Variant; Const row, col: Integer):String;
 Function FileNameToURL(FileName: String): Variant;
 Function MakePropertyValue(ServiceManager, PropertyName, PropertyValue: Variant): Variant;
 {$ENDIF}
 function GetPossibleOffice(DocType: TDocumentType; OfficeType: TOfficeDocumentFormat=odtPossible)
   : TOfficeDocumentFormat;
+Function ConvertOfficeType(OfficeType: String): TOfficeDocumentFormat;
 
 implementation
 
 {$IFDEF MSWINDOWS}
 uses
   uDCLOLE;
-{$ENDIF}
 
 var
   WordRuning: Boolean;
   WordVer: Byte;
+{$ENDIF}
 
 {$IFDEF UNIX}
 function GetPossibleOffice(DocType: TDocumentType; OfficeType: TOfficeDocumentFormat=odtPossible)
@@ -48,6 +51,16 @@ begin
   Result:=odtNone;
 end;
 {$ENDIF}
+
+Function ConvertOfficeType(OfficeType: String): TOfficeDocumentFormat;
+Begin
+  If LowerCase(OfficeType)='oo' then
+    Result:=odtOO
+  Else If LowerCase(OfficeType)='mso' then
+    Result:=odtMSO
+  Else
+    Result:=odtPossible;
+End;
 
 {$IFDEF MSWINDOWS}
 function GetPossibleOffice(DocType: TDocumentType; OfficeType: TOfficeDocumentFormat=odtPossible)
@@ -395,6 +408,12 @@ Begin
   Cell.setString(VarAsType(Text, varOleStr));
 End;
 
+Function GetTextByXY(var Sheet, Cell: Variant; Const row, col: Integer):String;
+begin
+  Cell:=Sheet.getCellByPosition(col, row);
+  Result:=Cell.getString;
+end;
+
 Function OOGetVisible(var Document: Variant): Boolean;
 Var
   v: Variant;
@@ -446,6 +465,14 @@ Begin
   Ar:=Unassigned;
   SM:=Unassigned;
 {$ENDIF}
+End;
+
+Procedure OOCloseDocument(var Document: Variant);
+Begin
+  {$IFDEF MSWINDOWS}
+  Document.Close(True);
+  Document:=Unassigned;
+  {$ENDIF}
 End;
 
 Procedure OOExportToFormat(var Document: Variant; FileName, Format: String);
@@ -507,30 +534,30 @@ Begin
     ShowErrorMessage(-6011, '');
 End;
 
-Function SaveDocAs(var MsWord: OleVariant; FileName: String): Boolean;
+Function SaveDocumentAs(var MsWord: OleVariant; FileName: String): Boolean;
 Begin
-  SaveDocAs:=False;
+  Result:=False;
   If WordRuning Then
   Begin
-    SaveDocAs:=True;
+    Result:=True;
     Try
       MsWord.ActiveDocument.SaveAs(FileName);
     Except
-      SaveDocAs:=False;
+      Result:=False;
     End;
   End;
 End;
 
-Function CloseDoc(var MsWord: OleVariant): Boolean;
+Function CloseDocument(var MsWord: OleVariant): Boolean;
 Begin
-  CloseDoc:=False;
+  Result:=False;
   If WordRuning Then
   Begin
-    CloseDoc:=True;
+    Result:=True;
     Try
       MsWord.ActiveDocument.Close;
     Except
-      CloseDoc:=False;
+      Result:=False;
     End;
   End;
 End;
