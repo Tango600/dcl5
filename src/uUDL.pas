@@ -16,7 +16,9 @@ Uses
   cwstring, process, unix, libc, lclintf, BaseUnix,
 {$ENDIF}
 {$IFNDEF FPC}
-  VCLFixPack,
+{$IFDEF VCLFIX}
+  VCLFixPack, ControlsAtomFix,
+{$ENDIF}
 {$ENDIF}
   Messages, Variants, Classes, Graphics, Controls, Forms, ExtCtrls, ToolWin,
   Grids, DB, StdCtrls, ComCtrls, Dialogs, DBCtrls, Buttons, ExtDlgs, Menus,
@@ -48,7 +50,7 @@ Uses
 {$IFNDEF FPC}
   JPEG,
 {$ENDIF}
-{$IFDEF MSWINDOWS}uOfficeDocs, {$ENDIF}
+{$IFDEF MSWINDOWS}uOfficeDocs, {$ENDIF} uDCLDownloader,
   uDCLMessageForm, uDCLSQLMonitor, uDCLQuery, uLogging, MD5,
   uStringParams, uDCLData, uDCLConst, uDCLTypes;
 
@@ -66,6 +68,13 @@ Type
   TDCLMainMenu=class;
   TVariables=class;
 
+  {$IFDEF SQLdbFamily}
+  Params=TParams;
+  {$ENDIF}
+  {$IFDEF ADO}
+  Params=TParameters;
+  {$ENDIF}
+
   { TDCLLogOn }
 
   TDCLLogOn=class(TObject)
@@ -80,7 +89,7 @@ Type
     SQLMon: TDCLSQLMon;
 
     FAccessLevel: TUserLevelsType;
-    FForms: Array of TDCLForm;
+    FForms: TList; //Array of TDCLForm;
     ActiveDCLForms: Array of Boolean;
     ReturnFormsValues: Array of TReturnFormValue;
     ShadowQuery: TDCLDialogQuery;
@@ -93,7 +102,6 @@ Type
     Timer1: TTimer;
 
     function GetFormsCount: Integer;
-    function GetNextForm: Integer;
     function GetForm(Index: Integer): TDCLForm;
     function LoadScrText(ScrName: String): TStringList;
 
@@ -133,10 +141,10 @@ Type
     procedure InitActions(Sender: TObject);
     procedure RunCommand(CommandName: String);
     procedure CreateMenu(MainForm: TForm);
-    function CreateForm(FormName: String; ParentForm: TDCLForm; Query: TDCLDialogQuery;
+    function CreateForm(FormName: String; ParentForm, CallerForm: TDCLForm; Query: TDCLDialogQuery;
       Data: TDataSource; ModalMode: Boolean; ReturnValueMode: TChooseMode;
       ReturnValueParams: TReturnValueParams=nil): TDCLForm;
-    function CloseForm(var Form: TDCLForm): TReturnFormValue;
+    function CloseForm(Form: TDCLForm): TReturnFormValue;
     procedure CloseFormNum(FormNum: Integer);
     procedure SetDBName(var Query: TDCLDialogQuery);
 
@@ -184,6 +192,8 @@ Type
     function GetAllVariables: TList;
   public
     constructor Create(var DCLLogOn: TDCLLogOn; DCLForm: TDCLForm);
+    destructor Destroy; override;
+
     procedure NewVariable(Const VariableName: String; Value: String='');
     procedure FreeVariable(Const VariableName: String);
     function Exists(Const VariableName: String): Boolean;
@@ -497,6 +507,7 @@ Type
   public
     constructor Create(Parent: TWinControl; Data: TDataSource; var Field: RField; aAlign: TAlign;
       GroupType: TGroupType);
+    destructor Destroy; override;
   end;
 
   TDCLCommandButton=class(TObject)
@@ -509,6 +520,8 @@ Type
     procedure ExecCommand(Sender: TObject);
   public
     constructor Create(var DCLLogOn: TDCLLogOn; var DCLForm: TDCLForm);
+    destructor Destroy; override;
+
     procedure AddCommand(Parent: TWinControl; ButtonParams: RButtonParams);
   end;
 
@@ -517,7 +530,7 @@ Type
   TDCLForm=class(TObject)
   private
     FName: String;
-    FParentForm: TDCLForm;
+    FParentForm, FCallerForm: TDCLForm;
     UserLevelLocal: TUserLevelsType;
     FOPL: TStringList;
     FFormNum, FormHeight, FormWidth: Integer;
@@ -603,7 +616,7 @@ Type
     FDialogName: String;
     ExitCode: Byte;
 
-    constructor Create(DialogName: String; var DCLLogOn: TDCLLogOn; ParentForm: TDCLForm;
+    constructor Create(DialogName: String; var DCLLogOn: TDCLLogOn; ParentForm, CallerForm: TDCLForm;
       aFormNum: Integer; OPL: TStringList; Query: TDCLDialogQuery; Data: TDataSource;
       Modal: Boolean=False; ReturnValueMode: TChooseMode=chmNone;
       ReturnValueParams: TReturnValueParams=nil);
@@ -630,6 +643,7 @@ Type
     procedure SetVariable(VarName, VValue: String);
     procedure GetChooseValue;
     function ChooseAndClose(Action: TChooseMode): TReturnFormValue;
+    function GetPreviosForm:TDCLForm;
 
     property DialogName: String read FName write FName;
     property CurrentQuery: TDCLQuery read GetMainQuery;
@@ -659,6 +673,7 @@ Type
     WordReport: TWordReport;
     BinStore: TBinStore;
     SpoolFileName: String;
+    Downloader: TDownloader;
 
     procedure ExportData(Tagert: TSpoolType; Scr: String);
     procedure OpenForm(FormName: String; ModalMode: Boolean);
@@ -792,6 +807,7 @@ Type
     constructor InitReport(DCLLogOn: TDCLLogOn; DCLGrid: TDCLGrid; OPL: TStringList;
       ParamsSet: Cardinal; Mode: TNewQueryMode);
     destructor Destroy; override;
+
     procedure CloseReport(FileName: String);
 
     procedure OpenReport(FileName: String; ViewMode: TReportViewMode);
@@ -820,6 +836,7 @@ Type
     procedure PrintWordReport(AReport: String; SQLs: TStrArray; ATemplate, AFileName: String);
   public
     constructor Create(DCLLogOn: TDCLLogOn);
+    destructor Destroy; override;
     procedure Print(RepName, TemplateName, FileName: String);
   end;
 {$ELSE}
@@ -844,6 +861,7 @@ Type
     OfficeDocumentFormat, OfficeTemplateFormat: TOfficeDocumentFormat;
 
     constructor Create(DCLLogOn: TDCLLogOn; DCLGrid: TDCLGrid);
+    destructor Destroy; override;
 
     procedure ReportOpenOfficeWriter(ParamStr: String; Save: Boolean);
     procedure ReportOpenOfficeCalc(ParamStr: String; Save: Boolean);
@@ -942,12 +960,16 @@ var
 implementation
 
 Uses
-  uDCLUtils, uDCLStringsRes, SumProps, uDCLDBUtils, uDCLOfficeUtils,
-  uDCLDownloader, uLZW;
+  uDCLUtils, uDCLStringsRes, SumProps, uDCLDBUtils, uDCLOfficeUtils, uLZW;
 
 { TWordReport }
 
 {$IFDEF MSWINDOWS}
+destructor TWordReport.Destroy;
+begin
+  ///
+end;
+
 function TWordReport.GetRepSQLArray(RepText: TStringList): TStrArray;
 var
   A: TStrArray;
@@ -1135,7 +1157,8 @@ var
   begin
     If (DestQuery<>nil)and(SourceFieldsSet<>nil) Then
       If SourceFieldsSet.Count>0 Then
-        If DestQuery.{$IFDEF PARAMS2}Params.Count{$ELSE}ParamCount{$ENDIF}>0 Then
+        If DestQuery.{$IFDEF PARAMS2}{$IFDEF SQLdbFamily}Params{$ENDIF}
+        {$IFDEF ADO}Parameters{$ENDIF}.Count{$ELSE}ParamCount{$ENDIF}>0 Then
         begin
           If Assigned(DestQuery.DataSource) Then
           begin
@@ -1143,21 +1166,26 @@ var
             begin
               MQF:=DestQuery.DataSource.DataSet.Fields;
 
-              For pv1:=0 to DestQuery.{$IFDEF PARAMS2}Params.Count{$ELSE}ParamCount{$ENDIF}-1 do
+              For pv1:=0 to DestQuery.{$IFDEF PARAMS2}{$IFDEF SQLdbFamily}Params{$ENDIF}
+        {$IFDEF ADO}Parameters{$ENDIF}.Count{$ELSE}ParamCount{$ENDIF}-1 do
               begin
-                If Not Assigned(MQF.FindField(DestQuery.Params[pv1].Name)) Then
-                  If Assigned(SourceFieldsSet.FindField(DestQuery.Params[pv1].Name)) Then
-                    DestQuery.Params[pv1].Value:=
-                      SourceFieldsSet.FieldByName(DestQuery.Params[pv1].Name).Value;
+                If Not Assigned(MQF.FindField(DestQuery.
+        {$IFDEF ADO}Parameters{$ELSE}Params{$ENDIF}[pv1].Name)) Then
+                  If Assigned(SourceFieldsSet.FindField(DestQuery.
+        {$IFDEF ADO}Parameters{$ELSE}Params{$ENDIF}[pv1].Name)) Then
+                    DestQuery.{$IFDEF ADO}Parameters{$ELSE}Params{$ENDIF}[pv1].Value:=
+                      SourceFieldsSet.FieldByName(DestQuery.
+        {$IFDEF ADO}Parameters{$ELSE}Params{$ENDIF}[pv1].Name).Value;
               end;
             end;
           end
           Else
-            For pv1:=0 to DestQuery.{$IFDEF PARAMS2}Params.Count{$ELSE}ParamCount{$ENDIF}-1 do
+            For pv1:=0 to DestQuery.{$IFDEF PARAMS2}{$IFDEF SQLdbFamily}Params{$ENDIF}
+        {$IFDEF ADO}Parameters{$ENDIF}.Count{$ELSE}ParamCount{$ENDIF}-1 do
             begin
-              If Assigned(SourceFieldsSet.FindField(DestQuery.Params[pv1].Name)) Then
-                DestQuery.Params[pv1].Value:=SourceFieldsSet.FieldByName
-                  (DestQuery.Params[pv1].Name).Value;
+              If Assigned(SourceFieldsSet.FindField(DestQuery.{$IFDEF ADO}Parameters{$ELSE}Params{$ENDIF}[pv1].Name)) Then
+                DestQuery.{$IFDEF ADO}Parameters{$ELSE}Params{$ENDIF}[pv1].Value:=SourceFieldsSet.FieldByName
+                  (DestQuery.{$IFDEF ADO}Parameters{$ELSE}Params{$ENDIF}[pv1].Name).Value;
             end;
         end;
   end;
@@ -1744,6 +1772,11 @@ begin
   FDCLForm:=DCLForm
 end;
 
+destructor TVariables.Destroy;
+begin
+  //
+end;
+
 function TVariables.Exists(Const VariableName: String): Boolean;
 var
   VarNum: Integer;
@@ -1938,7 +1971,7 @@ begin
         3:
         TmpStr:=DateToStr_(Date);
         4:
-        TmpStr:=TimeStampToStr(Date);
+        TmpStr:=TimeStampToStr(Now);
         5:
         TmpStr:=Version;
         6:
@@ -2520,6 +2553,7 @@ begin
   begin
     FPages:=TPageControl.Create(MainPanel);
     FPages.Parent:=MainPanel;
+    FPages.Name:='Pages_'+FForm.Name;
     FPages.Align:=alClient;
     FPages.OnChange:=ChangeTabPage;
 {$IFNDEF FPC}
@@ -2659,6 +2693,7 @@ var
   i, j: Word;
   TB1: TFormPanelButton;
 begin
+  FDCLLogOn.FForms.Remove(Self);
   If ExitCode=0 Then
   begin
     SaveFormPos;
@@ -2672,13 +2707,15 @@ begin
     For i:=1 to Length(EventsClose) do
       ExecCommand(EventsClose[i-1]);
 
-  For i:=1 to Length(FGrids) do
+  For i:=Length(FGrids) downto 1 do
   begin
-    For j:=1 to Length(FGrids[i-1].FTableParts) do
+    For j:=Length(FGrids[i-1].FTableParts) downto 1 do
       FreeAndNil(FGrids[i-1].FTableParts[j-1]);
 
     FreeAndNil(FGrids[i-1]);
   end;
+  If Assigned(FPages) then
+    FreeAndNil(FPages);
 
   If ShowFormPanel Then
   begin
@@ -2696,13 +2733,16 @@ begin
     If Assigned(FDCLLogOn.Forms[i-1]) Then
       If FDCLLogOn.ActiveDCLForms[i-1] Then
         If Self=FDCLLogOn.Forms[i-1].FParentForm Then
-          FreeAndNil(FDCLLogOn.FForms[i-1]);
+          FDCLLogOn.CloseForm(FDCLLogOn.Forms[i-1]);
   end;
 
-  FParentForm:=nil;
+  Pointer(FParentForm):=nil;
+  Pointer(FCallerForm):=nil;
   SetInactive;
-  FForm.Close;
-  FForm.Release;
+  //FForm.Close;
+  FreeAndNil(FForm);
+  //FreeAndNil(ParentPanel);
+  //FreeAndNil(MainPanel);
 end;
 
 procedure TDCLForm.CloseForm(Sender: TObject; var Action: TCloseAction);
@@ -3354,7 +3394,7 @@ begin
   SaveFormPos;
 end;
 
-constructor TDCLForm.Create(DialogName: String; var DCLLogOn: TDCLLogOn; ParentForm: TDCLForm;
+constructor TDCLForm.Create(DialogName: String; var DCLLogOn: TDCLLogOn; ParentForm, CallerForm: TDCLForm;
   aFormNum: Integer; OPL: TStringList; Query: TDCLDialogQuery; Data: TDataSource;
   Modal: Boolean=False; ReturnValueMode: TChooseMode=chmNone;
   ReturnValueParams: TReturnValueParams=nil);
@@ -3398,6 +3438,7 @@ begin
   FieldsSettingsReseted:=False;
   NotDestroyedDCLForm:=False;
   FParentForm:=ParentForm;
+  FCallerForm:=CallerForm;
   FRetunValue.Choosen:=False;
   Modal:=ReturnValueMode<>chmNone;
   FReturnValueParams:=ReturnValueParams;
@@ -3442,7 +3483,7 @@ begin
   FForm.OnResize:=ResizeDBForm;
   FForm.OnActivate:=ActivateForm;
   FForm.Tag:=aFormNum;
-  FForm.Icon:=GetIcon;
+  FForm.Icon.Assign(GetIcon);
 
   FFormMenu:=TMainMenu.Create(FForm);
   // FFormMenu.Parent:=FForm;
@@ -3580,7 +3621,7 @@ begin
           TranslateVal(ScrStr, True);
           tmpSQL:=FindParam('SetUserAccessRaight=', ScrStr);
 
-          Case IsDigit(tmpSQL) of
+          Case GetStringDataType(tmpSQL) of
           idDigit:
           UserLevelLocal:=TranslateDigitToUserLevel
             (StrToIntEx(FindParam('SetUserAccessRaight=', ScrStr)));
@@ -3594,7 +3635,7 @@ begin
       begin
         TranslateVal(ScrStr, True);
         tmpSQL:=FindParam('UserAccessRaight=', ScrStr);
-        Case IsDigit(tmpSQL) of
+        Case GetStringDataType(tmpSQL) of
         idDigit:
         UserLevel:=TranslateDigitToUserLevel(StrToIntEx(FindParam('UserAccessRaight=', ScrStr)));
         idUserLevel:
@@ -4028,7 +4069,7 @@ begin
           v2:=0;
           If tmpSQL1<>'' Then
           begin
-            IsDigitType:=IsDigit(tmpSQL1);
+            IsDigitType:=GetStringDataType(tmpSQL1);
             Case IsDigitType of
             idDigit:
             If TranslateDigitToUserLevel(StrToIntEx(FindParam('AccessLevel=', ScrStr)))<=
@@ -4105,7 +4146,7 @@ begin
           tmpSQL1:=FindParam('AccessLevel=', ScrStr);
           If tmpSQL1<>'' Then
           begin
-            IsDigitType:=IsDigit(tmpSQL1);
+            IsDigitType:=GetStringDataType(tmpSQL1);
             Case IsDigitType of
             idDigit:
             If TranslateDigitToUserLevel(StrToIntEx(FindParam('AccessLevel=', ScrStr)))<=
@@ -4838,6 +4879,17 @@ begin
   Result:=Tables[ - 1].TableParts[ - 1].Query;
 end;
 
+function TDCLForm.GetPreviosForm: TDCLForm;
+begin
+  if Assigned(FParentForm) then
+    Result:=FParentForm
+  else
+    If Assigned(FCallerForm) then
+      Result:=FCallerForm
+    else
+      Result:=nil;
+end;
+
 function TDCLForm.GetTable(Index: Integer): TDCLGrid;
 var
   i, j: Integer;
@@ -4933,8 +4985,10 @@ var
   ToolBtnSize: Word;
   i, j: Byte;
 begin
+  If Assigned(FForm) then
   For j:=1 to Length(FGrids) do
   begin
+    If Assigned(FGrids[j-1]) Then
     If Assigned(FGrids[j-1].ToolButtonPanel) Then
       If (FGrids[j-1].ToolButtonPanel.Width>0)and(FGrids[j-1].ToolButtonsCount>0) Then
       begin
@@ -5307,6 +5361,9 @@ end;
 
 destructor TDCLCommand.Destroy;
 begin
+  FDCLLogOn.SQLMon.DelTrace(DCLQuery);
+  FDCLLogOn.SQLMon.DelTrace(DCLQuery2);
+
   If Assigned(DCLQuery) Then
     FreeAndNil(DCLQuery);
   If Assigned(DCLQuery2) Then
@@ -5315,7 +5372,7 @@ end;
 
 procedure TDCLCommand.ExecCommand(Command: String; DCLForm: TDCLForm);
 var
-  ModalOpen, InContext, Enything: Boolean;
+  ModalOpen, InContext, Enything, DownLoadCancel, DownloadProgress: Boolean;
   IfCounter, IfSign: Byte;
   RecCount, ScriptStrings, RetPoint, v1, v2, v3, RepIdParams: Integer;
   ScrStr, TmpStr, tmpStr1, tmpStr2, tmpStr3, tmp1, tmp2, tmp3, tmp4, RepTable: String;
@@ -5326,8 +5383,8 @@ var
   BookMark: TBookmark;
   tmpDCL: TStringList;
   LocalCommand: TDCLCommand;
-  FormsStack: Array of TDCLForm;
   Sign:TSigns;
+  tmpDCLForm:TDCLForm;
 
   procedure GotoGoto(LabelName: String);
   var
@@ -5353,33 +5410,6 @@ var
     begin
       ScriptStrings:=RetPoint-1;
     end;
-  end;
-
-  procedure Pushf(Form: TDCLForm);
-  var
-    l: Word;
-  begin
-    l:=Length(FormsStack);
-    SetLength(FormsStack, l+1);
-    FormsStack[l]:=Form;
-  end;
-
-  function Popf: TDCLForm;
-  var
-    l: Word;
-  begin
-    Result:=nil;
-    l:=Length(FormsStack);
-    If l>0 Then
-    begin
-      If Assigned(FormsStack[l-1]) Then
-        Result:=FormsStack[l-1]
-      Else
-        ScriptStrings:=FCommandDCL.Count;
-      SetLength(FormsStack, l-1);
-    end
-    Else
-      ScriptStrings:=FCommandDCL.Count;
   end;
 
 begin
@@ -5414,7 +5444,6 @@ begin
   begin
     If Assigned(FDCLForm) Then
       FDCLLogOn.CloseForm(FDCLForm);
-    // FDCLForm:=Popf;
     Executed:=True;
     Exit;
   end;
@@ -5423,7 +5452,6 @@ begin
   begin
     If Assigned(FDCLForm) Then
       FDCLLogOn.CloseForm(FDCLForm);
-    // FDCLForm:=Popf;
     Executed:=True;
   end;
 
@@ -5466,7 +5494,7 @@ begin
     If FDCLForm.CurrentQuery.State in dsEditModes Then
       FDCLForm.CurrentQuery.Post;
     If Assigned(FDCLForm) Then
-      FreeAndNil(FDCLForm);
+      FDCLLogOn.CloseForm(FDCLForm);
     Executed:=True;
   end;
 
@@ -5475,7 +5503,7 @@ begin
     If FDCLForm.CurrentQuery.State in dsEditModes Then
       FDCLForm.CurrentQuery.Cancel;
     If Assigned(FDCLForm) Then
-      FreeAndNil(FDCLForm);
+      FDCLLogOn.CloseForm(FDCLForm);
     Executed:=True;
   end;
 
@@ -5698,6 +5726,19 @@ begin
             FDCLLogOn.Lock;
           end;
 
+          If PosEx('GetScreen=', ScrStr)=1 Then
+          begin
+            tmpStr1:=FindParam('Qlty=', ScrStr);
+            TmpStr:=FindParam('FileName=', ScrStr);
+            If TmpStr<>'' then
+            begin
+              If tmpStr1<>'' then
+                ConvertToJPEG(GetScreen, StrToIntDef(tmpStr1, JPEGCompressionQuality)).SaveToFile(TmpStr)
+              Else
+                GetScreen.SaveToFile(TmpStr);
+            end;
+          end;
+
           If PosEx('OpenScript;', ScrStr)=1 Then
           begin
             If FDCLLogOn.AccessLevel>=ulReadOnly Then
@@ -5792,7 +5833,14 @@ begin
               If CompareString(tmpStr2, 'show') Then
                 FDCLLogOn.Forms[v2].FForm.Show;
               If CompareString(tmpStr2, 'close') Then
-                DCLMainLogOn.Forms[v2].Free;
+              Begin
+                If Assigned(FDCLLogOn.Forms[v2]) then
+                Begin
+                  tmpDCLForm:=FDCLLogOn.Forms[v2].GetParentForm;
+                  FDCLLogOn.Forms[v2].Free;
+                  FDCLForm:=tmpDCLForm;
+                End;
+              End;
               If CompareString(tmpStr2, 'refresh') Then
               begin
                 For v3:=1 to FDCLLogOn.Forms[v2].GetTablesCount do
@@ -5918,6 +5966,7 @@ begin
             TmpStr:=FindParam('DownloadHTTP=', ScrStr);
             tmpStr1:=FindParam('Path=', ScrStr);
             tmpStr2:=FindParam('FileName=', ScrStr);
+            Downloader:=TDownloader.Create;
 
             If tmpStr1='' Then
             begin
@@ -5939,13 +5988,16 @@ begin
             Else
               DownLoadCancel:=False;
 
+            DownLoadProcess:=True;
             tmpStr2:=Trim(FindParam('Reset=', ScrStr));
             If tmpStr2='1' Then
-              DownLoadHTTP(TmpStr, tmp1, True, DownloadProgress, DownLoadCancel)
+              Downloader.DownLoadHTTP(TmpStr, tmp1, True, DownloadProgress, DownLoadCancel)
             Else
-              DownLoadHTTP(TmpStr, tmp1, False, DownloadProgress, DownLoadCancel);
+              Downloader.DownLoadHTTP(TmpStr, tmp1, False, DownloadProgress, DownLoadCancel);
+            DownLoadProcess:=False;
 
             Sleep(100);
+            Downloader.Free;
           end;
 
           If PosEx('Execute=', ScrStr)=1 Then
@@ -6052,29 +6104,31 @@ begin
           begin
             TmpStr:=FindParam('ExecQuery=', ScrStr);
             TranslateValContext(TmpStr);
-            If Not IsReturningQuery(TmpStr) Then
-              ExecSQLCommand(TmpStr, InContext);
+            ExecSQLCommand(TmpStr, InContext);
           end;
 
           If PosEx('Query=', ScrStr)=1 Then
           begin
-            FDCLLogOn.SetDBName(DCLQuery);
-            TmpStr:=FindParam('Query=', ScrStr);
-            FDCLForm.FGrids[FDCLForm.CurrentGridIndex].SetSQLToStore(TmpStr, qtMain, ulUndefined);
-            If Not IsReturningQuery(TmpStr) Then
+            If Assigned(FDCLForm) Then
             begin
-              DCLQuery.Close;
-              DCLQuery.SQL.Text:=TmpStr;
-              If GetRaightsByContext(InContext)>ulWrite Then
-                DCLQuery.ExecSQL;
-            end
-            Else
-              try
-                FDCLForm.CurrentQuery.SQL.Text:=TmpStr;
-                FDCLForm.CurrentQuery.Open;
-              Except
-                ShowErrorMessage( - 1100);
-              end;
+              FDCLLogOn.SetDBName(DCLQuery);
+              TmpStr:=FindParam('Query=', ScrStr);
+              FDCLForm.FGrids[FDCLForm.CurrentGridIndex].SetSQLToStore(TmpStr, qtMain, ulUndefined);
+              If Not IsReturningQuery(TmpStr) Then
+              begin
+                DCLQuery.Close;
+                DCLQuery.SQL.Text:=TmpStr;
+                If GetRaightsByContext(InContext)>ulWrite Then
+                  DCLQuery.ExecSQL;
+              end
+              Else
+                try
+                  FDCLForm.CurrentQuery.SQL.Text:=TmpStr;
+                  FDCLForm.CurrentQuery.Open;
+                Except
+                  ShowErrorMessage( - 1100);
+                end;
+            end;
           end;
 
           If PosEx('GlobQuery=', ScrStr)=1 Then
@@ -6095,36 +6149,40 @@ begin
               Except
                 ShowErrorMessage( - 1113, 'SQL='+TmpStr);
               end;
+              FDCLForm.CurrentQuery.EnableControls;
               try
                 FDCLForm.CurrentQuery.GoToBookmark(BookMark);
               finally
                 FDCLForm.CurrentQuery.FreeBookmark(BookMark);
-                FDCLForm.CurrentQuery.EnableControls;
               end;
             end;
           end;
 
           If PosEx('MultiSelect=', ScrStr)=1 Then
           begin
-            FDCLForm.Tables[ - 1].MultiSelect:=FindParam('MultiSelect=', ScrStr)='1';
+            If Assigned(FDCLForm) Then
+              FDCLForm.Tables[ - 1].MultiSelect:=FindParam('MultiSelect=', ScrStr)='1';
           end;
 
           If PosEx('TablePartQuery=', ScrStr)=1 Then
           begin
-            v1:=1;
-            TmpStr:=Trim(FindParam('TablePartNum=', ScrStr));
-            If TmpStr<>'' Then
-              v1:=StrToIntEx(TmpStr)-1;
+            If Assigned(FDCLForm) Then
+            begin
+              v1:=1;
+              TmpStr:=Trim(FindParam('TablePartNum=', ScrStr));
+              If TmpStr<>'' Then
+                v1:=StrToIntEx(TmpStr)-1;
 
-            TmpStr:=FindParam('TablePartQuery=', ScrStr);
-            FDCLForm.Tables[ - 1].TableParts[v1].SetSQLToStore(TmpStr, qtMain, ulUndefined);
-            FDCLForm.TranslateVal(TmpStr, False);
+              TmpStr:=FindParam('TablePartQuery=', ScrStr);
+              FDCLForm.Tables[ - 1].TableParts[v1].SetSQLToStore(TmpStr, qtMain, ulUndefined);
+              FDCLForm.TranslateVal(TmpStr, False);
 
-            FDCLForm.Tables[ - 1].TableParts[v1].Query.SQL.Text:=TmpStr;
-            try
-              FDCLForm.Tables[ - 1].TableParts[v1].Query.Open;
-            Except
-              ShowErrorMessage( - 1201, 'SQL='+TmpStr);
+              FDCLForm.Tables[ - 1].TableParts[v1].Query.SQL.Text:=TmpStr;
+              try
+                FDCLForm.Tables[ - 1].TableParts[v1].Query.Open;
+              Except
+                ShowErrorMessage( - 1201, 'SQL='+TmpStr);
+              end;
             end;
           end;
 
@@ -6175,103 +6233,126 @@ begin
               v1:=2;
             Case v1 of
             0:
-            TextReport:=TDCLTextReport.InitReport(FDCLLogOn,
-              FDCLForm.Tables[FDCLForm.CurrentTableIndex], tmpDCL, RepIdParams, nqmFromGrid);
+              If Assigned(FDCLForm) Then
+                TextReport:=TDCLTextReport.InitReport(FDCLLogOn,
+                  FDCLForm.Tables[FDCLForm.CurrentTableIndex], tmpDCL, RepIdParams, nqmFromGrid);
             1:
-            TextReport:=TDCLTextReport.InitReport(FDCLLogOn,
-              FDCLForm.Tables[FDCLForm.CurrentTableIndex], tmpDCL, RepIdParams, nqmNew);
+              If Assigned(FDCLForm) Then
+                TextReport:=TDCLTextReport.InitReport(FDCLLogOn,
+                  FDCLForm.Tables[FDCLForm.CurrentTableIndex], tmpDCL, RepIdParams, nqmNew);
             2:
-            TextReport:=TDCLTextReport.InitReport(FDCLLogOn, nil, tmpDCL, RepIdParams, nqmNew);
+              TextReport:=TDCLTextReport.InitReport(FDCLLogOn, nil, tmpDCL, RepIdParams, nqmNew);
             end;
             // TextReport.OpenReport('Report.txt', 1);
 
-            If TextReport.DialogRes=mrOk Then
+            If Assigned(TextReport) then
             begin
-              tmp1:=Trim(FindParam('FileName=', ScrStr));
-              TranslateVals(tmp1, FDCLForm.CurrentQuery);
-              If FindParam('ToDos=', ScrStr)='1' Then
-                TextReport.CodePage:=rcp866;
+              If TextReport.DialogRes=mrOk Then
+              begin
+                tmp1:=Trim(FindParam('FileName=', ScrStr));
+                TranslateVals(tmp1, FDCLForm.CurrentQuery);
+                If FindParam('ToDos=', ScrStr)='1' Then
+                  TextReport.CodePage:=rcp866;
 
-              v1:=StrToIntEx(Trim(FindParam('ViewMode=', ScrStr)));
-              TextReport.OpenReport(tmp1, TReportViewMode(v1));
-              tmp1:=TextReport.SaveReport(tmp1);
+                v1:=StrToIntEx(Trim(FindParam('ViewMode=', ScrStr)));
+                TextReport.OpenReport(tmp1, TReportViewMode(v1));
+                tmp1:=TextReport.SaveReport(tmp1);
 
-              tmp2:=FindParam('NoPrint=', ScrStr);
-              TranslateVals(tmp2, FDCLForm.CurrentQuery);
-              If TReportViewMode(v1-1)=rvmMultitRecordReport Then
-                tmp2:='1';
-              If tmp2<>'1' Then
-                If FindParam('Viewer=', ScrStr)<>'' Then
-                  ExecApp('"'+FindParam('Viewer=', ScrStr)+'" "'+tmp1+'"')
-                Else
-                  ExecApp('"'+GPT.Viewer+'" "'+tmp1+'"');
+                tmp2:=FindParam('NoPrint=', ScrStr);
+                TranslateVals(tmp2, FDCLForm.CurrentQuery);
+                If TReportViewMode(v1-1)=rvmMultitRecordReport Then
+                  tmp2:='1';
+                If tmp2<>'1' Then
+                  If FindParam('Viewer=', ScrStr)<>'' Then
+                    ExecApp('"'+FindParam('Viewer=', ScrStr)+'" "'+tmp1+'"')
+                  Else
+                    ExecApp('"'+GPT.Viewer+'" "'+tmp1+'"');
+              end;
+
+              TextReport.CloseReport('Report.txt');
             end;
-
-            TextReport.CloseReport('Report.txt');
             FreeAndNil(tmpDCL);
           end;
 
           If PosEx('ReportExcel=', ScrStr)=1 Then
           begin
-            Enything:=FindParam('Save=', ScrStr)='1';
-            OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
-              FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-            OfficeReport.ReportExcel(ScrStr, Enything);
+            If Assigned(FDCLForm) Then
+            begin
+              Enything:=FindParam('Save=', ScrStr)='1';
+              OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
+                FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
+              OfficeReport.ReportExcel(ScrStr, Enything);
+            end;
           end;
 
           If PosEx('ReportOOCalc=', ScrStr)=1 Then
           begin
-            OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
-              FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-            Enything:=FindParam('Save=', ScrStr)='1';
-            OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything);
+            If Assigned(FDCLForm) Then
+            begin
+              OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
+                FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
+              Enything:=FindParam('Save=', ScrStr)='1';
+              OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything);
+            end;
           end;
 
           If PosEx('ReportOfficeSheet=', ScrStr)=1 Then
           begin
-            Enything:=FindParam('Save=', ScrStr)='1';
-            TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
-            OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
-              FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-            Case GetPossibleOffice(dtSheet, ConvertOfficeType(TmpStr)) of
-            odtOO:
-            OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything);
-            odtMSO:
-            OfficeReport.ReportExcel(ScrStr, Enything);
-            odtNone:
-            ShowErrorMessage( - 6200, '');
+            If Assigned(FDCLForm) Then
+            begin
+              Enything:=FindParam('Save=', ScrStr)='1';
+              TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
+              OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
+                FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
+              Case GetPossibleOffice(dtSheet, ConvertOfficeType(TmpStr)) of
+              odtOO:
+              OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything);
+              odtMSO:
+              OfficeReport.ReportExcel(ScrStr, Enything);
+              odtNone:
+              ShowErrorMessage( - 6200, '');
+              end;
             end;
           end;
 
           If PosEx('ReportWord=', ScrStr)=1 Then
           begin
-            Enything:=FindParam('Save=', ScrStr)='1';
-            OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
-              FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-            OfficeReport.ReportWord(ScrStr, Enything);
+            If Assigned(FDCLForm) Then
+            begin
+              Enything:=FindParam('Save=', ScrStr)='1';
+              OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
+                FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
+              OfficeReport.ReportWord(ScrStr, Enything);
+            end;
           end;
 
           If PosEx('ReportOOWriter=', ScrStr)=1 Then
           begin
-            Enything:=FindParam('Save=', ScrStr)='1';
-            OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
-              FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-            OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything);
+            If Assigned(FDCLForm) Then
+            begin
+              Enything:=FindParam('Save=', ScrStr)='1';
+              OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
+                FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
+              OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything);
+            end;
           end;
 
           If PosEx('ReportOfficeText=', ScrStr)=1 Then
           begin
-            Enything:=FindParam('Save=', ScrStr)='1';
-            TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
-            OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
-              FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-            Case GetPossibleOffice(dtSheet, ConvertOfficeType(TmpStr)) of
-            odtOO:
-            OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything);
-            odtMSO:
-            OfficeReport.ReportWord(ScrStr, Enything);
-            odtNone:
-            ShowErrorMessage( - 6200, '');
+            If Assigned(FDCLForm) Then
+            begin
+              Enything:=FindParam('Save=', ScrStr)='1';
+              TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
+              OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
+                FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
+              Case GetPossibleOffice(dtSheet, ConvertOfficeType(TmpStr)) of
+              odtOO:
+              OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything);
+              odtMSO:
+              OfficeReport.ReportWord(ScrStr, Enything);
+              odtNone:
+              ShowErrorMessage( - 6200, '');
+              end;
             end;
           end;
 
@@ -6598,6 +6679,7 @@ begin
             If tmpStr2<>'' Then
             begin
               v1:=StrToIntEx(tmpStr2)-1;
+              If Assigned(FDCLForm) Then
               If Assigned(FDCLForm.Tables[ - 1].TableParts[v1]) Then
                 FDCLForm.Tables[ - 1].FTablePartsPages.ActivePageIndex:=v1;
             end;
@@ -6606,6 +6688,7 @@ begin
           If PosEx('Insert_part;', ScrStr)=1 Then
           begin
             If GetRaightsByContext(InContext)>ulReadOnly Then
+              If Assigned(FDCLForm) Then
               If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
                 FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Insert;
           end;
@@ -6613,6 +6696,7 @@ begin
           If PosEx('Append_part;', ScrStr)=1 Then
           begin
             If GetRaightsByContext(InContext)>ulReadOnly Then
+              If Assigned(FDCLForm) Then
               If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
                 FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Append;
           end;
@@ -6620,6 +6704,7 @@ begin
           If PosEx('Post_part;', ScrStr)=1 Then
           begin
             If GetRaightsByContext(InContext)>ulReadOnly Then
+              If Assigned(FDCLForm) Then
               If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
                 FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Post;
           end;
@@ -6627,6 +6712,7 @@ begin
           If PosEx('Delete_part;', ScrStr)=1 Then
           begin
             If GetRaightsByContext(InContext)>ulReadOnly Then
+              If Assigned(FDCLForm) Then
               If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
                 FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Delete;
           end;
@@ -6634,6 +6720,7 @@ begin
           If PosEx('DeleteConf_part;', ScrStr)=1 Then
           begin
             If GetRaightsByContext(InContext)>ulReadOnly Then
+              If Assigned(FDCLForm) Then
               If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
                 If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msDeleteRecord)+
                       '?'))=1 Then
@@ -6643,6 +6730,7 @@ begin
           If PosEx('Edit_part;', ScrStr)=1 Then
           begin
             If GetRaightsByContext(InContext)>ulReadOnly Then
+              If Assigned(FDCLForm) Then
               If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
                 FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Edit;
           end;
@@ -6650,6 +6738,7 @@ begin
           If PosEx('Next_part;', ScrStr)=1 Then
           begin
             If GetRaightsByContext(InContext)>ulReadOnly Then
+              If Assigned(FDCLForm) Then
               If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
                 FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Next;
           end;
@@ -6657,6 +6746,7 @@ begin
           If PosEx('Prior_part;', ScrStr)=1 Then
           begin
             If GetRaightsByContext(InContext)>ulReadOnly Then
+              If Assigned(FDCLForm) Then
               If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
                 FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Prior;
           end;
@@ -6664,6 +6754,7 @@ begin
           If PosEx('First_part;', ScrStr)=1 Then
           begin
             If GetRaightsByContext(InContext)>ulReadOnly Then
+              If Assigned(FDCLForm) Then
               If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
                 FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.First;
           end;
@@ -6671,42 +6762,49 @@ begin
           If PosEx('Last_part;', ScrStr)=1 Then
           begin
             If GetRaightsByContext(InContext)>ulReadOnly Then
+              If Assigned(FDCLForm) Then
               If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
                 FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Last;
           end;
 
           If PosEx('Next;', ScrStr)=1 Then
           begin
+            If Assigned(FDCLForm) Then
             If GetRaightsByContext(InContext)>ulReadOnly Then
               FDCLForm.CurrentQuery.Next;
           end;
 
           If PosEx('Prior;', ScrStr)=1 Then
           begin
+            If Assigned(FDCLForm) Then
             If GetRaightsByContext(InContext)>ulReadOnly Then
               FDCLForm.CurrentQuery.Prior;
           end;
 
           If PosEx('First;', ScrStr)=1 Then
           begin
+            If Assigned(FDCLForm) Then
             If GetRaightsByContext(InContext)>ulReadOnly Then
               FDCLForm.CurrentQuery.First;
           end;
 
           If PosEx('Last;', ScrStr)=1 Then
           begin
+            If Assigned(FDCLForm) Then
             If GetRaightsByContext(InContext)>ulReadOnly Then
               FDCLForm.CurrentQuery.Last;
           end;
 
           If PosEx('Edit;', ScrStr)=1 Then
           begin
+            If Assigned(FDCLForm) Then
             If GetRaightsByContext(InContext)>ulReadOnly Then
               FDCLForm.CurrentQuery.Edit;
           end;
 
           If PosEx('Post;', ScrStr)=1 Then
           begin
+            If Assigned(FDCLForm) Then
             If GetRaightsByContext(InContext)>ulReadOnly Then
               If FDCLForm.CurrentQuery.State in dsEditModes Then
                 FDCLForm.CurrentQuery.Post;
@@ -6714,17 +6812,26 @@ begin
 
           If PosEx('PostClose;', ScrStr)=1 Then
           begin
-            If FDCLForm.CurrentQuery.State in dsEditModes Then
-              FDCLForm.CurrentQuery.Post;
-            FreeAndNil(FDCLForm);
+            If Assigned(FDCLForm) Then
+            begin
+              If FDCLForm.CurrentQuery.State in dsEditModes Then
+                FDCLForm.CurrentQuery.Post;
+              tmpDCLForm:=FDCLForm.GetParentForm;
+              FDCLLogOn.CloseForm(FDCLForm);
+              FDCLForm:=tmpDCLForm;
+            end;
           end;
 
           If PosEx('CancelClose;', ScrStr)=1 Then
           begin
-            If FDCLForm.CurrentQuery.State in dsEditModes Then
-              FDCLForm.CurrentQuery.Cancel;
             If Assigned(FDCLForm) Then
-              FreeAndNil(FDCLForm);
+            begin
+              If FDCLForm.CurrentQuery.State in dsEditModes Then
+                FDCLForm.CurrentQuery.Cancel;
+              tmpDCLForm:=FDCLForm.GetParentForm;
+              FDCLLogOn.CloseForm(FDCLForm);
+              FDCLForm:=tmpDCLForm;
+            end;
           end;
 
           If PosEx('PostRefresh;', ScrStr)=1 Then
@@ -6791,9 +6898,8 @@ begin
                 FindParam('ModifyField=', ScrStr));
             end;
 
-            Pushf(FDCLForm);
             If FindParam('Child=', ScrStr)='1' Then
-              FDCLForm:=FDCLLogOn.CreateForm(TmpStr, FDCLForm, FDCLForm.CurrentQuery, nil,
+              FDCLForm:=FDCLLogOn.CreateForm(TmpStr, FDCLForm, nil, FDCLForm.CurrentQuery, nil,
                 ModalOpen, ChooseMode, ReturnValueParams)
             Else
             begin
@@ -6802,12 +6908,12 @@ begin
               begin
                 v1:=StrToIntEx(tmpStr2)-1;
                 If Assigned(FDCLForm.Tables[ - 1].TableParts[v1]) Then
-                  FDCLForm:=FDCLLogOn.CreateForm(TmpStr, nil,
+                  FDCLForm:=FDCLLogOn.CreateForm(TmpStr, nil, FDCLForm,
                     FDCLForm.Tables[ - 1].TableParts[v1].Query, nil, ModalOpen, ChooseMode,
                     ReturnValueParams);
               end
               Else
-                FDCLForm:=FDCLLogOn.CreateForm(TmpStr, nil, nil, nil, ModalOpen, ChooseMode,
+                FDCLForm:=FDCLLogOn.CreateForm(TmpStr, nil, FDCLForm, nil, nil, ModalOpen, ChooseMode,
                   ReturnValueParams);
             end;
 
@@ -6815,9 +6921,11 @@ begin
               If FDCLForm.ReturnFormValue.Choosen Then
               begin
                 RetVal:=FDCLForm.ReturnFormValue;
+                tmpDCLForm:=FDCLForm.GetParentForm;
                 If ChooseMode=chmChooseAndClose Then
                   FDCLLogOn.CloseForm(FDCLForm);
-                FDCLForm:=Popf;
+                FDCLForm:=tmpDCLForm;
+
                 If FieldExists(RetVal.ModifyField, FDCLForm.CurrentQuery) Then
                 begin
                   If Not (FDCLForm.CurrentQuery.State in dsEditModes) Then
@@ -6855,8 +6963,11 @@ begin
           If PosEx('CloseDialog;', ScrStr)=1 Then
           begin
             If Assigned(FDCLForm) Then
+            Begin
+              tmpDCLForm:=FDCLForm.GetParentForm;
               FDCLLogOn.CloseForm(FDCLForm);
-            FDCLForm:=Popf;
+              FDCLForm:=tmpDCLForm;
+            End;
           end;
 
           If PosEx('Hold;', ScrStr)=1 Then
@@ -7306,11 +7417,18 @@ begin
     {$ENDIF}
 
     try
-      {$IFDEF ADO}
-      ADOCommand.Execute;
-      {$ELSE}
-      ADOCommand.ExecSQL;
-      {$ENDIF}
+      If Not IsReturningQuery(SQLCommand) Then
+        {$IFDEF ADO}
+        ADOCommand.Execute
+        {$ELSE}
+        ADOCommand.ExecSQL
+        {$ENDIF}
+      Else
+        {$IFDEF ADO}
+        ADOCommand.Execute;
+        {$ELSE}
+        ADOCommand.Open;
+        {$ENDIF}
     Except
       ShowErrorMessage( - 1110, 'SQL='+SQLCommand);
     end;
@@ -7621,9 +7739,9 @@ begin
     Result:=FDCLLogOn.AccessLevel;
 end;
 
-procedure TDCLCommand.OpenForm(FormName: String; ModalMode: Boolean);
+procedure TDCLCommand.OpenForm(FormName: String; ModalMode: Boolean); deprecated;
 begin
-  FDCLForm:=FDCLLogOn.CreateForm(FormName, nil, nil, nil, ModalMode, chmNone);
+  FDCLForm:=FDCLLogOn.CreateForm(FormName, nil, nil, nil, nil, ModalMode, chmNone);
 end;
 
 procedure TDCLCommand.RePlaseParamss(var ParamsSet: String; Query: TDCLDialogQuery);
@@ -7653,6 +7771,15 @@ var
   OkButton: TButton;
   DBStringMemo: TMemo;
   DBString: String;
+{$IFDEF BDE}
+function GetBDEVersion:String;
+var
+  ThisVersion: SYSVersion;
+begin
+  DbiGetSysVersion(ThisVersion);
+  Result:=IntToStr(ThisVersion.iVersion);
+end;
+{$ENDIF}
 begin
   AboutForm:=TForm.Create(nil);
   With AboutForm do
@@ -7741,6 +7868,7 @@ begin
 {$IFDEF IBX}+' IBX v.'+FloatToStr(IBX_Version){$ENDIF}
 {$IFDEF ZEOS}+' ZEOS v.'+FDBLogOn.Version{$ENDIF}
 {$IFDEF ADO}+' ADO.db v.'+FDBLogOn.Version{$ENDIF}
+{$IFDEF BDE}+' BDE v.'+GetBDEVersion{$ENDIF}
 {$IFDEF SQLdbFamily}+' SQLdb v.'+AboutForm.LCLVersion{$ENDIF});
   end;
 
@@ -7866,27 +7994,33 @@ begin
     RoleOK:=lsLogonOK;
 end;
 
-function TDCLLogOn.CloseForm(var Form: TDCLForm): TReturnFormValue;
-var
-  v1: Integer;
+function TDCLLogOn.CloseForm(Form: TDCLForm): TReturnFormValue;
 begin
-  For v1:=1 to Length(FForms) do
-    If Form=FForms[v1-1] Then
-    begin
-      Result:=FForms[v1-1].FRetunValue;
-      FreeAndNil(FForms[v1-1]);
-      break;
-    end;
+  If Assigned(Form) then
+  begin
+    FForms.Remove(Form);
+    Form.Destroy;
+  end;
 end;
 
 procedure TDCLLogOn.CloseFormNum(FormNum: Integer);
 begin
-  If Length(FForms)>FormNum Then
-    FreeAndNil(FForms[FormNum]);
+  If ((FForms.Count>FormNum) and (FormNum>=0)) Then
+    If Assigned(Forms[FormNum]) Then
+      CloseForm(Forms[FormNum]);
 end;
 
 destructor TDCLLogOn.Destroy;
+var
+  i:Integer;
 begin
+  i:=FForms.Count;
+  while i<>0 do
+  begin
+    CloseFormNum(i-1);
+    i:=FForms.Count;
+  end;
+
   Disconnect;
 end;
 
@@ -7903,7 +8037,7 @@ begin
     FDBLogOn.LoginPrompt:=False;
 
     try
-      If Params.Count>0 Then
+      If FDBLogOn.Properties.Count>0 Then
         FDBLogOn.Open;
       Result:=0;
       ConnectErrorCode:=0;
@@ -8379,6 +8513,7 @@ begin
 {$IFDEF ADO}
   CoInitialize(nil);
 {$ENDIF}
+  FForms:=TList.Create;
   RoleOK:=lsNotNeed;
   CurrentForm:= - 1;
   RoleRaightsLevel:=0;
@@ -8447,7 +8582,7 @@ begin
 {$ENDIF}
 end;
 
-function TDCLLogOn.CreateForm(FormName: String; ParentForm: TDCLForm; Query: TDCLDialogQuery;
+function TDCLLogOn.CreateForm(FormName: String; ParentForm, CallerForm: TDCLForm; Query: TDCLDialogQuery;
   Data: TDataSource; ModalMode: Boolean; ReturnValueMode: TChooseMode;
   ReturnValueParams: TReturnValueParams=nil): TDCLForm;
 var
@@ -8463,17 +8598,20 @@ begin
   Scr.Text:=ShadowQuery.FieldByName('DCLTEXT').AsString;
   ShadowQuery.Close;
 
-  i:=GetNextForm;
-  FForms[i]:=TDCLForm.Create(FormName, Self, ParentForm, i, Scr, Query, Data, ModalMode,
-    ReturnValueMode, ReturnValueParams);
+  i:=FForms.Count;
+  SetLength(ActiveDCLForms, i+1);
+  FForms.Add(TDCLForm.Create(FormName, Self, ParentForm, CallerForm, i, Scr, Query, Data, ModalMode,
+    ReturnValueMode, ReturnValueParams));
+  i:=FForms.Count-1;
   CurrentForm:=i;
+  SetLength(ActiveDCLForms, i+1);
   ActiveDCLForms[i]:=True;
 
-  If FForms[i].ExitCode=0 Then
+  If Forms[i].ExitCode=0 Then
   begin
     If Assigned(FDCLMainMenu) Then
       FDCLMainMenu.UpdateFormBar;
-    Result:=FForms[i];
+    Result:=Forms[i];
   end
   Else
   begin
@@ -8510,13 +8648,13 @@ var
   i: Integer;
 begin
   For i:=1 to FormsCount do
-    FForms[i-1].CloseDatasets;
+    TDCLForm(FForms[i-1]).CloseDatasets;
 
   FDBLogOn.Connected:=False;
   FDBLogOn.Connected:=True;
 
   For i:=1 to FormsCount do
-    FForms[i-1].ResumeDatasets;
+    TDCLForm(FForms[i-1]).ResumeDatasets;
 end;
 
 procedure TDCLLogOn.ExecShellCommand(ShellCommandText: String);
@@ -8610,13 +8748,13 @@ end;
 function TDCLLogOn.GetForm(Index: Integer): TDCLForm;
 begin
   Result:=nil;
-  If Length(FForms)>Index Then
+  If FForms.Count>Index Then
     Result:=FForms[Index];
 end;
 
 function TDCLLogOn.GetFormsCount: Integer;
 begin
-  Result:=Length(FForms);
+  Result:=FForms.Count;
 end;
 
 function TDCLLogOn.GetFullRaight: Word;
@@ -8777,7 +8915,7 @@ begin
         If CompareString(Scr[0], '[FORM]') Then
         begin
           Scr.Delete(0);
-          Form:=CreateForm(ChangeFileExt(ExtractFileName(FileName), ''), nil, nil, nil, False,
+          Form:=CreateForm(ChangeFileExt(ExtractFileName(FileName), ''), nil, nil, nil, nil, False,
             chmNone, nil);
         end
         Else
@@ -8822,31 +8960,6 @@ begin
   FDBLogOn.GetTableNames(List, False);
 {$ENDIF}
 {$ENDIF}
-end;
-
-function TDCLLogOn.GetNextForm: Integer;
-var
-  i: Integer;
-  Find: Boolean;
-begin
-  Find:=False;
-  For i:=1 to FormsCount do
-    If Not Assigned(FForms[i-1]) Then
-    begin
-      FForms[i-1]:=nil;
-      Result:=i-1;
-      Find:=True;
-      break;
-    end;
-
-  If Not Find Then
-  begin
-    i:=Length(FForms);
-    SetLength(FForms, i+1);
-    SetLength(ActiveDCLForms, i+1);
-    ActiveDCLForms[i]:=False;
-    Result:=i;
-  end;
 end;
 
 function TDCLLogOn.GetRolesQueryText(QueryType: TSelectType; WhereStr: String): String;
@@ -9287,53 +9400,53 @@ var
   i, j, tmpCF: Integer;
 begin
   tmpCF:=CurrentForm;
-  If Length(FForms)>0 Then
+  If FForms.Count>0 Then
     For i:=0 to FormsCount-1 do
       If ActiveDCLForms[i] Then
         If Assigned(FForms[i]) Then
           Case Action of
           fnaRefresh:
-          FForms[i].RefreshForm;
+          Forms[i].RefreshForm;
           fnaClose:
-          FreeAndNil(FForms[i]);
+          Forms[i].Destroy;
           fnaSetMDI:
-          FForms[i].FForm.Parent:=MainForm;
+          Forms[i].FForm.Parent:=MainForm;
           fnaResetMDI:
-          FForms[i].FForm.Parent:=nil;
+          Forms[i].FForm.Parent:=nil;
           fnaHide:
-          FForms[i].FForm.Hide;
+          Forms[i].FForm.Hide;
           fnaShow:
-          FForms[i].FForm.Show;
+          Forms[i].FForm.Show;
           fnaStopAutoRefresh:
           begin
-            For j:=1 to FForms[i].TablesCount do
-              If Assigned(FForms[i].Tables[j-1].RefreshTimer) Then
-                FForms[i].Tables[j-1].RefreshTimer.Enabled:=False;
+            For j:=1 to Forms[i].TablesCount do
+              If Assigned(Forms[i].Tables[j-1].RefreshTimer) Then
+                Forms[i].Tables[j-1].RefreshTimer.Enabled:=False;
           end;
           fnaStartAutoRefresh:
           begin
-            For j:=1 to FForms[i].TablesCount do
-              If Assigned(FForms[i].Tables[j-1]) Then
-                If Assigned(FForms[i].Tables[j-1].RefreshTimer) Then
-                  FForms[i].Tables[j-1].RefreshTimer.Enabled:=True;
+            For j:=1 to Forms[i].TablesCount do
+              If Assigned(Forms[i].Tables[j-1]) Then
+                If Assigned(Forms[i].Tables[j-1].RefreshTimer) Then
+                  Forms[i].Tables[j-1].RefreshTimer.Enabled:=True;
           end;
           fnaPauseAutoRefresh:
           begin
-            For j:=1 to FForms[i].TablesCount do
-              If Assigned(FForms[i].Tables[j-1]) Then
-                If Assigned(FForms[i].Tables[j-1].RefreshTimer) Then
-                  If FForms[i].Tables[j-1].RefreshTimer.Enabled Then
-                    FForms[i].Tables[j-1].LastStateTimer:=FForms[i].Tables[j-1]
+            For j:=1 to Forms[i].TablesCount do
+              If Assigned(Forms[i].Tables[j-1]) Then
+                If Assigned(Forms[i].Tables[j-1].RefreshTimer) Then
+                  If Forms[i].Tables[j-1].RefreshTimer.Enabled Then
+                    Forms[i].Tables[j-1].LastStateTimer:=Forms[i].Tables[j-1]
                       .RefreshTimer.Enabled;
           end;
           fnaResumeAutoRefresh:
           begin
-            For j:=1 to FForms[i].TablesCount do
-              If Assigned(FForms[i].Tables[j-1]) Then
-                If Assigned(FForms[i].Tables[j-1].RefreshTimer) Then
-                  If Not FForms[i].Tables[j-1].RefreshTimer.Enabled Then
-                    FForms[i].Tables[j-1].RefreshTimer.Enabled:=
-                      FForms[i].Tables[j-1].LastStateTimer;
+            For j:=1 to Forms[i].TablesCount do
+              If Assigned(Forms[i].Tables[j-1]) Then
+                If Assigned(Forms[i].Tables[j-1].RefreshTimer) Then
+                  If Not Forms[i].Tables[j-1].RefreshTimer.Enabled Then
+                    Forms[i].Tables[j-1].RefreshTimer.Enabled:=
+                      Forms[i].Tables[j-1].LastStateTimer;
           end;
           end;
   CurrentForm:=tmpCF;
@@ -9427,8 +9540,8 @@ begin
   If GPT.IBAll then
   Begin
     TestQuery.SQL.Text:=
-      'select count(*) from RDB$RELATION_FIELDS f where upper(f.RDB$RELATION_NAME)=upper(:RN)';
-    TestQuery.ParamByName('RN').AsString:=TableName;
+      'select count(*) from RDB$RELATION_FIELDS f where upper(f.RDB$RELATION_NAME)=upper('+
+        GPT.StringTypeChar+TableName+GPT.StringTypeChar+')';
     try
       TestQuery.Open;
     Except
@@ -9783,7 +9896,7 @@ begin
       Else If LowerCase(FindParam('script type=', LowerCase(DCL[0])))=LowerCase('VBScript') Then
         FDCLLogOn.ExecVBS(DCLText)
       Else If Order=0 Then
-        FDCLLogOn.CreateForm(TrimRight(Name), nil, nil, nil, False, chmNone)
+        FDCLLogOn.CreateForm(TrimRight(Name), nil, nil, nil, nil, False, chmNone)
       Else
         ExecCommand(DCLText);
   end;
@@ -10332,7 +10445,7 @@ begin
     v2:=Pos('=', TmpStr);
     tmpStr2:=Copy(TmpStr, v2+1, Length(TmpStr)-v2+1);
     // RePlaseVariables(tmpSQL2);
-    Case IsDigit(tmpStr2) of
+    Case GetStringDataType(tmpStr2) of
     idDigit:
     BrushColors[l].Color:=StrToIntEx(tmpStr2);
     idHex:
@@ -11731,8 +11844,6 @@ begin
   SaveDB;
   ExecEvents(EventsAfterPost);
 
-  SetDataStatus(dssSaved);
-
   For v1:=1 to FDCLLogOn.FormsCount do
   begin
     If Assigned(FDCLLogOn.Forms[v1-1]) Then
@@ -11785,7 +11896,6 @@ procedure TDCLGrid.BeforePost(Data: TDataSet);
 var
   v1, v2: Integer;
 begin
-  /// deprecated;
   ExecEvents(EventsBeforePost);
 
   For v1:=1 to FDCLLogOn.FormsCount do
@@ -12055,9 +12165,11 @@ begin
   FGridPanel:=TDCLMainPanel.Create(Parent);
   FGridPanel.Parent:=Parent;
   FGridPanel.Align:=alClient;
+  FGridPanel.Name:='GridPanel';
 
   Navig:=TDBNavigator.Create(FGridPanel);
   Navig.Parent:=FGridPanel;
+  Navig.Name:='Fafigator';
   Navig.Align:=alTop;
   Navig.ShowHint:=True;
   Navig.DataSource:=FData;
@@ -12662,13 +12774,41 @@ begin
 end;
 
 procedure TDCLGrid.EditOnFloatData(Sender: TObject; var Key: Char);
+var
+  Text:String;
 begin
+  Text:=(Sender as TEdit).Text;
+
   If Key=FloatDelimiterFrom Then
     Key:=FloatDelimiterTo;
-  If (CountSimb((Sender as TEdit).Text, FloatDelimiterTo)>=1)and(Key=FloatDelimiterTo) Then
-    Key:=#0;
-  If ((Key<'0')or(Key>'9'))and(Key<>'.')and(Key<>#8)and(Key<>'-') Then
-    Key:=#0;
+  If (Key='/') or (Key='?') or (Key='<') then
+    Key:=FloatDelimiterTo;
+  If (Key=SourceToInterface('б')) or (Key=SourceToInterface('Б')) or (Key=SourceToInterface('ю')) or (Key=SourceToInterface('Ю')) then
+    Key:=FloatDelimiterTo;
+
+  Case Key of
+  // разрешаем ввод цифр
+  '0'..'9':Key:=Key;
+  // разрешаем ввод всего, что похоже на десятичный разделитель
+  '.', ',':
+  Begin
+    // запрещаем ввод более 1 десятичного разделителя
+    If (Pos(FloatDelimiterTo, Text)=0) and (Pos(FloatDelimiterFrom, Text)=0) and (Pos(',', Text)=0) then
+      Key:=FloatDelimiterTo
+    Else key:=#0;
+  End;
+  '-':
+  Begin
+    // запрещаем ввод более 1 минуса
+    If (Pos('-', Text)=0) then
+      Key:='-'
+    Else key:=#0;
+  End;
+  // разрешаем использование клавиш BackSpace и Delete
+  #8:Key:=Key;
+  // "гасим" все прочие клавиши
+  Else key:=#0;
+  End;
 end;
 
 procedure TDCLGrid.ExcludeNotAllowedOperation(Operation: TNotAllowedOperations);
@@ -12921,13 +13061,12 @@ begin
             end;
   end;
   BaseChanged:=False;
+  FreeAndNil(FGridPanel);
   FDCLLogOn.SQLMon.DelTrace(FQueryGlob);
-  { If Assigned(FQueryGlob) then
-    If not Assigned(FQueryGlob.DataSource) then
-    FreeAndNil(FQueryGlob); }
-  FromForm:='_Closed_'+FromForm;
-  FQueryGlob:=nil;
-  inherited Destroy;
+  If Assigned(FQueryGlob) then
+    FreeAndNil(FQueryGlob);
+
+//  FromForm:='_Closed_'+FromForm;
 end;
 
 procedure TDCLGrid.RefreshBookMarkMenu;
@@ -13051,34 +13190,18 @@ var
 
     If OperationType in [4, 5, 6, 7] Then
     begin
-      Case Query.FieldByName(FindFieldName).DataType of
-      ftString, ftFixedChar, ftWideString:
-      begin
+      If GetSimplyFieldType(Query.FieldByName(FindFieldName).DataType)=sftDigit then
+        QueryString:=QueryString+FindFieldName+Sign+Exemple
+      Else
         QueryString:=QueryString+FindFieldName+Sign+GPT.StringTypeChar+Exemple+GPT.StringTypeChar;
-      end;
-      ftSmallint, ftInteger, ftWord, ftBoolean, ftAutoInc, ftLargeint:
-      begin
-        QueryString:=QueryString+FindFieldName+Sign+Exemple;
-      end
-    Else
-    QueryString:=QueryString+FindFieldName+Sign+GPT.StringTypeChar+Exemple+GPT.StringTypeChar;
-      end;
     end;
 
     If OperationType=3 Then
     begin
-      Case Query.FieldByName(FindFieldName).DataType of
-      ftString, ftFixedChar, ftWideString:
-      begin
+      If GetSimplyFieldType(Query.FieldByName(FindFieldName).DataType)=sftDigit then
+        QueryString:=QueryString+FindFieldName+' != '+Exemple
+      Else
         QueryString:=QueryString+FindFieldName+' != '+GPT.StringTypeChar+Exemple+GPT.StringTypeChar;
-      end;
-      ftSmallint, ftInteger, ftWord, ftBoolean, ftAutoInc, ftLargeint:
-      begin
-        QueryString:=QueryString+FindFieldName+' != '+Exemple;
-      end
-    Else
-    QueryString:=QueryString+FindFieldName+' != '+GPT.StringTypeChar+Exemple+GPT.StringTypeChar;
-      end;
     end;
 
     If OperationType=1 Then
@@ -13091,38 +13214,20 @@ var
       Exemple1:=Copy(Exemple, 2, Pos(';', Exemple)-2);
       Exemple2:=Copy(Exemple, Pos(';', Exemple)+1, Pos(']', Exemple)-Pos(';', Exemple)-1);
 
-      Case Query.FieldByName(FindFieldName).DataType of
-      ftString, ftFixedChar, ftWideString:
-      begin
+      If GetSimplyFieldType(Query.FieldByName(FindFieldName).DataType)=sftDigit then
+        QueryString:=QueryString+FindFieldName+' between '+Exemple1+' and '+Exemple2
+      Else
         QueryString:=QueryString+FindFieldName+' between '+GPT.StringTypeChar+Exemple1+
           GPT.StringTypeChar+' and '+GPT.StringTypeChar+Exemple2+GPT.StringTypeChar;
-      end;
-      ftSmallint, ftInteger, ftWord, ftBoolean, ftAutoInc, ftLargeint:
-      begin
-        QueryString:=QueryString+FindFieldName+' between '+Exemple1+' and '+Exemple2;
-      end
-    Else
-    QueryString:=QueryString+FindFieldName+' between '+GPT.StringTypeChar+Exemple1+
-      GPT.StringTypeChar+' and '+GPT.StringTypeChar+Exemple2+GPT.StringTypeChar;
-      end;
     end;
 
     If OperationType=0 Then
     begin
-      Case Query.FieldByName(FindFieldName).DataType of
-      ftString, ftFixedChar, ftWideString:
-      begin
+      If GetSimplyFieldType(Query.FieldByName(FindFieldName).DataType)=sftDigit then
+        QueryString:=QueryString+' '+FindFieldName+' = '+Exemple+' '
+      Else
         QueryString:=QueryString+GPT.UpperString+FindFieldName+GPT.UpperStringEnd+' like '+
           GPT.UpperString+GPT.StringTypeChar+Exemple+GPT.StringTypeChar+GPT.UpperStringEnd;
-      end;
-      ftSmallint, ftInteger, ftWord, ftBoolean, ftAutoInc, ftLargeint:
-      begin
-        QueryString:=QueryString+' '+FindFieldName+' = '+Exemple+' ';
-      end
-    Else
-    QueryString:=QueryString+' '+FindFieldName+' = '+GPT.StringTypeChar+Exemple+
-      GPT.StringTypeChar+' ';
-      end;
     end;
   end;
 
@@ -13184,7 +13289,16 @@ end;
 
 function TDCLGrid.GetQuery: TDCLQuery;
 begin
-  Result:=TDCLQuery(FData.DataSet); // FQuery;
+  If not Assigned(FData) then
+  Begin
+    If not Assigned(FData.DataSet) then
+      Result:=FQueryGlob;
+  End
+  Else
+    If Assigned(FData.DataSet) then
+      Result:=TDCLQuery(FData.DataSet) // FQuery;
+    Else
+      Result:=FQueryGlob;
 end;
 
 function TDCLGrid.GetReadOnly: Boolean;
@@ -13464,8 +13578,17 @@ var
   ExeplStr: String;
 begin
   FilterIdx:=(Sender as TEdit).Tag;
-
   ExeplStr:=(Sender as TEdit).Text;
+
+  If FQuery.Active then
+  if FieldExists(DBFilters[FilterIdx].Field, FQuery) then
+  Begin
+    If not CheckStrFmtType(ExeplStr, GetSimplyFieldType(DBFilters[FilterIdx].Field, FQuery)) then
+    Begin
+      ExeplStr:='';
+    End;
+  End;
+
   DBFilters[FilterIdx].FilterString:=ExeplStr;
 
   If DBFilters[FilterIdx].WaitForKey<>0 Then
@@ -13489,11 +13612,18 @@ end;
 procedure TDCLGrid.Open;
 begin
   If Length(FQuery.SQL.Text)>11 Then
+  Try
     FQuery.Open;
+  Except
+    ShowErrorMessage( - 1100, 'SQL='+FQuery.SQL.Text);
+    Exit;
+  End;
 
   If Assigned(FLocalBookmark) Then
     try
-      FQuery.GoToBookmark(FLocalBookmark);
+      If FQuery.Active then
+      If FQuery.RecordCount<>0 then
+        FQuery.GoToBookmark(FLocalBookmark);
     finally
       FQuery.FreeBookmark(FLocalBookmark);
     end;
@@ -13738,12 +13868,11 @@ procedure TDCLGrid.ReFreshQuery;
 var
   tpc: Byte;
 begin
-  SaveDB;
   If FQuery.State in dsEditModes Then
     FQuery.Post;
   If FQuery.Active Then
     FQuery.SaveDB;
-  FQuery.DisableControls;
+  ///FQuery.DisableControls;
   If FQuery.Active Then
   begin
     For tpc:=1 to Length(FTableParts) do
@@ -13754,12 +13883,11 @@ begin
   end;
 
   Open;
+  ///FQuery.EnableControls;
   For tpc:=1 to Length(FTableParts) do
   begin
     FTableParts[tpc-1].Open;
   end;
-
-  FQuery.EnableControls;
 end;
 
 procedure TDCLGrid.RePlaseParams(var Params: String);
@@ -13974,7 +14102,12 @@ end;
 procedure TDCLGrid.SetNewQuery(Data: TDataSource);
 begin
   FQueryGlob:=TDCLQuery.Create(FDCLLogOn.FDBLogOn);
-  FQueryGlob.Name:='DCLQuery_'+FDCLForm.DialogName+'_'+IntToStr(UpTime);
+  Case FDisplayMode of
+  dctTablePart:FQueryGlob.Name:='DCLQuery_TP_'+FDCLForm.DialogName+'_'+IntToStr(UpTime);
+  dctLookupGrid:FQueryGlob.Name:='DCLQuery_LG_'+FDCLForm.DialogName+'_'+IntToStr(UpTime);
+  Else
+    FQueryGlob.Name:='DCLQuery_'+FDCLForm.DialogName+'_'+IntToStr(UpTime);
+  End;
 
   FQueryGlob.AfterInsert:=AfterInsert;
   FQueryGlob.AfterScroll:=ScrollDB;
@@ -14383,6 +14516,16 @@ begin
   FDCLLogOn:=DCLLogOn;
 end;
 
+destructor TDCLCommandButton.Destroy;
+var
+  i:Integer;
+begin
+  For i:=1 to Length(CommandButton) do
+  Begin
+    FreeAndNil(CommandButton[i-1]);
+  End;
+end;
+
 procedure TDCLCommandButton.ExecCommand(Sender: TObject);
 var
   Tag: Integer;
@@ -14397,17 +14540,8 @@ end;
 { TMainFormAction }
 
 procedure TMainFormAction.CloseMainForm(Sender: TObject; var Action: TCloseAction);
-var
-  v1: Integer;
 begin
   SaveMainFormPos(DCLMainLogOn, DCLMainLogOn.MainForm, 'MainForm');
-
-  For v1:=DCLMainLogOn.FormsCount downto 1 do
-  begin
-    If Assigned(DCLMainLogOn.Forms[v1-1]) Then
-      If DCLMainLogOn.ActiveDCLForms[v1-1] Then
-        FreeAndNil(DCLMainLogOn.FForms[v1-1]);
-  end;
 
   EndDCL;
 end;
@@ -15077,6 +15211,11 @@ begin
 {$ENDIF}
 end;
 
+destructor TDCLOfficeReport.Destroy;
+begin
+  ///
+end;
+
 procedure TDCLOfficeReport.ReportExcel(ParamStr: String; Save: Boolean);
 var
   SQLStr, FileName, ColorStr: String;
@@ -15607,7 +15746,7 @@ end;
 
 destructor TDCLTextReport.Destroy;
 begin
-  inherited Destroy;
+  ///
 end;
 
 procedure TDCLTextReport.CloseReport(FileName: String);
@@ -16472,6 +16611,11 @@ begin
   SaveButton.ShowHint:=True;
   SaveButton.OnClick:=Save;
   SaveButton.Glyph.Assign(DrawBMPButton('Save'));
+end;
+
+destructor TFieldGroup.Destroy;
+begin
+  ////
 end;
 
 procedure TFieldGroup.Load(Sender: TObject);

@@ -12,6 +12,10 @@ uses
 {$IFDEF UNIX}
   cwstring, process, unix, libc, lclintf,
 {$ENDIF}
+{$IFDEF FPC}InterfaceBase,{$ENDIF}
+{$IFNDEF FPC}
+  JPEG,
+{$ENDIF}
   Dialogs,
   uUDL, uLZW, uDCLTypes,
   Controls, Classes, Graphics, DateUtils,
@@ -58,7 +62,8 @@ Function FindDisableAction(Action: String): Boolean;
 Function TranslateDigitToUserLevel(Level: byte): TUserLevelsType; overload;
 Function TranslateDigitToUserLevel(Level: String): TUserLevelsType; overload;
 Procedure TranslateProc(Var CallProc: String; Var Factor: Word; Query: TDCLDialogQuery);
-Function IsDigit(S: String): TIsDigitType; // 0-Строка  1-Число  2-Hex  3-Цвет
+Function GetStringDataType(const S: String): TIsDigitType;
+function CheckStrFmtType(const S:string; SimplyFormatType:TSimplyFieldType):Boolean;
 
 Function ExtractFileNameEx(FileName: String): String;
 Function GetFileNameToTranslite(Const FullFileName: String): String;
@@ -95,6 +100,9 @@ function GetIniToRole(UserID: String): String;
 function GetFormPosString(FForm:TDBForm; DialogName:String): String;
 procedure SaveMainFormPos(FDCLLogOn:TDCLLogOn; FForm:TDBForm; DialogName:String);
 procedure LoadMainFormPos(FDCLLogOn:TDCLLogOn; var FForm:TDBForm; DialogName:String);
+
+function GetScreen:TBitmap;
+function ConvertToJPEG(BitMap:TBitmap; Quality:Byte=JPEGCompressionQuality):TJpegImage;
 
 
 implementation
@@ -287,6 +295,16 @@ Begin
   End
   Else
     Result:='tmp'+IntToStr(UpTime);
+End;
+
+function CheckStrFmtType(const S:string; SimplyFormatType:TSimplyFieldType):Boolean;
+Begin
+  Case SimplyFormatType of
+  sftNotDefine, sftString:Result:=True;
+  sftDigit:Result:=GetStringDataType(S)=idDigit;
+  sftFloat:Result:=GetStringDataType(S)=idFloatDigit;
+  sftDateTime:Result:=GetStringDataType(S)=idDateTime;
+  End;
 End;
 
 Function GetFileNameToTranslite(Const FullFileName: String): String;
@@ -635,8 +653,6 @@ Begin
 End;
 
 function GetIcon: TIcon;
-Const
-  BMPPos=0;
 Var
   Marker: Cardinal;
   MS, BS: TMemoryStream;
@@ -663,7 +679,7 @@ Begin
     End;
 
     Result:=TIcon.Create;
-    MS.Position:=BMPPos;
+    MS.Position:=0;
     Result.LoadFromStream(MS);
   End
   Else
@@ -1272,9 +1288,9 @@ Begin
           ParamLen:=Length(FunctionParams[1]);
           While ParamLen<>0 Do
           Begin
-            If (FunctionParams[1][ParamLen]='"')Or(FunctionParams[1][ParamLen]=CrossDelim)Or
-            { (FunctionParams[1][ParamLen]='\') or } (FunctionParams[1][ParamLen]='*')Or
-            { (FunctionParams[1][ParamLen]='&') or } (FunctionParams[1][ParamLen]='>')Or
+            If (FunctionParams[1][ParamLen]='"') Or (FunctionParams[1][ParamLen]=CrossDelim) Or
+              (FunctionParams[1][ParamLen]=':') or (FunctionParams[1][ParamLen]='*') Or
+            { (FunctionParams[1][ParamLen]='&') or } (FunctionParams[1][ParamLen]='>') Or
               (FunctionParams[1][ParamLen]='<') Then
               Delete(FunctionParams[1], ParamLen, 1);
             Dec(ParamLen);
@@ -1504,39 +1520,77 @@ Begin
 End;
 
 
-Function IsDigit(S: String): TIsDigitType;
+Function GetStringDataType(const S: String): TIsDigitType;
 Var
   iI: Word;
+  tmpS:string;
 Begin
   Result:=idString;
   If S<>'' Then
   Begin
-    If PosEx('cl', S)=1 Then
+    If Length(S)>1 then
     Begin
-      Result:=idColor;
-      Exit;
-    End;
-    If (PosEx('ul', S)=1)and(PosSet('ulDeny,ulReadOnly,ulWrite,ulExecute,ulLevel,ulDeveloper', S)<>0)
-    then
-    Begin
-      Result:=idUserLevel;
-      Exit;
-    End;
-    If (LowerCase(S[1])='h')Or(S[1]='$') Then
-    Begin
-      If ((Length(S)-1)Mod 2)=0 Then
+      If PosEx('cl', S)=1 Then
       Begin
-        Result:=idHex;
+        Result:=idColor;
         Exit;
       End;
-    End;
-    For iI:=1 To Length(S) Do
+      If (PosEx('ul', S)=1)and(PosSet(UserLevelsSet, S)<>0)
+      then
+      Begin
+        Result:=idUserLevel;
+        Exit;
+      End;
+      If (LowerCase(S[1])='h')Or(S[1]='$') Then
+      Begin
+        If ((Length(S)-1)Mod 2)=0 Then
+        Begin
+          tmpS:=UpperCase(Copy(S, 2, Length(S)));
+          For iI:=1 To Length(tmpS) Do
+          Begin
+            If Pos(tmpS[iI], '0123456789ABCDEF')=0 then
+            Begin
+              Result:=idString;
+              Exit;
+            End;
+          End;
+          Result:=idHex;
+          Exit;
+        End;
+      End;
+      For iI:=1 To Length(S) Do
+      Begin
+        If Pos(S[iI], '0123456789-.,')=0 then
+        Begin
+          If (Pos(S[iI], '0123456789-.: ')<>0) and (Length(S)>=9) then
+          Begin
+            Result:=idDateTime;
+            Exit;
+          End;
+          Result:=idString;
+          Exit;
+        End
+        Else
+        Begin
+          If Pos(S[iI], '0123456789-')<>0 then
+            Result:=idDigit
+          Else
+            If Pos(S[iI], '0123456789-,.')<>0 then
+              Result:=idFloatDigit;
+          Exit;
+        End;
+      End;
+    End
+    Else
     Begin
-      If ((S[iI]='-')Or((S[iI]>='0')And(S[iI]<='9'))) Then
-        Result:=idDigit
-      Else
+      If Pos(S, '0123456789')=0 then
       Begin
         Result:=idString;
+        Exit;
+      End
+      Else
+      Begin
+        Result:=idDigit;
         Exit;
       End;
     End;
@@ -2295,5 +2349,55 @@ begin
   End;
 end;
 
+function GetScreen:TBitmap;
+var
+  DC:HDC; //HWND;
+{$IFNDEF FPC}
+  r:TRect;
+  c:TCanvas;
+  w, h:Word;
+{$ENDIF}
+begin
+  Result:=TBitmap.Create;
+{$IFNDEF FPC}
+  w:=GetSystemMetrics(SM_CXSCREEN);
+  h:=GetSystemMetrics(SM_CYSCREEN);
+  c:=TCanvas.Create;
+  DC:=GetDesktopWindow;
+  c.Handle:=GetWindowDC(DC);
+  try
+    r:=Rect(0, 0, w, h);
+    Result.Width:=w;
+    Result.Height:=h;
+    Result.Canvas.CopyRect(r, c, r);
+  finally
+    ReleaseDC(DC, c.Handle);
+    c.Free;
+  end;
+{$ELSE}
+  DC := WidgetSet.GetDC(0);
+  try
+    Result.LoadFromDevice(DC);
+  finally
+    WidgetSet.ReleaseDC(0, DC);
+  end;
+{$ENDIF}
+end;
+
+function ConvertToJPEG(BitMap:TBitmap; Quality:Byte=JPEGCompressionQuality):TJpegImage;
+begin
+  if Quality=0 then
+    Quality:=JPEGCompressionQuality;
+  Result:=TJpegImage.Create;
+{$IFNDEF FPC}
+  Result.ProgressiveEncoding:=True;
+{$ENDIF}
+  try
+    Result.CompressionQuality:=Quality;
+    Result.Assign(BitMap);
+  finally
+    ///
+  end;
+end;
 
 end.

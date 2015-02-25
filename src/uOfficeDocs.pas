@@ -26,7 +26,7 @@ type
     otOpOffice);
   TDSPrintMode=(pmNone, pmField, pmTableGrow, pmTableInsert);
 
-  TUniDataModule=class
+  TUniDataModule=class(TObject)
   private
     FDataModule: TDataModule;
     FDataSets: TList;
@@ -35,12 +35,13 @@ type
     function GetDataSet(Index: Word): TDataSet;
   public
     constructor Create(DataModule: TDataModule);
+    destructor Destroy; override;
 
     property DataSets[Index: Word]: TDataSet read GetDataSet; default;
     property Count: Word read FCount;
   end;
 
-  TPrintDoc=class
+  TPrintDoc=class(TObject)
   private
     FMsWord, FWordDocument: OleVariant;
     FWordRuning: Boolean;
@@ -773,6 +774,11 @@ begin
       FDataSets.Add(vDS);
       Inc(FCount);
     End;
+end;
+
+destructor TUniDataModule.Destroy;
+begin
+  FDataSets.Clear;
 end;
 
 function TUniDataModule.GetDataSet(Index: Word): TDataSet;

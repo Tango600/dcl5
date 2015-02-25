@@ -5,7 +5,9 @@ interface
 
 uses
 {$IFNDEF FPC}
+{$IFDEF VCLFIX}
   VCLFixPack, ControlsAtomFix,
+{$ENDIF}
 {$ENDIF}
 {$IFDEF MSWINDOWS} Windows, Messages, {$ENDIF} SysUtils, Classes,
   Controls, Forms, Dialogs,
@@ -172,7 +174,7 @@ begin
     if FindMainMenu then
       uUDL.DCLMainLogOn.CreateMenu(Self);
 
-    uUDL.DCLMainLogOn.CreateForm(DialogName, nil, nil, nil, False, chmNone);
+    uUDL.DCLMainLogOn.CreateForm(DialogName, nil, nil, nil, nil, False, chmNone);
   end;
 end;
 

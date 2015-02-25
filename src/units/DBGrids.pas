@@ -3703,7 +3703,8 @@ var
 begin
   if not HandleAllocated then Exit;
   OldRect := BoxRect(0, Row, ColCount - 1, Row);
-  if (FDataLink.ActiveRecord >= RowCount - FTitleOffset) then UpdateRowCount;
+  if (FDataLink.ActiveRecord >= RowCount - FTitleOffset) then
+    UpdateRowCount;
   UpdateScrollBar;
   UpdateActive;
   NewRect := BoxRect(0, Row, ColCount - 1, Row);

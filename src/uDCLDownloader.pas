@@ -8,34 +8,38 @@ uses
 {$IFDEF MSWINDOWS}
   WinInet,
 {$ENDIF}
-  Forms, Classes, Graphics, Controls, ExtCtrls,
-  ComCtrls, Dialogs, Buttons,
+  Forms, Classes, Controls, ExtCtrls, ComCtrls, Dialogs, Buttons,
   uDCLTypes, uDCLConst;
 
-Procedure DownLoadHTTP(URL, FileName: String; ResetDownload, Progress, Cancel: Boolean);
-
-Var
-  DownLoadProcess, DownLoadCancel, DownloadProgress: Boolean;
-
-implementation
-
 Type
-  TDownloadProgressActions=class
+  TDownloader=class(TObject)
+  private
+    FStopDownLoadFlg, FDownLoadProcess: Boolean;
+
     Procedure StopDownLoad(Sender: TObject);
+    Function InetGetFile(URL, FileName: String; ResetDownload, Progress, Cancel: Boolean): Boolean;
+  public
+    constructor Create;
+    destructor Destroy; override;
+
+    Procedure DownLoadHTTP(URL, FileName: String; ResetDownload, Progress, Cancel: Boolean);
+
+    property DownLoadProcess:Boolean read FDownLoadProcess;
   End;
 
 var
-  StopDownLoadFlg: Boolean;
-  DownloadProgressActions: TDownloadProgressActions;
+  DownLoadProcess:Boolean;
 
-Procedure TDownloadProgressActions.StopDownLoad(Sender: TObject);
+implementation
+
+
+Procedure TDownloader.StopDownLoad(Sender: TObject);
 Begin
-  StopDownLoadFlg:=True;
+  FStopDownLoadFlg:=True;
 End;
 
 {$IFDEF MSWINDOWS}
-
-Function InetGetFile(URL, FileName: String; ResetDownload, Progress, Cancel: Boolean): Boolean;
+Function TDownloader.InetGetFile(URL, FileName: String; ResetDownload, Progress, Cancel: Boolean): Boolean;
 Var
   hInet, hURL: HINTERNET;
   fSize, InetFileSize, ReadLen, RestartPos, ProgressPos, lpdwReser, RLen: Cardinal;
@@ -50,7 +54,7 @@ Begin
   RestartPos:=0;
   fSize:=0;
   ReadLen:=0;
-  StopDownLoadFlg:=False;
+  FStopDownLoadFlg:=False;
 
   If Progress Then
   Begin
@@ -84,7 +88,7 @@ Begin
       BCancel.Left:=(250 Div 2)-(ButtonWidth Div 2);
       BCancel.Width:=ButtonWidth;
       BCancel.Height:=ButtonHeight;
-      BCancel.OnClick:=DownloadProgressActions.StopDownLoad;
+      BCancel.OnClick:=StopDownLoad;
     End;
     ProgressForm.Show;
   End;
@@ -117,14 +121,14 @@ Begin
   InternetQueryDataAvailable(hURL, fSize, 0, 0);
 
   ProgressPos:=0;
-  While (fSize<>0)Or(StopDownLoadFlg) Do
+  While (fSize<>0)Or(FStopDownLoadFlg) Do
   Begin
     InternetReadFile(hURL, @fBuf, SizeOf(fBuf), ReadLen);
     InternetQueryDataAvailable(hURL, fSize, 0, 0);
     BlockWrite(f, fBuf, ReadLen);
     Inc(ProgressPos, ReadLen);
     Application.ProcessMessages;
-    DownLoadProcess:=True;
+    FDownLoadProcess:=True;
     If Progress Then
     Begin
       ProgressBar.Position:=ProgressPos;
@@ -132,7 +136,7 @@ Begin
   End;
 
   ProgressPos:=System.FileSize(f);
-  DownLoadProcess:=False;
+  FDownLoadProcess:=False;
   InternetCloseHandle(hURL);
   InternetCloseHandle(hInet);
   CloseFile(f);
@@ -144,7 +148,7 @@ Begin
   End;
   If InetFileSize<>ProgressPos Then
   Begin
-    If StopDownLoadFlg Then
+    If FStopDownLoadFlg Then
       Result:=True
     Else
       Result:=False;
@@ -155,13 +159,24 @@ End;
 
 {$ELSE}
 
-Function InetGetFile(URL, FileName: String; ResetDownload, Progress, Cancel: Boolean): Boolean;
+Function TDownloader.InetGetFile(URL, FileName: String; ResetDownload, Progress, Cancel: Boolean): Boolean;
 Begin
   Result:=False;
 End;
 {$ENDIF}
 
-Procedure DownLoadHTTP(URL, FileName: String; ResetDownload, Progress, Cancel: Boolean);
+constructor TDownloader.Create;
+begin
+
+end;
+
+destructor TDownloader.Destroy;
+begin
+
+  inherited;
+end;
+
+procedure TDownloader.DownLoadHTTP(URL, FileName: String; ResetDownload, Progress, Cancel: Boolean);
 Var
   ResetDownload2: Boolean;
 Begin

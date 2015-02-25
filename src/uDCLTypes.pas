@@ -7,7 +7,9 @@ Uses
   Controls,
   StdCtrls, ComCtrls, dbctrls, Buttons, DBGrids,
 {$IFNDEF FPC}
+{$IFDEF ThemedDBGrid}
   ThemedDBGrid,
+{$ENDIF}
 {$ENDIF}
 {$IFDEF ADO}
   ADODB, ADOConst, ADOInt,
@@ -18,7 +20,7 @@ Uses
 {$IFDEF IBX}
 {$IFDEF NEWDELPHI}
   IBX.IBDatabase, IBX.IBTable, IBX.IBCustomDataSet, IBX.IBSQL, IBX.IBQuery,
-  IBX.IBVisualConst, IBX.IBXConst, IBX.IBUpdateSQL, 
+  IBX.IBVisualConst, IBX.IBXConst, IBX.IBUpdateSQL,
 {$ELSE}
   IBDatabase, IBTable, IBCustomDataSet, IBSQL, IBQuery, IBUpdateSQL,
   IBVisualConst, IBXConst,
@@ -37,7 +39,11 @@ type
   TDBForm=TForm;
   TDialogButton=TBitBtn;
   {$IFNDEF FPC}
+  {$IFDEF ThemedDBGrid}
   TDCLDBGrid=TThemeDBGrid;
+  {$ELSE}
+  TDCLDBGrid=TDBGrid;
+  {$ENDIF}
   {$ELSE}
   TDCLDBGrid=TDBGrid;
   {$ENDIF}

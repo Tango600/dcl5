@@ -30,6 +30,10 @@ uses
 {$ENDIF}
   DB, uDCLTypes, uDCLData, uDCLConst;
 
+const
+  DisableControlsMode=False;
+  FetchAllData=True;
+
 type
   TTransactionType=(trtWrite, trtRead);
   TUpdateKind=(ukAll, ukKeys);
@@ -120,6 +124,8 @@ type
 
     procedure SaveDB;
     procedure CancelDB;
+    procedure DisableControls;
+    procedure EnableControls;
 
     property NotAllowOperations: TOperationsTypes read GetOperations write SetOperations;
     property KeyField: String read FKeyField;
@@ -279,6 +285,13 @@ begin
     AfterOpen:=LocalAfterOpen;
   end;
 {$ENDIF}
+  If FetchAllData then
+  begin
+    inherited DisableControls;
+    Last;
+    First;
+    inherited EnableControls;
+  end;
 
   If Assigned(FAfterOpen) then
     FAfterOpen(Data);
@@ -370,7 +383,7 @@ begin
 {$IFDEF SQLdbFamily}
   ShadowQuery.Database:=DatabaseObj;
 {$ENDIF}
-  ShadowQuery.Name:='ShadowQueryDCLQuery_'+IntToStr(UpTime);
+//  ShadowQuery.Name:='ShadowQueryDCLQuery_'+IntToStr(UpTime);
 {$ENDIF}
 end;
 
@@ -550,8 +563,7 @@ Begin
         inherited Open;
 End;
 
-Function TDCLQuery.FindNotAllowedOperation(Value: TNotAllowedOperations
-  ): Boolean;
+Function TDCLQuery.FindNotAllowedOperation(Value: TNotAllowedOperations): Boolean;
 Var
   l, i: Byte;
 Begin
@@ -570,6 +582,15 @@ end;
 
 destructor TDCLQuery.Destroy;
 begin
+  Cancel;
+  FAfterDelete:=nil;
+  FAfterPost:=nil;
+  FAfterCancel:=nil;
+  FAfterInsert:=nil;
+  FAfterOpen:=nil;
+  FBeforePost:=nil;
+  FBeforeInsert:=nil;
+
 {$IFDEF TRANSACTIONDB}
   If Assigned(WriteTransaction) then
     FreeAndNil(WriteTransaction);
@@ -580,6 +601,13 @@ begin
 {$IFDEF CACHEON}
   FreeAndNil(ShadowQuery);
 {$ENDIF}
+  inherited Destroy;
+end;
+
+procedure TDCLQuery.DisableControls;
+begin
+  if DisableControlsMode then
+    inherited DisableControls;
 end;
 
 function TDCLQuery.GetAfterCancelEvent: TDataSetNotifyEvent;
@@ -702,6 +730,7 @@ begin
   Result:='';
   If GPT.IBAll then
   Begin
+{$IFDEF CACHEON}
     If TableName<>'' then
     Begin
       ShadowQuery.SQL.Text:='select RDB$FIELD_NAME '+
@@ -721,6 +750,7 @@ begin
       If Result<>'' then
         Result:=Copy(Result, 1, Length(Result)-1);
     End;
+{$ENDIF}    
   End;
 end;
 
@@ -751,6 +781,12 @@ procedure TDCLQuery.Edit;
 begin
   If not FindNotAllowedOperation(dsoEdit) then
      inherited Edit;
+end;
+
+procedure TDCLQuery.EnableControls;
+begin
+  if DisableControlsMode then
+    inherited EnableControls;
 end;
 
 procedure TDCLQuery.ExecSQL;
@@ -790,6 +826,7 @@ begin
 {$IFDEF IBX}
   If WriteTransaction.InTransaction then
 {$ENDIF}
+  If WriteTransaction.Active then
     WriteTransaction.Commit;
 {$ENDIF}
 end;

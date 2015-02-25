@@ -15,7 +15,7 @@ type
     DataSet: TDCLDialogQuery;
   End;
 
-  TDCLSQLMon=class
+  TDCLSQLMon=class(TObject)
   private
     FSQLContaner: TStringList;
     FFileName: string;
@@ -26,6 +26,7 @@ type
     procedure SetTrraceStatus(Status: Boolean);
   public
     constructor Create(FileName: string);
+    destructor Destroy; override;
 
     procedure Stop;
     procedure Resume;
@@ -97,6 +98,19 @@ begin
         Break;
       End;
   End;
+end;
+
+destructor TDCLSQLMon.Destroy;
+var
+  i:Integer;
+begin
+  If Length(DSEvents)>0 then
+    For i:=1 to Length(DSEvents) do
+    Begin
+      DSEvents[i-1].EventBeforeOpen:=nil;
+      DSEvents[i-1].DataSet:=nil;
+    End;
+  FSQLContaner.Free;
 end;
 
 procedure TDCLSQLMon.Resume;

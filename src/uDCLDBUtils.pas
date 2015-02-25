@@ -12,6 +12,8 @@ uses
 
 Function QueryIsEmpty(Query: TDCLDialogQuery): Boolean;
 Function GetDelimiter(Const FieldName: String; Query: TDCLDialogQuery): String;
+Function GetSimplyFieldType(Const FieldName: String; Query: TDCLDialogQuery): TSimplyFieldType; overload;
+Function GetSimplyFieldType(Const FieldType:TFieldType): TSimplyFieldType; overload;
 Function GetNameDSState(State: TDataSetState): String;
 procedure RePlaseParams_(var Params: string; Query: TDCLDialogQuery);
 Function FieldExists(Const FieldName: String; Query: TDCLDialogQuery; Table: string=''): Boolean;
@@ -40,15 +42,20 @@ Begin
   Result:=DataSetStateNames[Ord(State)];
 End;
 
-Function GetDelimiter(Const FieldName: String; Query: TDCLDialogQuery): String;
-var
-  tmpFieldName: string;
+Function NormalizeFieldName(Const FieldName: String): String;
 Begin
-  tmpFieldName:=FieldName;
+  Result:=FieldName;
   If Pos('.', FieldName)<>0 then
   begin
-    tmpFieldName:=Copy(FieldName, Pos('.', FieldName)+1, Length(FieldName));
+    Result:=Copy(FieldName, Pos('.', FieldName)+1, Length(FieldName));
   end;
+end;
+
+Function GetDelimiter(Const FieldName: String; Query: TDCLDialogQuery): String;
+var
+  tmpFieldName:string;
+Begin
+  tmpFieldName:=NormalizeFieldName(FieldName);
   Case Query.FieldByName(tmpFieldName).DataType Of
   ftString, ftBCD, ftFloat, ftCurrency:
   Begin
@@ -63,6 +70,44 @@ Result:=GPT.StringTypeChar;
   End;
 End;
 
+Function GetSimplyFieldType(Const FieldName: String; Query: TDCLDialogQuery): TSimplyFieldType;
+var
+  tmpFieldName:string;
+Begin
+  tmpFieldName:=NormalizeFieldName(FieldName);
+  If Query.FieldByName(tmpFieldName).DataType in TStringTypedFields then
+    Result:=sftString
+  Else
+    If Query.FieldByName(tmpFieldName).DataType in TIntegerTypedFields then
+      Result:=sftDigit
+    Else
+      If Query.FieldByName(tmpFieldName).DataType in TFloatTypedFields then
+        Result:=sftFloat
+      Else
+        If Query.FieldByName(tmpFieldName).DataType in TDateTimeTypedFields then
+          Result:=sftDateTime
+        Else
+          Result:=sftString;
+End;
+
+Function GetSimplyFieldType(Const FieldType:TFieldType): TSimplyFieldType; overload;
+Begin
+  If FieldType in TStringTypedFields then
+    Result:=sftString
+  Else
+    If FieldType in TIntegerTypedFields then
+      Result:=sftDigit
+    Else
+      If FieldType in TFloatTypedFields then
+        Result:=sftFloat
+      Else
+        If FieldType in TDateTimeTypedFields then
+          Result:=sftDateTime
+        Else
+          Result:=sftString;
+End;
+
+
 Function FieldExists(Const FieldName: String; Query: TDCLDialogQuery; Table: string=''): Boolean;
 Var
   v1FieldNum: Word;
@@ -70,11 +115,7 @@ Var
   tmpFieldName: string;
 Begin
   Result:=False;
-  tmpFieldName:=FieldName;
-  If Pos('.', FieldName)<>0 then
-  begin
-    tmpFieldName:=Copy(FieldName, Pos('.', FieldName)+1, Length(FieldName));
-  end;
+  tmpFieldName:=NormalizeFieldName(FieldName);
 
   If Table='' then
   Begin
@@ -239,10 +280,14 @@ End;
 Function GetField(Table, Field, Where: string): TField;
 Var
   tmpQ: TDCLDialogQuery;
+  tmpFieldName: string;
 Begin
-  tmpQ:=ExecQuery('select '+Field+' from '+Table+' '+Where);
+  tmpFieldName:=NormalizeFieldName(Field);
+  tmpQ:=ExecQuery('select '+tmpFieldName+' from '+Table+' '+Where);
   If Assigned(tmpQ) then
-    Result:=tmpQ.FieldByName(Field);
+    Result:=tmpQ.FieldByName(tmpFieldName);
+  tmpQ.Close;
+  FreeAndNil(tmpQ);
 End;
 
 Function GetFieldValue(Table, Field, Where: string): string;

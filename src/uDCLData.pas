@@ -241,6 +241,10 @@ var
   TDataFields: set of TDataControlType;
   DefaultOrientation: TOrientation;
   TBlobFields: set of TFieldType;
+  TIntegerTypedFields: set of TFieldType;
+  TStringTypedFields: set of TFieldType;
+  TFloatTypedFields: set of TFieldType;
+  TDateTimeTypedFields: set of TFieldType;
   EvalResultScript: string;
 
 implementation
@@ -348,6 +352,11 @@ Initialization
   TDataGrid:=[dctMainGrid..dctLookupGrid];
   TDataFields:=[dctFields..dctFieldsStep];
   DefaultOrientation:=oVertical;
+
   TBlobFields:=[ftBytes, ftVarBytes, ftBlob, ftGraphic, ftMemo, ftFmtMemo, ftTypedBinary, ftWideMemo];
+  TStringTypedFields:=[ftUnknown, ftString, ftFixedChar, ftWideString, ftVariant, ftGuid, ftFixedWideChar, ftWideMemo];
+  TIntegerTypedFields:=[ftSmallint, ftInteger, ftWord, ftBoolean, ftAutoInc, ftLargeint, ftBytes, ftVarBytes{$IFNDEF FPC}, ftOraInterval{$ENDIF}];
+  TFloatTypedFields:=[ftBCD, ftFloat, ftCurrency];
+  TDateTimeTypedFields:=[ftDate, ftTime, ftDateTime, ftTimeStamp {$IFNDEF FPC}, ftOraTimeStamp{$ENDIF}];
 
 end.

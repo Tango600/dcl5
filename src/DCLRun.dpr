@@ -10,8 +10,19 @@ uses
   {$ENDIF}
   Forms,
   {$IFNDEF FPC}
+  {$IFDEF VCLFIX}
   VCLFixPack in 'VCLFixPack.pas',
+  ControlsAtomFix in 'ControlsAtomFix.pas',
+  {$ENDIF}
+  {$IFDEF ThemedDBGrid}
   ThemedDBGrid in 'ThemedDBGrid.pas',
+  {$ENDIF}
+  {$IFDEF IBX}
+  {$IFNDEF NEWDELPHI}
+  IBHeader in 'units\IBHeader.pas',
+  IBSQL in 'units\IBSQL.pas',
+  {$ENDIF}
+  {$ENDIF}
   {$IFNDEF NEWDELPHI}
   DBCtrls in 'units\DBCtrls.pas',
   DBGrids in 'units\DBGrids.pas',

@@ -4104,7 +4104,7 @@ begin
   Buttons[nbEdit].Enabled := CanModify and not FDataLink.Editing;
   Buttons[nbPost].Enabled := CanModify and FDataLink.Editing;
   Buttons[nbCancel].Enabled := CanModify and FDataLink.Editing;
-  Buttons[nbRefresh].Enabled := CanModify;
+  Buttons[nbRefresh].Enabled := True;  //CanModify;  //Tango
 end;
 
 procedure TDBNavigator.ActiveChanged;

@@ -38,7 +38,7 @@ const
 {$IFDEF SQLdb}
   DBEngineType='SQLdb (Universal)';
 {$ENDIF}
-  Version='10.0.7.221';
+  Version='10.0.11.237';
 
   CompotableVersion='9.1.127.305';
 
@@ -180,6 +180,8 @@ const
   RolesToUsersRoleIDField='ru_roleid';
 
   ScriptControlLanguage='VBScript';
+
+  UserLevelsSet='ulDeny,ulReadOnly,ulWrite,ulExecute,ulLevel,ulDeveloper';
 
   SW_SHOWNORMAL=1;
 {$IFDEF FPC}
@@ -331,7 +333,7 @@ Type
   TFormsNotifyAction=(fnaRefresh, fnaClose, fnaMinimize, fnaMaximaze, fnaSetMDI, fnaResetMDI,
     fnaHide, fnaShow, fnaStopAutoRefresh, fnaStartAutoRefresh, fnaPauseAutoRefresh,
     fnaResumeAutoRefresh);
-  TIsDigitType=(idString, idDigit, idHex, idColor, idUserLevel);
+  TIsDigitType=(idString, idDigit, idFloatDigit, idHex, idColor, idDateTime, idUserLevel);
   TDataStatus=(dssChanged, dssSaved);
   TIniStore=(isDisk, isBase, isDiskAndBase);
   TNotifyActionsType=(naDone, naScriptRun, naMessage, naExecAndWait, naExec, naExitToTime);
@@ -355,6 +357,7 @@ Type
   TChooseMode=(chmNone, chmChoose, chmChooseAndClose);
   TMessageType=(mbtError=0, mbtWarning=1, mbtInformation=9, mbtConfirmation=10);
   TSigns=(sEquals, sGreater, sLess, sNotEqual, sGreaterEq, sLessEq);
+  TSimplyFieldType=(sftNotDefine, sftString, sftDigit, sftFloat, sftDateTime);
 
 
 const
