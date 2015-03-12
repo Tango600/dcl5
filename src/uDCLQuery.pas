@@ -203,19 +203,19 @@ begin
         FieldsDefs[j]:=TFloatField.Create(Self);
         FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
         TFloatField(FieldsDefs[j]).Precision:=5;
-        TFloatField(FieldsDefs[j]).DisplayFormat:='#.#####';
+        TFloatField(FieldsDefs[j]).DisplayFormat:='#.#####0.00000';
         Inc(j);
       End;
       ftCurrency:Begin
         FieldsDefs[j]:=TCurrencyField.Create(Self);
         FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
-        TFloatField(FieldsDefs[j]).DisplayFormat:='#.##';
+        TFloatField(FieldsDefs[j]).DisplayFormat:='#.##0.00';
         Inc(j);
       End;
       ftBCD, ftFMTBcd:Begin
         FieldsDefs[j]:=TNumericField.Create(Self);
         FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
-        TNumericField(FieldsDefs[j]).DisplayFormat:='#.#####';
+        TNumericField(FieldsDefs[j]).DisplayFormat:='#.#####0.00000';
         Inc(j);
       End;
       ftString, ftFixedChar, ftVariant:Begin

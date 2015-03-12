@@ -87,6 +87,7 @@ Type
     FMainForm: TForm;
     RoleOK: TLogOnStatus;
     SQLMon: TDCLSQLMon;
+    KillerDog: TTimer;
 
     FAccessLevel: TUserLevelsType;
     FForms: TList; //Array of TDCLForm;
@@ -114,6 +115,8 @@ Type
 
     function GetConnected: Boolean;
     function GetLastFormNum: Integer;
+
+    procedure KillerForms(Sender:TObject);
   public
     // Command: TDCLCommand;
     CurrentForm: Integer;
@@ -530,12 +533,13 @@ Type
   TDCLForm=class(TObject)
   private
     FName: String;
+    FCloseAction: TDCLFormCloseAction;
     FParentForm, FCallerForm: TDCLForm;
     UserLevelLocal: TUserLevelsType;
     FOPL: TStringList;
     FFormNum, FormHeight, FormWidth: Integer;
     TB: TFormPanelButton;
-    FNewPage, NoVisual, NoStdKeys, NotDestroyedDCLForm, FieldsSettingsReseted: Boolean;
+    FNewPage, NoVisual, NoStdKeys, FieldsSettingsReseted, SettingsLoaded: Boolean;
     FForm: TDBForm;
     FDCLLogOn: TDCLLogOn;
     FGrids: Array of TDCLGrid;
@@ -612,7 +616,7 @@ Type
     procedure SaveFieldsSettings(Sender: TObject);
   public
     LocalVariables: TVariables;
-    Modal, ExitNoSave: Boolean;
+    Modal, NotDestroyedDCLForm, ExitNoSave: Boolean;
     FDialogName: String;
     ExitCode: Byte;
 
@@ -622,6 +626,8 @@ Type
       ReturnValueParams: TReturnValueParams=nil);
     destructor Destroy; override;
 
+    procedure CloseDialog;
+    procedure Choose;
     procedure SetInactive;
     procedure SetActive;
     function GetActive: Boolean;
@@ -656,6 +662,7 @@ Type
     property ParentForm: TDCLForm read FParentForm;
     property FormNum: Integer read FFormNum;
     property ReturnFormValue: TReturnFormValue read FRetunValue;
+    property CloseAction: TDCLFormCloseAction read FCloseAction write FCloseAction;
   end;
 
   { TDCLCommand }
@@ -1157,8 +1164,8 @@ var
   begin
     If (DestQuery<>nil)and(SourceFieldsSet<>nil) Then
       If SourceFieldsSet.Count>0 Then
-        If DestQuery.{$IFDEF PARAMS2}{$IFDEF SQLdbFamily}Params{$ENDIF}
-        {$IFDEF ADO}Parameters{$ENDIF}.Count{$ELSE}ParamCount{$ENDIF}>0 Then
+        If DestQuery.{$IFDEF PARAMS2}{$IFDEF PARAMS}Params{$ENDIF}
+        {$IFDEF PARAMETERS}Parameters{$ENDIF}.Count{$ELSE}ParamCount{$ENDIF}>0 Then
         begin
           If Assigned(DestQuery.DataSource) Then
           begin
@@ -1166,26 +1173,28 @@ var
             begin
               MQF:=DestQuery.DataSource.DataSet.Fields;
 
-              For pv1:=0 to DestQuery.{$IFDEF PARAMS2}{$IFDEF SQLdbFamily}Params{$ENDIF}
-        {$IFDEF ADO}Parameters{$ENDIF}.Count{$ELSE}ParamCount{$ENDIF}-1 do
+              For pv1:=0 to DestQuery.{$IFDEF PARAMS2}{$IFDEF PARAMS}Params{$ENDIF}
+        {$IFDEF PARAMETERS}Parameters{$ENDIF}.Count{$ELSE}ParamCount{$ENDIF}-1 do
               begin
                 If Not Assigned(MQF.FindField(DestQuery.
-        {$IFDEF ADO}Parameters{$ELSE}Params{$ENDIF}[pv1].Name)) Then
+        {$IFDEF PARAMETERS}Parameters{$ELSE}Params{$ENDIF}[pv1].Name)) Then
                   If Assigned(SourceFieldsSet.FindField(DestQuery.
-        {$IFDEF ADO}Parameters{$ELSE}Params{$ENDIF}[pv1].Name)) Then
+        {$IFDEF PARAMETERS}Parameters{$ELSE}Params{$ENDIF}[pv1].Name)) Then
                     DestQuery.{$IFDEF ADO}Parameters{$ELSE}Params{$ENDIF}[pv1].Value:=
                       SourceFieldsSet.FieldByName(DestQuery.
-        {$IFDEF ADO}Parameters{$ELSE}Params{$ENDIF}[pv1].Name).Value;
+        {$IFDEF PARAMETERS}Parameters{$ELSE}Params{$ENDIF}[pv1].Name).Value;
               end;
             end;
           end
           Else
-            For pv1:=0 to DestQuery.{$IFDEF PARAMS2}{$IFDEF SQLdbFamily}Params{$ENDIF}
-        {$IFDEF ADO}Parameters{$ENDIF}.Count{$ELSE}ParamCount{$ENDIF}-1 do
+            For pv1:=0 to DestQuery.{$IFDEF PARAMS2}{$IFDEF PARAMS}Params{$ENDIF}
+        {$IFDEF PARAMETERS}Parameters{$ENDIF}.Count{$ELSE}ParamCount{$ENDIF}-1 do
             begin
-              If Assigned(SourceFieldsSet.FindField(DestQuery.{$IFDEF ADO}Parameters{$ELSE}Params{$ENDIF}[pv1].Name)) Then
-                DestQuery.{$IFDEF ADO}Parameters{$ELSE}Params{$ENDIF}[pv1].Value:=SourceFieldsSet.FieldByName
-                  (DestQuery.{$IFDEF ADO}Parameters{$ELSE}Params{$ENDIF}[pv1].Name).Value;
+              If Assigned(SourceFieldsSet.FindField(DestQuery.{$IFDEF PARAMETERS}Parameters{$ENDIF}{$IFDEF PARAMS}Params{$ENDIF}[pv1].Name)) Then
+                DestQuery.{$IFDEF PARAMS}Params{$ENDIF}
+        {$IFDEF PARAMETERS}Parameters{$ENDIF}[pv1].Value:=SourceFieldsSet.FieldByName
+                  (DestQuery.{$IFDEF PARAMS}Params{$ENDIF}
+        {$IFDEF PARAMETERS}Parameters{$ENDIF}[pv1].Name).Value;
             end;
         end;
   end;
@@ -2748,7 +2757,7 @@ end;
 procedure TDCLForm.CloseForm(Sender: TObject; var Action: TCloseAction);
 begin
   If GetActive and Not NotDestroyedDCLForm Then
-    FDCLLogOn.CloseForm(Self);
+    CloseAction:=fcaClose;
 end;
 
 procedure TDCLForm.ExecCommand(CommandName: String);
@@ -2799,6 +2808,7 @@ end;
 
 procedure TDCLForm.LoadFormPos;
 begin
+  SettingsLoaded:=True;
   Case GPT.FormPosInDB of
   isDisk:
   LoadFormPosINI;
@@ -3433,9 +3443,11 @@ var
   end;
 
 begin
+  FCloseAction:=fcaNone;
   FieldsOPL:=nil;
   ExitCode:=0;
   FieldsSettingsReseted:=False;
+  SettingsLoaded:=False;
   NotDestroyedDCLForm:=False;
   FParentForm:=ParentForm;
   FCallerForm:=CallerForm;
@@ -4794,7 +4806,12 @@ begin
         FForm.Hide;
       If Not FForm.Showing Then
         If ModalOpen Then
-          FForm.ShowModal
+        Begin
+          {LoadFormPos;
+          LoadBookmarkMenu;
+          SettingsLoaded:=True;
+          FForm.ShowModal;}
+        End
         Else
         begin
           FForm.Show;
@@ -4809,8 +4826,11 @@ begin
 {$ENDIF}
         end;
     end;
-    LoadFormPos;
-    LoadBookmarkMenu;
+    If not SettingsLoaded then
+    Begin
+      LoadFormPos;
+      LoadBookmarkMenu;
+    End;
   end;
 end;
 
@@ -4951,6 +4971,12 @@ begin
 
     FGrids[i-1].Close;
   end;
+end;
+
+procedure TDCLForm.CloseDialog;
+begin
+  If Assigned(FForm) then
+    FForm.Close;
 end;
 
 procedure TDCLForm.ResumeDatasets;
@@ -5111,6 +5137,11 @@ begin
   end;
 end;
 
+procedure TDCLForm.Choose;
+begin
+  FForm.ShowModal;
+end;
+
 function TDCLForm.ChooseAndClose(Action: TChooseMode): TReturnFormValue;
 begin
   GetChooseValue;
@@ -5118,11 +5149,15 @@ begin
   SetLength(FDCLLogOn.ReturnFormsValues, FFormNum+1);
   FDCLLogOn.ReturnFormsValues[FFormNum]:=FRetunValue;
   Result:=FRetunValue;
-  If Action=chmChooseAndClose Then
-  begin
-    NotDestroyedDCLForm:=True;
-    FForm.Close;
+  Case Action of
+  chmChooseAndClose:begin
+    NotDestroyedDCLForm:=False;
+    CloseAction:=fcaClose;
   end;
+  chmChoose:begin
+    NotDestroyedDCLForm:=False;
+  end;
+  End;
 end;
 
 procedure TDCLForm.ToolButtonClick(Sender: TObject);
@@ -5431,27 +5466,35 @@ begin
   begin
     If Assigned(FDCLForm) Then
       FDCLForm.ChooseAndClose(chmChoose);
+    Executed:=True;
   end;
 
   If CompareString(Command, 'ChooseAndClose') Then
   begin
     If Assigned(FDCLForm) Then
       FDCLForm.ChooseAndClose(chmChooseAndClose);
-    Exit;
+    Executed:=True;
   end;
 
   If CompareString(Command, 'Close') Then
   begin
     If Assigned(FDCLForm) Then
-      FDCLLogOn.CloseForm(FDCLForm);
+    begin
+      FDCLForm.NotDestroyedDCLForm:=False;
+      FDCLForm.CloseDialog;
+      FDCLForm.CloseAction:=fcaClose;
+    end;
     Executed:=True;
-    Exit;
   end;
 
   If CompareString(Command, 'CloseDialog') Then
   begin
     If Assigned(FDCLForm) Then
-      FDCLLogOn.CloseForm(FDCLForm);
+    begin
+      FDCLForm.NotDestroyedDCLForm:=False;
+      FDCLForm.CloseDialog;
+      FDCLForm.CloseAction:=fcaClose;
+    end;
     Executed:=True;
   end;
 
@@ -5494,7 +5537,7 @@ begin
     If FDCLForm.CurrentQuery.State in dsEditModes Then
       FDCLForm.CurrentQuery.Post;
     If Assigned(FDCLForm) Then
-      FDCLLogOn.CloseForm(FDCLForm);
+      FDCLForm.CloseAction:=fcaClose;
     Executed:=True;
   end;
 
@@ -5503,7 +5546,7 @@ begin
     If FDCLForm.CurrentQuery.State in dsEditModes Then
       FDCLForm.CurrentQuery.Cancel;
     If Assigned(FDCLForm) Then
-      FDCLLogOn.CloseForm(FDCLForm);
+      FDCLForm.CloseAction:=fcaClose;
     Executed:=True;
   end;
 
@@ -6018,10 +6061,10 @@ begin
 
               try
                 If FindParam('Wait=', ScrStr)='1' Then
-                begin
-                  If Not ExecAndWait(TmpStr, SW_SHOWNORMAL) Then
+                Begin
+                  If Not ExecAndWait(TmpStr, SW_SHOWNORMAL, True) Then
                     ShowErrorMessage( - 8000, tmpStr1+TmpStr);
-                end
+                End
                 Else If FindParam('ShellExec=', ScrStr)='1' Then
                   Exec(TmpStr, tmpStr1)
                 Else
@@ -6817,7 +6860,7 @@ begin
               If FDCLForm.CurrentQuery.State in dsEditModes Then
                 FDCLForm.CurrentQuery.Post;
               tmpDCLForm:=FDCLForm.GetParentForm;
-              FDCLLogOn.CloseForm(FDCLForm);
+              FDCLForm.CloseAction:=fcaClose;
               FDCLForm:=tmpDCLForm;
             end;
           end;
@@ -6829,7 +6872,7 @@ begin
               If FDCLForm.CurrentQuery.State in dsEditModes Then
                 FDCLForm.CurrentQuery.Cancel;
               tmpDCLForm:=FDCLForm.GetParentForm;
-              FDCLLogOn.CloseForm(FDCLForm);
+              FDCLForm.CloseAction:=fcaClose;
               FDCLForm:=tmpDCLForm;
             end;
           end;
@@ -6923,7 +6966,7 @@ begin
                 RetVal:=FDCLForm.ReturnFormValue;
                 tmpDCLForm:=FDCLForm.GetParentForm;
                 If ChooseMode=chmChooseAndClose Then
-                  FDCLLogOn.CloseForm(FDCLForm);
+                  FDCLForm.CloseAction:=fcaClose;
                 FDCLForm:=tmpDCLForm;
 
                 If FieldExists(RetVal.ModifyField, FDCLForm.CurrentQuery) Then
@@ -6965,7 +7008,7 @@ begin
             If Assigned(FDCLForm) Then
             Begin
               tmpDCLForm:=FDCLForm.GetParentForm;
-              FDCLLogOn.CloseForm(FDCLForm);
+              FDCLForm.CloseAction:=fcaClose;
               FDCLForm:=tmpDCLForm;
             End;
           end;
@@ -7995,9 +8038,14 @@ begin
 end;
 
 function TDCLLogOn.CloseForm(Form: TDCLForm): TReturnFormValue;
+var
+  i:Integer;
 begin
   If Assigned(Form) then
   begin
+    i:=FForms.IndexOf(@Form);
+    If i<>-1 then
+      TDCLForm(FForms[i]).CloseAction:=fcaClose;
     FForms.Remove(Form);
     Form.Destroy;
   end;
@@ -8021,6 +8069,8 @@ begin
     i:=FForms.Count;
   end;
 
+  KillerDog.Enabled:=False;
+  FreeAndNil(KillerDog);
   Disconnect;
 end;
 
@@ -8580,6 +8630,10 @@ begin
 {$IFDEF ADO}
   FDBLogOn.KeepConnection:=True;
 {$ENDIF}
+  KillerDog:=TTimer.Create(nil);
+  KillerDog.Interval:=KillerTimerInterval;
+  KillerDog.OnTimer:=KillerForms;
+  KillerDog.Enabled:=True;
 end;
 
 function TDCLLogOn.CreateForm(FormName: String; ParentForm, CallerForm: TDCLForm; Query: TDCLDialogQuery;
@@ -8606,7 +8660,11 @@ begin
   CurrentForm:=i;
   SetLength(ActiveDCLForms, i+1);
   ActiveDCLForms[i]:=True;
+  If Assigned(ReturnValueParams) then
+    If ReturnValueMode<>chmNone then
+      Forms[i].Choose;
 
+  If Assigned(Forms[i]) then
   If Forms[i].ExitCode=0 Then
   begin
     If Assigned(FDCLMainMenu) Then
@@ -8681,7 +8739,7 @@ begin
 {$IFDEF UNIX}
     fpChmod(IncludeTrailingPathDelimiter(AppConfigDir)+'$Batch$.bat', &777);
 {$ENDIF}
-    ExecAndWait(PChar(IncludeTrailingPathDelimiter(AppConfigDir)+'$Batch$.bat'), SW_SHOWNORMAL);
+    ExecAndWait(PChar(IncludeTrailingPathDelimiter(AppConfigDir)+'$Batch$.bat'), SW_SHOWNORMAL, True);
     If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'$Batch$.bat') Then
       DeleteFile(PChar(IncludeTrailingPathDelimiter(AppConfigDir)+'$Batch$.bat'));
   end;
@@ -9367,6 +9425,18 @@ begin
   FreeAndNil(MenuQuery);
 end;
 
+procedure TDCLLogOn.KillerForms(Sender: TObject);
+var
+  i:Integer;
+begin
+  for i:=1 to FForms.Count do
+  begin
+    If Assigned(FForms[i-1]) then
+      If TDCLForm(FForms[i-1]).CloseAction=fcaClose then
+        CloseForm(FForms[i-1]);
+  end;
+end;
+
 {$IFDEF TRANSACTIONDB}
 function TDCLLogOn.NewTransaction(RW: TTransactionType): TTransaction;
 begin
@@ -9725,11 +9795,11 @@ begin
         end;
         naExecAndWait:
         begin
-          ExecAndWait(Trim(ShadowQuery.FieldByName('NOTIFY_TEXT').AsString), SW_SHOWNORMAL);
+          ExecAndWait(Trim(ShadowQuery.FieldByName('NOTIFY_TEXT').AsString), SW_SHOWNORMAL, True);
         end;
         naExec:
         begin
-          Exec(ShadowQuery.FieldByName('NOTIFY_TEXT').AsString, '');
+          ExecApp(ShadowQuery.FieldByName('NOTIFY_TEXT').AsString);
         end;
         naMessage:
         begin
@@ -11444,10 +11514,10 @@ begin
   LookupTables[l].DCLGrid.SetSQL(TempStr);
   LookupTables[l].DCLGrid.ReadOnly:=Field.ReadOnly;
   LookupTables[l].DCLGrid.DependField:=FindParam('DependField=', Field.OPL);
-  LookupTables[l].DCLGrid.MasterDataField:=Field.FieldName;
+  If FQuery.Active then
+    LookupTables[l].DCLGrid.MasterDataField:=Field.FieldName;
 
-  If FQuery.Active Then
-    LookupTables[l].DCLGrid.Open;
+  LookupTables[l].DCLGrid.Open;
   LookupTables[l].DCLGrid.Show;
 
   TempStr:=FindParam('Columns=', Field.OPL);
@@ -11468,7 +11538,7 @@ begin
       end
       Else
       begin
-        FField.Caption:=SourceToInterface(GetDCLMessageString(msNoField))+Field.FieldName;
+        FField.Caption:=SourceToInterface(GetDCLMessageString(msNoField))+FieldName;
       end;
       LookupTables[l].DCLGrid.AddColumn(FField);
     end;

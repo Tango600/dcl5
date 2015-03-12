@@ -38,7 +38,7 @@ const
 {$IFDEF SQLdb}
   DBEngineType='SQLdb (Universal)';
 {$ENDIF}
-  Version='10.0.11.237';
+  Version='10.0.11.245';
 
   CompotableVersion='9.1.127.305';
 
@@ -273,6 +273,7 @@ const
 
   StopSimbols=DefaultParamsSeparator+DefaultValuesSeparator+DefaultParamDelim+'( )[],=.%:;&$#@*'#39;
 
+  KillerTimerInterval=400;
   IntervalTimeToInitScripts=700;
   IntervalTimeNotify=61007;
   TimeToTerminate=5000;
@@ -358,6 +359,7 @@ Type
   TMessageType=(mbtError=0, mbtWarning=1, mbtInformation=9, mbtConfirmation=10);
   TSigns=(sEquals, sGreater, sLess, sNotEqual, sGreaterEq, sLessEq);
   TSimplyFieldType=(sftNotDefine, sftString, sftDigit, sftFloat, sftDateTime);
+  TDCLFormCloseAction=(fcaNone, fcaClose);
 
 
 const

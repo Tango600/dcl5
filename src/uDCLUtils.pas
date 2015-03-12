@@ -42,9 +42,10 @@ Function LeadingZero(Const aVal: Word): String;
 Function CopyCut(Var S: String; From, Count: Word): String;
 //Function FindInArray(KeyWord:String; SourceArray:Array);
 
-Function ExecAndWait(Const FileName: ShortString; Const WinState: Word): Boolean;
+procedure ShellExecute(const AWnd: HWND; const AOperation, AFileName: String; const AParameters: String = ''; const ADirectory: String = ''; const AShowCmd: Integer = SW_SHOWNORMAL);
+Function ExecAndWait(Const FileName: ShortString; Const WinState: Word; Wait:Boolean=True): Boolean;
 Procedure Exec(Const FileName, Directory: String);
-Procedure ExecApp(App: String);
+procedure ExecApp(const ACmdLine: String);
 Procedure OpenDir(Dir: string);
 function GetComputerName: string;
 Function GetUserFromSystem: String;
@@ -461,7 +462,7 @@ Begin
 {$R+}
 End;
 
-Function ExecAndWait(Const FileName: ShortString; Const WinState: Word): Boolean;
+Function ExecAndWait(Const FileName: ShortString; Const WinState: Word; Wait:Boolean=True): Boolean;
 Var
   StartInfo: TStartupInfo;
   ProcInfo: TProcessInformation;
@@ -478,7 +479,7 @@ Begin
   Result:=CreateProcess(Nil, PChar(String(CmdLine)), Nil, Nil, False, CREATE_NEW_CONSOLE Or
     NORMAL_PRIORITY_CLASS, Nil, Nil, StartInfo, ProcInfo);
   { Ожидаем завершения приложения }
-  If Result Then
+  If Result and Wait Then
   Begin
     WaitForSingleObject(ProcInfo.hProcess, INFINITE);
     { Free the Handles }
@@ -487,14 +488,68 @@ Begin
   End;
 End;
 
+procedure ShellExecute(const AWnd: HWND; const AOperation, AFileName: String; const AParameters: String = ''; const ADirectory: String = ''; const AShowCmd: Integer = SW_SHOWNORMAL);
+var
+  ExecInfo: TShellExecuteInfo;
+  NeedUninitialize: Boolean;
+begin
+  Assert(AFileName <> '');
+ 
+  NeedUninitialize := SUCCEEDED(CoInitializeEx(nil, COINIT_APARTMENTTHREADED or COINIT_DISABLE_OLE1DDE));
+  try
+    FillChar(ExecInfo, SizeOf(ExecInfo), 0);
+    ExecInfo.cbSize := SizeOf(ExecInfo);
+ 
+    ExecInfo.Wnd := AWnd;
+    ExecInfo.lpVerb := Pointer(AOperation);
+    ExecInfo.lpFile := PChar(AFileName);
+    ExecInfo.lpParameters := Pointer(AParameters);
+    ExecInfo.lpDirectory := Pointer(ADirectory);
+    ExecInfo.nShow := AShowCmd;
+    ExecInfo.fMask := {$IFDEF NEWDELPHI}SEE_MASK_NOASYNC{$ELSE}SEE_MASK_FLAG_DDEWAIT{$ENDIF}
+                   or SEE_MASK_FLAG_NO_UI;
+    {$IFDEF UNICODE}
+    // Необязательно, см. http://www.transl-gunsmoker.ru/2015/01/what-does-SEEMASKUNICODE-flag-in-ShellExecuteEx-actually-do.html
+    ExecInfo.fMask := ExecInfo.fMask or SEE_MASK_UNICODE;
+    {$ENDIF}
+ 
+    {$WARN SYMBOL_PLATFORM OFF}
+    Win32Check({$IFDEF FPC}{$ifdef UNICODE}ShellExecuteExW{$ELSE}ShellExecuteExA{$ENDIF}{$ELSE}ShellExecuteEx{$ENDIF}(@ExecInfo));
+    {$WARN SYMBOL_PLATFORM ON}
+  finally
+    if NeedUninitialize then
+      CoUninitialize;
+  end;
+end;
+
+procedure ExecApp(const ACmdLine: String);
+var
+  SI: TStartupInfo;
+  PI: TProcessInformation;
+  CmdLine: String;
+begin
+  Assert(ACmdLine <> '');
+
+  CmdLine := ACmdLine;
+  UniqueString(CmdLine);
+
+  FillChar(SI, SizeOf(SI), 0);
+  FillChar(PI, SizeOf(PI), 0);
+  SI.cb := SizeOf(SI);
+  SI.dwFlags := STARTF_USESHOWWINDOW;
+  SI.wShowWindow := SW_SHOWNORMAL;
+
+  SetLastError(ERROR_INVALID_PARAMETER);
+  {$WARN SYMBOL_PLATFORM OFF}
+  Win32Check(CreateProcess(nil, PChar(CmdLine), nil, nil, False, CREATE_DEFAULT_ERROR_MODE {$IFDEF UNICODE}or CREATE_UNICODE_ENVIRONMENT{$ENDIF}, nil, nil, SI, PI));
+  {$WARN SYMBOL_PLATFORM ON}
+  CloseHandle(PI.hThread);
+  CloseHandle(PI.hProcess);
+end;
+
 Procedure Exec(Const FileName, Directory: String);
 Begin
-  ShellExecute(0, Nil, PChar(FileName), Nil, PChar(Directory), SW_SHOWNORMAL);
-End;
-
-Procedure ExecApp(App: String);
-Begin
-  WinExec(PAnsiChar(App), SW_SHOWNORMAL);
+  ShellExecute(0, '', FileName, '', Directory, SW_SHOWNORMAL);
 End;
 
 Procedure OpenDir(Dir: string);
@@ -625,9 +680,9 @@ Begin
   ExecuteApp(App);
 End;
 
-Function ExecAndWait(Const FileName: ShortString; Const WinState: Word): Boolean;
+Function ExecAndWait(Const FileName: ShortString; Const WinState: Word; Wait:Boolean=True): Boolean;
 Begin
-  Result:=ExecuteApp(FileName, True);
+  Result:=ExecuteApp(FileName, Wait);
 End;
 
 Procedure Exec(Const FileName, Directory: String);

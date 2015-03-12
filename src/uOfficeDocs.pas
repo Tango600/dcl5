@@ -6,7 +6,7 @@ interface
 uses
   SysUtils, Classes, Variants,
 {$IFDEF MSWINDOWS}
-  ComObj, ShellAPI, ActiveX, uOpenOffice,
+  ComObj, ActiveX, uOpenOffice,
 {$ENDIF}
 {$IFDEF FPC}
   LConvEncoding,
@@ -475,7 +475,7 @@ end;
 procedure TPrintDoc.ShowReport;
 begin
   If FileExists(FReportFileName) then
-    ShellExecute(0, nil, PChar(FReportFileName), nil, nil, SW_SHOWNORMAL);
+    ShellExecute(0, '', FReportFileName, '', '', SW_SHOWNORMAL);
 end;
 
 function TPrintDoc.Find(aFindText: string): Boolean;
