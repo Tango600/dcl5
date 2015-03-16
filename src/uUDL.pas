@@ -5795,6 +5795,15 @@ begin
             end;
           end;
 
+          If PosEx('OpenScript=', ScrStr)=1 Then
+          begin
+            If FDCLLogOn.AccessLevel>=ulReadOnly Then
+            begin
+              tmp1:=FindParam('FileName=', ScrStr);
+              RunSkriptFromFile(UTF8ToSys(tmp1));
+            end;
+          end;
+
           If PosEx('SignScript;', ScrStr)=1 Then
           begin
             If FDCLLogOn.AccessLevel=ulDeveloper Then
@@ -5808,6 +5817,15 @@ begin
             end;
           end;
 
+          If PosEx('SignScript=', ScrStr)=1 Then
+          begin
+            If FDCLLogOn.AccessLevel=ulDeveloper Then
+            begin
+              tmp1:=FindParam('FileName=', ScrStr);
+              FDCLLogOn.SignScriptFile(UTF8ToSys(tmp1), GPT.DCLUserName);
+            end;
+          end;
+
           If PosEx('ReSignScript;', ScrStr)=1 Then
           begin
             If FDCLLogOn.AccessLevel=ulDeveloper Then
@@ -5818,6 +5836,15 @@ begin
               If OpenDialog.Execute Then
                 FDCLLogOn.ReSignScriptFile(UTF8ToSys(OpenDialog.FileName));
               FreeAndNil(OpenDialog);
+            end;
+          end;
+
+          If PosEx('ReSignScript=', ScrStr)=1 Then
+          begin
+            If FDCLLogOn.AccessLevel=ulDeveloper Then
+            begin
+              tmp1:=FindParam('FileName=', ScrStr);
+              FDCLLogOn.ReSignScriptFile(UTF8ToSys(tmp1));
             end;
           end;
 
@@ -7908,7 +7935,7 @@ begin
     Height:=13;
     Caption:=SourceToInterface(GetDCLMessageString(msVersion)+' DCL : '+Version+', '+
         GetDCLMessageString(msStatus)+' : '+ReliseStatues[ReleaseStatus]+'.'
-{$IFDEF IBX}+' IBX v.'+FloatToStr(IBX_Version){$ENDIF}
+{$IFDEF IBX}+' IBX v.'{$IFNDEF FPC}+FloatToStr(IBX_Version){$ENDIF}{$ENDIF}
 {$IFDEF ZEOS}+' ZEOS v.'+FDBLogOn.Version{$ENDIF}
 {$IFDEF ADO}+' ADO.db v.'+FDBLogOn.Version{$ENDIF}
 {$IFDEF BDE}+' BDE v.'+GetBDEVersion{$ENDIF}
@@ -8043,10 +8070,7 @@ var
 begin
   If Assigned(Form) then
   begin
-    i:=FForms.IndexOf(@Form);
-    If i<>-1 then
-      TDCLForm(FForms[i]).CloseAction:=fcaClose;
-    FForms.Remove(Form);
+//    FForms.Remove(Form);
     Form.Destroy;
   end;
 end;
@@ -8208,7 +8232,9 @@ begin
     IBTransaction.Params.Append('read_committed');
     IBTransaction.Params.Append('rec_version');
     IBTransaction.DefaultAction:=TACommit;
+    {$IFNDEF FPC}
     IBTransaction.AllowAutoStart:=True;
+    {$ENDIF}
     IBTransaction.DefaultDataBase:=FDBLogOn;
     FDBLogOn.DefaultTransaction:=IBTransaction;
   end
@@ -8219,6 +8245,13 @@ begin
   begin
     If GPT.DBPath<>'' Then
     begin
+      {$IFDEF FPC}
+      If GPT.LibPath<>'' Then
+        FDBLogOn.LibraryName:=GPT.LibPath
+      Else
+        FDBLogOn.LibraryName:=DefaultLibraryLocation;
+      {$ENDIF}
+
       FDBLogOn.Params.Clear;
       If Not IsFullPAth(GPT.DBPath) Then
         GPT.DBPath:=ExtractFilePath(Application.ExeName)+GPT.DBPath;
@@ -8823,9 +8856,8 @@ end;
 function TDCLLogOn.GetSecKeyData(Data: TMemoryStream; UserName: String): String;
 var
   DataMD5, PassMD5: TMD5Digest;
-  i: Byte;
+  i, tmp1: Byte;
   Pass: String;
-  SecKey: Array [0..15] of Byte;
   ShadowQuery: TDCLDialogQuery;
 begin
   Result:='';
@@ -8835,7 +8867,7 @@ begin
       Data.Position:=0;
       DataMD5:=MD5Stream(Data);
       If UserName='' Then
-        Pass:=GPT.DCLUserPass
+        Pass:=GPT.DCLUserName+GPT.DCLUserPass
       Else
       begin
         ShadowQuery:=TDCLDialogQuery.Create(Application);
@@ -8845,8 +8877,9 @@ begin
         ShadowQuery.Open;
         ShadowQuery.Last;
         ShadowQuery.First;
+        Pass:=UserName;
         If ShadowQuery.RecordCount=1 Then
-          Pass:=TrimRight(ShadowQuery.Fields[0].AsString);
+          Pass:=Pass+TrimRight(ShadowQuery.Fields[0].AsString);
         ShadowQuery.Close;
         FreeAndNil(ShadowQuery);
       end;
@@ -8854,9 +8887,8 @@ begin
 
       For i:=0 to 15 do
       begin
-        // SecKey[i]:=(PassMD5.A+PassMD5.B+PassMD5.C+PassMD5.D) mod DataMD5.v[i];
-        SecKey[i]:=Abs((PassMD5.A)Mod DataMD5.v[i]);
-        Result:=Result+IntToHex(SecKey[i], 2);
+        tmp1:=DataMD5.v[i] Mod PassMD5.v[i];
+        Result:=Result+IntToHex(tmp1, 1);
       end;
     end;
 end;

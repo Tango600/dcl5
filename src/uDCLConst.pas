@@ -11,6 +11,12 @@ uses
   DBCtrls;
 
 const
+{$IFDEF MSWINDOWS}
+DefaultLibraryLocation='gds32.dll';
+{$ENDIF}
+{$IFDEF UNIX}
+DefaultLibraryLocation='fbclient.so';
+{$ENDIF}
 {$IFDEF ADO}
   DBEngineType='ADODB';
 {$ENDIF}
@@ -25,12 +31,6 @@ const
   DefaultIBPort=3050;
   DefaultDBType='firebird-2.5';
   DefaultDBTInterBaseType='interbase-6';
-  {$IFDEF MSWINDOWS}
-  DefaultLibraryLocation='gds32.dll';
-  {$ENDIF}
-  {$IFDEF UNIX}
-  DefaultLibraryLocation='fbclient.so';
-  {$ENDIF}
 {$ENDIF}
 {$IFDEF SQLdbIB}
   DBEngineType='SQLdb IB';

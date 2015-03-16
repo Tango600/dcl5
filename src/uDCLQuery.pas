@@ -351,6 +351,11 @@ begin
 {$ENDIF}
 {$IFDEF IBX}
   Database:=DatabaseObj;
+  {$IFDEF FPC}
+  AutoStartTransaction:=True;
+  AutoCommit:=True;
+  AutoTrim:=True;
+  {$ENDIF}
 {$ENDIF}
 {$IFDEF SQLdbFamily}
   Database:=DatabaseObj;
@@ -379,6 +384,11 @@ begin
 {$ENDIF}
 {$IFDEF IBX}
   ShadowQuery.Database:=DatabaseObj;
+  {$IFDEF FPC}
+  ShadowQuery.AutoStartTransaction:=True;
+  ShadowQuery.AutoCommit:=True;
+  ShadowQuery.AutoTrim:=True;
+  {$ENDIF}
 {$ENDIF}
 {$IFDEF SQLdbFamily}
   ShadowQuery.Database:=DatabaseObj;
