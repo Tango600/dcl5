@@ -90,7 +90,7 @@ Type
     KillerDog: TTimer;
 
     FAccessLevel: TUserLevelsType;
-    FForms: TList; //Array of TDCLForm;
+    FForms: TList;
     ActiveDCLForms: Array of Boolean;
     ReturnFormsValues: Array of TReturnFormValue;
     ShadowQuery: TDCLDialogQuery;
@@ -170,6 +170,7 @@ Type
     procedure SignScriptFile(FileName, UserName: String);
     procedure ReSignScriptFile(FileName: String);
     procedure RunSkriptFromFile(FileName: String);
+    procedure ExtractScriptFile(FileName: String);
 
     function ConnectDB: Integer;
     procedure Disconnect;
@@ -305,6 +306,7 @@ Type
     function GetFingQuery: String;
     function FindRaightQuery(St: String): String;
     procedure ChangeTabPage(Sender: TObject);
+    function GetTablePartsCount:Integer;
 
     procedure ClickNavig(Sender: TObject; Button: TNavigateBtn);
     procedure SortDB(Column: TColumn);
@@ -477,6 +479,7 @@ Type
     property GridPanel: TDCLMainPanel read FGridPanel write FGridPanel;
     property Grid: TDCLDBGrid read FGrid;
     property TableParts[Index: Integer]: TDCLGrid read GetTablePart write SetTablePart;
+    property TablePartsCount:Integer read GetTablePartsCount;
     property MultiSelect: Boolean read GetMultiselect write SetMultiselect;
   end;
 
@@ -583,6 +586,7 @@ Type
     procedure ToolButtonClick(Sender: TObject);
 
     procedure CloseForm(Sender: TObject; var { %H- } Action: TCloseAction);
+    procedure OnCloseQuery(Sender: TObject; var CanClose: Boolean);
 
     procedure ExecCommand(CommandName: String);
 
@@ -616,7 +620,7 @@ Type
     procedure SaveFieldsSettings(Sender: TObject);
   public
     LocalVariables: TVariables;
-    Modal, NotDestroyedDCLForm, ExitNoSave: Boolean;
+    Modal, NotDestroyedDCLForm, ExitNoSave, NoCloseable: Boolean;
     FDialogName: String;
     ExitCode: Byte;
 
@@ -692,6 +696,7 @@ Type
     procedure TranslateVals(var Params: String; Query: TDCLDialogQuery);
     procedure TranslateValContext(var Params: String);
     procedure RunSkriptFromFile(FileName: String);
+    procedure ExtractScriptFile(FileName: String);
   public
     constructor Create(DCLForm: TDCLForm; var DCLLogOn: TDCLLogOn);
     destructor Destroy; override;
@@ -1422,37 +1427,7 @@ begin
         dstDataSet:
         mDataSources[vDataSourceIndex].Name:=Trim(vStrTmp1);
         end;
-        /// ///////////////////////////////////////////////////////////////////////////////////////////////
-        vStrTmp1:='';
-        If i<Length(vGenStrSection) Then
-          If vGenStrSection[i]='[' Then
-          begin
-            inc(i);
-            vStrTmp1:='';
-            If i<Length(vGenStrSection) Then
-              While (vGenStrSection[i]<>']') do
-              begin
-                vStrTmp1:=vStrTmp1+vGenStrSection[i];
-                inc(i);
-                If i>Length(vGenStrSection) Then
-                  break;
-              end;
-
-            ppc:=ParamsCount(vStrTmp1, ',');
-            For ppn:=1 to ppc do
-            begin
-              If IsReturningQuery(mQueries[vQueryIndex].SQL.Text) Then
-              begin
-                mQueries[vQueryIndex].FieldDefs.Update;
-                vStrTmp2:=Trim(SortParams(vStrTmp1, ppn, ','));
-                If vStrTmp2<>'' Then
-                begin
-                  ParamName:=Copy(vStrTmp2, 1, Pos('=', vStrTmp2)-1);
-                end;
-              end;
-            end;
-          end;
-
+        //////////////////////////////////////////////////////////////////////////////////////////////////
         inc(i);
         ParamName:='';
         If i<Length(vGenStrSection) Then
@@ -2703,6 +2678,7 @@ var
   TB1: TFormPanelButton;
 begin
   FDCLLogOn.FForms.Remove(Self);
+  CloseAction:=fcaInProcess;
   If ExitCode=0 Then
   begin
     SaveFormPos;
@@ -2756,8 +2732,10 @@ end;
 
 procedure TDCLForm.CloseForm(Sender: TObject; var Action: TCloseAction);
 begin
-  If GetActive and Not NotDestroyedDCLForm Then
-    CloseAction:=fcaClose;
+  FDCLLogOn.KillerDog.Enabled:=True;
+  If not NoCloseable then
+    If GetActive and Not NotDestroyedDCLForm Then
+      CloseAction:=fcaClose;
 end;
 
 procedure TDCLForm.ExecCommand(CommandName: String);
@@ -2979,6 +2957,13 @@ begin
           end;
       end;
     end;
+end;
+
+procedure TDCLForm.OnCloseQuery(Sender: TObject; var CanClose: Boolean);
+begin
+  CanClose:=not NoCloseable;
+  If NoCloseable then
+    Beep(500, 500);
 end;
 
 procedure TDCLForm.SaveFormPos;
@@ -3443,6 +3428,7 @@ var
   end;
 
 begin
+  NoCloseable:=False;
   FCloseAction:=fcaNone;
   FieldsOPL:=nil;
   ExitCode:=0;
@@ -3494,6 +3480,7 @@ begin
   FForm.Position:=poScreenCenter;
   FForm.OnResize:=ResizeDBForm;
   FForm.OnActivate:=ActivateForm;
+  FForm.OnCloseQuery:=OnCloseQuery;
   FForm.Tag:=aFormNum;
   FForm.Icon.Assign(GetIcon);
 
@@ -3778,6 +3765,12 @@ begin
         end
         Else
           FGrids[GridIndex].ReadOnly:=False;
+      end;
+
+      If PosEx('NoCloseable=', ScrStr)=1 Then
+      begin
+        TmpStr:=FindParam('NoCloseable=', ScrStr);
+        NoCloseable:=Trim(TmpStr)='1';
       end;
 
       If PosEx('Navigator=', ScrStr)=1 Then
@@ -4489,6 +4482,22 @@ begin
             end;
           end;
         end;
+      end;
+
+      If PosEx('CurrentTablePart=', ScrStr)=1 Then
+      begin
+        tmpSQL:=Trim(FindParam('CurrentTablePart=', ScrStr));
+        v1:=0;
+        If FGrids[GridIndex].TablePartsCount>1 then
+        Begin
+          If tmpSQL='-1' then
+            v1:=FGrids[GridIndex].TablePartsCount-1
+          Else
+            v1:=StrToIntEx(tmpSQL)-1;
+
+          If (v1>=0) and (v1<FGrids[GridIndex].TablePartsCount) then
+            FGrids[GridIndex].FTablePartsPages.ActivePageIndex:=v1;
+        End;
       end;
 
       If PosEx('SummQuery=', ScrStr)=1 Then
@@ -5662,13 +5671,27 @@ begin
     Executed:=True;
   end;
 
+  If CompareString(Command, 'ExtractScript') Then
+  begin
+    If FDCLLogOn.AccessLevel>=ulReadOnly Then
+    begin
+      OpenDialog:=TOpenDialog.Create(nil);
+      OpenDialog.DefaultExt:=SignedScriptExt;
+      OpenDialog.Filter:='DCL script files|*'+SignedScriptExt;
+      If OpenDialog.Execute Then
+        ExtractScriptFile(UTF8ToSys(OpenDialog.FileName));
+      FreeAndNil(OpenDialog);
+    end;
+    Executed:=True;
+  end;
+
   If CompareString(Command, 'OpenScript') Then
   begin
     If FDCLLogOn.AccessLevel>=ulReadOnly Then
     begin
       OpenDialog:=TOpenDialog.Create(nil);
-      OpenDialog.DefaultExt:='dcs';
-      OpenDialog.Filter:='DCL script files|*.dcs';
+      OpenDialog.DefaultExt:=SignedScriptExt;
+      OpenDialog.Filter:='DCL script files|*'+SignedScriptExt;
       If OpenDialog.Execute Then
         RunSkriptFromFile(UTF8ToSys(OpenDialog.FileName));
       FreeAndNil(OpenDialog);
@@ -5681,8 +5704,8 @@ begin
     If FDCLLogOn.AccessLevel=ulDeveloper Then
     begin
       OpenDialog:=TOpenDialog.Create(nil);
-      OpenDialog.DefaultExt:='dcs';
-      OpenDialog.Filter:='DCL script files|*.dcs';
+      OpenDialog.DefaultExt:=TextScriptFileExt;
+      OpenDialog.Filter:='DCL script text|*'+TextScriptFileExt;
       If OpenDialog.Execute Then
         FDCLLogOn.SignScriptFile(UTF8ToSys(OpenDialog.FileName), GPT.DCLUserName);
       FreeAndNil(OpenDialog);
@@ -5782,13 +5805,35 @@ begin
             end;
           end;
 
+          If PosEx('ExtractScript;', ScrStr)=1 Then
+          begin
+            If FDCLLogOn.AccessLevel>=ulReadOnly Then
+            begin
+              OpenDialog:=TOpenDialog.Create(nil);
+              OpenDialog.DefaultExt:=SignedScriptExt;
+              OpenDialog.Filter:='DCL script files|*'+SignedScriptExt;
+              If OpenDialog.Execute Then
+                ExtractScriptFile(UTF8ToSys(OpenDialog.FileName));
+              FreeAndNil(OpenDialog);
+            end;
+          end;
+
+          If PosEx('ExtractScript=', ScrStr)=1 Then
+          begin
+            If FDCLLogOn.AccessLevel>=ulReadOnly Then
+            begin
+              tmp1:=FindParam('FileName=', ScrStr);
+              ExtractScriptFile(UTF8ToSys(tmp1));
+            end;
+          end;
+
           If PosEx('OpenScript;', ScrStr)=1 Then
           begin
             If FDCLLogOn.AccessLevel>=ulReadOnly Then
             begin
               OpenDialog:=TOpenDialog.Create(nil);
-              OpenDialog.DefaultExt:='dcs';
-              OpenDialog.Filter:='DCL script files|*.dcs';
+              OpenDialog.DefaultExt:=SignedScriptExt;
+              OpenDialog.Filter:='DCL script files|*'+SignedScriptExt;
               If OpenDialog.Execute Then
                 RunSkriptFromFile(UTF8ToSys(OpenDialog.FileName));
               FreeAndNil(OpenDialog);
@@ -5809,8 +5854,8 @@ begin
             If FDCLLogOn.AccessLevel=ulDeveloper Then
             begin
               OpenDialog:=TOpenDialog.Create(nil);
-              OpenDialog.DefaultExt:='dcs';
-              OpenDialog.Filter:='DCL script files|*.dcs';
+              OpenDialog.DefaultExt:=TextScriptFileExt;
+              OpenDialog.Filter:='DCL script text|*'+TextScriptFileExt;
               If OpenDialog.Execute Then
                 FDCLLogOn.SignScriptFile(UTF8ToSys(OpenDialog.FileName), GPT.DCLUserName);
               FreeAndNil(OpenDialog);
@@ -5831,8 +5876,8 @@ begin
             If FDCLLogOn.AccessLevel=ulDeveloper Then
             begin
               OpenDialog:=TOpenDialog.Create(nil);
-              OpenDialog.DefaultExt:='dcs';
-              OpenDialog.Filter:='DCL script files|*.dcs';
+              OpenDialog.DefaultExt:=SignedScriptExt;
+              OpenDialog.Filter:='DCL script files|*'+SignedScriptExt;
               If OpenDialog.Execute Then
                 FDCLLogOn.ReSignScriptFile(UTF8ToSys(OpenDialog.FileName));
               FreeAndNil(OpenDialog);
@@ -5917,6 +5962,15 @@ begin
                   FDCLLogOn.Forms[v2].Tables[v3-1].ReFreshQuery;
               end;
             end;
+          end;
+
+          If PosEx('NoCloseable=', ScrStr)=1 Then
+          begin
+            TmpStr:=FindParam('NoCloseable=', ScrStr);
+            If Assigned(FDCLForm) Then
+            Begin
+              FDCLForm.NoCloseable:=Trim(TmpStr)='1';
+            End;
           end;
 
           If PosEx('Navigator=', ScrStr)=1 Then
@@ -6746,10 +6800,14 @@ begin
           begin
             tmpStr2:=Trim(FindParam('CurrentTablePart=', ScrStr));
             TranslateValContext(tmpStr2);
+            If Assigned(FDCLForm) Then
             If tmpStr2<>'' Then
             begin
-              v1:=StrToIntEx(tmpStr2)-1;
-              If Assigned(FDCLForm) Then
+              v1:=0;
+              If tmpStr2='-1' then
+                v1:=FDCLForm.Tables[-1].TablePartsCount-1
+              Else
+                v1:=StrToIntEx(tmpStr2)-1;
               If Assigned(FDCLForm.Tables[ - 1].TableParts[v1]) Then
                 FDCLForm.Tables[ - 1].FTablePartsPages.ActivePageIndex:=v1;
             end;
@@ -7801,6 +7859,11 @@ begin
   end;
 end;
 
+procedure TDCLCommand.ExtractScriptFile(FileName: String);
+begin
+  FDCLLogOn.ExtractScriptFile(FileName);
+end;
+
 function TDCLCommand.GetRaightsByContext(InContext: Boolean): TUserLevelsType;
 begin
   If InContext Then
@@ -8065,13 +8128,14 @@ begin
 end;
 
 function TDCLLogOn.CloseForm(Form: TDCLForm): TReturnFormValue;
-var
-  i:Integer;
 begin
   If Assigned(Form) then
   begin
-//    FForms.Remove(Form);
-    Form.Destroy;
+    Try
+      Form.Destroy;
+    Except
+      KillerDog.Enabled:=False;
+    End;
   end;
 end;
 
@@ -8801,6 +8865,47 @@ begin
   FreeAndNil(VBSText);
 end;
 
+procedure TDCLLogOn.ExtractScriptFile(FileName: String);
+var
+  Scr: TStringList;
+  tmpMem: TMemoryStream;
+  Key, SecKey, User: String;
+  p: Integer;
+  Command: TDCLCommand;
+  Form: TDCLForm;
+begin
+  If FileExists(FileName) Then
+  begin
+    tmpMem:=TMemoryStream.Create;
+    tmpMem.LoadFromFile(FileName);
+    Scr:=DecodeScriptData(tmpMem);
+    tmpMem.Clear;
+
+    If Scr.Count>1 Then
+    begin
+      User:='';
+      p:=Pos('=', Scr[0]);
+      If p<>0 Then
+      begin
+        User:=Copy(Scr[0], 2, p-2);
+        Key:=Copy(Scr[0], p+1, 32);
+      end
+      Else
+        Key:=Copy(Scr[0], 2, 32);
+      Scr.Delete(0);
+      Scr.SaveToStream(tmpMem);
+      tmpMem.Position:=0;
+      SecKey:=GetSecKeyData(tmpMem, User);
+      If SecKey=Key Then
+      begin
+        Scr.SaveToFile(ChangeFileExt(FileName, TextScriptFileExt));
+      end;
+    end;
+    FreeAndNil(Scr);
+    FreeAndNil(tmpMem);
+  end;
+end;
+
 function TDCLLogOn.GetConfigInfo: String;
 var
   Q: TDCLDialogQuery;
@@ -8888,7 +8993,7 @@ begin
       For i:=0 to 15 do
       begin
         tmp1:=DataMD5.v[i] Mod PassMD5.v[i];
-        Result:=Result+IntToHex(tmp1, 1);
+        Result:=Result+IntToHex(tmp1, 2);
       end;
     end;
 end;
@@ -8897,13 +9002,12 @@ procedure TDCLLogOn.SignScriptFile(FileName, UserName: String);
 var
   Scr: TStringList;
   SecKey: String;
-  tmpMem, tmpArc: TMemoryStream;
+  tmpMem: TMemoryStream;
 begin
   If FileExists(FileName) Then
   begin
     Scr:=TStringList.Create;
     Scr.LoadFromFile(FileName);
-
     tmpMem:=TMemoryStream.Create;
     Scr.SaveToStream(tmpMem);
     tmpMem.Position:=0;
@@ -8914,16 +9018,10 @@ begin
     Else
       Scr.Insert(0, '['+UserName+'='+SecKey+']');
 
-    tmpMem.Clear;
-    Scr.SaveToStream(tmpMem);
-    tmpMem.Position:=0;
-    tmpArc:=TMemoryStream.Create;
-    CompressProc(tmpMem, tmpArc);
-    tmpArc.SaveToFile(FileName);
-    // Scr.SaveToFile(FileName);
-    FreeAndNil(Scr);
-    FreeAndNil(tmpArc);
+    tmpMem:=EncodeScriptData(Scr);
+    tmpMem.SaveToFile(ChangeFileExt(FileName, SignedScriptExt));
     FreeAndNil(tmpMem);
+    FreeAndNil(Scr);
   end;
 end;
 
@@ -8931,35 +9029,28 @@ procedure TDCLLogOn.ReSignScriptFile(FileName: String);
 var
   Scr: TStringList;
   SecKey: String;
-  tmpMem, tmpArc: TMemoryStream;
+  tmpMem: TMemoryStream;
 begin
   If FileExists(FileName) Then
   begin
-    tmpArc:=TMemoryStream.Create;
-    tmpArc.LoadFromFile(FileName);
-    tmpArc.Position:=0;
     tmpMem:=TMemoryStream.Create;
-    DecompressProc(tmpArc, tmpMem);
-    tmpMem.Position:=0;
-    Scr:=TStringList.Create;
-    Scr.LoadFromStream(tmpMem);
+    tmpMem.LoadFromFile(FileName);
+    Scr:=DecodeScriptData(tmpMem);
     tmpMem.Clear;
-    Scr.Delete(0);
+    If Length(Scr.Text)>10 then
+    Begin
+      If (Pos('[', Scr[0])<>Pos(']', Scr[0])) and (Pos('[', Scr[0])>0) then
+        Scr.Delete(0);
 
-    Scr.SaveToStream(tmpMem);
-    tmpMem.Position:=0;
-    SecKey:=GetSecKeyData(tmpMem, GPT.DCLUserName);
+      Scr.SaveToStream(tmpMem);
+      tmpMem.Position:=0;
+      SecKey:=GetSecKeyData(tmpMem, GPT.DCLUserName);
 
-    Scr.Insert(0, '['+GPT.DCLUserName+'='+SecKey+']');
+      Scr.Insert(0, '['+GPT.DCLUserName+'='+SecKey+']');
 
-    tmpMem.Clear;
-    Scr.SaveToStream(tmpMem);
-    tmpMem.Position:=0;
-    tmpArc:=TMemoryStream.Create;
-    CompressProc(tmpMem, tmpArc);
-    tmpArc.SaveToFile(FileName);
-    FreeAndNil(Scr);
-    FreeAndNil(tmpArc);
+      tmpMem:=EncodeScriptData(Scr);
+      tmpMem.SaveToFile(FileName);
+    End;
     FreeAndNil(tmpMem);
   end;
 end;
@@ -8967,7 +9058,7 @@ end;
 procedure TDCLLogOn.RunSkriptFromFile(FileName: String);
 var
   Scr: TStringList;
-  tmpMem, tmpArc: TMemoryStream;
+  tmpMem: TMemoryStream;
   Key, SecKey, User: String;
   p: Integer;
   Command: TDCLCommand;
@@ -8975,14 +9066,9 @@ var
 begin
   If FileExists(FileName) Then
   begin
-    tmpArc:=TMemoryStream.Create;
-    tmpArc.LoadFromFile(FileName);
-    tmpArc.Position:=0;
     tmpMem:=TMemoryStream.Create;
-    DecompressProc(tmpArc, tmpMem);
-    tmpMem.Position:=0;
-    Scr:=TStringList.Create;
-    Scr.LoadFromStream(tmpMem);
+    tmpMem.LoadFromFile(FileName);
+    Scr:=DecodeScriptData(tmpMem);
     tmpMem.Clear;
 
     If Scr.Count>1 Then
@@ -9019,6 +9105,7 @@ begin
       end;
     end;
     FreeAndNil(Scr);
+    FreeAndNil(tmpMem);
   end;
 end;
 
@@ -9423,37 +9510,47 @@ var
   RecCount: Cardinal;
 begin
   Timer1.Enabled:=False;
+  FreeAndNil(Timer1);
 
   FDCLMainMenu.LockMenu;
 
   MenuQuery:=TDCLDialogQuery.Create(nil);
   MenuQuery.Name:='Menu_'+IntToStr(UpTime);
   SetDBName(MenuQuery);
-  MenuQuery.SQL.Text:=GetRolesQueryText(qtCount, ' s.'+GPT.IdentifyField+
-      ' between 40001 and 40100');
-  MenuQuery.Open;
-  RecCount:=MenuQuery.Fields[0].AsInteger;
 
-  If RecCount>0 Then
+  MenuQuery.SQL.Text:=GetRolesQueryText(qtSelect, ' s.'+GPT.IdentifyField+
+      ' between 40001 and 40100 order by s.'+GPT.IdentifyField);
+  MenuQuery.Open;
+  While Not MenuQuery.Eof do
   begin
-    MenuQuery.Close;
-    MenuQuery.SQL.Text:=GetRolesQueryText(qtSelect, ' s.'+GPT.IdentifyField+
-        ' between 40001 and 40100 order by s.'+GPT.IdentifyField);
-    MenuQuery.Open;
-    While Not MenuQuery.Eof do
-    begin
-      FDCLMainMenu.ChoseRunType(MenuQuery.FieldByName(GPT.CommandField).AsString,
-        MenuQuery.FieldByName(GPT.DCLTextField).AsString, MenuQuery.FieldByName(GPT.DCLNameField)
-          .AsString, 1);
-      MenuQuery.Next;
-    end;
+    FDCLMainMenu.ChoseRunType(MenuQuery.FieldByName(GPT.CommandField).AsString,
+      MenuQuery.FieldByName(GPT.DCLTextField).AsString, MenuQuery.FieldByName(GPT.DCLNameField)
+        .AsString, 1);
+    MenuQuery.Next;
   end;
-  Timer1.Enabled:=False;
-  FreeAndNil(Timer1);
+  MenuQuery.Close;
+
+  If FileExists(GPT.LaunchScrFile) then
+  Begin
+    RunSkriptFromFile(GPT.LaunchScrFile);
+  End;
+  GPT.LaunchScrFile:='';
+
+  If GPT.LaunchForm<>'' then
+  Begin
+    MenuQuery.SQL.Text:=GetRolesQueryText(qtSelect, ' s.'+GPT.DCLNameField+
+        '='+GPT.StringTypeChar+GPT.LaunchForm+GPT.StringTypeChar);
+    MenuQuery.Open;
+    If Not MenuQuery.Eof then
+    begin
+      FDCLMainMenu.ChoseRunType('', '',
+        MenuQuery.FieldByName(GPT.DCLNameField).AsString, 0);
+    end;
+    MenuQuery.Close;
+  End;
 
   FDCLMainMenu.UnLockMenu;
 
-  MenuQuery.Close;
   FreeAndNil(MenuQuery);
 end;
 
@@ -9461,12 +9558,13 @@ procedure TDCLLogOn.KillerForms(Sender: TObject);
 var
   i:Integer;
 begin
-  for i:=1 to FForms.Count do
-  begin
+  For i:=1 to FForms.Count do
+  Begin
     If Assigned(FForms[i-1]) then
+    If not TDCLForm(FForms[i-1]).NoCloseable then
       If TDCLForm(FForms[i-1]).CloseAction=fcaClose then
         CloseForm(FForms[i-1]);
-  end;
+  End;
 end;
 
 {$IFDEF TRANSACTIONDB}
@@ -9510,7 +9608,7 @@ begin
           fnaRefresh:
           Forms[i].RefreshForm;
           fnaClose:
-          Forms[i].Destroy;
+          Forms[i].CloseDialog;
           fnaSetMDI:
           Forms[i].FForm.Parent:=MainForm;
           fnaResetMDI:
@@ -9915,7 +10013,10 @@ end;
 procedure CreateAboutItem(var MainMenu: TMainMenu; Form: TForm);
 var
   ItemMenu: TMenuItem;
+  Bmp1:TPicture;
 begin
+  Bmp1:=TPicture.Create;
+  Bmp1.Assign(DrawBMPButton('logo'));
   If Not Assigned(MainMenu) Then
     MainMenu:=TMainMenu.Create(Form);
 
@@ -9923,6 +10024,13 @@ begin
   ItemMenu.Name:='ItemMeu_About';
   ItemMenu.Caption:='Î...';
   ItemMenu.OnClick:=DCLMainLogOn.About;
+
+  SetMenuItemBitmaps(ItemMenu.Handle,
+    0,
+    MF_BYPOSITION,
+    Bmp1.Bitmap.Handle,
+    Bmp1.Bitmap.Handle);
+
   MainMenu.Items.Add(ItemMenu);
 end;
 
@@ -9985,19 +10093,23 @@ begin
   Else
   begin
     DCL.Text:=DCLText;
-    If DCLText<>'' Then
+    If (DCLText<>'') and (Order<>0) Then
+    Begin
       If FindParam('script type=', LowerCase(DCL[0]))='command' Then
-      begin
-        If Trim(Command)<>'' Then
+        ExecCommand(DCLText)
+      Else
+        If (Trim(Command)<>'') and (Order=1) Then
           ExecCommand(TrimRight(Command))
         Else
           ExecCommand(DCLText);
-      end
-      Else If LowerCase(FindParam('script type=', LowerCase(DCL[0])))=LowerCase('ShellCommand') Then
+
+      If LowerCase(FindParam('script type=', LowerCase(DCL[0])))=LowerCase('ShellCommand') Then
         FDCLLogOn.ExecShellCommand(DCLText)
       Else If LowerCase(FindParam('script type=', LowerCase(DCL[0])))=LowerCase('VBScript') Then
-        FDCLLogOn.ExecVBS(DCLText)
-      Else If Order=0 Then
+        FDCLLogOn.ExecVBS(DCLText);
+    End
+    Else
+      If Order=0 Then
         FDCLLogOn.CreateForm(TrimRight(Name), nil, nil, nil, nil, False, chmNone)
       Else
         ExecCommand(DCLText);
@@ -10286,60 +10398,30 @@ begin
 
     MenuQuery.Close;
 
-    MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtCount,
-      ' s.'+GPT.IdentifyField+' between 1001 and 10000');
+    MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtSelect,
+      ' s.'+GPT.IdentifyField+' between 1001 and 10000 order by s.'+GPT.IdentifyField);
+    MenuQuery.Open;
 
-    RecCount:=0;
-    DebugProc('Selecting sub menu:');
-    DebugProc('  Query: '+MenuQuery.SQL.Text);
-    try
-      DebugProc('  ... selected');
-      MenuQuery.Open;
-      RecCount:=MenuQuery.Fields[0].AsInteger;
-      DebugProc('  ... OK');
-    Except
-      DebugProc('  ... Fail');
-    end;
-
-    MenuQuery.Close;
-    If RecCount>0 Then
+    While Not MenuQuery.Eof do
     begin
-      MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtSelect,
-        ' s.'+GPT.IdentifyField+' between 1001 and 10000 order by s.'+GPT.IdentifyField);
-      MenuQuery.Open;
-
-      While Not MenuQuery.Eof do
-      begin
-        AddSubItem(TrimRight(MenuQuery.FieldByName(GPT.DCLNameField).AsString),
-          'MenuItem_'+MenuQuery.FieldByName(GPT.IdentifyField).AsString,
-          FMainMenu.Items.IndexOf((FMainMenu.FindComponent('MenuItem_'+
-                  TrimRight(MenuQuery.FieldByName(GPT.ParentFlgField).AsString)) as TMenuItem)));
-        MenuQuery.Next;
-      end;
+      AddSubItem(TrimRight(MenuQuery.FieldByName(GPT.DCLNameField).AsString),
+        'MenuItem_'+MenuQuery.FieldByName(GPT.IdentifyField).AsString,
+        FMainMenu.Items.IndexOf((FMainMenu.FindComponent('MenuItem_'+
+                TrimRight(MenuQuery.FieldByName(GPT.ParentFlgField).AsString)) as TMenuItem)));
+      MenuQuery.Next;
     end;
     MenuQuery.Close;
 
-    MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtCount,
+    MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtSelect,
       ' s.'+GPT.IdentifyField+' between 10001 and 16000');
+    MenuQuery.Open;
 
-    RecCount:=0;
-    DebugProc('Selecting sub sub menu:');
-    DebugProc('  Query: '+MenuQuery.SQL.Text);
-    try
-      DebugProc('  ... selected');
-      MenuQuery.Open;
-      RecCount:=MenuQuery.Fields[0].AsInteger;
-      DebugProc('  ... OK');
-    Except
-      DebugProc('  ... Fail');
-    end;
+    SubQuery:=TDCLDialogQuery.Create(nil);
+    SubQuery.Name:='MenuSub10001_'+IntToStr(UpTime);
+    FDCLLogOn.SetDBName(SubQuery);
 
-    If RecCount>0 Then
-    begin
-      SubQuery:=TDCLDialogQuery.Create(nil);
-      SubQuery.Name:='MenuSub10001_'+IntToStr(UpTime);
-      FDCLLogOn.SetDBName(SubQuery);
-
+    If not (MenuQuery.Eof and MenuQuery.Bof) then
+    Begin
       MenuQuery.Close;
       MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtSelect,
         ' s.'+GPT.IdentifyField+' between 10001 and 16000 order by s.'+GPT.IdentifyField);
@@ -10362,7 +10444,7 @@ begin
         MenuQuery.Next;
       end;
       FreeAndNil(SubQuery);
-    end;
+    End;
     MenuQuery.Close;
 
     MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtCount,
@@ -10379,10 +10461,10 @@ begin
     Except
       DebugProc('  ... Fail');
     end;
+    MenuQuery.Close;
 
     If RecCount>0 Then
     begin
-      MenuQuery.Close;
       MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtSelect,
         ' s.'+GPT.IdentifyField+' between 20051 and 20100 order by s.'+GPT.IdentifyField);
       MenuQuery.Open;
@@ -10416,26 +10498,7 @@ begin
     end;
     MenuQuery.Close;
 
-    MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtCount,
-      ' s.'+GPT.IdentifyField+' between 40001 and 40100');
-
-    RecCount:=0;
-    DebugProc('Selecting components(40001):');
-    DebugProc('  Query: '+MenuQuery.SQL.Text);
-    try
-      DebugProc('  ... selected');
-      MenuQuery.Open;
-      RecCount:=MenuQuery.Fields[0].AsInteger;
-      DebugProc('  ... OK');
-    Except
-      DebugProc('  ... Fail');
-    end;
-
-    If RecCount>0 Then
-    begin
-      FDCLLogOn.RunInitSkripts;
-    end;
-    MenuQuery.Close;
+    FDCLLogOn.RunInitSkripts;
 
     MenuQuery.SQL.Text:='select Count(*) from '+GPT.DCLTable+' where '+GPT.IdentifyField+'=50000';
     RecCount:=0;
@@ -10641,6 +10704,8 @@ begin
   CheckBoxes[l].CheckBox.Checked:=False;
   If PosEx('_OnCheck;', Field.OPL)<>0 Then
     CheckBoxes[l].CheckBox.Checked:=True;
+  If PosEx('_OffCheck;', Field.OPL)<>0 Then
+    CheckBoxes[l].CheckBox.Checked:=False;
 
   CheckBoxes[l].CheckBox.Tag:=l;
   CheckBoxes[l].CheckBox.OnClick:=CheckOnClick;
@@ -10923,6 +10988,11 @@ begin
     DBCheckBoxes[l].ValueChecked:=Field.CheckValue;
   If Field.UnCheckValue<>'' Then
     DBCheckBoxes[l].ValueUnchecked:=Field.UnCheckValue;
+
+  If PosEx('_OnCheck;', Field.OPL)<>0 Then
+    DBCheckBoxes[l].Checked:=True;
+  If PosEx('_OffCheck;', Field.OPL)<>0 Then
+    DBCheckBoxes[l].Checked:=False;
 
   IncXYPos(EditTopStep, DBCheckBoxes[l].Width, Field);
 end;
@@ -12462,7 +12532,7 @@ begin
           FOPL.Insert(ScrStrNum+v1*2, Query.Fields[v1-1].FieldName);
           FOPL.Insert(ScrStrNum+1+v1*2, Query.Fields[v1-1].FieldName);
         end;
-        ScrStrNum:=FOPL.Count;
+        //ScrStrNum:=FOPL.Count;
         // FOPL.SaveToFile('OPL.txt');
       end
       Else If PosEx('LoadFromTable=', FOPL[ScrStrNum+1])<>0 Then
@@ -13472,6 +13542,11 @@ begin
   end;
 end;
 
+function TDCLGrid.GetTablePartsCount: Integer;
+begin
+  Result:=Length(FTableParts);
+end;
+
 procedure TDCLGrid.GridDblClick(Sender: TObject);
 begin
   ExecEvents(LineDblClickEvents);
@@ -14283,7 +14358,7 @@ end;
 
 procedure TDCLGrid.SetTablePart(Index: Integer; Value: TDCLGrid);
 begin
-  If Length(FTableParts)>Index Then
+  If (Index>=0) and (Length(FTableParts)>Index) Then
     FTableParts[Index]:=Value;
 end;
 
@@ -14643,9 +14718,12 @@ end;
 
 procedure TMainFormAction.CloseMainForm(Sender: TObject; var Action: TCloseAction);
 begin
-  SaveMainFormPos(DCLMainLogOn, DCLMainLogOn.MainForm, 'MainForm');
+  If Assigned(DCLMainLogOn) then
+  Begin
+    SaveMainFormPos(DCLMainLogOn, DCLMainLogOn.MainForm, 'MainForm');
 
-  EndDCL;
+    EndDCL;
+  End;
 end;
 
 procedure TMainFormAction.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -16414,8 +16492,18 @@ begin
     Else
     begin
       For v1:=1 to ParamCount do
+      Begin
         If PosEx('-ini', ParamStr(v1))<>0 Then
           GPT.IniFileName:=ParamStr(v1+1);
+        If PosEx('-user', ParamStr(v1))<>0 Then
+          GPT.DCLUserName:=ParamStr(v1+1);
+        If PosEx('-password', ParamStr(v1))<>0 Then
+          GPT.EnterPass:=ParamStr(v1+1);
+        If PosEx('-scr', ParamStr(v1))<>0 Then
+          GPT.LaunchScrFile:=ParamStr(v1+1);
+        If PosEx('-dialog', ParamStr(v1))<>0 Then
+          GPT.LaunchForm:=ParamStr(v1+1);
+      End;
     end;
 
   If {$IFNDEF EMBEDDED}FileExists(GPT.IniFileName){$ELSE}True{$ENDIF} Then
@@ -16430,6 +16518,21 @@ begin
     end;
 {$ENDIF}
     GetParamsStructure(Params);
+
+{$IFNDEF EMBEDDED}
+    If ParamCount>0 Then
+    begin
+      For v1:=1 to ParamCount do
+      Begin
+        If PosEx('-ini', ParamStr(v1))<>0 Then
+          GPT.IniFileName:=ParamStr(v1+1);
+        If PosEx('-user', ParamStr(v1))<>0 Then
+          GPT.DCLUserName:=ParamStr(v1+1);
+        If PosEx('-password', ParamStr(v1))<>0 Then
+          GPT.EnterPass:=ParamStr(v1+1);
+      End;
+    end;
+{$ENDIF}
 
     Logger:=TLogging.Create(IncludeTrailingPathDelimiter(AppConfigDir)+'DebugApp.txt', GPT.DebugOn);
     Logger.Active:=GPT.DebugOn;
@@ -16476,6 +16579,7 @@ begin
             GPT.NoParamsTable:=False;
           end;
           ParamsQuery.First;
+          Params.Clear;
           While Not ParamsQuery.Eof do
           begin
             Params.Insert(0, ParamsQuery.FieldByName(GPT.GPTNameField).AsString+'='+
@@ -17318,7 +17422,7 @@ end;
 {$IFNDEF EMBEDDED}
 Initialization
 
-InitDCL(nil);
+  InitDCL(nil);
 
 // Finalization
 
@@ -17326,3 +17430,4 @@ InitDCL(nil);
 {$ENDIF}
 
 end.
+

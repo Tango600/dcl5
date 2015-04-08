@@ -41,7 +41,7 @@ type
     StringTypeChar, DCLNameField, DCLTextField, DCLTable, ShowRoleField, ACTIVE_USERS_TABLE,
     USER_LOGIN_HISTORY_TABLE, TemplatesNameField, TemplatesKeyField, TemplatesDataField,
     UserAdminField, {INITable,} RolesMenuTable, TimeStampFormat, DCLLongUserName, UserID, RoleID,
-    DCLRoleName, NewDBPassword, DBPassword, LibPath: String;
+    DCLRoleName, NewDBPassword, DBPassword, LibPath, LaunchScrFile, LaunchForm: String;
     FormPosInDB:TIniStore;
 
 end;

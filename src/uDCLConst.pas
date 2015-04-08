@@ -38,7 +38,7 @@ DefaultLibraryLocation='fbclient.so';
 {$IFDEF SQLdb}
   DBEngineType='SQLdb (Universal)';
 {$ENDIF}
-  Version='10.0.11.245';
+  Version='10.0.13.255';
 
   CompotableVersion='9.1.127.305';
 
@@ -144,6 +144,10 @@ DefaultLibraryLocation='fbclient.so';
 
   CharWidth=7;
 
+  TextScriptFileExt='.dst';
+  SignedScriptExt='.dcs';
+  SignMethodVer='1.2';
+
   DBTypeFirebird='firebird';
   DBTypeInterbase='interbase';
 
@@ -194,7 +198,7 @@ DefaultLibraryLocation='fbclient.so';
 {$ENDIF}
 {$IFDEF DELPHI}
 {$IFDEF MSWINDOWS}
-  LineEnding=#10#13;
+  LineEnding=#13#10;
 {$ENDIF}
 {$IFDEF WIN32}
   TargetCPU='i386';
@@ -359,7 +363,7 @@ Type
   TMessageType=(mbtError=0, mbtWarning=1, mbtInformation=9, mbtConfirmation=10);
   TSigns=(sEquals, sGreater, sLess, sNotEqual, sGreaterEq, sLessEq);
   TSimplyFieldType=(sftNotDefine, sftString, sftDigit, sftFloat, sftDateTime);
-  TDCLFormCloseAction=(fcaNone, fcaClose);
+  TDCLFormCloseAction=(fcaNone, fcaClose, fcaInProcess);
 
 
 const

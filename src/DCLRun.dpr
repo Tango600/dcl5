@@ -2,11 +2,17 @@ program DCLRun;
 {$I DefineType.pas}
 
 uses
+  {$IFDEF FPC}
   {$IFDEF UNIX}{$IFDEF UseCThreads}
   cthreads,
   {$ENDIF}{$ENDIF}
-  {$IFDEF FPC}
   Interfaces,
+  {$IFDEF IBX}
+   ibexpress,
+  {$ENDIF}
+  {$IFDEF ZEOS}
+  zcomponent,
+  {$ENDIF}
   {$ENDIF}
   Forms,
   {$IFNDEF FPC}
@@ -48,13 +54,14 @@ uses
   uDCLResources in 'uDCLResources.pas',
   uDCLSQLMonitor in 'uDCLSQLMonitor.pas',
   uDCLDownloader in 'uDCLDownloader.pas',
+  {$IFDEF MSWINDOWS}
+  uOpenOffice In 'uOpenOffice.pas',
+  uOfficeDocs in 'uOfficeDocs.pas',
+  {$ENDIF}
   uLZW in 'uLZW.pas',
   FileBuffer in 'FileBuffer.pas',
-  uDCLQuery in 'uDCLQuery.pas'
-  {$IFDEF MSWINDOWS}
-  ,uOpenOffice In 'uOpenOffice.pas',
-  uOfficeDocs in 'uOfficeDocs.pas'{$ENDIF}
-  {$IFDEF FPC}{$IFDEF ZEOS}, zcomponent{$ENDIF}{$ENDIF};
+  uDCLQuery in 'uDCLQuery.pas',
+  uDCLDataModule in 'uDCLDataModule.pas';
 
 {$R DCLRun.res}
 

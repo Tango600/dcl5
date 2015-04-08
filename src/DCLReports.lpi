@@ -18,7 +18,7 @@
       <UseVersionInfo Value="True"/>
       <AutoIncrementBuild Value="True"/>
       <MajorVersionNr Value="10"/>
-      <BuildNr Value="26"/>
+      <BuildNr Value="27"/>
       <Language Value="0419"/>
       <StringTable CompanyName="Unreal Software" ProductName="DCL5 plathform" ProductVersion=""/>
     </VersionInfo>

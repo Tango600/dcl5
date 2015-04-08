@@ -30,7 +30,8 @@ Function CompareString(S1, S2: String): Boolean;
 Function ShowErrorMessage(ErrorCode: Integer; AddText: String=''): Integer;
 Function StrToIntEx(St: String): LongInt;
 Function StrToFloatEx(St: String): Real;
-Function HexToInt(HexStr: String): Int64;
+Function HexToInt64(HexStr: String): Int64;
+Function HexToInt(HexStr: String): Integer;
 Function Pow(const Base:Cardinal; PowNum: Word): Cardinal; overload;
 Function Pow(Const Base: Real; PowNum: Word): Real; overload;
 Procedure DeleteNonPrintSimb(Var S: String);
@@ -105,6 +106,15 @@ procedure LoadMainFormPos(FDCLLogOn:TDCLLogOn; var FForm:TDBForm; DialogName:Str
 function GetScreen:TBitmap;
 function ConvertToJPEG(BitMap:TBitmap; Quality:Byte=JPEGCompressionQuality):TJpegImage;
 
+function ConvertBinToXBase(Data:TMemoryStream; Base:Byte):TMemoryStream;
+function ConvertXBaseToBin(Data:TMemoryStream; Base:Byte):TMemoryStream;
+function SaveFormatedBlock(Data:TMemoryStream; Width:Word):TMemoryStream;
+function LoadFormatedBlock(Data:TMemoryStream):TMemoryStream;
+
+function DecodeScriptData(Data:TMemoryStream):TStringList;
+function EncodeScriptData(Script:TStringList):TMemoryStream;
+
+function GetTimeFormat(mSec: Cardinal): String;
 
 implementation
 
@@ -799,6 +809,9 @@ Begin
   If CompareString(BMPType, 'logo') Then
     MS.Write(DCLbmp, Length(DCLbmp));
 
+  If CompareString(BMPType, 'logo_small') Then
+    MS.Write(DCLbmp, Length(DCLbmp_Small));
+
   If MS.Size>0 Then
   Begin
     Marker:=0;
@@ -1037,6 +1050,7 @@ Var
 Begin
   While Pos('(', Formula)<>0 Do
   Begin
+    EndBrPos:=0;
     BrFormula:='';
     BeginBrPos:=Pos('(', Formula);
     If BeginBrPos<>0 Then
@@ -1055,10 +1069,13 @@ Begin
           Break;
         End;
 
-      BrFormula:=CopyCut(Formula, BeginBrPos, EndBrPos-BeginBrPos+1);
-      BrFormula:=CopyCut(BrFormula, 2, Length(BrFormula)-2);
-      GetOperandsPair(BrFormula);
-      Insert(BrFormula, Formula, BeginBrPos);
+      If (EndBrPos>0) and (BeginBrPos<EndBrPos) then
+      Begin
+        BrFormula:=CopyCut(Formula, BeginBrPos, EndBrPos-BeginBrPos+1);
+        BrFormula:=CopyCut(BrFormula, 2, Length(BrFormula)-2);
+        GetOperandsPair(BrFormula);
+        Insert(BrFormula, Formula, BeginBrPos);
+      End;
     End;
   End;
 End;
@@ -2114,9 +2131,29 @@ Begin
     Result:='Выкл.';
 End;
 
-Function HexToInt(HexStr: String): Int64;
+Function HexToInt64(HexStr: String): Int64;
 Var
   RetVar: Int64;
+  i: byte;
+Begin
+  HexStr:=UpperCase(HexStr);
+  If UpperCase(HexStr[Length(HexStr)])='H' Then
+    Delete(HexStr, Length(HexStr), 1);
+  RetVar:=0;
+  For i:=1 To Length(HexStr) Do
+  Begin
+    RetVar:=RetVar Shl 4;
+    If HexStr[i] In ['0'..'9'] Then
+      RetVar:=RetVar+(byte(HexStr[i])-48)
+    Else If HexStr[i] In ['A'..'F'] Then
+      RetVar:=RetVar+(byte(HexStr[i])-55);
+  End;
+  Result:=RetVar;
+End;
+
+Function HexToInt(HexStr: String): Integer; overload;
+Var
+  RetVar: Integer;
   i: byte;
 Begin
   HexStr:=UpperCase(HexStr);
@@ -2454,5 +2491,189 @@ begin
     ///
   end;
 end;
+
+function ConvertBinToXBase(Data:TMemoryStream; Base:Byte):TMemoryStream;
+var
+  BaseStep:Byte;
+  BasseSet:Array[0..64] of Byte;
+  Buffer:Int64;
+  i:Integer;
+  S:String;
+begin
+  Result:=TMemoryStream.Create;
+  If Data.Size>0 then
+  Begin
+    For i:=0 to 9 do
+      BasseSet[i]:=Ord('0')+i;
+    For i:=10 to Base do
+      BasseSet[i]:=Ord('A')+i-10;
+
+    BaseStep:=1;//(Base div 8)+((8+(Base mod 8)-1) div 8);
+    Data.Position:=0;
+
+    While Data.Position<Data.Size do
+    Begin
+      Buffer:=0;
+      Data.Read(Buffer, BaseStep);
+      S:=IntToHex(Buffer, 2);
+      For i:=1 to Length(S) do
+        Result.WriteBuffer(S[i], 1);
+		End;
+	End;
+end;
+
+function ConvertXBaseToBin(Data:TMemoryStream; Base:Byte):TMemoryStream;
+var
+  BasseSet:Array[0..64] of Byte;
+  SingleDig, b:Byte;
+  S:string;
+  i:Integer;
+Begin
+  Result:=TMemoryStream.Create;
+  If Data.Size>0 then
+  Begin
+    For i:=0 to 9 do
+      BasseSet[i]:=Ord('0')+i;
+    For i:=10 to Base do
+      BasseSet[i]:=Ord('A')+i-10;
+
+    Data.Position:=0;
+    While Data.Position<Data.Size-1 do
+    Begin
+      S:='';
+      For i:=1 to ((Base div 8)+((8+(Base mod 8)-1) div 8)) do
+      Begin
+        Data.Read(SingleDig, 1);
+        S:=S+Chr(SingleDig);
+  		End;
+      b:=HexToInt(S);
+      Result.Write(b, 1);
+  	End;
+	End;
+End;
+
+function SaveFormatedBlock(Data:TMemoryStream; Width:Word):TMemoryStream;
+var
+  Buffer:array of Byte;
+  i:Integer;
+Begin
+  Result:=TMemoryStream.Create;
+  If Data.Size>0 then
+  Begin
+    Data.Position:=0;
+    While Data.Position<Data.Size-1 do
+    Begin
+      If Data.Size-Data.Position>=Width then
+        SetLength(Buffer, Width+Length(CR))
+      Else
+        SetLength(Buffer, Data.Size-Data.Position+Length(CR));
+
+      Data.Read(Buffer[0], Width);
+      For i:=1 to Length(CR) do
+        Buffer[Length(Buffer)-Length(CR)+i-1]:=Ord(CR[i]);
+      Result.WriteBuffer(Buffer[0], Length(Buffer));
+    End;
+  End;
+End;
+
+function LoadFormatedBlock(Data:TMemoryStream):TMemoryStream;
+var
+  Buffer:array of Byte;
+  i, p, l:Integer;
+Begin
+  Result:=TMemoryStream.Create;
+  SetLength(Buffer, 100);
+  If Data.Size>0 then
+  Begin
+    Data.Position:=0;
+    While Data.Position<Data.Size-1 do
+    Begin
+      l:=Data.Read(Buffer[0], 100);
+      p:=0;
+      For i:=1 to l do
+      Begin
+        If Chr(Buffer[i-1]) in ['A'..'Z', '0'..'9'] then
+        Begin
+          Buffer[p]:=Buffer[i-1];
+          Inc(p);
+        End;
+			End;
+
+      Result.WriteBuffer(Buffer[0], p);
+		End;
+	End;
+End;
+
+function DecodeScriptData(Data:TMemoryStream):TStringList;
+var
+  tmpMem, tmpArc: TMemoryStream;
+  tmp:TStringList;
+Begin
+  Result:=TStringList.Create;
+  If Data.Size>0 then
+  Begin
+    Data.Position:=0;
+    tmp:=TStringList.Create;
+    tmp.LoadFromStream(Data);
+    If (Pos('[', tmp[0])<Pos(']', tmp[0])) and (Pos('[', tmp[0])>0) then
+      If tmp[0]='['+SignMethodVer+']' then
+      Begin
+        tmp.Delete(0);
+        Data.Clear;
+        tmp.SaveToStream(Data);
+        Data.Position:=0;
+        tmpArc:=ConvertXBaseToBin(LoadFormatedBlock(Data), 16);
+        tmpArc.Position:=0;
+        tmpMem:=TMemoryStream.Create;
+        DecompressProc(tmpArc, tmpMem);
+        tmpMem.Position:=0;
+        Result.LoadFromStream(tmpMem);
+        FreeAndNil(tmpMem);
+        FreeAndNil(tmpArc);
+      End;
+    FreeAndNil(tmp);
+  End;
+End;
+
+function EncodeScriptData(Script:TStringList):TMemoryStream;
+var
+  tmpMem, tmpArc: TMemoryStream;
+  i:Byte;
+  Buffer:Array of Byte;
+  S:string;
+Begin
+  Result:=TMemoryStream.Create;
+  S:='['+SignMethodVer+']'+CR;
+  SetLength(Buffer, Length(S));
+  For i:=1 to Length(S) do
+    Buffer[i-1]:=Ord(S[i]);
+  Result.Write(Buffer[0], Length(Buffer));
+
+  tmpArc:=TMemoryStream.Create;
+  tmpMem:=TMemoryStream.Create;
+  Script.SaveToStream(tmpMem);
+  tmpMem.Position:=0;
+  CompressProc(tmpMem, tmpArc);
+  tmpArc.Position:=0;
+  Result.CopyFrom(SaveFormatedBlock(ConvertBinToXBase(tmpArc, 16), 32), 0);
+  Result.Position:=0;
+  FreeAndNil(tmpArc);
+  FreeAndNil(tmpMem);
+End;
+
+function GetTimeFormat(mSec: Cardinal): String;
+var
+  h, m, S: Cardinal;
+begin
+  h:=mSec div 3600000;
+  Dec(mSec, h*3600000);
+  m:=mSec div 60000;
+  Dec(mSec, m*60000);
+  S:=mSec div 1000;
+  Dec(mSec, S*1000);
+
+  Result:=IntToStr(h)+' ч. '+IntToStr(m)+' м. '+IntToStr(S)+' с. '+IntToStr(mSec)+' мсек.';
+end;
+
 
 end.
