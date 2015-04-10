@@ -76,10 +76,10 @@ Function UpTime: Cardinal;
 Function HashString(S: String): String;
 
 Function IsReturningQuery(SQQL: String): Boolean;
+function TrimSQLComment(SQLText: String): String;
 
 Procedure ExecuteStatement(Code: String);
 Function GetOnOffMode(Mode: Boolean): String;
-Function ToDOSf(Buf: String): String;
 Function FakeFileExt(Const FileName, Ext: String): String;
 Function AddToFileName(Const FileName, AddStr: String): String;
 Function ExtractSection(Var SectionStr: String): String;
@@ -119,7 +119,7 @@ function GetTimeFormat(mSec: Cardinal): String;
 implementation
 
 uses
-  SumProps, uDCLResources, uDCLDBUtils, MD5;
+  SumProps, uDCLResources, uDCLDBUtils, uDCLStringsRes, MD5;
 
 function ValidObject(const AObj: TObject): Boolean;
 begin
@@ -2018,6 +2018,17 @@ Begin
 {$ENDIF}
 End;
 
+function TrimSQLComment(SQLText: String): String;
+var
+  p1, p2: Word;
+begin
+  p1:=Pos('/*', SQLText);
+  p2:=Pos('*/', SQLText);
+  If ((p1>0)and(p1<p2)) Then
+    Delete(SQLText, p1, p2-p1);
+  Result:=SQLText;
+end;
+
 Function IsReturningQuery(SQQL: String): Boolean;
 Begin
   Result:=False;
@@ -2126,9 +2137,9 @@ End;
 Function GetOnOffMode(Mode: Boolean): String;
 Begin
   If Mode then
-    Result:='Âêë.'
+    Result:=GetDCLMessageString(msModeOn)+'.'
   else
-    Result:='Âûêë.';
+    Result:=GetDCLMessageString(msModeOff)+'.';
 End;
 
 Function HexToInt64(HexStr: String): Int64;
@@ -2151,7 +2162,7 @@ Begin
   Result:=RetVar;
 End;
 
-Function HexToInt(HexStr: String): Integer; overload;
+Function HexToInt(HexStr: String): Integer;
 Var
   RetVar: Integer;
   i: byte;
@@ -2169,26 +2180,6 @@ Begin
       RetVar:=RetVar+(byte(HexStr[i])-55);
   End;
   Result:=RetVar;
-End;
-
-Function ToDOSf(Buf: String): String;
-Var
-  i: Cardinal;
-Begin
-  For i:=1 To Length(Buf) Do
-  Begin
-    Case Ord(Buf[i]) Of
-    168:
-    Buf[i]:=Chr(240);
-    184:
-    Buf[i]:=Chr(241);
-    192..239:
-    Buf[i]:=Chr(Ord(Buf[i])-64);
-    240..255:
-    Buf[i]:=Chr(Ord(Buf[i])-16);
-    End
-  End;
-  Result:=Buf;
 End;
 
 Function FakeFileExt(Const FileName, Ext: String): String;
@@ -2672,7 +2663,9 @@ begin
   S:=mSec div 1000;
   Dec(mSec, S*1000);
 
-  Result:=IntToStr(h)+' ÷. '+IntToStr(m)+' ì. '+IntToStr(S)+' ñ. '+IntToStr(mSec)+' ìñåê.';
+  Result:=IntToStr(h)+' '+GetDCLMessageString(msHour)+'. '+IntToStr(m)+' '+
+    GetDCLMessageString(msMinute)+'. '+IntToStr(S)+' '+
+      GetDCLMessageString(msSecond)+'. '+IntToStr(mSec)+' '+GetDCLMessageString(msMSecond)+'.';
 end;
 
 

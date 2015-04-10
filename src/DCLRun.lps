@@ -73,7 +73,7 @@
         <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
         <TopLine Value="8963"/>
-        <CursorPos X="1" Y="8991"/>
+        <CursorPos X="7" Y="8982"/>
         <UsageCount Value="100"/>
         <Bookmarks Count="7">
           <Item0 X="11" Y="13521" ID="9"/>
@@ -148,8 +148,8 @@
         <UnitName Value="uDCLUtils"/>
         <EditorIndex Value="1"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="2503"/>
-        <CursorPos X="38" Y="2519"/>
+        <TopLine Value="2052"/>
+        <CursorPos X="22" Y="2135"/>
         <UsageCount Value="100"/>
         <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
@@ -276,12 +276,10 @@
       <Unit29>
         <Filename Value="C:\lazarus\fpc\2.6.4\source\rtl\win\sysutils.pp"/>
         <UnitName Value="sysutils"/>
-        <EditorIndex Value="7"/>
         <WindowIndex Value="0"/>
         <TopLine Value="42"/>
         <CursorPos X="10" Y="61"/>
         <UsageCount Value="44"/>
-        <Loaded Value="True"/>
       </Unit29>
       <Unit30>
         <Filename Value="C:\lazarus\fpc\2.6.4\source\rtl\win\wininc\redef.inc"/>
@@ -816,7 +814,7 @@
         <UsageCount Value="5"/>
       </Unit95>
       <Unit96>
-        <Filename Value="..\..\..\..\Soft\zeossvn\zeoslib-code-0\src\component\ZAbstractRODataset.pas"/>
+        <Filename Value="D:\Soft\zeossvn\zeoslib-code-0\src\component\ZAbstractRODataset.pas"/>
         <UnitName Value="ZAbstractRODataset"/>
         <WindowIndex Value="0"/>
         <TopLine Value="522"/>
@@ -996,12 +994,10 @@
       <Unit118>
         <Filename Value="C:\lazarus\fpc\2.6.4\source\packages\winunits-base\src\shellapi.pp"/>
         <UnitName Value="ShellApi"/>
-        <EditorIndex Value="6"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1461"/>
         <CursorPos X="1" Y="1478"/>
         <UsageCount Value="44"/>
-        <Loaded Value="True"/>
       </Unit118>
       <Unit119>
         <Filename Value="C:\lazarus\components\ibx\runtime\IBVisualConst.pas"/>
@@ -1026,128 +1022,128 @@
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="12479" Column="1" TopLine="12468"/>
+        <Caret Line="12510" Column="1" TopLine="12497"/>
       </Position1>
       <Position2>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="12481" Column="1" TopLine="12468"/>
+        <Caret Line="12511" Column="1" TopLine="12497"/>
       </Position2>
       <Position3>
-        <Filename Value="uUDL.pas"/>
-        <Caret Line="12482" Column="1" TopLine="12468"/>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="2485" Column="17" TopLine="2467"/>
       </Position3>
       <Position4>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="12479" Column="1" TopLine="12468"/>
+        <Caret Line="8919" Column="41" TopLine="8912"/>
       </Position4>
       <Position5>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="12484" Column="1" TopLine="12468"/>
+        <Caret Line="8921" Column="1" TopLine="8912"/>
       </Position5>
       <Position6>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="12510" Column="1" TopLine="12497"/>
+        <Caret Line="8923" Column="1" TopLine="8912"/>
       </Position6>
       <Position7>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="12511" Column="1" TopLine="12497"/>
+        <Caret Line="8924" Column="1" TopLine="8912"/>
       </Position7>
       <Position8>
-        <Filename Value="uDCLUtils.pas"/>
-        <Caret Line="2485" Column="17" TopLine="2467"/>
+        <Filename Value="uUDL.pas"/>
+        <Caret Line="8925" Column="1" TopLine="8915"/>
       </Position8>
       <Position9>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="8919" Column="41" TopLine="8912"/>
+        <Caret Line="8926" Column="1" TopLine="8915"/>
       </Position9>
       <Position10>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="8921" Column="1" TopLine="8912"/>
+        <Caret Line="8927" Column="1" TopLine="8915"/>
       </Position10>
       <Position11>
-        <Filename Value="uUDL.pas"/>
-        <Caret Line="8923" Column="1" TopLine="8912"/>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="2496" Column="32" TopLine="2480"/>
       </Position11>
       <Position12>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="8924" Column="1" TopLine="8912"/>
+        <Caret Line="8922" Column="35" TopLine="8903"/>
       </Position12>
       <Position13>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="8925" Column="1" TopLine="8915"/>
+        <Caret Line="8921" Column="1" TopLine="8903"/>
       </Position13>
       <Position14>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="8926" Column="1" TopLine="8915"/>
+        <Caret Line="8923" Column="1" TopLine="8903"/>
       </Position14>
       <Position15>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="8927" Column="1" TopLine="8915"/>
+        <Caret Line="8924" Column="1" TopLine="8903"/>
       </Position15>
       <Position16>
         <Filename Value="uDCLUtils.pas"/>
-        <Caret Line="2496" Column="32" TopLine="2480"/>
+        <Caret Line="2487" Column="29" TopLine="2480"/>
       </Position16>
       <Position17>
-        <Filename Value="uUDL.pas"/>
-        <Caret Line="8922" Column="35" TopLine="8903"/>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="2490" Column="34" TopLine="2480"/>
       </Position17>
       <Position18>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="8921" Column="1" TopLine="8903"/>
+        <Caret Line="8919" Column="1" TopLine="8903"/>
       </Position18>
       <Position19>
-        <Filename Value="uUDL.pas"/>
-        <Caret Line="8923" Column="1" TopLine="8903"/>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="2519" Column="38" TopLine="2503"/>
       </Position19>
       <Position20>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="8924" Column="1" TopLine="8903"/>
+        <Caret Line="8983" Column="1" TopLine="8963"/>
       </Position20>
       <Position21>
-        <Filename Value="uDCLUtils.pas"/>
-        <Caret Line="2487" Column="29" TopLine="2480"/>
+        <Filename Value="uUDL.pas"/>
+        <Caret Line="8984" Column="1" TopLine="8963"/>
       </Position21>
       <Position22>
-        <Filename Value="uDCLUtils.pas"/>
-        <Caret Line="2490" Column="34" TopLine="2480"/>
+        <Filename Value="uUDL.pas"/>
+        <Caret Line="8985" Column="1" TopLine="8963"/>
       </Position22>
       <Position23>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="8919" Column="1" TopLine="8903"/>
+        <Caret Line="8986" Column="1" TopLine="8963"/>
       </Position23>
       <Position24>
-        <Filename Value="uDCLUtils.pas"/>
-        <Caret Line="2519" Column="38" TopLine="2503"/>
+        <Filename Value="uUDL.pas"/>
+        <Caret Line="8987" Column="1" TopLine="8963"/>
       </Position24>
       <Position25>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="8983" Column="1" TopLine="8963"/>
+        <Caret Line="8988" Column="1" TopLine="8963"/>
       </Position25>
       <Position26>
-        <Filename Value="uUDL.pas"/>
-        <Caret Line="8984" Column="1" TopLine="8963"/>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="2519" Column="38" TopLine="2503"/>
       </Position26>
       <Position27>
-        <Filename Value="uUDL.pas"/>
-        <Caret Line="8985" Column="1" TopLine="8963"/>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="2134" Column="54" TopLine="2129"/>
       </Position27>
       <Position28>
-        <Filename Value="uUDL.pas"/>
-        <Caret Line="8986" Column="1" TopLine="8963"/>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="33" Column="43" TopLine="14"/>
       </Position28>
       <Position29>
-        <Filename Value="uUDL.pas"/>
-        <Caret Line="8987" Column="1" TopLine="8963"/>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="2164" Column="87" TopLine="2135"/>
       </Position29>
       <Position30>
-        <Filename Value="uUDL.pas"/>
-        <Caret Line="8988" Column="1" TopLine="8963"/>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="34" Column="44" TopLine="15"/>
       </Position30>
     </JumpHistory>
   </ProjectSession>
   <Debugging>
-    <BreakPoints Count="7">
+    <BreakPoints Count="6">
       <Item1>
         <Kind Value="bpkSource"/>
         <WatchScope Value="wpsLocal"/>
@@ -1190,13 +1186,6 @@
         <Source Value="uDCLUtils.pas"/>
         <Line Value="2493"/>
       </Item6>
-      <Item7>
-        <Kind Value="bpkSource"/>
-        <WatchScope Value="wpsLocal"/>
-        <WatchKind Value="wpkWrite"/>
-        <Source Value="uUDL.pas"/>
-        <Line Value="8983"/>
-      </Item7>
     </BreakPoints>
     <Watches Count="1">
       <Item1>

@@ -1124,20 +1124,6 @@ var
     Result:=(dmData.FindComponent(QName) as TDCLDialogQuery);
   end;
 
-  function GetTimeFormat(mSec: Cardinal): String;
-  var
-    h, m, S: Cardinal;
-  begin
-    h:=mSec div 3600000;
-    Dec(mSec, h*3600000);
-    m:=mSec div 60000;
-    Dec(mSec, m*60000);
-    S:=mSec div 1000;
-    Dec(mSec, S*1000);
-
-    Result:=IntToStr(h)+' ч. '+IntToStr(m)+' м. '+IntToStr(S)+' с. '+IntToStr(mSec)+' мсек.';
-  end;
-
   function CreateQuery: TDCLDialogQuery;
   begin
     try
@@ -1149,17 +1135,6 @@ var
     Except
       Result:=nil;
     end
-  end;
-
-  function TrimSQLComment(SQLText: String): String;
-  var
-    p1, p2: Word;
-  begin
-    p1:=Pos('/*', SQLText);
-    p2:=Pos('*/', SQLText);
-    If ((p1>0)and(p1<p2)) Then
-      Delete(SQLText, p1, p2-p1);
-    Result:=SQLText;
   end;
 
   procedure SetParams(var DestQuery: TDCLDialogQuery; SourceFieldsSet: TFields);
@@ -14921,6 +14896,11 @@ begin
         VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'writer8');
         end;
       Except
+        Sheets:=Unassigned;
+        Sheet:=Unassigned;
+        Document:=Unassigned;
+        Desktop:=Unassigned;
+        OO:=Unassigned;
         ShowErrorMessage( - 6002, '');
         Exit;
       end;
@@ -15061,6 +15041,11 @@ begin
           Document.Close(True);
           Document:=Unassigned;
         end;
+        Sheets:=Unassigned;
+        Sheet:=Unassigned;
+        Document:=Unassigned;
+        Desktop:=Unassigned;
+        OO:=Unassigned;
 
         If ToPDF Then
           Exec(FakeFileExt(AddToFileName(FileName, '_'+IntToStr(DocNum)), 'pdf'), '');
@@ -15126,6 +15111,11 @@ begin
         Sheets:=Document.GetSheets;
         Sheet:=Sheets.getByIndex(0);
       Except
+        Sheets:=Unassigned;
+        Sheet:=Unassigned;
+        Document:=Unassigned;
+        Desktop:=Unassigned;
+        OO:=Unassigned;
         ShowErrorMessage( - 6001, '');
         Exit;
       end;
@@ -15134,6 +15124,11 @@ begin
         StartRow:=Range.RangeAddress.StartRow;
         StartCol:=Range.RangeAddress.StartColumn;
       Except
+        Sheets:=Unassigned;
+        Sheet:=Unassigned;
+        Document:=Unassigned;
+        Desktop:=Unassigned;
+        OO:=Unassigned;
         ShowErrorMessage( - 5002, '');
         Exit;
       end;
@@ -15230,6 +15225,10 @@ begin
         Document.Close(True);
         Document:=Unassigned;
       end;
+      Sheets:=Unassigned;
+      Sheet:=Unassigned;
+      Document:=Unassigned;
+      Desktop:=Unassigned;
       OO:=Unassigned;
 
       If Not Save Then
@@ -15956,7 +15955,7 @@ end;
 
 function TDCLTextReport.SaveReport(FileName: String): String;
 var
-  i: Word;
+  i: Integer;
 begin
   If DialogRes=mrCancel Then
     Exit;
@@ -15988,7 +15987,7 @@ begin
 
   Case CodePage of
   rcp866:
-  Report.Text:=ToDOSf(Report.Text);
+  Report.Text:=ToDOS(Report.Text);
   end;
   Report.SaveToFile(FileName);
   Result:=FileName;
@@ -16000,7 +15999,7 @@ end;
 
 function TDCLTextReport.SetVarToControl(VarName: String): Integer;
 var
-  l: Word;
+  l: Integer;
 begin
   l:=Length(VarsToControls);
   SetLength(VarsToControls, l+1);

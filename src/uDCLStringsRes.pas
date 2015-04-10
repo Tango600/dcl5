@@ -16,9 +16,10 @@ type
     msChangePassord, msOldM, msNewM, msPassword, msConfirm, msHashed, msToHashing, msToAll, msIn,
     msLogonToSystem, msUserName, msNoYes, msDenyMessage, msAccessLevelsSet, msNotifyActionsSet,
     msCodePage, msLock, msUnLock, msChoose, msEditings, msData, msReset, msSettings, msFields,
-    msBookmarks);
+    msBookmarks, msHour, msMinute, msSecond, msMSecond, msModeOff, msModeOn);
 
 function GetDCLMessageString(MesID: TStringMessages): String;
+Function ToDOS(Buf: String): String;
 
 implementation
 
@@ -213,11 +214,44 @@ begin
   Result:='настройки';
   msFields:
   Result:='полей';
+  msHour:
+  Result:='ч';
+  msMinute:
+  Result:='м';
+  msSecond:
+  Result:='сек';
+  msMSecond:
+  Result:='мсек';
+  msModeOff:
+  Result:='Выкл';
+  msModeOn:
+  Result:='Вкл';
 //  Result:='';
 //  Result:='';
 //  Result:='';
 //  Result:='';
   end;
 end;
+
+
+Function ToDOS(Buf: String): String;
+Var
+  i: Cardinal;
+Begin
+  For i:=1 To Length(Buf) Do
+  Begin
+    Case Ord(Buf[i]) Of
+    168:
+    Buf[i]:=Chr(240);
+    184:
+    Buf[i]:=Chr(241);
+    192..239:
+    Buf[i]:=Chr(Ord(Buf[i])-64);
+    240..255:
+    Buf[i]:=Chr(Ord(Buf[i])-16);
+    End
+  End;
+  Result:=Buf;
+End;
 
 end.

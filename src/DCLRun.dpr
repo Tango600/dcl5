@@ -60,8 +60,7 @@ uses
   {$ENDIF}
   uLZW in 'uLZW.pas',
   FileBuffer in 'FileBuffer.pas',
-  uDCLQuery in 'uDCLQuery.pas',
-  uDCLDataModule in 'uDCLDataModule.pas';
+  uDCLQuery in 'uDCLQuery.pas';
 
 {$R DCLRun.res}
 
