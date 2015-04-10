@@ -212,6 +212,8 @@ Begin
   MessageText:='“аблица пользователей не найдена. '+IntToStr(ErrorCode);
   -6001, -6002: // OOo
   MessageText:='OpenOffice не установлен. '+IntToStr(ErrorCode);
+  -6003:
+  MessageText:='ќткрыть документ не удалось. '+IntToStr(ErrorCode);
   -6000, -6010:
   MessageText:='Microsoft Office не установлен. '+IntToStr(ErrorCode);
   -6011:

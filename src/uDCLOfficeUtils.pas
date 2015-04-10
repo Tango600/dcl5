@@ -15,6 +15,7 @@ Procedure WordInsert(var MsWord: OleVariant; Data, info: Variant;
   _bold, _italic, _StrikeThrough, _Underline: Integer; _Size: Integer; _center: Boolean);
 Procedure WordOpen(var MsWord: OleVariant; FileName: OleVariant);
 Procedure WordClose(var MsWord: OleVariant);
+procedure WordDocumentClose(var MsWord: OleVariant; Save:Boolean);
 Function CloseDocument(var MsWord: OleVariant): Boolean;
 Function SaveDocumentAs(var MsWord: OleVariant; FileName: String): Boolean;
 Procedure WordRun(var MsWord: OleVariant);
@@ -568,6 +569,17 @@ Begin
   Begin
     MsWord.Quit;
     WordRuning:=False;
+  End;
+End;
+
+procedure WordDocumentClose(var MsWord: OleVariant; Save:Boolean);
+var
+  StV: OleVariant;
+Begin
+  If WordRuning Then
+  Begin
+    StV:=Save;
+    MsWord.ActiveDocument.Close(StV, EmptyParam, EmptyParam);
   End;
 End;
 

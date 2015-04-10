@@ -875,10 +875,10 @@ Type
     constructor Create(DCLLogOn: TDCLLogOn; DCLGrid: TDCLGrid);
     destructor Destroy; override;
 
-    procedure ReportOpenOfficeWriter(ParamStr: String; Save: Boolean);
-    procedure ReportOpenOfficeCalc(ParamStr: String; Save: Boolean);
-    procedure ReportWord(ParamStr: String; Save: Boolean);
-    procedure ReportExcel(ParamStr: String; Save: Boolean);
+    procedure ReportOpenOfficeWriter(ParamStr: String; Save, Close: Boolean);
+    procedure ReportOpenOfficeCalc(ParamStr: String; Save, Close: Boolean);
+    procedure ReportWord(ParamStr: String; Save, Close: Boolean);
+    procedure ReportExcel(ParamStr: String; Save, Close: Boolean);
   end;
 
   { TBaseBinStore }
@@ -5391,7 +5391,7 @@ end;
 
 procedure TDCLCommand.ExecCommand(Command: String; DCLForm: TDCLForm);
 var
-  ModalOpen, InContext, Enything, DownLoadCancel, DownloadProgress: Boolean;
+  ModalOpen, InContext, Enything, EnythingElse, DownLoadCancel, DownloadProgress: Boolean;
   IfCounter, IfSign: Byte;
   RecCount, ScriptStrings, RetPoint, v1, v2, v3, RepIdParams: Integer;
   ScrStr, TmpStr, tmpStr1, tmpStr2, tmpStr3, tmp1, tmp2, tmp3, tmp4, RepTable: String;
@@ -6378,9 +6378,10 @@ begin
             If Assigned(FDCLForm) Then
             begin
               Enything:=FindParam('Save=', ScrStr)='1';
+              EnythingElse:=FindParam('Close=', ScrStr)='1';
               OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
                 FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-              OfficeReport.ReportExcel(ScrStr, Enything);
+              OfficeReport.ReportExcel(ScrStr, Enything, EnythingElse);
             end;
           end;
 
@@ -6391,7 +6392,8 @@ begin
               OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
                 FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
               Enything:=FindParam('Save=', ScrStr)='1';
-              OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything);
+              EnythingElse:=FindParam('Close=', ScrStr)='1';
+              OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything, EnythingElse);
             end;
           end;
 
@@ -6400,14 +6402,15 @@ begin
             If Assigned(FDCLForm) Then
             begin
               Enything:=FindParam('Save=', ScrStr)='1';
+              EnythingElse:=FindParam('Close=', ScrStr)='1';
               TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
               OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
                 FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
               Case GetPossibleOffice(dtSheet, ConvertOfficeType(TmpStr)) of
               odtOO:
-              OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything);
+              OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything, EnythingElse);
               odtMSO:
-              OfficeReport.ReportExcel(ScrStr, Enything);
+              OfficeReport.ReportExcel(ScrStr, Enything, EnythingElse);
               odtNone:
               ShowErrorMessage( - 6200, '');
               end;
@@ -6419,9 +6422,10 @@ begin
             If Assigned(FDCLForm) Then
             begin
               Enything:=FindParam('Save=', ScrStr)='1';
+              EnythingElse:=FindParam('Close=', ScrStr)='1';
               OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
                 FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-              OfficeReport.ReportWord(ScrStr, Enything);
+              OfficeReport.ReportWord(ScrStr, Enything, EnythingElse);
             end;
           end;
 
@@ -6430,9 +6434,10 @@ begin
             If Assigned(FDCLForm) Then
             begin
               Enything:=FindParam('Save=', ScrStr)='1';
+              EnythingElse:=FindParam('Close=', ScrStr)='1';
               OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
                 FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-              OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything);
+              OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything, EnythingElse);
             end;
           end;
 
@@ -6441,14 +6446,15 @@ begin
             If Assigned(FDCLForm) Then
             begin
               Enything:=FindParam('Save=', ScrStr)='1';
+              EnythingElse:=FindParam('Close=', ScrStr)='1';
               TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
               OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
                 FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
               Case GetPossibleOffice(dtSheet, ConvertOfficeType(TmpStr)) of
               odtOO:
-              OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything);
+              OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything, EnythingElse);
               odtMSO:
-              OfficeReport.ReportWord(ScrStr, Enything);
+              OfficeReport.ReportWord(ScrStr, Enything, EnythingElse);
               odtNone:
               ShowErrorMessage( - 6200, '');
               end;
@@ -14839,7 +14845,7 @@ begin
   ExecApp('"'+GPT.Viewer+'" "'+IncludeTrailingPathDelimiter(AppConfigDir)+'table.tmp"');
 end;
 
-procedure TDCLOfficeReport.ReportOpenOfficeWriter(ParamStr: String; Save: Boolean);
+procedure TDCLOfficeReport.ReportOpenOfficeWriter(ParamStr: String; Save, Close: Boolean);
 var
   TextPointer, CursorPointer, BookmarksSupplier, InsLength, BookMark: Variant;
   BookmarckNum, LayotCount, FontSize: Word;
@@ -14939,8 +14945,17 @@ begin
       DocNum:=1;
       While Not DCLQuery.Eof do
       begin
-        Document:=Desktop.LoadComponentFromURL(FileNameToURL(FileName), '_blank', 0, VariantArray);
-        TextPointer:=Document.GetText;
+        Try
+          Document:=Desktop.LoadComponentFromURL(FileNameToURL(FileName), '_blank', 0, VariantArray);
+          OOSetVisible(Document, False);
+          TextPointer:=Document.GetText;
+        Except
+          Document:=Unassigned;
+          Desktop:=Unassigned;
+          OO:=Unassigned;
+          ShowErrorMessage( - 6003, '');
+          Exit;
+        End;
         CursorPointer:=TextPointer.CreateTextCursor;
 
         For BookmarckNum:=0 to LayotCount-1 do
@@ -15011,6 +15026,7 @@ begin
               CursorPointer.setString(InsStr);
             end;
           Except
+            OOSetVisible(Document, True);
             ShowErrorMessage( - 5005, '');
           end;
         end;
@@ -15021,6 +15037,7 @@ begin
         If ToHTML Then
           OOExportToFormat(Document, AddToFileName(FileName, '_'+IntToStr(DocNum)), 'html');
 
+        OOSetVisible(Document, True);
         If Save Then
         begin
           Case OfficeDocumentFormat of
@@ -15038,14 +15055,19 @@ begin
 
           Document.StoreAsURL(FileNameToURL(AddToFileName(FileName, '_'+IntToStr(DocNum))),
             VariantArray);
+        end;
+
+        If Close then
+        Begin
           Document.Close(True);
           Document:=Unassigned;
-        end;
+        End;
+
         Sheets:=Unassigned;
         Sheet:=Unassigned;
-        Document:=Unassigned;
-        Desktop:=Unassigned;
-        OO:=Unassigned;
+        //Document:=Unassigned;
+        //Desktop:=Unassigned;
+        //OO:=Unassigned;
 
         If ToPDF Then
           Exec(FakeFileExt(AddToFileName(FileName, '_'+IntToStr(DocNum)), 'pdf'), '');
@@ -15058,23 +15080,16 @@ begin
       end;
       DCLQuery.Close;
 
-      If Not Save Then
-        If FileName<>'' Then
-          If FileExists(FileName) Then
-            try
-              DeleteFile(PChar(FileName));
-            Except
-              //
-            end;
-
-      OO:=Unassigned;
+      Sheets:=Unassigned;
+      Sheet:=Unassigned;
+      //OO:=Unassigned;
     end
     Else
       ShowErrorMessage( - 5006, FileName);
 {$ENDIF}
 end;
 
-procedure TDCLOfficeReport.ReportOpenOfficeCalc(ParamStr: String; Save: Boolean);
+procedure TDCLOfficeReport.ReportOpenOfficeCalc(ParamStr: String; Save, Close: Boolean);
 var
   SQLStr, FileName, ColorStr, Ext: String;
   ToPDF, ToHTML, EnableRowChColor, EnableColChColor: Boolean;
@@ -15107,9 +15122,6 @@ begin
         odtOO, odtPossible:
         VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'calc8');
         end;
-        Document:=Desktop.LoadComponentFromURL(FileNameToURL(FileName), '_blank', 0, VariantArray);
-        Sheets:=Document.GetSheets;
-        Sheet:=Sheets.getByIndex(0);
       Except
         Sheets:=Unassigned;
         Sheet:=Unassigned;
@@ -15119,11 +15131,28 @@ begin
         ShowErrorMessage( - 6001, '');
         Exit;
       end;
+      Try
+        Document:=Desktop.LoadComponentFromURL(FileNameToURL(FileName), '_blank', 0, VariantArray);
+        OOSetVisible(Document, False);
+        Sheets:=Document.GetSheets;
+        Sheet:=Sheets.getByIndex(0);
+      Except
+        Sheets:=Unassigned;
+        Sheet:=Unassigned;
+        Document:=Unassigned;
+        Desktop:=Unassigned;
+        OO:=Unassigned;
+        ShowErrorMessage( - 6003, '');
+        Exit;
+      End;
+
       try
         Range:=Sheet.getCellRangeByName('DATA');
         StartRow:=Range.RangeAddress.StartRow;
         StartCol:=Range.RangeAddress.StartColumn;
       Except
+        OOSetVisible(Document, True);
+        Document.Close(False);
         Sheets:=Unassigned;
         Sheet:=Unassigned;
         Document:=Unassigned;
@@ -15146,6 +15175,7 @@ begin
       try
         DCLQuery.Open;
       Except
+        OOSetVisible(Document, True);
         ShowErrorMessage( - 1104, 'SQL='+SQLStr);
       end;
       DCLQuery.First;
@@ -15206,6 +15236,7 @@ begin
       If ToHTML Then
         OOExportToFormat(Document, FileName, 'html');
 
+      OOSetVisible(Document, True);
       If Save Then
       begin
         Case OfficeDocumentFormat of
@@ -15222,23 +15253,16 @@ begin
         end;
 
         Document.StoreAsURL(FileNameToURL(FileName), VariantArray);
+      end;
+
+      If Close Then
+      Begin
         Document.Close(True);
         Document:=Unassigned;
-      end;
+      End;
+
       Sheets:=Unassigned;
       Sheet:=Unassigned;
-      Document:=Unassigned;
-      Desktop:=Unassigned;
-      OO:=Unassigned;
-
-      If Not Save Then
-        If FileName<>'' Then
-          If FileExists(FileName) Then
-            try
-              DeleteFile(PChar(FileName));
-            Except
-              //
-            end;
 
       If ToPDF Then
         Exec(FakeFileExt(FileName, 'pdf'), '');
@@ -15251,7 +15275,7 @@ begin
 {$ENDIF}
 end;
 
-procedure TDCLOfficeReport.ReportWord(ParamStr: String; Save: Boolean);
+procedure TDCLOfficeReport.ReportWord(ParamStr: String; Save, Close: Boolean);
 {$IFDEF MSWINDOWS}
 var
   StV: OleVariant;
@@ -15362,26 +15386,29 @@ begin
 
           WordInsert(MsWord, BookmarckName, StV, FontStyleRec.Bold, FontStyleRec.italic,
             FontStyleRec.StrikeThrough, FontStyleRec.Undeline, FontSize, FontStyleRec.Center);
-
-          If Save Then
-          begin
-            StV:=AddToFileName(FileName, '_'+IntToStr(DocNum));
-            If WordVer=9 Then
-              MsWord.ActiveDocument.SaveAs(StV, EmptyParam, EmptyParam, EmptyParam, EmptyParam,
-                EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam) // Word 2000
-            Else If WordVer>9 Then
-              MsWord.ActiveDocument.SaveAs(StV, EmptyParam, EmptyParam, EmptyParam, EmptyParam,
-                EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam,
-                EmptyParam, EmptyParam, EmptyParam, EmptyParam); // Word XP
-
-            StV:=True;
-            MsWord.ActiveDocument.Close(StV, EmptyParam, EmptyParam);
-          end;
         end;
+
+        If Save Then
+        begin
+          StV:=AddToFileName(FileName, '_'+IntToStr(DocNum));
+          If WordVer=9 Then
+            MsWord.ActiveDocument.SaveAs(StV, EmptyParam, EmptyParam, EmptyParam, EmptyParam,
+              EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam) // Word 2000
+          Else If WordVer>9 Then
+            MsWord.ActiveDocument.SaveAs(StV, EmptyParam, EmptyParam, EmptyParam, EmptyParam,
+              EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam,
+              EmptyParam, EmptyParam, EmptyParam, EmptyParam); // Word XP
+
+        end;
+
+        If Close then
+        Begin
+          CloseDocument(MsWord);
+          WordClose(MsWord);
+        End;
+
         DCLQuery.Next;
       end;
-      If Save Then
-        WordClose(MsWord);
     end
     Else
       ShowErrorMessage( - 5004, FileName);
@@ -15395,7 +15422,7 @@ begin
   ///
 end;
 
-procedure TDCLOfficeReport.ReportExcel(ParamStr: String; Save: Boolean);
+procedure TDCLOfficeReport.ReportExcel(ParamStr: String; Save, Close: Boolean);
 var
   SQLStr, FileName, ColorStr: String;
   v1: Byte;
@@ -15439,6 +15466,7 @@ begin
       try
         DCLQuery.Open;
       Except
+        Excel.Visible:=True;
         ShowErrorMessage( - 1104, 'SQL='+SQLStr);
       end;
       DCLQuery.First;
@@ -15483,14 +15511,13 @@ begin
         DCLQuery.Next;
       end;
       DCLQuery.Close;
+      Excel.Visible:=True;
 
       If Save Then
-      begin
         ExcelSave(Excel, FileName);
+
+      if Close then
         ExcelQuit(Excel);
-      end
-      Else
-        Excel.Visible:=True;
     end
     Else
       ShowErrorMessage( - 5004, FileName);
