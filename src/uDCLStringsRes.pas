@@ -3,6 +3,9 @@ unit uDCLStringsRes;
 
 interface
 
+uses
+  SysUtils;
+
 type
   TStringMessages=(msNone, msClose, msOpen, msEdit, msDelete, msModified, msInputVulues, msInBegin,
     msInEnd, msPrior, msNext, msCancel, msRefresh, msInsert, msPost, msEmptyUserName, msPage,
@@ -19,6 +22,7 @@ type
     msBookmarks, msHour, msMinute, msSecond, msMSecond, msModeOff, msModeOn);
 
 function GetDCLMessageString(MesID: TStringMessages): String;
+function GetDCLErrorString(ErrorCode: Integer; AddText: String=''):string;
 Function ToDOS(Buf: String): String;
 
 implementation
@@ -233,6 +237,63 @@ begin
   end;
 end;
 
+function GetDCLErrorString(ErrorCode: Integer; AddText: String=''):string;
+Var
+  MessageText: String;
+Begin
+  MessageText:='';
+  Case ErrorCode Of
+  -2, -3:
+  MessageText:='Сбой соединения';
+  -1100, -1101, -1119, -1102, -1106, -1107, -1112, -1200, -1201, -1113, -1114, -1115, -1116, -1118:
+  MessageText:='Ошибочный запрос. '+IntToStr(ErrorCode);
+  -1111:
+  MessageText:='Ошибочный запрос или не верные условия поиска. '+IntToStr(ErrorCode);
+  -1103, -1104, -1105, -1108, -1110, -1117:
+  MessageText:='Ошибка в выражении. '+IntToStr(ErrorCode);
+  -1109:
+  MessageText:='Ошибочный запрос в параметре. '+IntToStr(ErrorCode);
+  -4000:
+  MessageText:='Недостаточно или много параметров в предложении. '+IntToStr(ErrorCode);
+  -4002:
+  MessageText:='Неверный формат полей. '+IntToStr(ErrorCode);
+  -5002:
+  MessageText:='Нет области данных "DATA". '+IntToStr(ErrorCode);
+  -5003:
+  MessageText:='Нет таблицы шаблонов - '+IntToStr(ErrorCode);
+  -5004:
+  MessageText:='Нет такого шаблона - '+IntToStr(ErrorCode);
+  -5005:
+  MessageText:='Такой метки нет. '+IntToStr(ErrorCode);
+  -5006, -5007:
+  MessageText:='Нет файла шаблона. '+IntToStr(ErrorCode);
+  -5008:
+  MessageText:='Таблица пользователей не найдена. '+IntToStr(ErrorCode);
+  -6001, -6002: // OOo
+  MessageText:='OpenOffice не установлен. '+IntToStr(ErrorCode);
+  -6003:
+  MessageText:='Открыть документ не удалось. '+IntToStr(ErrorCode);
+  -6000, -6010:
+  MessageText:='Microsoft Office не установлен. '+IntToStr(ErrorCode);
+  -6011:
+  MessageText:='Требуется WORD 2000/XP или выше. '+IntToStr(ErrorCode);
+  -6020:
+  MessageText:='Никакой офис не установлен. '+IntToStr(ErrorCode);
+  -7000:
+  MessageText:='Ошибка преобразования. '+IntToStr(ErrorCode);
+  -8000:
+  MessageText:='Ошибка запуска. '+IntToStr(ErrorCode);
+  -8001:
+  MessageText:='Файл не найден. '+IntToStr(ErrorCode);
+  -9000:
+  MessageText:='Ошибка в выражении прав доступа. '+IntToStr(ErrorCode);
+  -10000, -10001, -10002:
+  MessageText:='Поле не найдено. '+IntToStr(ErrorCode);
+  Else
+    MessageText:=AddText;
+  End;
+  Result:=MessageText;
+End;
 
 Function ToDOS(Buf: String): String;
 Var

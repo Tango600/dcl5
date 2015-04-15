@@ -2938,7 +2938,11 @@ procedure TDCLForm.OnCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
   CanClose:=not NoCloseable;
   If NoCloseable then
+  {$IFDEF MSWINDOWS}
     Beep(500, 500);
+  {$ELSE}
+    Beep;
+  {$ENDIF}
 end;
 
 procedure TDCLForm.SaveFormPos;
@@ -6070,12 +6074,12 @@ begin
             If tmpStr1='' Then
             begin
               If tmpStr2='' Then
-                tmp1:=ExtractFileNameEx(TmpStr)
+                tmp1:=ExtractFileName(TmpStr)
               Else
                 tmp1:=tmpStr2;
             end
             Else
-              TmpStr:=tmpStr1+ExtractFileNameEx(TmpStr);
+              TmpStr:=tmpStr1+ExtractFileName(TmpStr);
 
             If FindParam('Progress=', ScrStr)='1' Then
               DownloadProgress:=True
@@ -8492,7 +8496,7 @@ begin
   begin
     If GPT.DBPath<>'' Then
     begin
-      If Pos(':\', GPT.DBPath)=0 Then
+      If Not IsFullPAth(GPT.DBPath) Then
         GPT.DBPath:=ExtractFilePath(Application.ExeName)+GPT.DBPath;
 
       If GPT.ServerName<>'' Then
@@ -8576,7 +8580,7 @@ begin
   begin
     If GPT.DBPath<>'' Then
     begin
-      If Pos(':\', GPT.DBPath)=0 Then
+      If Not IsFullPAth(GPT.DBPath) Then
         GPT.DBPath:=ExtractFilePath(Application.ExeName)+GPT.DBPath;
 
       FDBLogOn.ConnectorType:=GPT.DBType;
@@ -10006,11 +10010,13 @@ begin
   ItemMenu.Caption:='Î...';
   ItemMenu.OnClick:=DCLMainLogOn.About;
 
+  {$IFDEF MSWINDOWS}
   SetMenuItemBitmaps(ItemMenu.Handle,
     0,
     MF_BYPOSITION,
     Bmp1.Bitmap.Handle,
     Bmp1.Bitmap.Handle);
+  {$ENDIF}
 
   MainMenu.Items.Add(ItemMenu);
 end;
@@ -15112,8 +15118,8 @@ begin
     If FileExists(FileName) Then
     begin
       try
-        If VarIsEmpty(OO) Then
-          OO:=CreateOleObject('com.sun.star.ServiceManager');
+        //If VarIsEmpty(OO) Then
+        OO:=CreateOleObject('com.sun.star.ServiceManager');
         Desktop:=OO.CreateInstance('com.sun.star.frame.Desktop');
         VariantArray:=VarArrayCreate([0, 0], varVariant);
         Case OfficeTemplateFormat of
@@ -16456,7 +16462,6 @@ end;
 
 procedure InitDCL(DBLogOn: TDBLogOn);
 var
-  TmpStr: String;
   v1: Integer;
   ShowLogOnForm: Boolean;
   ParamsQuery, RolesQuery1: TDCLDialogQuery;
@@ -16466,6 +16471,9 @@ var
 {$ENDIF}
 begin
   ShowFormPanel:=True;
+  Path:=ExtractFilePath(Application.ExeName);
+  SetCurrentDir(Path);
+
   InitGetAppConfigDir;
   DCLMainLogOn:=TDCLLogOn.Create(DBLogOn);
   DCLMainLogOn.RoleOK:=lsNotNeed;
@@ -16580,9 +16588,6 @@ begin
 {$ELSE}
       GPT.Viewer:='pluma';
 {$ENDIF}
-    TmpStr:=Application.ExeName;
-    Path:=ExtractFilePath(TmpStr);
-    SetCurrentDir(Path);
 
     TransParams:=True;
 

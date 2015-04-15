@@ -12,7 +12,9 @@ uses
 {$IFDEF UNIX}
   cwstring, process, unix, libc, lclintf,
 {$ENDIF}
-{$IFDEF FPC}InterfaceBase,{$ENDIF}
+{$IFDEF FPC}
+  InterfaceBase, LCLType,
+{$ENDIF}
 {$IFNDEF FPC}
   JPEG,
 {$ENDIF}
@@ -43,10 +45,13 @@ Function LeadingZero(Const aVal: Word): String;
 Function CopyCut(Var S: String; From, Count: Word): String;
 //Function FindInArray(KeyWord:String; SourceArray:Array);
 
+{$IFDEF MSWINDOWS}
 procedure ShellExecute(const AWnd: HWND; const AOperation, AFileName: String; const AParameters: String = ''; const ADirectory: String = ''; const AShowCmd: Integer = SW_SHOWNORMAL);
+{$ENDIF}
+
 Function ExecAndWait(Const FileName: ShortString; Const WinState: Word; Wait:Boolean=True): Boolean;
 Procedure Exec(Const FileName, Directory: String);
-procedure ExecApp(const ACmdLine: String);
+Procedure ExecApp(const App: String);
 Procedure OpenDir(Dir: string);
 function GetComputerName: string;
 Function GetUserFromSystem: String;
@@ -67,7 +72,6 @@ Procedure TranslateProc(Var CallProc: String; Var Factor: Word; Query: TDCLDialo
 Function GetStringDataType(const S: String): TIsDigitType;
 function CheckStrFmtType(const S:string; SimplyFormatType:TSimplyFieldType):Boolean;
 
-Function ExtractFileNameEx(FileName: String): String;
 Function GetFileNameToTranslite(Const FullFileName: String): String;
 function PosInSet(SimbolsSet, SourceStr: String): Cardinal;
 Function ShiftDown: Boolean;
@@ -178,83 +182,30 @@ End;
 Function ShowErrorMessage(ErrorCode: Integer; AddText: String=''): Integer;
 Var
   MessageText: String;
-  Flg: Boolean;
 Begin
   Result:=0;
-  MessageText:='';
-  Flg:=True;
-  Case ErrorCode Of
-  -2, -3:
-  MessageText:='Сбой соединения';
-  -1100, -1101, -1119, -1102, -1106, -1107, -1112, -1200, -1201, -1113, -1114, -1115, -1116, -1118:
-  MessageText:='Ошибочный запрос. '+IntToStr(ErrorCode);
-  -1111:
-  MessageText:='Ошибочный запрос или не верные условия поиска. '+IntToStr(ErrorCode);
-  -1103, -1104, -1105, -1108, -1110, -1117:
-  MessageText:='Ошибка в выражении. '+IntToStr(ErrorCode);
-  -1109:
-  MessageText:='Ошибочный запрос в параметре. '+IntToStr(ErrorCode);
-  -4000:
-  MessageText:='Недостаточно или много параметров в предложении. '+IntToStr(ErrorCode);
-  -4002:
-  MessageText:='Неверный формат полей. '+IntToStr(ErrorCode);
-  -5002:
-  MessageText:='Нет области данных "DATA". '+IntToStr(ErrorCode);
-  -5003:
-  MessageText:='Нет таблицы шаблонов - '+IntToStr(ErrorCode);
-  -5004:
-  MessageText:='Нет такого шаблона - '+IntToStr(ErrorCode);
-  -5005:
-  MessageText:='Такой метки нет. '+IntToStr(ErrorCode);
-  -5006, -5007:
-  MessageText:='Нет файла шаблона. '+IntToStr(ErrorCode);
-  -5008:
-  MessageText:='Таблица пользователей не найдена. '+IntToStr(ErrorCode);
-  -6001, -6002: // OOo
-  MessageText:='OpenOffice не установлен. '+IntToStr(ErrorCode);
-  -6003:
-  MessageText:='Открыть документ не удалось. '+IntToStr(ErrorCode);
-  -6000, -6010:
-  MessageText:='Microsoft Office не установлен. '+IntToStr(ErrorCode);
-  -6011:
-  MessageText:='Требуется WORD 2000/XP или выше. '+IntToStr(ErrorCode);
-  -6020:
-  MessageText:='Никакой офис не установлен. '+IntToStr(ErrorCode);
-  -7000:
-  MessageText:='Ошибка преобразования. '+IntToStr(ErrorCode);
-  -8000:
-  MessageText:='Ошибка запуска. '+IntToStr(ErrorCode);
-  -8001:
-  MessageText:='Файл не найден. '+IntToStr(ErrorCode);
-  -9000:
-  MessageText:='Ошибка в выражении прав доступа. '+IntToStr(ErrorCode);
-  -10000, -10001, -10002:
-  MessageText:='Поле не найдено. '+IntToStr(ErrorCode);
-Else
-MessageText:=AddText;
-Flg:=False;
-  End;
+  MessageText:=GetDCLErrorString(ErrorCode, AddText);
 
   If ErrorCode<0 Then
   Begin
-    If Flg Then
+    If GPT.CurrentRunningScrString>0 Then
       MessageText:=SourceToInterface(MessageText)+' / '+AddText+LineEnding+
         SourceToInterface('В строке №(Визуальный/Коммандный) : '+
         IntToStr(GPT.CurrentRunningScrString)+'/-1');
-    // +IntToStr('-1'{GPT.CurrentRunningCmdString)}));
+
     Result:=MessageDlg(MessageText, mtError, [mbOK], 0);
   End
   Else
     Case ErrorCode Of
     1:
-    Result:=MessageDlg(MessageText, mtWarning, [mbOK], 0);
+      Result:=MessageDlg(MessageText, mtWarning, [mbOK], 0);
     0:
-    Result:=MessageDlg(MessageText, mtError, [mbOK], 0);
+      Result:=MessageDlg(MessageText, mtError, [mbOK], 0);
     9:
-    Result:=MessageDlg(MessageText, mtInformation, [mbOK], 0);
+      Result:=MessageDlg(MessageText, mtInformation, [mbOK], 0);
     10:
-    If MessageDlg(MessageText, mtConfirmation, mbOKCancel, 0)=1 Then
-      Result:=1;
+      If MessageDlg(MessageText, mtConfirmation, mbOKCancel, 0)=1 Then
+        Result:=1;
     End;
 end;
 
@@ -346,26 +297,9 @@ Begin
   FilePath:=ExtractFilePath(FullFileName);
 
   For i:=1 To Length(FileName) Do
-  Begin
     NewFileName:=NewFileName+FindCharIndex(FileName[i]);
-  End;
 
   Result:=FilePath+NewFileName;
-End;
-
-Function ExtractFileNameEx(FileName: String): String;
-Var
-  ti: Word;
-Begin
-  Result:='';
-  ti:=Length(FileName);
-  While (FileName[ti]<>PathDelim)And(FileName[ti]<>CrossDelim) Do
-  Begin
-    Dec(ti);
-    If ti<=0 then
-      Break;
-  End;
-  Result:=Copy(FileName, ti+1, Length(FileName));
 End;
 
 Function GetComputerName: String;
@@ -534,15 +468,15 @@ begin
   end;
 end;
 
-procedure ExecApp(const ACmdLine: String);
+procedure ExecApp(const App: String);
 var
   SI: TStartupInfo;
   PI: TProcessInformation;
   CmdLine: String;
 begin
-  Assert(ACmdLine <> '');
+  Assert(App <> '');
 
-  CmdLine := ACmdLine;
+  CmdLine := App;
   UniqueString(CmdLine);
 
   FillChar(SI, SizeOf(SI), 0);
@@ -687,7 +621,7 @@ Begin
   end;
 End;
 
-Procedure ExecApp(App: String);
+Procedure ExecApp(const App: String);
 Begin
   ExecuteApp(App);
 End;
@@ -1381,7 +1315,7 @@ Begin
         // ExtractFileName
         7:
         Begin
-          TmpStr:=ExtractFileNameEx(FunctionParams[1]);
+          TmpStr:=ExtractFileName(FunctionParams[1]);
         End;
 
         // SumWrite
@@ -2436,7 +2370,7 @@ end;
 
 function GetScreen:TBitmap;
 var
-  DC:HDC; //HWND;
+  DC:HDC;
 {$IFNDEF FPC}
   r:TRect;
   c:TCanvas;
@@ -2460,7 +2394,7 @@ begin
     c.Free;
   end;
 {$ELSE}
-  DC := WidgetSet.GetDC(0);
+  DC:=WidgetSet.GetDC(0);
   try
     Result.LoadFromDevice(DC);
   finally
@@ -2549,7 +2483,9 @@ function SaveFormatedBlock(Data:TMemoryStream; Width:Word):TMemoryStream;
 var
   Buffer:array of Byte;
   i:Integer;
+  S:String;
 Begin
+  S:=CR;
   Result:=TMemoryStream.Create;
   If Data.Size>0 then
   Begin
@@ -2562,8 +2498,8 @@ Begin
         SetLength(Buffer, Data.Size-Data.Position+Length(CR));
 
       Data.Read(Buffer[0], Width);
-      For i:=1 to Length(CR) do
-        Buffer[Length(Buffer)-Length(CR)+i-1]:=Ord(CR[i]);
+      For i:=1 to Length(S) do
+        Buffer[Length(Buffer)-Length(S)+i-1]:=Ord(S[i]);
       Result.WriteBuffer(Buffer[0], Length(Buffer));
     End;
   End;
