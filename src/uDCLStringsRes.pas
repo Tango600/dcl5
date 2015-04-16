@@ -13,8 +13,8 @@ type
     msLoad, msClear, msSave, msNotAllow, msOpenForm, msExecuteApps, msText, msAll, msFormated,
     msConfigurationFile, msNotFoundM, msNotFoundF, msTable, msAppRunning, msNot, msNotSupportedS,
     msPaths, msTheProduct, msProducer, msVersion, msStatus, msUser, msRole, msDataBase, msConfiguration,
-    msDebugMode, msInformationAbout, msBuildOf, msOS, msLang, msUsers, msDoYouWontTerminate,
-    msApplication, msDownloadInProgress, msFind, msPrint, msCopy, msCut, msPast, msBookmark,
+    msDebugMode, msInformationAbout, msBuildOf, msOS, msLang, msUsers, msDoYouWontTerminate, msClearAllFind,
+    msApplication, msDownloadInProgress, msFind, msFindCurrCell, msPrint, msCopy, msCut, msPast, msBookmark,
     msStructure, msGotoBookmark, msOldFormat, msOldBookmarkFormat, msVersionsGap, msOldVersion,
     msChangePassord, msOldM, msNewM, msPassword, msConfirm, msHashed, msToHashing, msToAll, msIn,
     msLogonToSystem, msUserName, msNoYes, msDenyMessage, msAccessLevelsSet, msNotifyActionsSet,
@@ -144,8 +144,12 @@ begin
   Result:='приложение';
   msDownloadInProgress:
   Result:='Идёт закачка';
+  msClearAllFind:
+  Result:='Очистить поиск';
   msFind:
   Result:='Поиск';
+  msFindCurrCell:
+  Result:='Поиск по текущей ячейки';
   msPrint:
   Result:='Печать';
   msCopy:

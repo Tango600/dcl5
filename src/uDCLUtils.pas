@@ -71,6 +71,7 @@ Function TranslateDigitToUserLevel(Level: String): TUserLevelsType; overload;
 Procedure TranslateProc(Var CallProc: String; Var Factor: Word; Query: TDCLDialogQuery);
 Function GetStringDataType(const S: String): TIsDigitType;
 function CheckStrFmtType(const S:string; SimplyFormatType:TSimplyFieldType):Boolean;
+function FindSubstrInString(AText:string; AValues:Array of String):Integer;
 
 Function GetFileNameToTranslite(Const FullFileName: String): String;
 function PosInSet(SimbolsSet, SourceStr: String): Cardinal;
@@ -269,6 +270,23 @@ Begin
   sftFloat:Result:=GetStringDataType(S)=idFloatDigit;
   sftDateTime:Result:=GetStringDataType(S)=idDateTime;
   End;
+End;
+
+function FindSubstrInString(AText:string; AValues:Array of String):Integer;
+var
+  i, MaxLong:Integer;
+Begin
+  Result:=-1;
+  MaxLong:=0;
+  For I := Low(AValues) to High(AValues) do
+    If PosEx(AValues[I], AText)<>0 then
+    begin
+      If MaxLong<Length(AValues[I]) then
+      Begin
+        MaxLong:=Length(AValues[I]);
+        Result:=i;
+      End;
+    end;
 End;
 
 Function GetFileNameToTranslite(Const FullFileName: String): String;
@@ -699,6 +717,10 @@ Begin
   MS:=TMemoryStream.Create;
   If CompareString(BMPType, 'find') Then
     MS.Write(FindBMP, Length(FindBMP));
+  If CompareString(BMPType, 'FindCurrCell') Then
+    MS.Write(FindCurrCellBMP, Length(FindCurrCellBMP));
+  If CompareString(BMPType, 'ClearAllFind') Then
+    MS.Write(FindCurrCellBMP_Neg, Length(FindCurrCellBMP_Neg));
   If CompareString(BMPType, 'print') Then
     MS.Write(PrintBMP, Length(PrintBMP));
   If CompareString(BMPType, 'structure') Then

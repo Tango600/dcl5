@@ -9,7 +9,7 @@
         <Filename Value="DCLRun.dpr"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="DCLRun"/>
-        <EditorIndex Value="9"/>
+        <EditorIndex Value="10"/>
         <WindowIndex Value="0"/>
         <TopLine Value="39"/>
         <CursorPos X="31" Y="63"/>
@@ -33,10 +33,12 @@
       <Unit2>
         <Filename Value="uOfficeDocs.pas"/>
         <UnitName Value="uOfficeDocs"/>
+        <EditorIndex Value="2"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="745"/>
-        <CursorPos X="45" Y="766"/>
+        <TopLine Value="459"/>
+        <CursorPos X="17" Y="478"/>
         <UsageCount Value="125"/>
+        <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit2>
       <Unit3>
@@ -125,7 +127,7 @@
       <Unit11>
         <Filename Value="uDCLQuery.pas"/>
         <UnitName Value="uDCLQuery"/>
-        <EditorIndex Value="8"/>
+        <EditorIndex Value="9"/>
         <WindowIndex Value="0"/>
         <TopLine Value="708"/>
         <CursorPos X="3" Y="713"/>
@@ -148,8 +150,8 @@
         <IsVisibleTab Value="True"/>
         <EditorIndex Value="1"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1"/>
-        <CursorPos X="18" Y="16"/>
+        <TopLine Value="37"/>
+        <CursorPos X="21" Y="50"/>
         <UsageCount Value="100"/>
         <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
@@ -485,11 +487,11 @@
       </Unit55>
       <Unit56>
         <Filename Value="C:\lazarus\fpc\2.6.4\source\rtl\win\wininc\func.inc"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="4"/>
         <WindowIndex Value="0"/>
         <TopLine Value="239"/>
         <CursorPos X="10" Y="258"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="11"/>
         <Loaded Value="True"/>
       </Unit56>
       <Unit57>
@@ -528,11 +530,11 @@
       <Unit61>
         <Filename Value="uDCLDBUtils.pas"/>
         <UnitName Value="uDCLDBUtils"/>
-        <EditorIndex Value="7"/>
+        <EditorIndex Value="8"/>
         <WindowIndex Value="0"/>
         <TopLine Value="107"/>
         <CursorPos X="27" Y="118"/>
-        <UsageCount Value="85"/>
+        <UsageCount Value="86"/>
         <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit61>
@@ -740,11 +742,11 @@
       <Unit87>
         <Filename Value="uDCLResources.pas"/>
         <UnitName Value="uDCLResources"/>
-        <EditorIndex Value="6"/>
+        <EditorIndex Value="7"/>
         <WindowIndex Value="0"/>
         <TopLine Value="315"/>
         <CursorPos X="28" Y="343"/>
-        <UsageCount Value="20"/>
+        <UsageCount Value="21"/>
         <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit87>
@@ -1020,31 +1022,31 @@
       <Unit121>
         <Filename Value="C:\lazarus\lcl\lclintf.pas"/>
         <UnitName Value="LCLIntf"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="5"/>
         <WindowIndex Value="0"/>
         <TopLine Value="31"/>
         <CursorPos X="55" Y="50"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="11"/>
         <Loaded Value="True"/>
       </Unit121>
       <Unit122>
         <Filename Value="C:\lazarus\components\lazutils\lazutf8sysutils.pas"/>
         <UnitName Value="lazutf8sysutils"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="6"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="1" Y="1"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="11"/>
         <Loaded Value="True"/>
       </Unit122>
       <Unit123>
         <Filename Value="C:\lazarus\lcl\lcltype.pp"/>
         <UnitName Value="LCLType"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="3"/>
         <WindowIndex Value="0"/>
         <TopLine Value="3037"/>
         <CursorPos X="1" Y="1"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="11"/>
         <Loaded Value="True"/>
       </Unit123>
     </Units>
@@ -1054,123 +1056,123 @@
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="uDCLUtils.pas"/>
-        <Caret Line="2134" Column="54" TopLine="2129"/>
+        <Caret Line="33" Column="43" TopLine="14"/>
       </Position1>
       <Position2>
         <Filename Value="uDCLUtils.pas"/>
-        <Caret Line="33" Column="43" TopLine="14"/>
+        <Caret Line="2164" Column="87" TopLine="2135"/>
       </Position2>
       <Position3>
         <Filename Value="uDCLUtils.pas"/>
-        <Caret Line="2164" Column="87" TopLine="2135"/>
+        <Caret Line="34" Column="44" TopLine="15"/>
       </Position3>
       <Position4>
-        <Filename Value="uDCLUtils.pas"/>
-        <Caret Line="34" Column="44" TopLine="15"/>
+        <Filename Value="uUDL.pas"/>
+        <Caret Line="8973" Column="17" TopLine="8980"/>
       </Position4>
       <Position5>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="8973" Column="17" TopLine="8980"/>
+        <Caret Line="16432" Column="23" TopLine="16415"/>
       </Position5>
       <Position6>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="16432" Column="23" TopLine="16415"/>
+        <Caret Line="16451" Column="19" TopLine="16434"/>
       </Position6>
       <Position7>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="16451" Column="19" TopLine="16434"/>
+        <Caret Line="16595" Column="45" TopLine="16579"/>
       </Position7>
       <Position8>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="16595" Column="45" TopLine="16579"/>
+        <Caret Line="8580" Column="4" TopLine="8482"/>
       </Position8>
       <Position9>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="8580" Column="4" TopLine="8482"/>
+        <Caret Line="8624" Column="80" TopLine="8593"/>
       </Position9>
       <Position10>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="8624" Column="80" TopLine="8593"/>
+        <Caret Line="8786" Column="32" TopLine="8754"/>
       </Position10>
       <Position11>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="8786" Column="32" TopLine="8754"/>
+        <Caret Line="16432" Column="23" TopLine="16400"/>
       </Position11>
       <Position12>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="16432" Column="23" TopLine="16400"/>
+        <Caret Line="16451" Column="19" TopLine="16419"/>
       </Position12>
       <Position13>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="16451" Column="19" TopLine="16419"/>
+        <Caret Line="16485" Column="24" TopLine="16458"/>
       </Position13>
       <Position14>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="16485" Column="24" TopLine="16458"/>
+        <Caret Line="16466" Column="1" TopLine="16461"/>
       </Position14>
       <Position15>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="16466" Column="1" TopLine="16461"/>
+        <Caret Line="16485" Column="26" TopLine="16461"/>
       </Position15>
       <Position16>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="16485" Column="26" TopLine="16461"/>
+        <Caret Line="16569" Column="48" TopLine="16538"/>
       </Position16>
       <Position17>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="16569" Column="48" TopLine="16538"/>
+        <Caret Line="16479" Column="7" TopLine="16466"/>
       </Position17>
       <Position18>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="16479" Column="7" TopLine="16466"/>
+        <Caret Line="16465" Column="5" TopLine="16459"/>
       </Position18>
       <Position19>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="16465" Column="5" TopLine="16459"/>
+        <Caret Line="16475" Column="9" TopLine="16459"/>
       </Position19>
       <Position20>
         <Filename Value="uUDL.pas"/>
-        <Caret Line="16475" Column="9" TopLine="16459"/>
+        <Caret Line="16476" Column="31" TopLine="16459"/>
       </Position20>
       <Position21>
-        <Filename Value="uUDL.pas"/>
-        <Caret Line="16476" Column="31" TopLine="16459"/>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="1933" Column="1" TopLine="1931"/>
       </Position21>
       <Position22>
         <Filename Value="uDCLUtils.pas"/>
-        <Caret Line="1933" Column="1" TopLine="1931"/>
+        <Caret Line="2378" Column="49" TopLine="2368"/>
       </Position22>
       <Position23>
         <Filename Value="uDCLUtils.pas"/>
-        <Caret Line="2378" Column="49" TopLine="2368"/>
+        <Caret Line="15" Column="23" TopLine="1"/>
       </Position23>
       <Position24>
         <Filename Value="uDCLUtils.pas"/>
-        <Caret Line="15" Column="23" TopLine="1"/>
+        <Caret Line="16" Column="17" TopLine="1"/>
       </Position24>
       <Position25>
         <Filename Value="uDCLUtils.pas"/>
-        <Caret Line="16" Column="17" TopLine="1"/>
+        <Caret Line="245" Column="35" TopLine="222"/>
       </Position25>
       <Position26>
-        <Filename Value="uDCLUtils.pas"/>
-        <Caret Line="245" Column="35" TopLine="222"/>
+        <Filename Value="C:\lazarus\lcl\lclintf.pas"/>
+        <Caret Line="146" Column="3" TopLine="141"/>
       </Position26>
       <Position27>
         <Filename Value="C:\lazarus\lcl\lclintf.pas"/>
-        <Caret Line="146" Column="3" TopLine="141"/>
+        <Caret Line="50" Column="55" TopLine="31"/>
       </Position27>
       <Position28>
-        <Filename Value="C:\lazarus\lcl\lclintf.pas"/>
-        <Caret Line="50" Column="55" TopLine="31"/>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="245" Column="35" TopLine="222"/>
       </Position28>
       <Position29>
         <Filename Value="uDCLUtils.pas"/>
-        <Caret Line="245" Column="35" TopLine="222"/>
+        <Caret Line="16" Column="18" TopLine="1"/>
       </Position29>
       <Position30>
-        <Filename Value="uDCLUtils.pas"/>
-        <Caret Line="16" Column="18" TopLine="1"/>
+        <Filename Value="uOfficeDocs.pas"/>
+        <Caret Line="766" Column="45" TopLine="745"/>
       </Position30>
     </JumpHistory>
   </ProjectSession>

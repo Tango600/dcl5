@@ -431,6 +431,8 @@ Type
 
     procedure Structure(Sender: TObject);
     procedure PFind(Sender: TObject);
+    procedure PSetFind(Sender: TObject);
+    procedure PClearAllFind(Sender: TObject);
     procedure Print(Sender: TObject);
     procedure PCopy(Sender: TObject);
     procedure PCut(Sender: TObject);
@@ -6573,13 +6575,16 @@ begin
                 v2:=LastDelimiter('<>=', TmpStr);
                 If v2<>0 Then
                 begin
-                  Sign:=TSigns(AnsiIndexStr(TmpStr, Signs));
+                  v1:=FindSubstrInString(TmpStr, Signs);
+                  If v1<0 then
+                    v1:=0;
+                  Sign:=TSigns(v1);
                   tmp3:=Signs[Sign];
 
                   v1:=Pos(Signs[Sign], TmpStr);
                   v2:=Length(Signs[Sign]);
                   Tmp1:=Copy(TmpStr, 1, v1-1);
-                  Tmp2:=Copy(TmpStr, v1+v2+1, Length(TmpStr));
+                  Tmp2:=Copy(TmpStr, v1+v2, Length(TmpStr));
                   tmp1:=Trim(AnsiLowerCase(tmp1));
                   tmp2:=Trim(AnsiLowerCase(tmp2));
                 end;
@@ -13810,6 +13815,22 @@ begin
   end;
 end;
 
+procedure TDCLGrid.PClearAllFind(Sender: TObject);
+var
+  StrIndex, i:Integer;
+begin
+  If (Not (FDisplayMode in TDataGrid))or(Not Assigned(FGrid)) Then
+    StrIndex:=1
+  Else
+    StrIndex:=0;
+
+  If not FindProcess then
+    PFind(Sender);
+  If Assigned(FindGrid) then
+    For i:=2 to FindGrid.ColCount do
+      FindGrid.Cells[i-1, StrIndex]:='';
+end;
+
 procedure TDCLGrid.PCopy(Sender: TObject);
 begin
 {$IFDEF MSWINDOWS}
@@ -13837,6 +13858,27 @@ var
 begin
   PrintBase:=TPrintBase.Create;
   PrintBase.Print(FGrid, FQuery, FDCLForm.FForm.Caption);
+end;
+
+procedure TDCLGrid.PSetFind(Sender: TObject);
+var
+  StrIndex, i:Integer;
+  S:String;
+begin
+  If (Not (FDisplayMode in TDataGrid))or(Not Assigned(FGrid)) Then
+    StrIndex:=1
+  Else
+    StrIndex:=0;
+
+  If not FindProcess then
+    PFind(Sender);
+  If Assigned(FindGrid) then
+  If Assigned(FGrid) then
+  Begin
+    S:=FGrid.SelectedField.AsString;
+    i:=FGrid.SelectedIndex;
+    FindGrid.Cells[i+1, StrIndex]:=S;
+  End;
 end;
 
 procedure TDCLGrid.PUndo(Sender: TObject);
@@ -14358,6 +14400,12 @@ var
   begin
     AddPopupMenuItem(SourceToInterface(GetDCLMessageString(msFind)), 'Find', PFind, 'Ctrl+F',
       0, 'Find');
+    If WithStructure Then
+      AddPopupMenuItem(SourceToInterface(GetDCLMessageString(msFindCurrCell)), 'FindCurrentCell', PSetFind, 'Alt+F',
+        0, 'FindCurrCell');
+    AddPopupMenuItem(SourceToInterface(GetDCLMessageString(msClearAllFind)), 'ClearAllFind', PClearAllFind, 'Alt+C',
+      0, 'ClearAllFind');
+    AddPopupMenuItem('-', 'Separator4', nil, '', 0, '');
     AddPopupMenuItem(SourceToInterface(GetDCLMessageString(msPrint)), 'Print', Print, 'Ctrl+P',
       0, 'Print');
     If WithStructure Then
