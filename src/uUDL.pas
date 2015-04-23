@@ -42,7 +42,7 @@ Uses
   ZDbcIntfs, // ZConnection, ZDataset, ZSqlUpdate,
 {$ENDIF}
 {$IFDEF SQLdbFamily}
-  IBConnection, sqldb,
+  sqldb,
 {$ENDIF}
 {$IFDEF FPC}
   FileUtil, EditBtn, LConvEncoding, {$IFDEF ZVComponents}ZVDateTimePicker, {$ENDIF}
@@ -3378,7 +3378,7 @@ var
   ScrStr, TmpStr, tmpStr2, tmpSQL, tmpSQL1: String;
   DisplayMode, tmpStyle: TDataControlType;
   QCreated, ModalOpen: Boolean;
-  OPLLinesCount, ScrStrNum, v1, v2, v3, v5, TabIndex: Integer;
+  OPLLinesCount, ScrStrNum, v1, v2, v3, v4, v5, TabIndex: Integer;
   IsDigitType: TIsDigitType;
   ShadowQuery: TDCLDialogQuery;
   FFilter: TDBFilter;
@@ -4037,8 +4037,25 @@ begin
           begin
             v3:=StrToIntEx(SortParams(tmpSQL, v2))-1;
             v5:=StrToIntEx(SortParams(tmpSQL, v2+1))-1;
-            FGrids[GridIndex].DBFilters[v3].Between:=v5;
-            FGrids[GridIndex].DBFilters[v5].Between:=StopFilterFlg;
+            If v3<v5 then
+            Begin
+              v4:=v3;
+              v3:=v5;
+              v5:=v4;
+            End;
+
+            v4:=Length(FGrids[GridIndex].DBFilters);
+            If v5<v4 then
+            Begin
+              If v3>0 then
+                FGrids[GridIndex].DBFilters[v3].Between:=v5
+              Else
+                FGrids[GridIndex].DBFilters[v4+v3].Between:=v4+v5;
+              If v5>0 then
+                FGrids[GridIndex].DBFilters[v5].Between:=StopFilterFlg
+              Else
+                FGrids[GridIndex].DBFilters[v4+v5].Between:=StopFilterFlg;
+            End;
             inc(v2, 1);
           end;
         end

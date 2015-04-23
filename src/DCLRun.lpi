@@ -18,7 +18,7 @@
       <UseVersionInfo Value="True"/>
       <AutoIncrementBuild Value="True"/>
       <MajorVersionNr Value="10"/>
-      <BuildNr Value="74"/>
+      <BuildNr Value="75"/>
       <Language Value="0419"/>
       <StringTable CompanyName="Unreal Software" ProductName="DCL5 plathform" ProductVersion=""/>
     </VersionInfo>
@@ -127,7 +127,7 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
-        <CommandLineParams Value="DCL1.ini"/>
+        <CommandLineParams Value="DCL.ini"/>
       </local>
     </RunParams>
     <RequiredPackages Count="1">
