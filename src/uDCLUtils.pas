@@ -191,7 +191,7 @@ Begin
   Begin
     If GPT.CurrentRunningScrString>0 Then
       MessageText:=SourceToInterface(MessageText)+' / '+AddText+LineEnding+
-        SourceToInterface('В строке №(Визуальный/Коммандный) : '+
+        SourceToInterface(GetDCLMessageString(msIn)+' '+GetDCLMessageString(msStringNum)+'('+GetDCLMessageString(msVisualCommand)+') : '+
         IntToStr(GPT.CurrentRunningScrString)+'/-1');
 
     Result:=MessageDlg(MessageText, mtError, [mbOK], 0);
@@ -1150,6 +1150,21 @@ Begin
 {$ENDIF}
 End;
 
+function StringToLangID(Lang:string):TISO639_3;
+var
+  i:TISO639_3;
+begin
+  Result:=DefaultLanguage;
+  For i:=Low(TISO639_3) to High(TISO639_3) do
+    If Trim(LowerCase(Lang))=TISO639_3_Str[i] then
+      Result:=i;
+end;
+
+function LangIDToString(LangID:TISO639_3):string;
+begin
+  Result:=TISO639_3_Str[LangID];
+end;
+
 
 Procedure TranslateProc(Var CallProc: String; Var Factor: Word; Query: TDCLDialogQuery);
 Const
@@ -1896,6 +1911,11 @@ Begin
         If PosEx('DateFormat=', Params[i])=1 Then
         Begin
           GPT.DateFormat:=Trim(FindParam('DateFormat=', Params[i]));
+        End;
+
+        If PosEx('Language=', Params[i])=1 Then
+        Begin
+          GPT.Lang:=StringToLangID(Trim(FindParam('Language=', Params[i])));
         End;
 
         If PosEx('DateSeparator=', Params[i])=1 Then

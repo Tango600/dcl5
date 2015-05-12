@@ -9319,7 +9319,7 @@ begin
     If FAccessLevel=ulDeny Then
 {$ENDIF}
     begin
-      ShowErrorMessage(1, SourceToInterface(GetDCLMessageString(msDenyMessage)));
+      ShowErrorMessage(1, SourceToInterface(GetDCLMessageString({$IFDEF DEVELOPERMODE}msDenyMessageDev{$ELSE}msDenyMessageUsr{$ENDIF})));
       Halt;
     end;
 
@@ -10535,18 +10535,26 @@ begin
         For RecCount:=1 to 4 do
           BaseCompVer[RecCount]:=StrToInt(SortParams(tmpSQL, RecCount, '.'));
 
+      v1:=0;
+      SubNum:=0;
       For RecCount:=1 to 4 do
-        If ProgrammCompVer[RecCount]<BaseCompVer[RecCount] Then
-        begin
+      Begin
+        If (ProgrammCompVer[RecCount]<BaseCompVer[RecCount]) and (v1<SubNum) Then
+        Begin
           If RecCount=1 Then
             ShowErrorMessage(1, SourceToInterface(GetDCLMessageString(msVersionsGap)))
           Else
             ShowErrorMessage(1, SourceToInterface(GetDCLMessageString(msOldVersion)));
 
           break;
-        end
-        Else If ProgrammCompVer[RecCount]>BaseCompVer[RecCount] Then
-          break;
+        End
+        Else
+          If (ProgrammCompVer[RecCount]>BaseCompVer[RecCount]) and (v1>SubNum) Then
+            break;
+            
+        Inc(v1, ProgrammCompVer[RecCount]);
+        Inc(SubNum, BaseCompVer[RecCount]);
+      End;
     end;
     MenuQuery.Close;
 
@@ -14286,11 +14294,11 @@ begin
   begin
     If Assigned(FDCLForm.ParentForm) Then
     begin
-      FDCLForm.ParentForm.SetDBStatus(SourceToInterface(GetDCLMessageString(msNone)));
+      FDCLForm.ParentForm.SetDBStatus(SourceToInterface(''));
       BaseChanged:=False;
     end;
 
-    FDCLForm.SetDBStatus(SourceToInterface(GetDCLMessageString(msNone)));
+    FDCLForm.SetDBStatus(SourceToInterface(''));
     BaseChanged:=False;
   end;
   end;
@@ -16538,6 +16546,7 @@ begin
   ShowFormPanel:=True;
   Path:=ExtractFilePath(Application.ExeName);
   SetCurrentDir(Path);
+  GPT.Lang:=DefaultLanguage;
 
   InitGetAppConfigDir;
   DCLMainLogOn:=TDCLLogOn.Create(DBLogOn);
@@ -16617,6 +16626,8 @@ begin
     end;
 {$ENDIF}
     GetParamsStructure(Params);
+
+    LoadLangRes(GPT.Lang);
 
 {$IFNDEF EMBEDDED}
     If ParamCount>0 Then

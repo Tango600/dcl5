@@ -31,7 +31,7 @@ Uses
   ZConnection, ZDataset, ZSqlUpdate,
 {$ENDIF}
 {$IFDEF SQLdbFamily}
-  IBConnection, sqldb, db,
+  IBConnection, sqldb,
 {$ENDIF}
   Forms;
 

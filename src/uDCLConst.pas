@@ -38,7 +38,7 @@ DefaultLibraryLocation='fbclient.so';
 {$IFDEF SQLdb}
   DBEngineType='SQLdb (Universal)';
 {$ENDIF}
-  Version='10.0.16.267';
+  Version='10.0.19.269';
 
   CompotableVersion='9.1.127.305';
 
@@ -275,7 +275,7 @@ DefaultLibraryLocation='fbclient.so';
   Digits='0123456789.,';
   /// Math
 
-  StopSimbols=DefaultParamsSeparator+DefaultValuesSeparator+DefaultParamDelim+'( )[],=.%:;&$#@*'#39;
+  StopSimbols=DefaultParamsSeparator+DefaultValuesSeparator+DefaultParamDelim+'( )[],=+-^<>.%:;&$#@*'#39#10#13;
 
   KillerTimerInterval=400;
   IntervalTimeToInitScripts=700;
@@ -364,12 +364,16 @@ Type
   TSigns=(sEquals, sGreater, sLess, sNotEqual, sGreaterEq, sLessEq);
   TSimplyFieldType=(sftNotDefine, sftString, sftDigit, sftFloat, sftDateTime);
   TDCLFormCloseAction=(fcaNone, fcaClose, fcaInProcess);
+  TISO639_3=(lgRUS, lgENG);
 
 
 const
   ReleaseStatus=rsBetta;
-  ReliseStatues:Array[TReliseStatus] of String=('Alpha', 'Betta', 'PreRelase', 'Unstable', 'Stable');
+  ReliseStatues:Array[TReliseStatus] of String=('Alpha', 'Betta', 'Pre relase', 'Unstable', 'Stable');
   Signs:Array[TSigns] of String=('=', '<', '>', '<>', '<=', '>=');
+  TISO639_3_Str:array[TISO639_3] of string=('rus', 'eng');
+
+  DefaultLanguage=lgRUS;
 
 
 implementation

@@ -33,6 +33,7 @@ type
     DateSeparator, TimeSeparator: Char;
     ServerCodePage, DateFormat, TimeFormat, Viewer, ConnectionString, MainFormCaption,
     NewConnectionString, DBPath, ServerName, NewDBUserName, DBType, GeneratorName: String;
+    Lang:TISO639_3;
     SQLDialect:Byte;
     NoParamsTable, DisableLogOnWithoutUser, MultiRolesMode: Boolean;
     DBUserName, DCLUserName, DCLUserPass, EnterPass, LongRoleName, GetValueSeparator, UpperString,
