@@ -20,7 +20,11 @@ type
     msChangePassord, msOldM, msNewM, msPassword, msConfirm, msHashed, msToHashing, msToAll, msIn,
     msLogonToSystem, msUserName, msNoYes, msDenyMessageDev, msDenyMessageUsr, msAccessLevelsSet, msNotifyActionsSet,
     msCodePage, msLock, msUnLock, msChoose, msEditings, msData, msReset, msSettings, msFields,
-    msBookmarks, msHour, msMinute, msSecond, msMSecond, msModeOff, msModeOn, msStringNum, msVisualCommand);
+    msBookmarks, msHour, msMinute, msSecond, msMSecond, msModeOff, msModeOn, msStringNum, msVisualCommand,
+    msConnectionError, msErrorQuery, msBadFindParams, msErrorInExpression, msErrorQueryInExpression,
+    msTooMachParams, msBadFieldFormad, msNoDATARegion, msNoTemplatesTable, msTemplateNotFound, msLabelNotFound,
+    msTemplFileNotFound, msTableUsersNotFound, msOONotInstalled, msFailOpenDocument, msMSNotInstalled, msWord2000Req,
+    msNoOfficeInstalled, msConvertionError, msAppRunError, msFileNotFound, msErrorInRaightExpression, msFieldNotFound);
 
 procedure LoadLangRes(Lang:TISO639_3);
 function GetDCLMessageString(MessID: TStringMessages): String;
@@ -30,7 +34,7 @@ Function ToDOS(Buf: String): String;
 implementation
 
 uses
-  uDCLData;
+  uDCLData, uDCLUtils;
 
 const
   StringDelim=#39;
@@ -46,10 +50,24 @@ const
     'msChangePassord', 'msOldM', 'msNewM', 'msPassword', 'msConfirm', 'msHashed', 'msToHashing', 'msToAll', 'msIn',
     'msLogonToSystem', 'msUserName', 'msNoYes', 'msDenyMessageDev', 'msDenyMessageUsr', 'msAccessLevelsSet', 'msNotifyActionsSet',
     'msCodePage', 'msLock', 'msUnLock', 'msChoose', 'msEditings', 'msData', 'msReset', 'msSettings', 'msFields',
-    'msBookmarks', 'msHour', 'msMinute', 'msSecond', 'msMSecond', 'msModeOff', 'msModeOn', 'msStringNum', 'msVisualCommand');
+    'msBookmarks', 'msHour', 'msMinute', 'msSecond', 'msMSecond', 'msModeOff', 'msModeOn', 'msStringNum', 'msVisualCommand',
+    'msConnectionError', 'msErrorQuery', 'msBadFindParams', 'msErrorInExpression', 'msErrorQueryInExpression',
+    'msTooMachParams', 'msBadFieldFormad', 'msNoDATARegion', 'msNoTemplatesTable', 'msTemplateNotFound', 'msLabelNotFound',
+    'msTemplFileNotFound', 'msTableUsersNotFound', 'msOONotInstalled', 'msFailOpenDocument', 'msMSNotInstalled', 'msWord2000Req',
+    'msNoOfficeInstalled', 'msConvertionError', 'msAppRunError', 'msFileNotFound', 'msErrorInRaightExpression', 'msFieldNotFound');
+
+type
+  TTranscodeType=(ttDirect, ttSub, ttAdd);
+  TTranscodeData=Record
+    CodeFrom1, CodeFrom2, TargetGap:Integer;
+    TagertCode:String;
+    TranscodeType:TTranscodeType;
+  end;
 
 var
   StringMessages:array[TStringMessages] of string;
+  TranscodeData:Array of TTranscodeData;
+
 
 function GetDCLMessageStringDefault(MesID: TStringMessages): String;
 begin
@@ -262,7 +280,52 @@ begin
     Result:='строке №';
     msVisualCommand:
     Result:='Визуальный/Коммандный';
-  //  Result:='';
+    msConnectionError:
+    Result:='Ошибка соединения';
+    msErrorQuery:
+    Result:='Ошибочный запрос.';
+    msBadFindParams:
+    Result:='Ошибочный запрос или не верные условия поиска.';
+    msErrorInExpression:
+    Result:='Ошибка в выражении.';
+    msErrorQueryInExpression:
+    Result:='Ошибочный запрос в параметре.';
+    msTooMachParams:
+    Result:='Недостаточно или много параметров в предложении.';
+    msBadFieldFormad:
+    Result:='Неверный формат полей.';
+    msNoDATARegion:
+    Result:='Нет области данных "DATA".';
+    msNoTemplatesTable:
+    Result:='Нет таблицы шаблонов.';
+    msTemplateNotFound:
+    Result:='Нет такого шаблона - ';
+    msLabelNotFound:
+    Result:='Такой метки нет.';
+    msTemplFileNotFound:
+    Result:='Нет файла шаблона.';
+    msTableUsersNotFound:
+    Result:='Таблица пользователей не найдена.';
+    msOONotInstalled:
+    Result:='OpenOffice не установлен.';
+    msFailOpenDocument:
+    Result:='Открыть документ не удалось.';
+    msMSNotInstalled:
+    Result:='Microsoft Office не установлен.';
+    msWord2000Req:
+    Result:='Требуется WORD 2000/XP или выше.';
+    msNoOfficeInstalled:
+    Result:='Никакой офис не установлен.';
+    msConvertionError:
+    Result:='Ошибка преобразования.';
+    msAppRunError:
+    Result:='Ошибка запуска.';
+    msFileNotFound:
+    Result:='Файл не найден.';
+    msErrorInRaightExpression:
+    Result:='Ошибка в выражении прав доступа.';
+    msFieldNotFound:
+    Result:='Поле не найдено.';
   //  Result:='';
     end;
   End;
@@ -272,13 +335,9 @@ procedure LoadLangRes(Lang:TISO639_3);
 var
   LangResFile:TStringList;
   FileName, S, msID, MessageString:string;
-  i, p, k, FindNum, Delims, StartDelim, EndDelim:Integer;
+  i, p, k, Delims, StartDelim, EndDelim:Integer;
 begin
-  FileName:='DCLTranslate.';
-  Case Lang of
-  lgRUS:FileName:=FileName+'RUS';
-  lgENG:FileName:=FileName+'ENG';
-  End;
+  FileName:='DCLTranslate.'+LangIDToString(Lang);
 
   If FileExists(Path+FileName) then
   Begin
@@ -292,7 +351,6 @@ begin
       p:=Pos(':=', S);
       If p>0 then
       Begin
-        FindNum:=-1;
         msID:=LowerCase(Trim(Copy(S, 1, p-1)));
         Delims:=-1;
         StartDelim:=-1;
@@ -301,11 +359,11 @@ begin
         Begin
           If Delims=-1 then
           Begin
-          If S[k]=StringDelim then
-          Begin
-            Inc(Delims);
-            StartDelim:=k+1;
-          End;
+            If S[k]=StringDelim then
+            Begin
+              Inc(Delims);
+              StartDelim:=k+1;
+            End;
           End
           Else
             If Delims=0 then
@@ -324,14 +382,15 @@ begin
           Begin
             If LowerCase(NamedStringMessages[TStringMessages(k)])=msID then
             Begin
-              FindNum:=k;
-              StringMessages[TStringMessages(FindNum)]:=MessageString;
+              If MessageString<>'' then
+                StringMessages[TStringMessages(k)]:=MessageString
+              Else
+                StringMessages[TStringMessages(k)]:=GetDCLMessageStringDefault(TStringMessages(k));
               Break;
             End;
           End;
         End;
       End;
-
     End;
 
     LangResFile.Free;
@@ -355,51 +414,51 @@ Begin
   lgRUS:
     Case ErrorCode Of
     -2, -3:
-    MessageText:='Сбой соединения';
+    MessageText:=GetDCLMessageString(msConnectionError);
     -1100, -1101, -1119, -1102, -1106, -1107, -1112, -1200, -1201, -1113, -1114, -1115, -1116, -1118:
-    MessageText:='Ошибочный запрос. '+IntToStr(ErrorCode);
+    MessageText:=GetDCLMessageString(msErrorQuery)+' '+IntToStr(ErrorCode);
     -1111:
-    MessageText:='Ошибочный запрос или не верные условия поиска. '+IntToStr(ErrorCode);
+    MessageText:=GetDCLMessageString(msBadFindParams)+' '+IntToStr(ErrorCode);
     -1103, -1104, -1105, -1108, -1110, -1117:
-    MessageText:='Ошибка в выражении. '+IntToStr(ErrorCode);
+    MessageText:=GetDCLMessageString(msErrorInExpression)+' '+IntToStr(ErrorCode);
     -1109:
-    MessageText:='Ошибочный запрос в параметре. '+IntToStr(ErrorCode);
+    MessageText:=GetDCLMessageString(msErrorQueryInExpression)+' '+IntToStr(ErrorCode);
     -4000:
-    MessageText:='Недостаточно или много параметров в предложении. '+IntToStr(ErrorCode);
+    MessageText:=GetDCLMessageString(msTooMachParams)+' '+IntToStr(ErrorCode);
     -4002:
-    MessageText:='Неверный формат полей. '+IntToStr(ErrorCode);
+    MessageText:=GetDCLMessageString(msBadFieldFormad)+' '+IntToStr(ErrorCode);
     -5002:
-    MessageText:='Нет области данных "DATA". '+IntToStr(ErrorCode);
+    MessageText:=GetDCLMessageString(msNoDATARegion)+' '+IntToStr(ErrorCode);
     -5003:
-    MessageText:='Нет таблицы шаблонов - '+IntToStr(ErrorCode);
+    MessageText:=GetDCLMessageString(msNoTemplatesTable)+' '+IntToStr(ErrorCode);
     -5004:
-    MessageText:='Нет такого шаблона - '+IntToStr(ErrorCode);
+    MessageText:=GetDCLMessageString(msTemplateNotFound)+' '+IntToStr(ErrorCode);
     -5005:
-    MessageText:='Такой метки нет. '+IntToStr(ErrorCode);
+    MessageText:=GetDCLMessageString(msLabelNotFound)+' '+IntToStr(ErrorCode);
     -5006, -5007:
-    MessageText:='Нет файла шаблона. '+IntToStr(ErrorCode);
+    MessageText:=GetDCLMessageString(msTemplFileNotFound)+' '+IntToStr(ErrorCode);
     -5008:
-    MessageText:='Таблица пользователей не найдена. '+IntToStr(ErrorCode);
+    MessageText:=GetDCLMessageString(msTableUsersNotFound)+' '+IntToStr(ErrorCode);
     -6001, -6002: // OOo
-    MessageText:='OpenOffice не установлен. '+IntToStr(ErrorCode);
+    MessageText:=GetDCLMessageString(msOONotInstalled)+' '+IntToStr(ErrorCode);
     -6003:
-    MessageText:='Открыть документ не удалось. '+IntToStr(ErrorCode);
+    MessageText:=GetDCLMessageString(msFailOpenDocument)+' '+IntToStr(ErrorCode);
     -6000, -6010:
-    MessageText:='Microsoft Office не установлен. '+IntToStr(ErrorCode);
+    MessageText:=GetDCLMessageString(msMSNotInstalled)+' '+IntToStr(ErrorCode);
     -6011:
-    MessageText:='Требуется WORD 2000/XP или выше. '+IntToStr(ErrorCode);
+    MessageText:=GetDCLMessageString(msWord2000Req)+' '+IntToStr(ErrorCode);
     -6020:
-    MessageText:='Никакой офис не установлен. '+IntToStr(ErrorCode);
+    MessageText:=GetDCLMessageString(msNoOfficeInstalled)+' '+IntToStr(ErrorCode);
     -7000:
-    MessageText:='Ошибка преобразования. '+IntToStr(ErrorCode);
+    MessageText:=GetDCLMessageString(msConvertionError)+' '+IntToStr(ErrorCode);
     -8000:
-    MessageText:='Ошибка запуска. '+IntToStr(ErrorCode);
+    MessageText:=GetDCLMessageString(msAppRunError)+' '+IntToStr(ErrorCode);
     -8001:
-    MessageText:='Файл не найден. '+IntToStr(ErrorCode);
+    MessageText:=GetDCLMessageString(msFileNotFound)+' '+IntToStr(ErrorCode);
     -9000:
-    MessageText:='Ошибка в выражении прав доступа. '+IntToStr(ErrorCode);
+    MessageText:=GetDCLMessageString(msErrorInRaightExpression)+' '+IntToStr(ErrorCode);
     -10000, -10001, -10002:
-    MessageText:='Поле не найдено. '+IntToStr(ErrorCode);
+    MessageText:=GetDCLMessageString(msFieldNotFound)+' '+IntToStr(ErrorCode);
     Else
       MessageText:=AddText;
     End;
@@ -429,5 +488,140 @@ Begin
   End;
   Result:=Buf;
 End;
+
+procedure LoadTranscodeFile(FileName:String; Lang:TISO639_3);
+var
+  LangResFile:TStringList;
+  S, c, vs1:String;
+  i, p, k, d, v1:Integer;
+  simbcodeflg:Boolean;
+begin
+  FileName:=FileName+'.'+LangIDToString(Lang);
+
+  If FileExists(Path+FileName) then
+  Begin
+    LangResFile:=TStringList.Create;
+    LangResFile.LoadFromFile(Path+FileName);
+
+    For i:=1 to LangResFile.Count do
+    Begin
+      S:=LangResFile[i-1];
+      p:=Pos(':', S);
+      If p<>0 then
+      Begin
+        SetLength(TranscodeData, i);
+        vs1:=Copy(S, 1, p-1);
+        If (Pos('-', vs1)=0) then
+        Begin
+          k:=StrToInt(Copy(S, 1, p-1));
+          TranscodeData[i-1].CodeFrom1:=k;
+          TranscodeData[i-1].CodeFrom2:=k;
+        End
+        Else
+        Begin
+          k:=StrToInt(Copy(S, 1, Pos('-', vs1)-1));
+          TranscodeData[i-1].CodeFrom1:=k;
+          c:=Copy(S, Pos('-', vs1)+1, p-1-Pos('-', vs1));
+          k:=StrToInt(c);
+          TranscodeData[i-1].CodeFrom2:=k;
+        End;
+
+        d:=Pos(';', S);
+        If d=0 then
+          d:=Length(S);
+        c:=Copy(S, p+1, d-p-1);
+        simbcodeflg:=False;
+        If Length(c)>0 then
+        Begin
+          vs1:='';
+          TranscodeData[i-1].TranscodeType:=ttDirect;
+
+          For v1:=1 to Length(c) do
+          Begin
+            If simbcodeflg and (c[v1] in ['0'..'9']) then
+              vs1:=vs1+c[v1];
+
+            If c[v1]='#' then
+            Begin
+              simbcodeflg:=True;
+              If vs1<>'' then
+                TranscodeData[i-1].TagertCode:=TranscodeData[i-1].TagertCode+Chr(StrToInt(vs1));
+              vs1:='';
+            End;
+            If c[v1]='-' then
+            Begin
+              TranscodeData[i-1].TranscodeType:=ttSub;
+              simbcodeflg:=True;
+              If vs1<>'' then
+                TranscodeData[i-1].TargetGap:=StrToInt(vs1);
+            End;
+            If c[v1]='+' then
+            Begin
+              TranscodeData[i-1].TranscodeType:=ttAdd;
+              simbcodeflg:=True;
+              If vs1<>'' then
+                TranscodeData[i-1].TargetGap:=StrToInt(vs1);
+            End;
+          End;
+          If vs1<>'' then
+            TranscodeData[i-1].TagertCode:=TranscodeData[i-1].TagertCode+Chr(StrToInt(vs1));
+          vs1:='';
+        End;
+      End;
+    End;
+  End;
+end;
+
+
+Function Transcode(const Buf: String): String;
+Var
+  i, j: Cardinal;
+  Match:Boolean;
+  ts:String;
+begin
+  Result:='';
+  For i:=1 To Length(Buf) Do
+  Begin
+    Match:=False;
+	  For j:=1 to Length(TranscodeData) do
+	  Begin
+	    If TranscodeData[j-1].CodeFrom1=TranscodeData[j-1].CodeFrom2 then
+	    Begin
+        If Ord(Buf[i])=TranscodeData[j-1].CodeFrom1 then
+        Begin
+          Match:=True;
+          break;
+        End;
+			End
+	    Else
+  	    If TranscodeData[j-1].CodeFrom1<TranscodeData[j-1].CodeFrom2 then
+  	    Begin
+          If Ord(Buf[i])>=TranscodeData[j-1].CodeFrom1 then
+            If Ord(Buf[i])<=TranscodeData[j-1].CodeFrom2 then
+            Begin
+              Match:=True;
+              break;
+            End;
+	  	  End;
+		End;
+
+    If Match then
+    Begin
+    Case TranscodeData[j-1].TranscodeType of
+    ttDirect:
+      ts:=TranscodeData[j-1].TagertCode;
+    ttAdd:
+      ts:=Chr(Ord(Buf[i])+Ord(TranscodeData[j-1].TagertCode[1]));
+    ttSub:
+      ts:=Chr(Ord(Buf[i])-Ord(TranscodeData[j-1].TagertCode[1]));
+		end;
+    End
+    Else
+      ts:=Buf[i];
+
+    Result:=Result+ts;
+	End;
+end;
+
 
 end.

@@ -121,6 +121,9 @@ function EncodeScriptData(Script:TStringList):TMemoryStream;
 
 function GetTimeFormat(mSec: Cardinal): String;
 
+function StringToLangID(Lang:string):TISO639_3;
+function LangIDToString(LangID:TISO639_3):string;
+
 implementation
 
 uses
@@ -1164,7 +1167,6 @@ function LangIDToString(LangID:TISO639_3):string;
 begin
   Result:=TISO639_3_Str[LangID];
 end;
-
 
 Procedure TranslateProc(Var CallProc: String; Var Factor: Word; Query: TDCLDialogQuery);
 Const

@@ -114,7 +114,7 @@ End;
 
 Function FileNameToURL(FileName: String): Variant;
 type
-  TCharToUTF8Table=array [0..255] of PChar;
+  TCharToUTF8Table=array [0..255] of String;
 const
   ArrayCP1251ToUTF8: TCharToUTF8Table=(
     #0, // #0
@@ -378,7 +378,7 @@ const
 Var
   i: Integer;
   j: Byte;
-  utf8ch: PChar;
+  utf8ch: String;
 Begin
   Result:='';
   For i:=1 To Length(FileName) Do
@@ -392,12 +392,12 @@ Begin
       Else
         Result:=Result+FileName[i];
       End;
-      End;
-      $80..$FF:Begin
+    End;
+    $80..$FF:Begin
         utf8ch:=ArrayCP1251ToUTF8[Ord(FileName[i])];
         For j:=0 to Length(utf8ch)-1 do
           Result:=Result+'%'+IntToHex(Ord(utf8ch[j]), 2);
-      End;
+    End;
     End;
   End;
   Result:=VarAsType('file:///'+Result, varOleStr);

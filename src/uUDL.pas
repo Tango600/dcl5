@@ -2454,8 +2454,9 @@ begin
       FDCLLogOn.FDCLMainMenu.UpdateFormBar;
 
   If Assigned(Tables[ - 1]) Then
-    If Tables[ - 1].Query.Active Then
-      Tables[ - 1].ScrollDB(Tables[ - 1].Query);
+    If Assigned(Tables[ - 1].Query) then
+      If Tables[ - 1].Query.Active Then
+        Tables[ - 1].ScrollDB(Tables[ - 1].Query);
 end;
 
 procedure TDCLForm.AddEvents(var Events: TEventsArray; EventsSet: String);
@@ -2720,8 +2721,11 @@ var
   DCLCommand: TDCLCommand;
 begin
   DCLCommand:=TDCLCommand.Create(Self, FDCLLogOn);
-  DCLCommand.ExecCommand(CommandName, Self);
-  FreeAndNil(DCLCommand);
+  Try
+    DCLCommand.ExecCommand(CommandName, Self);
+  Finally
+    FreeAndNil(DCLCommand);
+  End;
 end;
 
 function TDCLForm.GetQueryToRaights(S: String): String;
@@ -5541,24 +5545,31 @@ begin
 
   If CompareString(Command, 'PostClose') Then
   begin
-    If FDCLForm.CurrentQuery.State in dsEditModes Then
-      FDCLForm.CurrentQuery.Post;
-    If Assigned(FDCLForm) Then
-      FDCLForm.CloseAction:=fcaClose;
+    If Assigned(FDCLForm.CurrentQuery) then
+    Begin
+      If FDCLForm.CurrentQuery.State in dsEditModes Then
+        FDCLForm.CurrentQuery.Post;
+      If Assigned(FDCLForm) Then
+        FDCLForm.CloseAction:=fcaClose;
+    End;
     Executed:=True;
   end;
 
   If CompareString(Command, 'CancelClose') Then
   begin
-    If FDCLForm.CurrentQuery.State in dsEditModes Then
-      FDCLForm.CurrentQuery.Cancel;
-    If Assigned(FDCLForm) Then
-      FDCLForm.CloseAction:=fcaClose;
+    If Assigned(FDCLForm.CurrentQuery) then
+    Begin
+      If FDCLForm.CurrentQuery.State in dsEditModes Then
+        FDCLForm.CurrentQuery.Cancel;
+      If Assigned(FDCLForm) Then
+        FDCLForm.CloseAction:=fcaClose;
+    End;
     Executed:=True;
   end;
 
   If CompareString(Command, 'Post') Then
   begin
+    If Assigned(FDCLForm.CurrentQuery) then
     If FDCLForm.CurrentQuery.State in dsEditModes Then
       FDCLForm.CurrentQuery.Post;
     Executed:=True;
@@ -5566,6 +5577,7 @@ begin
 
   If CompareString(Command, 'Cancel') Then
   begin
+    If Assigned(FDCLForm.CurrentQuery) then
     If FDCLForm.CurrentQuery.State in dsEditModes Then
       FDCLForm.CurrentQuery.Cancel;
     Executed:=True;
@@ -5573,6 +5585,7 @@ begin
 
   If CompareString(Command, 'Delete') Then
   begin
+    If Assigned(FDCLForm.CurrentQuery) then
     If GetRaightsByContext(InContext)>ulReadOnly Then
       FDCLForm.CurrentQuery.Delete;
     Executed:=True;
@@ -5580,6 +5593,7 @@ begin
 
   If CompareString(Command, 'DeleteConf') Then
   begin
+    If Assigned(FDCLForm.CurrentQuery) then
     If GetRaightsByContext(InContext)>ulReadOnly Then
       If ShowErrorMessage(10, SourceToInterface('Удалить запись?'))=1 Then
         FDCLForm.CurrentQuery.Delete;
@@ -5588,6 +5602,7 @@ begin
 
   If CompareString(Command, 'Insert') Then
   begin
+    If Assigned(FDCLForm.CurrentQuery) then
     If GetRaightsByContext(InContext)>ulReadOnly Then
       FDCLForm.CurrentQuery.Insert;
     Executed:=True;
@@ -5595,6 +5610,7 @@ begin
 
   If CompareString(Command, 'Append') Then
   begin
+    If Assigned(FDCLForm.CurrentQuery) then
     If GetRaightsByContext(InContext)>ulReadOnly Then
       FDCLForm.CurrentQuery.Append;
     Executed:=True;
@@ -5603,6 +5619,7 @@ begin
   // ==============================================================
   If CompareString(Command, 'Post_Part') Then
   begin
+    If Assigned(FDCLForm.CurrentQuery) then
     If FDCLForm.CurrentPartQuery.State in dsEditModes Then
       FDCLForm.CurrentPartQuery.Post;
     Executed:=True;
@@ -5610,6 +5627,7 @@ begin
 
   If CompareString(Command, 'Delete_Part') Then
   begin
+    If Assigned(FDCLForm.CurrentQuery) then
     If GetRaightsByContext(InContext)>ulReadOnly Then
       FDCLForm.CurrentPartQuery.Delete;
     Executed:=True;
@@ -5617,6 +5635,7 @@ begin
 
   If CompareString(Command, 'DeleteConf_Part') Then
   begin
+    If Assigned(FDCLForm.CurrentPartQuery) then
     If GetRaightsByContext(InContext)>ulReadOnly Then
       If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msDeleteRecord)+'?'))=1 Then
         FDCLForm.CurrentPartQuery.Delete;
@@ -5625,12 +5644,14 @@ begin
 
   If CompareString(Command, 'Cancel_Part') Then
   begin
+    If Assigned(FDCLForm.CurrentPartQuery) then
     FDCLForm.CurrentPartQuery.Cancel;
     Executed:=True;
   end;
 
   If CompareString(Command, 'Insert_Part') Then
   begin
+    If Assigned(FDCLForm.CurrentPartQuery) then
     If GetRaightsByContext(InContext)>ulReadOnly Then
       FDCLForm.CurrentPartQuery.Insert;
     Executed:=True;
@@ -5638,6 +5659,7 @@ begin
 
   If CompareString(Command, 'Append_Part') Then
   begin
+    If Assigned(FDCLForm.CurrentPartQuery) then
     If GetRaightsByContext(InContext)>ulReadOnly Then
       FDCLForm.CurrentPartQuery.Append;
     Executed:=True;
@@ -9567,6 +9589,7 @@ var
 begin
   For i:=1 to FForms.Count do
   Begin
+    If i<FForms.Count then
     If Assigned(FForms[i-1]) then
     If not TDCLForm(FForms[i-1]).NoCloseable then
       If TDCLForm(FForms[i-1]).CloseAction=fcaClose then
@@ -10119,7 +10142,12 @@ begin
     End
     Else
       If Order=0 Then
-        FDCLLogOn.CreateForm(TrimRight(Name), nil, nil, nil, nil, False, chmNone)
+      Begin
+        If FindParam('script type=', LowerCase(DCL[0]))='command' Then
+          ExecCommand(DCLText)
+        Else
+          FDCLLogOn.CreateForm(TrimRight(Name), nil, nil, nil, nil, False, chmNone);
+      End
       Else
         ExecCommand(DCLText);
   end;
