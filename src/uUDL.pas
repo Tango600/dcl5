@@ -9589,7 +9589,7 @@ var
 begin
   For i:=1 to FForms.Count do
   Begin
-    If i<FForms.Count then
+    If i<=FForms.Count then
     If Assigned(FForms[i-1]) then
     If not TDCLForm(FForms[i-1]).NoCloseable then
       If TDCLForm(FForms[i-1]).CloseAction=fcaClose then
