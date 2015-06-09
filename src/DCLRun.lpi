@@ -18,7 +18,7 @@
       <UseVersionInfo Value="True"/>
       <AutoIncrementBuild Value="True"/>
       <MajorVersionNr Value="10"/>
-      <BuildNr Value="75"/>
+      <BuildNr Value="76"/>
       <Language Value="0419"/>
       <StringTable CompanyName="Unreal Software" ProductName="DCL5 plathform" ProductVersion=""/>
     </VersionInfo>
@@ -47,7 +47,7 @@
               <IOChecks Value="True"/>
               <RangeChecks Value="True"/>
             </Checks>
-            <TargetProcessor Value="pentium3"/>
+            <TargetProcessor Value="pentium2"/>
             <TargetCPU Value="i386"/>
             <TargetOS Value="win32"/>
           </CodeGeneration>
@@ -127,7 +127,6 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
-        <CommandLineParams Value="DCL.ini"/>
       </local>
     </RunParams>
     <RequiredPackages Count="1">

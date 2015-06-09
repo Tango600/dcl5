@@ -1703,7 +1703,6 @@ end;
 procedure TVariables.SetVariableByName(Const VariableName, Value: String);
 var
   vv1: Integer;
-  SumLabel, PayLabel: String;
 begin
   vv1:=VariableNumByName(VariableName);
   If vv1<> - 1 Then
@@ -1815,7 +1814,7 @@ end;
 
 procedure TVariables.RePlaseVariables(var VariablesSet: String; Query: TDCLDialogQuery);
 Const
-  MaxSysVars=48;
+  MaxSysVars=49;
   SysVarsSet: Array [1..MaxSysVars] of String=('_TIME_', '_TIMES_', '_DATE_', '_DATETIME_', // 4
     '_VERSION_', '_ISEMPTY_', '_DCLTABLE_', '_DCLNAMEFIELD_', '_DCLTEXTFIELD_', '_IDENTIFYFIELD_',
     // 10
@@ -1828,7 +1827,7 @@ Const
     // 37
     '_YESNO_', '_EVALFORMULA_', '_DSSTATE_', '_DSSTATENAME_', '_FULLRAIGHTS_', '_ROLEACCESSLEVEL_',
     // 43
-    '_APPDATAPATH_', '_OS_', '_MAC_', '_USERPROFILE_', '_USERDOC_'); // 48
+    '_APPDATAPATH_', '_OS_', '_MAC_', '_USERPROFILE_', '_USERDOC_', '_DCLINI_'); // 49
 var
   ReplaseVar, TmpStr: String;
   StartSel, ParamLen, StartSearch, pv1, pv2, pv3, FindVarNum, VarNameLength, MaxMatch: Integer;
@@ -2034,6 +2033,8 @@ begin
         TmpStr:=UserProfileDir; // '_USERPROFILE_'
         48:
         TmpStr:=GetUserDocumentsDir; // '_USERDOC_'
+        49:
+        TmpStr:=GPT.IniFileName; // _DCLINI_
         end;
       end;
 
@@ -2687,7 +2688,8 @@ begin
       begin
         TB1:=(FDCLLogOn.FDCLMainMenu.FormBar.FindComponent('TB'+IntToStr(FFormNum))
             as TFormPanelButton);
-        FreeAndNil(TB1);
+        If Assigned(TB1) then
+          FreeAndNil(TB1);
       end;
   end;
 
@@ -2702,10 +2704,8 @@ begin
   Pointer(FParentForm):=nil;
   Pointer(FCallerForm):=nil;
   SetInactive;
-  //FForm.Close;
-  FreeAndNil(FForm);
-  //FreeAndNil(ParentPanel);
-  //FreeAndNil(MainPanel);
+  FForm.Release;
+  inherited Destroy;
 end;
 
 procedure TDCLForm.CloseForm(Sender: TObject; var Action: TCloseAction);
@@ -3438,7 +3438,6 @@ begin
   FFormNum:=aFormNum;
   GridIndex:= - 1;
   TabIndex:= - 1;
-  // DCLCommand:=TDCLCommand.Create(Self, FDCLLogOn);
   Commands:=TDCLCommandButton.Create(DCLLogOn, Self);
   UserLevelLocal:=FDCLLogOn.AccessLevel;
   FormHeight:=DefaultFormHeight;
@@ -3540,9 +3539,6 @@ begin
     While ScrStrNum<OPLLinesCount do
     begin
       ScrStr:=Trim(FOPL[ScrStrNum]);
-      { RePlaseVariables(ScrStr);
-        FFactor:=0;
-        TranslateProc(ScrStr, FFactor); }
       inc(GPT.CurrentRunningScrString);
 
       If Pos('//', ScrStr)=1 Then
@@ -4489,7 +4485,6 @@ begin
       If PosEx('CurrentTablePart=', ScrStr)=1 Then
       begin
         tmpSQL:=Trim(FindParam('CurrentTablePart=', ScrStr));
-        v1:=0;
         If FGrids[GridIndex].TablePartsCount>1 then
         Begin
           If tmpSQL='-1' then
@@ -5036,15 +5031,6 @@ begin
   end;
 end;
 
-{ procedure TDCLForm.RunCommand(Command: String);
-  Var
-  vDCLCommand: TDCLCommand;
-  begin
-  vDCLCommand:=TDCLCommand.Create(Self, FDCLLogOn);
-  vDCLCommand.ExecCommand(Command, Self);
-  FreeAndNil(vDCLCommand);
-  end; }
-
 procedure TDCLForm.SetActive;
 begin
   FDCLLogOn.ActiveDCLForms[FFormNum]:=True;
@@ -5438,7 +5424,6 @@ var
   begin
     For StringNum:=0 to FCommandDCL.Count-1 do
       If CompareString(FCommandDCL[StringNum], ':'+LabelName+';') Then
-      // If LowerCase(FCommandDCL[StringNo])=':'+LowerCase(LabelName)+';' Then
       begin
         ScriptStrings:=StringNum;
         break;
@@ -5469,8 +5454,6 @@ begin
   FDCLLogOn.NotifyForms(fnaPauseAutoRefresh);
   Command:=Trim(Command);
   Executed:=False;
-  { MainForm:=FDCLForm;
-    CurrentForm:=FDCLForm; }
   InContext:=Assigned(FDCLForm);
 
   If CompareString(Command, 'Choose') Then
@@ -6285,20 +6268,14 @@ begin
               TmpStr:=FindParam('GlobQuery=', ScrStr);
               FDCLForm.FGrids[FDCLForm.CurrentGridIndex].SetSQLToStore(TmpStr, qtMain, ulUndefined);
               TranslateValContext(TmpStr);
-              FDCLForm.CurrentQuery.Close;
-              FDCLForm.CurrentQuery.SQL.Clear;
-              FDCLForm.CurrentQuery.SQL.Text:=TmpStr;
+              FDCLForm.FGrids[FDCLForm.CurrentGridIndex].Close;
+              FDCLForm.FGrids[FDCLForm.CurrentGridIndex].SetSQL(TmpStr);
               try
-                FDCLForm.CurrentQuery.Open;
+                FDCLForm.FGrids[FDCLForm.CurrentGridIndex].Open;
               Except
                 ShowErrorMessage( - 1113, 'SQL='+TmpStr);
               end;
               FDCLForm.CurrentQuery.EnableControls;
-              try
-                FDCLForm.CurrentQuery.GoToBookmark(BookMark);
-              finally
-                FDCLForm.CurrentQuery.FreeBookmark(BookMark);
-              end;
             end;
           end;
 
@@ -6387,7 +6364,6 @@ begin
             2:
               TextReport:=TDCLTextReport.InitReport(FDCLLogOn, nil, tmpDCL, RepIdParams, nqmNew);
             end;
-            // TextReport.OpenReport('Report.txt', 1);
 
             If Assigned(TextReport) then
             begin
@@ -6582,7 +6558,7 @@ begin
                   If PosEx('_Value=', ScrStr)<>0 Then
                   begin
                     TmpStr:=FindParam('_Value=', ScrStr);
-                    // RePlaseVariables(tmpStr);
+                    TranslateVals(tmpStr, FDCLForm.CurrentQuery);
                     (FDCLForm.Tables[ - 1].FieldPanel.FindComponent(tmpStr1) as TEdit).Text:=TmpStr;
                   end;
                 end;
@@ -6832,7 +6808,6 @@ begin
             If Assigned(FDCLForm) Then
             If tmpStr2<>'' Then
             begin
-              v1:=0;
               If tmpStr2='-1' then
                 v1:=FDCLForm.Tables[-1].TablePartsCount-1
               Else
@@ -7109,12 +7084,10 @@ begin
                         end;
                       end;
                     end;
-                // EditName
               end;
 
             If Assigned(ReturnValueParams) Then
               FreeAndNil(ReturnValueParams);
-            // FDCLForm:=CurrentForm;
           end;
 
           If PosEx('CloseDialog;', ScrStr)=1 Then
@@ -7502,8 +7475,6 @@ begin
             FDCLForm.Tables[ - 1].ReadOnly:=Trim(FindParam('ReadOnly=', ScrStr))='1';
           end;
 
-          // If LowerCase(ScrStr)='bkprint' Then PrintBase.Print(Nil, FormData[CurrentForm].QueryGlob);
-
           If LowerCase(ScrStr)='print' Then
             FDCLForm.Tables[FDCLForm.CurrentGridIndex].Print(nil);
 
@@ -7870,7 +7841,6 @@ begin
       ShowErrorMessage( - 1102, 'SQL='+ExpressionTmp);
     end;
     ExpressionTmp1:=FindParam('ReturnField=', Expression);
-    // DeleteNonPrintSimb(ExpressionTmp1);
     TranslateValContext(ExpressionTmp1);
     If ExpressionTmp1='' Then
       If DCLQuery.Active Then
@@ -8012,7 +7982,6 @@ begin
     Caption:='Unreal Software (C) 2002-'+IntToStr(YearOf(Now));
     Font.Color:=clWindowText;
     Font.Height:= - 12;
-    // Font.Name:='Times New Roman';
     Font.Style:=[fsBold, fsItalic];
     ParentFont:=False;
   end;
@@ -8138,9 +8107,6 @@ begin
     ModalResult:=1;
     TabOrder:=0;
   end;
-{$IFNDEF VER150}
-  // If GetMainFormNum<>-1 then AboutForm.PopupParent := FormData[GetMainFormNum].DBForm;
-{$ENDIF}
   AboutForm.ShowModal;
   FreeAndNil(AboutForm);
 end;
@@ -8742,8 +8708,6 @@ begin
 
   GPT.FormPosInDB:=isDisk;
 
-  // Command:=TDCLCommand.Create(nil, Self);
-
   NewLogOn:=Not Assigned(DBLogOn);
   If NewLogOn Then
   begin
@@ -8900,8 +8864,6 @@ var
   tmpMem: TMemoryStream;
   Key, SecKey, User: String;
   p: Integer;
-  Command: TDCLCommand;
-  Form: TDCLForm;
 begin
   If FileExists(FileName) Then
   begin
@@ -9367,7 +9329,6 @@ begin
         inc(PassRetries);
         If LogOnForm.PressOK=psCanceled Then
         begin
-          // break;
           Halt(0);
         end;
       until (Result=lsLogonOK)or(PassRetries>3);
@@ -9536,7 +9497,6 @@ end;
 procedure TDCLLogOn.InitActions(Sender: TObject);
 var
   MenuQuery: TDCLDialogQuery;
-  RecCount: Cardinal;
 begin
   Timer1.Enabled:=False;
   FreeAndNil(Timer1);
@@ -9601,7 +9561,6 @@ end;
 function TDCLLogOn.NewTransaction(RW: TTransactionType): TTransaction;
 begin
   Result:=TTransaction.Create(FDBLogOn);
-  //Result.Name:='tmp_WTR_'+IntToStr(UpTime);
   {$IFDEF IBX}
   Result.DefaultDatabase:=FDBLogOn;
   Result.DefaultAction:=TACommit;
@@ -9680,7 +9639,6 @@ begin
           end;
           end;
   CurrentForm:=tmpCF;
-  // FForms[CurrentForm].BringToFront;
 end;
 
 function TDCLLogOn.ReadConfig(ConfigName, UserID: String): String;
@@ -10306,8 +10264,6 @@ begin
     Form.OnClose:=MainFormAction.CloseMainForm;
     Form.OnCloseQuery:=MainFormAction.FormCloseQuery;
 
-    // Form.OnActivate:=DBDialogFormActions.ActivateDBForm;
-
     MenuQuery:=TDCLDialogQuery.Create(nil);
     MenuQuery.Name:='CreateMenu_'+IntToStr(UpTime);
     FDCLLogOn.SetDBName(MenuQuery);
@@ -10651,10 +10607,8 @@ begin
   For v1:=1 to ParamsCount(Colors) do
   begin
     TmpStr:=SortParams(Colors, v1);
-    // RePlaseVariables(tmpStr3);
     v2:=Pos('=', TmpStr);
     tmpStr2:=Copy(TmpStr, v2+1, Length(TmpStr)-v2+1);
-    // RePlaseVariables(tmpSQL2);
     Case GetStringDataType(tmpStr2) of
     idDigit:
     BrushColors[l].Color:=StrToIntEx(tmpStr2);
@@ -11606,7 +11560,6 @@ begin
           ShadowQuery.Open;
           TempStr:=ShadowQuery.Fields[0].AsString;
           ShadowQuery.Close;
-          // If tmpSQL='' then tmpSQL:='-1';
         Except
           ShowErrorMessage( - 1117, 'SQL='+TempStr);
         end;
@@ -12182,7 +12135,6 @@ end;
 procedure TDCLGrid.ChangeTabPage(Sender: TObject);
 begin
   CurrentTabIndex:=(Sender as TPageControl).ActivePageIndex;
-  // PartQueryGlob:=Query;
   FDCLForm.CurrentTabIndex:=CurrentTabIndex;
 end;
 
@@ -12283,7 +12235,6 @@ begin
         FQuery.Edit;
       FQuery.FieldByName(ContextLists[ComboNum].DataField).AsInteger:=
         tmpQuery.FieldByName(ContextLists[ComboNum].KeyField).AsInteger;
-      // If pre=1 then FormData[CurrentForm].QueryGlob.Post;
     end;
     tmpQuery.Close;
     FreeAndNil(tmpQuery);
@@ -12321,7 +12272,6 @@ begin
           FQuery.Edit;
         FQuery.FieldByName(ContextLists[ComboNum].DataField).AsInteger:=
           tmpQuery.FieldByName(ContextLists[ComboNum].KeyField).AsInteger;
-        // If pre=1 then FormData[CurrentForm].QueryGlob.Post;
       end
       Else
       begin
@@ -12371,7 +12321,6 @@ begin
     FData.DataSet:=FQuery;
   end
   Else
-    // FQuery:=Query; // Query.Query;
     FData.DataSet:=Query;
 
   If Assigned(Data) Then
@@ -12391,7 +12340,6 @@ begin
   Navig.ShowHint:=True;
   Navig.DataSource:=FData;
   Navig.BeforeAction:=ClickNavig;
-  // Navig.OnClick:=ClickNavig;
 
   For v1:=1 to Navig.ControlCount do
     If Navig.Controls[v1-1] is TNavButtons Then
@@ -12577,8 +12525,6 @@ begin
           FOPL.Insert(ScrStrNum+v1*2, Query.Fields[v1-1].FieldName);
           FOPL.Insert(ScrStrNum+1+v1*2, Query.Fields[v1-1].FieldName);
         end;
-        //ScrStrNum:=FOPL.Count;
-        // FOPL.SaveToFile('OPL.txt');
       end
       Else If PosEx('LoadFromTable=', FOPL[ScrStrNum+1])<>0 Then
       begin
@@ -12589,7 +12535,7 @@ begin
         try
           ShadowQuery.Open;
         Except
-          // ShowErrorMessage(-1103, 'SQL='+ShadowQuery.SQL.Text);
+          ShowErrorMessage(-1103, 'SQL='+ShadowQuery.SQL.Text);
         end;
         ShadowQuery.Last;
         ShadowQuery.First;
@@ -12606,8 +12552,8 @@ begin
       try
         CountFields:=StrToInt(Trim(FOPL[ScrStrNum+1]));
       Except
-        // ShowErrorMessage(-4002, '');
         CountFields:=0;
+        ShowErrorMessage(-4002, '');
       end;
 
       Case DisplayMode of
@@ -13010,7 +12956,7 @@ begin
   '.', ',':
   Begin
     // запрещаем ввод более 1 десятичного разделителя
-    If (Pos(FloatDelimiterTo, Text)=0) and (Pos(FloatDelimiterFrom, Text)=0) and (Pos(',', Text)=0) then
+    If Pos(FloatDelimiterTo, Text)=0 then
       Key:=FloatDelimiterTo
     Else key:=#0;
   End;
@@ -13127,7 +13073,6 @@ begin
         begin
           FGrid.Align:=alTop;
           FGrid.Height:=FGrid.Height-46;
-          // FGrid.Align:=alClient;
         end;
 
         FindGrid.Height:=45;
@@ -13187,7 +13132,6 @@ begin
       end;
       FGrid.Align:=alClient;
     end;
-    // FindGrid.Align:=alBottom;
   end
   Else
   begin
@@ -13210,7 +13154,7 @@ begin
     try
       FQuery.Open;
     Except
-      // ShowErrorMessage(-1111, 'SQL='+tmpSQL1+CR+SourceToInterface('Условия поиска=')+FindSQL);
+      ShowErrorMessage(-1111, 'SQL='+tmpSQL2+CR+SourceToInterface(GetDCLMessageString(msBadFindParams)));
     end;
   end;
 end;
@@ -13492,7 +13436,6 @@ begin
         Result:='';
       end;
     end;
-
   end;
 end;
 
@@ -13508,8 +13451,7 @@ function TDCLGrid.GetQuery: TDCLQuery;
 begin
   If not Assigned(FData) then
   Begin
-    If not Assigned(FData.DataSet) then
-      Result:=FQueryGlob;
+    Result:=FQueryGlob;
   End
   Else
     If Assigned(FData.DataSet) then
@@ -13841,6 +13783,7 @@ begin
     Exit;
   End;
 
+{$IFNDEF FPC}
   If Assigned(FLocalBookmark) Then
     try
       If FQuery.Active then
@@ -13849,6 +13792,7 @@ begin
     finally
       FQuery.FreeBookmark(FLocalBookmark);
     end;
+{$ENDIF}
 end;
 
 procedure TDCLGrid.OpenQuery(QText: String);
@@ -14060,7 +14004,6 @@ begin
       begin
         ExeplStr:=DBFilters[FN].FilterString;
         QFilterField:=DBFilters[FN].Field;
-        // Delimiter:=GetDelimiter(QFilterField);
 
         If ExeplStr='-1' Then
         begin
@@ -14131,7 +14074,6 @@ begin
     FQuery.Post;
   If FQuery.Active Then
     FQuery.SaveDB;
-  ///FQuery.DisableControls;
   If FQuery.Active Then
   begin
     For tpc:=1 to Length(FTableParts) do
@@ -14142,7 +14084,6 @@ begin
   end;
 
   Open;
-  ///FQuery.EnableControls;
   For tpc:=1 to Length(FTableParts) do
   begin
     FTableParts[tpc-1].Open;
@@ -14533,8 +14474,6 @@ begin
 
       SetPopupMenuItems(True);
 
-      // CreateBookMarkMenu;
-
       FGrid.PopupMenu:=PopupGridMenu;
     end;
 
@@ -14547,8 +14486,6 @@ begin
       PopupGridMenu:=TPopupMenu.Create(FieldPanel);
 
       SetPopupMenuItems(False);
-
-      // CreateBookMarkMenu;
 
       FieldPanel.PopupMenu:=PopupGridMenu;
     end;
@@ -16059,7 +15996,7 @@ end;
 
 destructor TDCLTextReport.Destroy;
 begin
-  ///
+  inherited Destroy;
 end;
 
 procedure TDCLTextReport.CloseReport(FileName: String);
@@ -16280,7 +16217,7 @@ begin
         StartSel:=PosEx(RepParams[StringNum], BodyText);
       end;
 
-      inc(StringNum, 2);
+      Inc(StringNum, 2);
     end;
   end;
 
@@ -16351,7 +16288,7 @@ begin
         end;
       end;
     end;
-    BodyText1:=Copy(BodyText, 1, Length(BodyText)-2);
+    BodyText1:=Copy(BodyText, 1, Length(BodyText)-Length(CR));
   end
   Else
     BodyText1:='';
@@ -16956,7 +16893,7 @@ end;
 
 destructor TFieldGroup.Destroy;
 begin
-  ////
+  inherited Destroy;
 end;
 
 procedure TFieldGroup.Load(Sender: TObject);
@@ -17115,7 +17052,6 @@ begin
     SavePictureDialog.Name:='SavePictureDialog1';
     SavePictureDialog.DefaultExt:=GetExtByType(FGraphicFileType);
     SavePictureDialog.Filter:=GraphicFilter(TGraphic);
-    // SavePictureDialog.Filter:='JPEG Image File (*.jpeg)|*.jpeg;*.jpg|Bitmaps (*.bmp)|*.bmp';
 
     If SavePictureDialog.Execute Then
       SaveData(SavePictureDialog.FileName);
@@ -17223,6 +17159,7 @@ begin
       DCLQuery.Close;
     // FreeAndNil(DCLQuery);
   end;
+  inherited Destroy;
 end;
 
 procedure TBaseBinStore.CompressData(DataName, Data: String; FindType: TFindType);

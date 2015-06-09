@@ -394,9 +394,9 @@ Begin
       End;
     End;
     $80..$FF:Begin
-        utf8ch:=ArrayCP1251ToUTF8[Ord(FileName[i])];
-        For j:=0 to Length(utf8ch)-1 do
-          Result:=Result+'%'+IntToHex(Ord(utf8ch[j]), 2);
+      utf8ch:=ArrayCP1251ToUTF8[Ord(FileName[i])];
+      For j:=1 to Length(utf8ch) do
+        Result:=Result+'%'+IntToHex(Ord(utf8ch[j]), 2);
     End;
     End;
   End;

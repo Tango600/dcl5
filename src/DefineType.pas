@@ -51,7 +51,8 @@
 {$ENDIF}
 {$IFDEF FPC}
 //  {$DEFINE ZEOS}
-  {$DEFINE SQLdb}
+//  {$DEFINE SQLdb}
+  {$DEFINE SQLdbIB}
 //  {$DEFINE IBX}
 
 //  {$DEFINE ZVComponents}
