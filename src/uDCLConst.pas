@@ -38,7 +38,7 @@ DefaultLibraryLocation='fbclient.so';
 {$IFDEF SQLdb}
   DBEngineType='SQLdb (Universal)';
 {$ENDIF}
-  Version='10.0.21.277';
+  Version='10.0.23.285';
 
   CompotableVersion='9.1.127.305';
 
@@ -275,7 +275,7 @@ DefaultLibraryLocation='fbclient.so';
   Digits='0123456789.,';
   /// Math
 
-  StopSimbols=DefaultParamsSeparator+DefaultValuesSeparator+DefaultParamDelim+'( )[],=+-^<>.%:;&$#@*'#39#10#13;
+  StopSimbols=DefaultParamsSeparator+DefaultValuesSeparator+DefaultParamDelim+'( )[],=\/+-^<>.%:;&$#@*'#39#10#13;
 
   KillerTimerInterval=400;
   IntervalTimeToInitScripts=700;
@@ -291,9 +291,9 @@ DefaultLibraryLocation='fbclient.so';
 
   DefaultNavigButtonsSet='First,Last,Edit,Delete,Insert,Post,Cancel,Refresh';
 
-  MonthsNames: Array [0..12] of String=(' ', 'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь');
-  MonthsNamesW: Array [0..12] of String=(' ', 'Января', 'Февраля', 'Марта', 'Апреля', 'Майя', 'Июня',
+  {MonthsNames: Array [0..12] of String=(' ', 'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь');}
+  MonthsNamesRusW: Array [0..12] of String=(' ', 'Января', 'Февраля', 'Марта', 'Апреля', 'Майя', 'Июня',
     'Июля', 'Августа', 'Сентября', 'Октября', 'Ноября', 'Декабря');
 
   DCLDir='DCL5'+PathDelim;
@@ -309,20 +309,11 @@ DefaultLibraryLocation='fbclient.so';
   ToolCommandsCount=3;
   ToolButtonsCmd: Array [1..ToolCommandsCount] Of String=('structure', 'print', 'find');
 
-  SimbolsCount=68;
-  RusTab: Array [1..SimbolsCount] Of Char=('а', 'б', 'в', 'г', 'д', 'е', 'ё', 'ж', 'з', 'и', 'й',
-    'к', 'л', 'м', 'н', 'о', 'п', 'р', 'с', 'т', 'у', 'ф', 'х', 'ц', 'ч', 'ш', 'щ', 'ы', 'ъ', 'ь',
-    'э', 'ю', 'я', 'А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ё', 'Ж', 'З', 'И', 'Й', 'К', 'Л', 'М', 'Н', 'О',
-    'П', 'Р', 'С', 'Т', 'У', 'Ф', 'Х', 'Ц', 'Ч', 'Ш', 'Щ', 'Ы', 'Ъ', 'Ь', 'Э', 'Ю', 'Я', ' ', '№');
-  LatTab: Array [1..SimbolsCount] Of String=('a', 'b', 'v', 'g', 'd', 'je', 'jo', 'zh', 'z', 'i',
-    'j', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'f', 'h', 'ce', 'ch', 'sh', 'sch', 'y',
-    '''', '', 'e', 'ju', 'ja', 'A', 'B', 'V', 'G', 'D', 'JE', 'JO', 'ZH', 'Z', 'I', 'J', 'K', 'L',
-    'M', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'F', 'H', 'CE', 'CH', 'SH', 'SCH', 'Y', '''', '', 'E',
-    'JU', 'JA', '_', '#');
-
   QCount=20;
   PCount=40;
   KeyMarksItems=3;
+
+  ScrDataBlockWidth=80;
 
 Type
   TReliseStatus=(rsAlpha, rsBetta, rsPreRelase, rsUnstable, rsStable);
@@ -340,13 +331,12 @@ Type
     fnaResumeAutoRefresh);
   TIsDigitType=(idString, idDigit, idFloatDigit, idHex, idColor, idDateTime, idUserLevel);
   TDataStatus=(dssChanged, dssSaved);
-  TIniStore=(isDisk, isBase, isDiskAndBase);
+  TIniStore=(isDisk, isBase, isDiskAndBase, isNone);
   TNotifyActionsType=(naDone, naScriptRun, naMessage, naExecAndWait, naExec, naExitToTime);
   TQueryType=(qtMain, qtFind, qtDefault);
   TFilterType=(ftNone, ftDBFilter, ftContextFilter);
   TOfficeDocumentFormat=(odtNone, odtMSO, odtOO, odtPossible);
   TDocumentType=(dtNone, dtSheet, dtText);
-  TReportCodePage=(rcp1251, rcp866);
   TReportViewMode=(rvmOneRecord, rvmAllDS, rvmGrid, rvmMultitRecordReport, rvmBookmarcks);
   TFieldBoxType=(fbtOutBox, fbtInputBox, fbtEditBox);
   TGraficFileType=(gftNone, gftBMP, gftJPEG, gftPNG, gftIcon, gftGIF, gftTIFF, gftOther);
@@ -354,8 +344,8 @@ Type
   TSpoolType=(stNone, stSpool, stText);
   TGroupType=(gtGrafic, gtMemo, gtRichText);
   TQueryBehavior=(qbNormal, qbNotReload, qbEnding);
-  TDataSetType=(dstIBQ, dstDataSet);
-  TReportType=(rtWord);
+  TDataSetType=(dstIBQ, dstDataSet, dstFRX);
+  TReportType=(rtWord, rtFast);
   TSelectType=(qtCount, qtSelect);
   TFindType=(ftByIndex, ftByName, ftSQL);
   TNewQueryMode=(nqmNew, nqmFromGrid);
@@ -364,16 +354,19 @@ Type
   TSigns=(sEquals, sGreater, sLess, sNotEqual, sGreaterEq, sLessEq);
   TSimplyFieldType=(sftNotDefine, sftString, sftDigit, sftFloat, sftDateTime);
   TDCLFormCloseAction=(fcaNone, fcaClose, fcaInProcess);
-  TISO639_3=(lgRUS, lgENG);
-
+  TFastReportsScriptLanguage=(fslPascal, fslBasic, fslCppScript, fslJScript);
 
 const
   ReleaseStatus=rsBetta;
   ReliseStatues:Array[TReliseStatus] of String=('Alpha', 'Betta', 'Pre relase', 'Unstable', 'Stable');
   Signs:Array[TSigns] of String=('=', '<', '>', '<>', '<=', '>=');
-  TISO639_3_Str:array[TISO639_3] of string=('rus', 'eng');
+  FastReportsScriptLanguages:array[TFastReportsScriptLanguage] of String=('PascalScript', 'BasicScript', 'C++Script', 'JScript');
 
-  DefaultLanguage=lgRUS;
+  DefaultLanguage='RUS';
+  DefaultLanguageID=1049;
+
+  DefaultFRScriptLanguage=fslPascal;
+
 
 
 implementation

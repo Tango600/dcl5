@@ -61,6 +61,7 @@ Procedure InitGetAppConfigDir;
 function GetUserDocumentsDir: String;
 Function IsUNCPath(Path: String): Boolean;
 Function IsFullPath(Path: String): Boolean;
+Function NoFileExt(const FileName:String):Boolean;
 
 Function DrawBMPButton(Const BMPType: String): TBitmap;
 function GetIcon: TIcon;
@@ -82,6 +83,7 @@ Function HashString(S: String): String;
 
 Function IsReturningQuery(SQQL: String): Boolean;
 function TrimSQLComment(SQLText: String): String;
+function FindSQLWhere(SQL, FindToken:String; Opened:Boolean=True):Integer;
 
 Procedure ExecuteStatement(Code: String);
 Function GetOnOffMode(Mode: Boolean): String;
@@ -121,13 +123,14 @@ function EncodeScriptData(Script:TStringList):TMemoryStream;
 
 function GetTimeFormat(mSec: Cardinal): String;
 
-function StringToLangID(Lang:string):TISO639_3;
-function LangIDToString(LangID:TISO639_3):string;
+function GetSystemLanguage: String;
+function GetSystemLanguageID: Integer;
+procedure InitLangEnv;
 
 implementation
 
 uses
-  SumProps, uDCLResources, uDCLDBUtils, uDCLStringsRes, MD5;
+  SumProps, uDCLResources, uDCLDBUtils, uDCLMultiLang, MD5;
 
 function ValidObject(const AObj: TObject): Boolean;
 begin
@@ -295,30 +298,11 @@ End;
 Function GetFileNameToTranslite(Const FullFileName: String): String;
 Var
   FileName, NewFileName, FilePath: String;
-  i: byte;
-
-  Function FindCharIndex(Item: String): String;
-  Var
-    ti: byte;
-  Begin
-    ti:=1;
-    While (Item<>RusTab[ti])And(ti<SimbolsCount) Do
-      Inc(ti);
-
-    If Item=RusTab[ti] Then
-      Result:=LatTab[ti]
-    Else
-      Result:=Item;
-  End;
-
 Begin
   FileName:=ExtractFileName(FullFileName);
-  NewFileName:='';
-
   FilePath:=ExtractFilePath(FullFileName);
 
-  For i:=1 To Length(FileName) Do
-    NewFileName:=NewFileName+FindCharIndex(FileName[i]);
+  NewFileName:=Transcode(tdtTranslit, FileName);
 
   Result:=FilePath+NewFileName;
 End;
@@ -1153,19 +1137,56 @@ Begin
 {$ENDIF}
 End;
 
-function StringToLangID(Lang:string):TISO639_3;
+function GetSystemLanguage: String;
+{$IFDEF MSWINDOWS}
 var
-  i:TISO639_3;
+  OutputBuffer: PChar;
+  SelectedLCID: LCID;       //DWORD constand in Windows.pas
+{$ENDIF}
 begin
-  Result:=DefaultLanguage;
-  For i:=Low(TISO639_3) to High(TISO639_3) do
-    If Trim(LowerCase(Lang))=TISO639_3_Str[i] then
-      Result:=i;
+{$IFDEF MSWINDOWS}
+  OutputBuffer:=StrAlloc(90);     //alocate memory for the PChar
+  try
+    try
+      SelectedLCID:=GetUserDefaultLCID and $FF;
+
+      GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SABBREVLANGNAME, OutputBuffer, 89);
+      Result:=UpperCase(OutputBuffer);
+    except
+      Result:=DefaultLanguage;
+      Abort;
+    end;
+  finally
+    StrDispose(OutputBuffer);   //alway's free the memory alocated
+  end;
+{$ENDIF}
 end;
 
-function LangIDToString(LangID:TISO639_3):string;
+function GetSystemLanguageID: Integer;
+{$IFDEF MSWINDOWS}
+var
+  SelectedLCID: LCID;       //DWORD constand in Windows.pas
+{$ENDIF}
 begin
-  Result:=TISO639_3_Str[LangID];
+{$IFDEF MSWINDOWS}
+  try
+    try
+      SelectedLCID:=GetUserDefaultLCID;// and $FF;
+      Result:=SelectedLCID
+    except
+      Result:=DefaultLanguageID;
+      Abort;
+    end;
+  finally
+    //
+  end;
+{$ENDIF}
+end;
+
+procedure InitLangEnv;
+begin
+  GPT.LangID:=GetSystemLanguageID;
+  GPT.LangName:=GetSystemLanguage;
 end;
 
 Procedure TranslateProc(Var CallProc: String; Var Factor: Word; Query: TDCLDialogQuery);
@@ -1509,7 +1530,10 @@ Begin
         End;
         18: // GetMonthName
         Begin
-          TmpStr:=MonthsNames[StrToInt(FunctionParams[1])];
+          tmpStr:=FunctionParams[1];
+          pv1:=StrToIntEx(tmpStr);
+          If ((pv1>0) and (pv1<13)) then
+            TmpStr:=GetLacalaizedMonthName(StrToInt(FunctionParams[1]));
         End;
         19: // LeadingZero
         Begin
@@ -1530,7 +1554,7 @@ Begin
           tmpStr:=FunctionParams[1];
           pv1:=StrToIntEx(tmpStr);
           If ((pv1>0) and (pv1<13)) then
-            TmpStr:=MonthsNamesW[pv1];
+            TmpStr:=MonthsNamesRusW[pv1];
         End;
         23:
         Begin
@@ -1577,33 +1601,29 @@ Begin
   Begin
     If Length(S)>1 then
     Begin
-      If PosEx('cl', S)=1 Then
+      If (PosEx('cl', S)=1) and (Length(S)>4) Then
       Begin
         Result:=idColor;
         Exit;
       End;
-      If (PosEx('ul', S)=1)and(PosSet(UserLevelsSet, S)<>0)
+      If (PosEx('ul', S)=1) and (PosSet(UserLevelsSet, S)<>0) and (Length(S)>5)
       then
       Begin
         Result:=idUserLevel;
         Exit;
       End;
-      If (LowerCase(S[1])='h')Or(S[1]='$') Then
+      If (LowerCase(S[1])='h') or (S[1]='$') Then
       Begin
-        If ((Length(S)-1)Mod 2)=0 Then
+        For iI:=2 To Length(S) Do
         Begin
-          tmpS:=UpperCase(Copy(S, 2, Length(S)));
-          For iI:=1 To Length(tmpS) Do
+          If PosEx(S[iI], '0123456789ABCDEF')=0 then
           Begin
-            If Pos(tmpS[iI], '0123456789ABCDEF')=0 then
-            Begin
-              Result:=idString;
-              Exit;
-            End;
+            Result:=idString;
+            Exit;
           End;
-          Result:=idHex;
-          Exit;
         End;
+        Result:=idHex;
+        Exit;
       End;
       For iI:=1 To Length(S) Do
       Begin
@@ -1917,7 +1937,7 @@ Begin
 
         If PosEx('Language=', Params[i])=1 Then
         Begin
-          GPT.Lang:=StringToLangID(Trim(FindParam('Language=', Params[i])));
+          //GPT.Lang:=StringToLangID(Trim(FindParam('Language=', Params[i])));
         End;
 
         If PosEx('DateSeparator=', Params[i])=1 Then
@@ -1958,6 +1978,29 @@ Function HashString(S: String): String;
 Begin
   Result:=MD5DigestToStr(MD5String(S));
 End;
+
+Function NoFileExt(const FileName:String):Boolean;
+var
+  i, p, l, k:Integer;
+begin
+  p:=0;
+  k:=0;
+  i:=Length(FileName);
+  l:=i-5;
+  If i<=5 then
+    l:=1;
+  For i:=Length(FileName) downto l do
+  Begin
+    If FileName[i]='.' then
+    Begin
+      k:=p;
+      Break;
+    End;
+    Inc(p);
+  End;
+
+  Result:=not (k>1);
+end;
 
 Function IsFullPath(Path: String): Boolean;
 Begin
@@ -2028,6 +2071,54 @@ Begin
       Result:=False;
   End;
 End;
+
+function FindSQLWhere(SQL, FindToken:String; Opened:Boolean=True):Integer;
+var
+  p, i, skb, sep, l:Integer;
+  Words:TStringList;
+  First, Last:Boolean;
+  tmp1, DelimsSet, OpenerSet, CloseerSet:String;
+begin
+  Result:=0;
+  DelimsSet:='( )[]/*\-+'#39#10#13#9;
+  OpenerSet:='(';
+  CloseerSet:=')';
+  First:=True;
+  Last:=False;
+  l:=Length(FindToken);
+  i:=1;
+  skb:=0;
+  while i<Length(SQL) do
+  Begin
+    Last:=i=Length(SQL);
+
+    If Opened then
+      If Pos(SQL[i], OpenerSet)<>0 then
+        Inc(skb)
+      Else
+        If Pos(SQL[i], CloseerSet)<>0 then
+          Dec(skb);
+
+    If (Pos(SQL[i], DelimsSet)<>0) or First then
+    Begin
+      If i+Length(FindToken)<Length(SQL) then
+      Begin
+        If (Pos(SQL[i+l+1], DelimsSet)<>0) or Last then
+        Begin
+          tmp1:=LowerCase(Copy(SQL, i+1, l));
+          If skb=0 then
+            If LowerCase(tmp1)=LowerCase(FindToken) then
+            Begin
+              Result:=i+1;
+              Break;
+            End;
+        End;
+      End;
+    End;
+    Inc(i);
+    First:=False;
+  End;
+end;
 
 /// ////////////////////////////////////////////////////////////
 
@@ -2291,34 +2382,37 @@ Var
 Begin
   If Assigned(FForm) Then
   Begin
-    DCLQueryL:=TDCLDialogQuery.Create(nil);
-    DCLQueryL.Name:='SaveFormPosOLD_'+IntToStr(UpTime);
-    FDCLLogOn.SetDBName(DCLQueryL);
-
-    DCLQueryL.SQL.Text:='select count(*) from '+INITable+' where '+IniUserFieldName+'='+GPT.UserID+
-      ' and '+IniDialogNameField+'='+GPT.StringTypeChar+DialogName+GPT.StringTypeChar;
-    DCLQueryL.Open;
-    i:=DCLQueryL.Fields[0].AsInteger;
-    DCLQueryL.Close;
-
-    If i<>0 Then
+    If FDCLLogOn.TableExists(INITable) then
     Begin
-      DCLQueryL.SQL.Text:='update '+INITable+' set '+IniParamValField+'='+GPT.StringTypeChar+
-        GetFormPosString(FForm, DialogName)+GPT.StringTypeChar+' where '+GetIniToRole(GPT.UserID)+IniDialogNameField+
-        '='+GPT.StringTypeChar+DialogName+GPT.StringTypeChar;
-    End
-    Else
-    Begin
-      DCLQueryL.SQL.Text:='insert into '+INITable+'('+IniUserFieldName+', '+IniDialogNameField+', '+
-        IniParamValField+') values('+GPT.UserID+', '+GPT.StringTypeChar+DialogName+
-        GPT.StringTypeChar+', '+GPT.StringTypeChar+GetFormPosString(FForm, DialogName)+GPT.StringTypeChar+')';
+      DCLQueryL:=TDCLDialogQuery.Create(nil);
+      DCLQueryL.Name:='SaveFormPosOLD_'+IntToStr(UpTime);
+      FDCLLogOn.SetDBName(DCLQueryL);
+
+      DCLQueryL.SQL.Text:='select count(*) from '+INITable+' where '+IniUserFieldName+'='+GPT.UserID+
+        ' and '+IniDialogNameField+'='+GPT.StringTypeChar+DialogName+GPT.StringTypeChar;
+      DCLQueryL.Open;
+      i:=DCLQueryL.Fields[0].AsInteger;
+      DCLQueryL.Close;
+
+      If i<>0 Then
+      Begin
+        DCLQueryL.SQL.Text:='update '+INITable+' set '+IniParamValField+'='+GPT.StringTypeChar+
+          GetFormPosString(FForm, DialogName)+GPT.StringTypeChar+' where '+GetIniToRole(GPT.UserID)+IniDialogNameField+
+          '='+GPT.StringTypeChar+DialogName+GPT.StringTypeChar;
+      End
+      Else
+      Begin
+        DCLQueryL.SQL.Text:='insert into '+INITable+'('+IniUserFieldName+', '+IniDialogNameField+', '+
+          IniParamValField+') values('+GPT.UserID+', '+GPT.StringTypeChar+DialogName+
+          GPT.StringTypeChar+', '+GPT.StringTypeChar+GetFormPosString(FForm, DialogName)+GPT.StringTypeChar+')';
+      End;
+      Try
+        DCLQueryL.ExecSQL;
+      Except
+        //ShowMessage('Error!');
+      End;
+      FreeAndNil(DCLQueryL);
     End;
-    Try
-      DCLQueryL.ExecSQL;
-    Except
-      //ShowMessage('Error!');
-    End;
-    FreeAndNil(DCLQueryL);
   End;
 end;
 
@@ -2372,28 +2466,31 @@ Var
 Begin
   If DialogName<>'' Then
   Begin
-    DCLQueryL:=TDCLDialogQuery.Create(Nil);
-    DCLQueryL.Name:='LoadFormPosOLD_'+IntToStr(UpTime);
-    FDCLLogOn.SetDBName(DCLQueryL);
-
-    DCLQueryL.SQL.Text:='select * from '+INITable+' where '+GetIniToRole(GPT.UserID)+
-      IniDialogNameField+'='+GPT.StringTypeChar+DialogName+GPT.StringTypeChar;
-    DCLQueryL.Open;
-
-    If Not DCLQueryL.IsEmpty Then
+    If FDCLLogOn.TableExists(INITable) then
     Begin
-      IniVal:=DCLQueryL.FieldByName(IniParamValField).AsString;
+      DCLQueryL:=TDCLDialogQuery.Create(Nil);
+      DCLQueryL.Name:='LoadFormPosOLD_'+IntToStr(UpTime);
+      FDCLLogOn.SetDBName(DCLQueryL);
 
-      If GPT.DialogsSettings and (IniVal<>'') Then
+      DCLQueryL.SQL.Text:='select * from '+INITable+' where '+GetIniToRole(GPT.UserID)+
+        IniDialogNameField+'='+GPT.StringTypeChar+DialogName+GPT.StringTypeChar;
+      DCLQueryL.Open;
+
+      If Not DCLQueryL.IsEmpty Then
       Begin
-        FForm.Top:=StrToInt(FindParam('Top=', IniVal));
-        FForm.Left:=StrToInt(FindParam('Left=', IniVal));
-        FForm.ClientHeight:=StrToInt(FindParam('Height=', IniVal))+AddHeight;
-        FForm.Width:=StrToInt(FindParam('Width=', IniVal));
+        IniVal:=DCLQueryL.FieldByName(IniParamValField).AsString;
+
+        If GPT.DialogsSettings and (IniVal<>'') Then
+        Begin
+          FForm.Top:=StrToInt(FindParam('Top=', IniVal));
+          FForm.Left:=StrToInt(FindParam('Left=', IniVal));
+          FForm.ClientHeight:=StrToInt(FindParam('Height=', IniVal))+AddHeight;
+          FForm.Width:=StrToInt(FindParam('Width=', IniVal));
+        End;
       End;
+      DCLQueryL.Close;
+      FreeAndNil(DCLQueryL);
     End;
-    DCLQueryL.Close;
-    FreeAndNil(DCLQueryL);
   End;
 end;
 
@@ -2570,11 +2667,11 @@ Begin
           Buffer[p]:=Buffer[i-1];
           Inc(p);
         End;
-			End;
+      End;
 
       Result.WriteBuffer(Buffer[0], p);
-		End;
-	End;
+    End;
+  End;
 End;
 
 function DecodeScriptData(Data:TMemoryStream):TStringList;
@@ -2628,7 +2725,7 @@ Begin
   tmpMem.Position:=0;
   CompressProc(tmpMem, tmpArc);
   tmpArc.Position:=0;
-  Result.CopyFrom(SaveFormatedBlock(ConvertBinToXBase(tmpArc, 16), 32), 0);
+  Result.CopyFrom(SaveFormatedBlock(ConvertBinToXBase(tmpArc, 16), ScrDataBlockWidth), 0);
   Result.Position:=0;
   FreeAndNil(tmpArc);
   FreeAndNil(tmpMem);

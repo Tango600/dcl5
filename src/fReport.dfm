@@ -1,37 +1,40 @@
 object MainForm: TMainForm
   Left = 633
-  Height = 79
   Top = 281
-  Width = 280
   ClientHeight = 79
-  ClientWidth = 280
+  ClientWidth = 301
   Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = True
+  Position = poDesktopCenter
   OnCreate = FormCreate
-  LCLVersion = '1.2.4.0'
+  PixelsPerInch = 96
+  TextHeight = 13
   object ButtonPrint: TButton
     Left = 16
-    Height = 25
     Top = 24
     Width = 75
+    Height = 25
     Caption = 'Print'
-    OnClick = ButtonPrintClick
     TabOrder = 0
+    OnClick = ButtonPrintClick
   end
   object InDOSCodePage: TCheckBox
     Left = 120
-    Height = 19
     Top = 28
-    Width = 93
+    Width = 149
+    Height = 19
     Caption = 'DOS Codepage'
     TabOrder = 1
   end
   object OpenDialog1: TOpenDialog
     DefaultExt = '.drt'
-    Filter = 'DCL Îò÷¸òû|*.dcl;*.drt;*.dcr'
-    left = 17
-    top = 28
+    Filter = 'DCL '#1054#1090#1095#1105#1090#1099'|*.dcl;*.drt;*.dcr'
+    Left = 17
+    Top = 28
   end
 end

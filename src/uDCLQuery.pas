@@ -337,7 +337,7 @@ end;
 constructor TDCLQuery.Create(DatabaseObj: TDBLogOn);
 begin
   inherited Create(nil);
-  Name:='DCLQuery'+IntToStr(UpTime);
+  //Name:='DCLQuery'+IntToStr(UpTime);
   FUpdateSQLDefined:=False;
 {$IFDEF ZEOS}
   FFieldsDefsDefined:=False;

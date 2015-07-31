@@ -8,7 +8,7 @@ uses
   {$ENDIF}{$ENDIF}
   Interfaces,
   {$IFDEF IBX}
-   ibexpress,
+  ibexpress,
   {$ENDIF}
   {$IFDEF ZEOS}
   zcomponent,
@@ -44,11 +44,11 @@ uses
   uDCLConst in 'uDCLConst.pas',
   uDCLUtils in 'uDCLUtils.pas',
   uDCLTypes in 'uDCLTypes.pas',
-  uDCLStringsRes in 'uDCLStringsRes.pas',
   SumProps in 'SumProps.pas',
   uDCLMessageForm in 'uDCLMessageForm.pas',
   uDCLDBUtils in 'uDCLDBUtils.pas',
   uDCLOLE in 'uDCLOLE.pas',
+  uDCLMultiLang in 'uDCLMultiLang.pas',
   uDCLOfficeUtils in 'uDCLOfficeUtils.pas',
   uLogging in 'uLogging.pas',
   uDCLResources in 'uDCLResources.pas',

@@ -9,14 +9,14 @@ uses
   VCLFixPack, ControlsAtomFix,
 {$ENDIF}
 {$ENDIF}
-{$IFDEF MSWINDOWS} Windows, Messages, {$ENDIF} SysUtils, Classes,
+{$IFDEF MSWINDOWS} Windows, Messages, uNewFonts, {$ENDIF} SysUtils, Classes,
   Controls, Forms, Dialogs,
 {$IFDEF FPC}
   LCLType, LConvEncoding, InterfaceBase,
 {$ELSE}
   uGlass,
 {$ENDIF}
-  uDCLConst, uUDL, uDCLData, uStringParams, uDCLStringsRes;
+  uDCLConst, uUDL, uDCLData, uStringParams, uDCLMultiLang;
 
 type
   { TMainForm }
@@ -58,12 +58,12 @@ begin
 {$IFNDEF NEWDELPHI}
   SC_MINIMIZE:
   begin
-    ShowWindow(OldMainWin, SW_HIDE);
     for i:=Screen.FormCount-1 DownTo 0 do
       If OldMainWin<>Screen.Forms[i].Handle then
         ShowWindow(Screen.Forms[i].Handle, SW_MINIMIZE)
       Else
         ShowWindow(Screen.Forms[i].Handle, SW_HIDE);
+    ShowWindow(OldMainWin, SW_HIDE);
     Message.Result:=0;
   end;
   SC_RESTORE:
@@ -71,6 +71,7 @@ begin
     for i:=0 to Screen.FormCount-1 do
       If OldMainWin<>Screen.Forms[i].Handle then
         ShowWindow(Screen.Forms[i].Handle, SW_RESTORE);
+    ShowWindow(OldMainWin, SW_HIDE);
     Message.Result:=0;
   end;
 {$ENDIF}

@@ -129,6 +129,7 @@ begin
   End;
 
   WriteLog('-=Окончание журнала=-', etNone);
+  inherited Destroy;
 end;
 
 procedure TLogging.FlushLog;

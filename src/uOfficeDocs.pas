@@ -43,11 +43,11 @@ type
 
   TPrintDoc=class(TObject)
   private
-    FMsWord, FWordDocument: OleVariant;
     FWordRuning: Boolean;
     FWordVer: Byte;
     FOfficeType: TOfficeType;
 {$IFDEF MSWINDOWS}
+    FMsWord, FWordDocument: OleVariant;
     FOW: TOOWriter;
 {$ENDIF}
     FDataModule: TDataModule;
@@ -80,12 +80,13 @@ type
     procedure FindAndReplace(aFindText, AReplaceText: ShortString);
     procedure SaveReport(FileName: String);
     procedure ShowReport;
+    procedure CloseDoc;
   end;
 
 implementation
 
 uses
-  uDCLUtils, uDCLData, uDCLConst;
+  uDCLUtils, uDCLData, uDCLOfficeUtils, uDCLConst;
 
 const
   wdReplaceNone=$00000000;
@@ -586,6 +587,20 @@ begin
     end;
   finally
     Result:=True;
+  end;
+end;
+
+procedure TPrintDoc.CloseDoc;
+begin
+  case FOfficeType of
+  otMSOffice: // Microsoft Word
+  begin
+    WordDocumentClose(FWordDocument, True);
+  end;
+  otOpOffice: // OpenOffice
+  begin
+    FOW.CloseDocument;
+  end;
   end;
 end;
 

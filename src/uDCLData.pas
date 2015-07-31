@@ -23,6 +23,8 @@ type
   {$ENDIF}
   TDialogLabel=TLabel;
   TOrientation=(oVertical, oHorizontal);
+  TLangID=LongWord;
+  TLangName=String;
 
   TGPT=record
   // EnableSQLTrace,
@@ -33,9 +35,10 @@ type
     DateSeparator, TimeSeparator: Char;
     ServerCodePage, DateFormat, TimeFormat, Viewer, ConnectionString, MainFormCaption,
     NewConnectionString, DBPath, ServerName, NewDBUserName, DBType, GeneratorName: String;
-    Lang:TISO639_3;
+    LangID:TLangID;//   //TISO639_3;
+    LangName:TLangName;
     SQLDialect:Byte;
-    NoParamsTable, DisableLogOnWithoutUser, MultiRolesMode: Boolean;
+    NoParamsTable, NoUsersTable, DisableLogOnWithoutUser, MultiRolesMode: Boolean;
     DBUserName, DCLUserName, DCLUserPass, EnterPass, LongRoleName, GetValueSeparator, UpperString,
     UpperStringEnd, NotifycationsTable, IdentifyField, ParentFlgField, CommandField, NumSeqField,
     GPTTableName, GPTNameField, GPTValueField, GPTUserIDField, IniFileName, TemplatesTable,
@@ -44,8 +47,7 @@ type
     UserAdminField, {INITable,} RolesMenuTable, TimeStampFormat, DCLLongUserName, UserID, RoleID,
     DCLRoleName, NewDBPassword, DBPassword, LibPath, LaunchScrFile, LaunchForm: String;
     FormPosInDB:TIniStore;
-
-end;
+  end;
 
 TLogonParams=record
 //

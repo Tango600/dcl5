@@ -111,6 +111,7 @@ begin
       DSEvents[i-1].DataSet:=nil;
     End;
   FSQLContaner.Free;
+  inherited Destroy;
 end;
 
 procedure TDCLSQLMon.Resume;

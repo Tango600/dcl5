@@ -24,7 +24,7 @@ type
     Rep: TStringList;
     OldMainWin:THandle;
 
-    procedure LoadReportFromFile(FileName:String; ReportCP:TReportCodePage);
+    procedure LoadReportFromFile(FileName:String; InConsoleCodePage:Boolean);
 {$IFDEF MSWINDOWS}
 {$IFNDEF NEWDELPHI}
 
@@ -90,19 +90,14 @@ end;
 procedure TMainForm.ButtonPrintClick(Sender: TObject);
 begin
   If OpenDialog1.Execute then
-  Begin
-    if InDOSCodePage.Checked then
-      LoadReportFromFile(OpenDialog1.FileName, rcp866)
-    Else
-      LoadReportFromFile(OpenDialog1.FileName, rcp1251);
-  End;
+    LoadReportFromFile(OpenDialog1.FileName, InDOSCodePage.Checked);
 end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
 var
   i:Byte;
   FileName:string;
-  ReportCP:TReportCodePage;
+  ReportCP:Boolean;
   Command:TDCLCommand;
   AppH:THandle;
 begin
@@ -146,12 +141,9 @@ begin
       If CompareString(ParamStr(i), '-r') then
         If FileExists(ParamStr(i+1)) then
           FileName:=ParamStr(i+1);
-      If CompareString(ParamStr(i), '-cp') then
+      If CompareString(ParamStr(i), '-cc') then
       Begin
-        If CompareString(ParamStr(i+1), '866') then
-          ReportCP:=rcp866;
-        If CompareString(ParamStr(i+1), '1251') then
-          ReportCP:=rcp1251;
+        ReportCP:=True;
       End;
     End;
     If FileExists(FileName) then
@@ -159,7 +151,7 @@ begin
   End;
 end;
 
-procedure TMainForm.LoadReportFromFile(FileName:String; ReportCP:TReportCodePage);
+procedure TMainForm.LoadReportFromFile(FileName:String; InConsoleCodePage:Boolean);
 var
   DCLTextReport:TDCLTextReport;
 begin
@@ -167,7 +159,7 @@ begin
   Begin
     Rep.LoadFromFile(FileName);
     DCLTextReport:=TDCLTextReport.InitReport(DCLMainLogOn, nil, Rep, 0, nqmNew);
-    DCLTextReport.CodePage:=ReportCP;
+    DCLTextReport.InConsoleCodePage:=InConsoleCodePage;
     DCLTextReport.OpenReport('Result.txt', rvmAllDS);
     DCLTextReport.CloseReport('Result.txt');
     FreeAndNil(DCLTextReport);
