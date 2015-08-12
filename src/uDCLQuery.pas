@@ -144,9 +144,6 @@ type
 
 implementation
 
-uses
-  uDCLUtils;
-
 { TDCLQuery }
 
 procedure TDCLQuery.AfterCancelData(Data: TDataSet);
@@ -745,11 +742,30 @@ begin
     Begin
       ShadowQuery.SQL.Text:='select RDB$FIELD_NAME '+
         'from RDB$RELATION_CONSTRAINTS C, RDB$INDICES I, RDB$INDEX_SEGMENTS S '+
-        'where UPPER(C.RDB$RELATION_NAME) = UPPER('''+TableName+''') and '+
-        'C.RDB$CONSTRAINT_TYPE = ''PRIMARY KEY'' and I.RDB$UNIQUE_FLAG = 1 and '+
-        '((I.RDB$INDEX_INACTIVE = 0) or (I.RDB$INDEX_INACTIVE is null)) and '+
-        'C.RDB$RELATION_NAME = I.RDB$RELATION_NAME and I.RDB$INDEX_NAME = C.RDB$INDEX_NAME and '+
-        'I.RDB$UNIQUE_FLAG = 1 and S.RDB$INDEX_NAME = I.RDB$INDEX_NAME';
+        'where upper(C.RDB$RELATION_NAME) = upper(:TABLENAME) and '+
+              'C.RDB$CONSTRAINT_TYPE = ''PRIMARY KEY'' and I.RDB$UNIQUE_FLAG = 1 and '+
+              '((I.RDB$INDEX_INACTIVE = 0) or (I.RDB$INDEX_INACTIVE is null)) and '+
+              'C.RDB$RELATION_NAME = I.RDB$RELATION_NAME and '+
+              'I.RDB$INDEX_NAME = C.RDB$INDEX_NAME and '+
+              'S.RDB$INDEX_NAME = I.RDB$INDEX_NAME '+
+        'union '+
+        'select RDB$FIELD_NAME '+
+                'from RDB$RELATION_CONSTRAINTS C, RDB$INDICES I, RDB$INDEX_SEGMENTS S '+
+                'where upper(C.RDB$RELATION_NAME) = upper(:TABLENAME) and '+
+                      'C.RDB$CONSTRAINT_TYPE = ''UNIQUE'' and I.RDB$UNIQUE_FLAG = 1 and '+
+                      '((I.RDB$INDEX_INACTIVE = 0) or (I.RDB$INDEX_INACTIVE is null)) and '+
+                      'C.RDB$RELATION_NAME = I.RDB$RELATION_NAME and '+
+                      'I.RDB$INDEX_NAME = C.RDB$INDEX_NAME and '+
+                      'S.RDB$INDEX_NAME = I.RDB$INDEX_NAME and '+
+                      'not exists(select * '+
+                                       'from RDB$RELATION_CONSTRAINTS C1, RDB$INDICES I1 '+
+                                       'where upper(C1.RDB$RELATION_NAME) = upper(:TABLENAME) and '+
+                                             'C1.RDB$CONSTRAINT_TYPE = ''PRIMARY KEY'' and I1.RDB$UNIQUE_FLAG = 1 and '+
+                                             '((I1.RDB$INDEX_INACTIVE = 0) or (I1.RDB$INDEX_INACTIVE is null)) and '+
+                                             'C1.RDB$RELATION_NAME = I1.RDB$RELATION_NAME and '+
+                                             'I1.RDB$INDEX_NAME = C1.RDB$INDEX_NAME)';
+
+      ShadowQuery.ParamByName('TABLENAME').AsString:=TableName;
       ShadowQuery.Open;
       while not ShadowQuery.Eof do
       Begin

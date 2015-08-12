@@ -8,7 +8,7 @@ unit uUDL;
 interface
 
 Uses
-  SysUtils, StrUtils,
+  SysUtils,
 {$IFDEF MSWINDOWS}
   Windows, ComObj,
 {$ENDIF}
@@ -1047,7 +1047,7 @@ var
   tmpDCL, tmpDCL2: TStringList;
   DCLQuery, RepParamsSet: TDCLDialogQuery;
   RecCount, ParamsSet: Integer;
-  Ext, TemplateFileName, tmp1: String;
+  Ext, TemplateFileName: String;
 begin
   DCLQuery:=TDCLDialogQuery.Create(nil);
   DCLQuery.Name:='WordReportQuery_'+IntToStr(UpTime);
@@ -16189,7 +16189,7 @@ begin
   end;
 
   If InConsoleCodePage then
-    Report.Text:=ToDOS(Report.Text);
+    Report.Text:=Transcode(tdtDOS, Report.Text);
   Report.SaveToFile(FileName);
   Result:=FileName;
   FSaved:=True;

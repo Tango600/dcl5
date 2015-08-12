@@ -24,8 +24,6 @@ function MoneyToString(S: Currency; kpk: boolean; usd: boolean): string;
 // usd =True - печать суммы в долларах США и центах США ,
 // =False - печать суммы в рублях и копейках.
 
-function Line2Win(Line: string; WinLen: byte): string;
-
 implementation
 
 uses SysUtils, inifiles;
@@ -33,24 +31,15 @@ uses SysUtils, inifiles;
 const
   m1: array [1..9] of string=('один ', 'два ', 'три ', 'четыре ', 'пять ', 'шесть ', 'семь ',
     'восемь ', 'девять ');
-
-const
   f1: array [1..9] of string=('одна ', 'две ', 'три ', 'четыре ', 'пять ', 'шесть ', 'семь ',
     'восемь ', 'девять ');
-
-const
   n10: array [1..9] of string=('десять ', 'двадцать ', 'тридцать ', 'сорок ', 'пятьдесят ',
     'шестьдесят ', 'семьдесят ', 'восемьдесят ', 'девяносто ');
-
-const
   first10: array [11..19] of string=('одиннадцать ', 'двенадцать ', 'тринадцать ', 'четырнадцать ',
     'пятнадцать ', 'шестнадцать ', 'семнадцать ', 'восемнадцать ', 'девятнадцать ');
-
-const
   n100: array [1..9] of string=('сто ', 'двести ', 'триста ', 'четыреста ', 'пятьсот ', 'шестьсот ',
     'семьсот ', 'восемьсот ', 'девятьсот ');
 
-const
   kop: array [1..3] of string=('копейка', 'копейки', 'копеек');
   rub: array [1..3] of string=('рубль ', 'рубля ', 'рублей ');
   tsd: array [1..3] of string=('тысяча ', 'тысячи ', 'тысяч ');
@@ -59,7 +48,6 @@ const
   trl: array [1..3] of string=('триллион ', 'триллионa ', 'триллионoв ');
   cnt: array [1..3] of string=('тысяча ', 'тысячи ', 'тысяч ');
 
-const
   cent: array [1..3] of string=('цент США', 'цента США', 'центов США');
   doll: array [1..3] of string=('доллар ', 'доллара ', 'долларов ');
 
@@ -303,36 +291,5 @@ begin
   Result:=V;
 end; // function MoneyToString(S:Currency; kpk:boolean; usd:boolean):string;
 
-function Line2Win(Line: string; WinLen: byte): string;
-var
-  LineStart, LineEnd: string;
-
-  function LastPos(SS, S: string): byte;
-  var
-    TempPos: byte;
-  begin
-    // TempPos:=0;
-    Repeat
-      TempPos:=Pos(SS, S);
-      FillChar(S[TempPos], Length(SS), '_');
-    Until Pos(SS, S)=0;
-    LastPos:=TempPos;
-  end; // function LastPos(SS, S: string): byte;
-
-begin
-  if Length(Line)<=WinLen then
-    Line2Win:=Line
-  else
-  begin
-    LineStart:=Copy(Line, 1, 3);
-    LineEnd:=Copy(Line, LastPos('\', Line), Length(Line)-LastPos('\', Line)+1);
-    if (Length(LineStart)+Length(LineEnd)+2)>=WinLen then
-      Line2Win:=LineStart+'..'+LineEnd
-    else
-      Line2Win:=LineStart+Copy(Line, 4, Trunc((WinLen-(Length(LineStart)+Length(LineEnd)))/2)-1)+
-        '..'+Copy(Line, LastPos('\', Line)-Trunc((WinLen-(Length(LineStart)+Length(LineEnd)))/2),
-        Trunc((WinLen-(Length(LineStart)+Length(LineEnd)))/2)-1)+LineEnd;
-  end;
-end; // function Line2Win(Line: string; WinLen: byte): string;
 
 end.

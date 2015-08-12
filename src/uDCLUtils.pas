@@ -1594,7 +1594,6 @@ End;
 Function GetStringDataType(const S: String): TIsDigitType;
 Var
   iI: Word;
-  tmpS:string;
 Begin
   Result:=idString;
   If S<>'' Then
@@ -1937,7 +1936,7 @@ Begin
 
         If PosEx('Language=', Params[i])=1 Then
         Begin
-          //GPT.Lang:=StringToLangID(Trim(FindParam('Language=', Params[i])));
+          GPT.LangID:=LangNameToID(Trim(FindParam('Language=', Params[i])));
         End;
 
         If PosEx('DateSeparator=', Params[i])=1 Then
@@ -2074,8 +2073,7 @@ End;
 
 function FindSQLWhere(SQL, FindToken:String; Opened:Boolean=True):Integer;
 var
-  p, i, skb, sep, l:Integer;
-  Words:TStringList;
+  i, skb, l:Integer;
   First, Last:Boolean;
   tmp1, DelimsSet, OpenerSet, CloseerSet:String;
 begin
