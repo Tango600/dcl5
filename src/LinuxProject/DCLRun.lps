@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectSession>
+    <PathDelim Value="\"/>
+    <Version Value="9"/>
+    <BuildModes Active="Release"/>
+    <Units Count="14">
+      <Unit0>
+        <Filename Value="DCLRun.dpr"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="11"/>
+        <TopLine Value="26"/>
+        <CursorPos X="21" Y="37"/>
+        <UsageCount Value="37"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit0>
+      <Unit1>
+        <Filename Value="fMainForm.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="MainForm"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="fMainForm"/>
+        <CursorPos X="28" Y="8"/>
+        <UsageCount Value="37"/>
+        <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit1>
+      <Unit2>
+        <Filename Value="uOfficeDocs.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="uOfficeDocs"/>
+        <EditorIndex Value="2"/>
+        <TopLine Value="64"/>
+        <CursorPos X="38" Y="15"/>
+        <UsageCount Value="26"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit2>
+      <Unit3>
+        <Filename Value="uOpenOffice.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="uOpenOffice"/>
+        <EditorIndex Value="7"/>
+        <TopLine Value="61"/>
+        <CursorPos X="11" Y="19"/>
+        <UsageCount Value="26"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="..\..\..\..\usr\share\lazarus\1.0.14\components\lazutils\masks.pas"/>
+        <TopLine Value="16"/>
+        <CursorPos X="22" Y="29"/>
+        <UsageCount Value="10"/>
+      </Unit4>
+      <Unit5>
+        <Filename Value="uUDL.pas"/>
+        <UnitName Value="uUDL"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="6"/>
+        <TopLine Value="2926"/>
+        <CursorPos X="20" Y="2941"/>
+        <UsageCount Value="13"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit5>
+      <Unit6>
+        <Filename Value="..\..\..\..\usr\share\fpcsrc\2.6.2\packages\fcl-base\src\contnrs.pp"/>
+        <TopLine Value="166"/>
+        <UsageCount Value="10"/>
+      </Unit6>
+      <Unit7>
+        <Filename Value="uDCLOLE.pas"/>
+        <UnitName Value="uDCLOLE"/>
+        <EditorIndex Value="1"/>
+        <CursorPos Y="7"/>
+        <UsageCount Value="13"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit7>
+      <Unit8>
+        <Filename Value="uDCLUtils.pas"/>
+        <UnitName Value="uDCLUtils"/>
+        <EditorIndex Value="4"/>
+        <TopLine Value="2551"/>
+        <CursorPos X="39" Y="2575"/>
+        <UsageCount Value="13"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit8>
+      <Unit9>
+        <Filename Value="uDCLOfficeUtils.pas"/>
+        <UnitName Value="uDCLOfficeUtils"/>
+        <EditorIndex Value="10"/>
+        <TopLine Value="573"/>
+        <CursorPos X="5" Y="598"/>
+        <UsageCount Value="11"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit9>
+      <Unit10>
+        <Filename Value="uDCLConst.pas"/>
+        <UnitName Value="uDCLConst"/>
+        <EditorIndex Value="8"/>
+        <TopLine Value="195"/>
+        <CursorPos X="3" Y="210"/>
+        <UsageCount Value="11"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit10>
+      <Unit11>
+        <Filename Value="DefineType.pas"/>
+        <UnitName Value="DefineType"/>
+        <EditorIndex Value="3"/>
+        <TopLine Value="44"/>
+        <CursorPos X="29" Y="57"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit11>
+      <Unit12>
+        <Filename Value="..\..\..\..\usr\share\lazarus\1.4RC3\lcl\include\winapih.inc"/>
+        <EditorIndex Value="5"/>
+        <TopLine Value="99"/>
+        <CursorPos Y="121"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit12>
+      <Unit13>
+        <Filename Value="..\..\..\..\usr\share\fpcsrc\2.6.4\rtl\unix\sysunixh.inc"/>
+        <EditorIndex Value="9"/>
+        <TopLine Value="12"/>
+        <CursorPos X="2" Y="28"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit13>
+    </Units>
+    <JumpHistory Count="30" HistoryIndex="29">
+      <Position1>
+        <Filename Value="uUDL.pas"/>
+        <Caret Line="715" Column="16" TopLine="706"/>
+      </Position1>
+      <Position2>
+        <Filename Value="uUDL.pas"/>
+      </Position2>
+      <Position3>
+        <Filename Value="uUDL.pas"/>
+        <Caret Line="52" TopLine="31"/>
+      </Position3>
+      <Position4>
+        <Filename Value="uUDL.pas"/>
+        <Caret Line="14967" Column="12" TopLine="14946"/>
+      </Position4>
+      <Position5>
+        <Filename Value="uUDL.pas"/>
+        <Caret Line="14971" TopLine="14946"/>
+      </Position5>
+      <Position6>
+        <Filename Value="uUDL.pas"/>
+        <Caret Line="14840" Column="22" TopLine="14793"/>
+      </Position6>
+      <Position7>
+        <Filename Value="uUDL.pas"/>
+        <Caret Line="1545" Column="8" TopLine="1531"/>
+      </Position7>
+      <Position8>
+        <Filename Value="uOpenOffice.pas"/>
+      </Position8>
+      <Position9>
+        <Filename Value="uOfficeDocs.pas"/>
+        <Caret Line="8"/>
+      </Position9>
+      <Position10>
+        <Filename Value="uOpenOffice.pas"/>
+        <Caret Line="6" Column="6"/>
+      </Position10>
+      <Position11>
+        <Filename Value="uOfficeDocs.pas"/>
+        <Caret Line="9" Column="39"/>
+      </Position11>
+      <Position12>
+        <Filename Value="DCLRun.dpr"/>
+        <Caret Line="37" Column="36" TopLine="23"/>
+      </Position12>
+      <Position13>
+        <Filename Value="uDCLOfficeUtils.pas"/>
+        <Caret Line="51" TopLine="46"/>
+      </Position13>
+      <Position14>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="9"/>
+      </Position14>
+      <Position15>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="48" TopLine="33"/>
+      </Position15>
+      <Position16>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="693" Column="14" TopLine="686"/>
+      </Position16>
+      <Position17>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="52" Column="42" TopLine="39"/>
+      </Position17>
+      <Position18>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="697" Column="53" TopLine="680"/>
+      </Position18>
+      <Position19>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="52" Column="14" TopLine="39"/>
+      </Position19>
+      <Position20>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="693" Column="25" TopLine="693"/>
+      </Position20>
+      <Position21>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="2473" TopLine="2460"/>
+      </Position21>
+      <Position22>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="2444" TopLine="2437"/>
+      </Position22>
+      <Position23>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="2470" Column="45" TopLine="2458"/>
+      </Position23>
+      <Position24>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="2442" TopLine="2438"/>
+      </Position24>
+      <Position25>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="2568" Column="16" TopLine="2554"/>
+      </Position25>
+      <Position26>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="2573" Column="55" TopLine="2558"/>
+      </Position26>
+      <Position27>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="2527" Column="3" TopLine="2512"/>
+      </Position27>
+      <Position28>
+        <Filename Value="uDCLUtils.pas"/>
+        <Caret Line="2572" Column="53" TopLine="2558"/>
+      </Position28>
+      <Position29>
+        <Filename Value="uDCLConst.pas"/>
+        <Caret Line="210" Column="3" TopLine="195"/>
+      </Position29>
+      <Position30>
+        <Filename Value="uUDL.pas"/>
+        <Caret Line="5612" Column="26" TopLine="5602"/>
+      </Position30>
+    </JumpHistory>
+  </ProjectSession>
+  <Debugging>
+    <BreakPoints Count="2">
+      <Item1>
+        <Kind Value="bpkSource"/>
+        <WatchScope Value="wpsLocal"/>
+        <WatchKind Value="wpkWrite"/>
+        <Source Value="uUDL.pas"/>
+        <Line Value="7315"/>
+      </Item1>
+      <Item2>
+        <Kind Value="bpkSource"/>
+        <WatchScope Value="wpsLocal"/>
+        <WatchKind Value="wpkWrite"/>
+        <Source Value="uUDL.pas"/>
+        <Line Value="7333"/>
+      </Item2>
+    </BreakPoints>
+  </Debugging>
+</CONFIG>
