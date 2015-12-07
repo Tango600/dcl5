@@ -224,7 +224,7 @@ Begin
               TmpStr:='';
             End
             Else
-              Inc(StartSearch, Length(ParamPrefix)+1);
+              Inc(StartSearch, Length(ParamPrefix)+0);
           End;
         End;
       End;

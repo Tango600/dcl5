@@ -38,7 +38,7 @@ DefaultLibraryLocation='fbclient.so';
 {$IFDEF SQLdb}
   DBEngineType='SQLdb (Universal)';
 {$ENDIF}
-  Version='10.0.23.289';
+  Version='10.1.27.299';
 
   CompotableVersion='9.1.129.307';
 
@@ -146,7 +146,7 @@ DefaultLibraryLocation='fbclient.so';
 
   TextScriptFileExt='.dst';
   SignedScriptExt='.dcs';
-  SignMethodVer='1.2';
+  SignMethodVer='1.3';
 
   DBTypeFirebird='firebird';
   DBTypeInterbase='interbase';

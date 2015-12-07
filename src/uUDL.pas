@@ -104,6 +104,11 @@ Type
     TimeToExit: Cardinal;
     DCLSession: TDCLSession;
     Timer1: TTimer;
+//    VirtulScript:RVirtualScripts;
+    VirtualScripts:array of RVirtualScript;
+
+    function AddVirtualScript(Scr:RVirtualScript):Integer;
+    function FindVirtualScript(ScriptName:String):Integer;
 
     function GetFormsCount: Integer;
     function GetForm(Index: Integer): TDCLForm;
@@ -139,6 +144,9 @@ Type
 {$IFDEF TRANSACTIONDB}
     function NewTransaction(RW:TTransactionType): TTransaction;
 {$ENDIF}
+
+    function GetVirtualScript(ScriptName: String):RVirtualScript;
+    function GetVirtualScriptNum(Index:Integer):RVirtualScript;
 
     function ReadConfig(ConfigName, UserID: String): String;
     procedure WriteConfig(ConfigName, NewValue, UserID: String);
@@ -691,7 +699,6 @@ Type
     Downloader: TDownloader;
 
     procedure ExportData(Tagert: TSpoolType; Scr: String);
-    procedure OpenForm(FormName: String; ModalMode: Boolean);
     procedure RePlaseVariabless(var Variables: String);
     procedure RePlaseParamss(var ParamsSet: String; Query: TDCLDialogQuery);
     procedure SetValue(S: String);
@@ -2737,6 +2744,11 @@ var
   TB1: TFormPanelButton;
 begin
   FDCLLogOn.FForms.Remove(Self);
+
+  FForm.OnResize:=nil;
+  FForm.OnActivate:=nil;
+  FForm.OnCloseQuery:=nil;
+  
   CloseAction:=fcaInProcess;
   If ExitCode=0 Then
   begin
@@ -3710,6 +3722,22 @@ begin
         end;
       end;
 
+      If PosEx('DataReadOnly=', ScrStr)=1 Then
+      begin
+        TranslateVal(ScrStr, True);
+        TmpStr:=Trim(FindParam('DataReadOnly=', ScrStr));
+        FGrids[GridIndex].TranslateVal(TmpStr);
+
+        If StrToIntEx(TmpStr)=1 Then
+        Begin
+         // FGrids[GridIndex].FQuery.CanModify:=False;
+          FGrids[GridIndex].ReadOnly:=True;
+          FGrids[GridIndex].AddNotAllowedOperation(dsoInsert);
+          FGrids[GridIndex].AddNotAllowedOperation(dsoDelete);
+          FGrids[GridIndex].AddNotAllowedOperation(dsoEdit);
+        End;
+      end;
+
       If PosEx('AddNotAllowOperation=', ScrStr)=1 Then
       begin
         TranslateVal(ScrStr, True);
@@ -3798,11 +3826,6 @@ begin
         FForm.ClientWidth:=FormWidth;
       end;
 
-      If PosEx('Execute=', ScrStr)=1 Then
-      begin
-        ExecCommand(ScrStr);
-      end;
-
       If PosEx('SeparateChar=', ScrStr)=1 Then
       begin
         GPT.StringTypeChar:=FindParam('SeparateChar=', ScrStr);
@@ -3821,9 +3844,7 @@ begin
         FGrids[GridIndex].TranslateVal(TmpStr);
 
         If StrToIntEx(TmpStr)=1 Then
-        begin
-          FGrids[GridIndex].ReadOnly:=True;
-        end
+          FGrids[GridIndex].ReadOnly:=True
         Else
           FGrids[GridIndex].ReadOnly:=False;
       end;
@@ -4947,9 +4968,9 @@ begin
   l:=Length(NotAllowedOperations);
   Result:=False;
   If l>0 Then
-    For i:=0 to l-1 do
+    For i:=1 to l do
     begin
-      If NotAllowedOperations[i]=Operation Then
+      If NotAllowedOperations[i-1]=Operation Then
       begin
         Result:=True;
         break;
@@ -5094,21 +5115,20 @@ end;
 
 procedure TDCLForm.ResizeDBForm(Sender: TObject);
 var
-  ToolBtnSize: Word;
-  i, j: Byte;
+  ToolBtnSize, i, j: Integer;
 begin
   If Assigned(FForm) then
-  For j:=1 to Length(FGrids) do
-  begin
-    If Assigned(FGrids[j-1]) Then
-    If Assigned(FGrids[j-1].ToolButtonPanel) Then
-      If (FGrids[j-1].ToolButtonPanel.Width>0)and(FGrids[j-1].ToolButtonsCount>0) Then
-      begin
-        ToolBtnSize:=FGrids[j-1].ToolButtonPanel.Width div FGrids[j-1].ToolButtonsCount;
-        For i:=1 to FGrids[j-1].ToolButtonsCount do
-          FGrids[j-1].ToolButtonPanelButtons[i].Width:=ToolBtnSize;
-      end;
-  end;
+    For j:=1 to Length(FGrids) do
+    begin
+      If Assigned(FGrids[j-1]) Then
+      If Assigned(FGrids[j-1].ToolButtonPanel) Then
+        If (FGrids[j-1].ToolButtonPanel.Width>0)and(FGrids[j-1].ToolButtonsCount>0) Then
+        begin
+          ToolBtnSize:=FGrids[j-1].ToolButtonPanel.Width div FGrids[j-1].ToolButtonsCount;
+          For i:=1 to FGrids[j-1].ToolButtonsCount do
+            FGrids[j-1].ToolButtonPanelButtons[i].Width:=ToolBtnSize;
+        end;
+    end;
 end;
 
 procedure TDCLForm.SetActive;
@@ -5650,6 +5670,7 @@ begin
   begin
     If Assigned(FDCLForm.CurrentQuery) then
     If GetRaightsByContext(InContext)>ulReadOnly Then
+//      FDCLForm.FGrids[FDCLForm.CurrentGridIndex].DataSource.DataSet.Delete;
       FDCLForm.CurrentQuery.Delete;
     Executed:=True;
   end;
@@ -5814,25 +5835,34 @@ begin
     If Pos('''', Command)=0 Then
       If Pos(#10, Command)=0 Then
       begin
-        DCLQuery.Close;
-        DCLQuery.SQL.Text:='select Count(*) from '+GPT.DCLTable+' where '+GPT.UpperString+
-          GPT.DCLNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+Command+
-          GPT.StringTypeChar+GPT.UpperStringEnd;
-        try
-          DCLQuery.Open;
-          RecCount:=DCLQuery.Fields[0].AsInteger;
-        Except
-          DCLQuery.SQL.Clear;
-          RecCount:=0;
-        end;
-        If RecCount>0 Then
-        begin
+        v1:=FDCLLogOn.FindVirtualScript(Command);
+        If v1=-1 then
+        Begin
           DCLQuery.Close;
-          DCLQuery.SQL.Text:='select * from '+GPT.DCLTable+' where '+GPT.UpperString+
+          DCLQuery.SQL.Text:='select Count(*) from '+GPT.DCLTable+' where '+GPT.UpperString+
             GPT.DCLNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+Command+
             GPT.StringTypeChar+GPT.UpperStringEnd;
-          DCLQuery.Open;
-        end;
+          try
+            DCLQuery.Open;
+            RecCount:=DCLQuery.Fields[0].AsInteger;
+            DCLQuery.Close;
+          Except
+            DCLQuery.SQL.Clear;
+            RecCount:=0;
+          end;
+          If RecCount>0 Then
+          begin
+            DCLQuery.Close;
+            DCLQuery.SQL.Text:='select * from '+GPT.DCLTable+' where '+GPT.UpperString+
+              GPT.DCLNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+Command+
+              GPT.StringTypeChar+GPT.UpperStringEnd;
+            DCLQuery.Open;
+          end;
+        End
+        Else
+        Begin
+          Command:=FDCLLogOn.GetVirtualScriptNum(v1).ScrText;
+        End;
       end;
 
     If RecCount=0 Then
@@ -7592,6 +7622,7 @@ begin
     end;
   end;
 
+  DCLQuery.Close;
   FDCLLogOn.NotifyForms(fnaResumeAutoRefresh);
 end;
 
@@ -7963,11 +7994,6 @@ begin
     Result:=FDCLLogOn.AccessLevel;
 end;
 
-procedure TDCLCommand.OpenForm(FormName: String; ModalMode: Boolean); deprecated;
-begin
-  FDCLForm:=FDCLLogOn.CreateForm(FormName, nil, nil, nil, nil, ModalMode, chmNone);
-end;
-
 procedure TDCLCommand.RePlaseParamss(var ParamsSet: String; Query: TDCLDialogQuery);
 begin
   RePlaseParams_(ParamsSet, Query);
@@ -8201,6 +8227,26 @@ begin
   end;
   AboutForm.ShowModal;
   FreeAndNil(AboutForm);
+end;
+
+function TDCLLogOn.AddVirtualScript(Scr: RVirtualScript):Integer;
+var
+  l, f:Integer;
+begin
+  f:=FindVirtualScript(Scr.ScriptName);
+  If f=-1 then
+  Begin
+    l:=Length(VirtualScripts);
+    SetLength(VirtualScripts, l+1);
+  End
+  Else
+    l:=f;
+
+  VirtualScripts[l].ScriptName:=Scr.ScriptName;
+  VirtualScripts[l].ScrCommand:=Scr.ScrCommand;
+  VirtualScripts[l].ScrText:=Scr.ScrText;
+
+  Result:=l;
 end;
 
 function TDCLLogOn.CheckPass(UserName, EnterPass, Password: String): Boolean;
@@ -8825,18 +8871,13 @@ var
   i: Integer;
   Scr: TStringList;
 begin
-  // Scr:=LoadScrText(FormName);
-  Scr:=TStringList.Create;
   If not Assigned(Script) then
-  Begin
-    ShadowQuery.Close;
-    ShadowQuery.SQL.Text:='select * from DCL_SCRIPTS where lower(DCLNAME)=lower('''+FormName+''')';
-    ShadowQuery.Open;
-    Scr.Text:=ShadowQuery.FieldByName('DCLTEXT').AsString;
-    ShadowQuery.Close;
-  End
+    Scr:=LoadScrText(FormName)
   Else
+  Begin
+    Scr:=TStringList.Create;
     Scr.Text:=Script.Text;
+  End;
 
   i:=FForms.Count;
   SetLength(ActiveDCLForms, i+1);
@@ -8993,6 +9034,21 @@ begin
   end;
 end;
 
+function TDCLLogOn.FindVirtualScript(ScriptName: String): Integer;
+var
+  i:Integer;
+begin
+  Result:=-1;
+  For i:=1 to Length(VirtualScripts) do
+  Begin
+    If AnsiLowerCase(VirtualScripts[i-1].ScriptName)=AnsiLowerCase(ScriptName) then
+    Begin
+      Result:=i-1;
+      Break;
+    End;
+  End;
+end;
+
 function TDCLLogOn.GetConfigInfo: String;
 var
   Q: TDCLDialogQuery;
@@ -9091,6 +9147,30 @@ begin
     end;
 end;
 
+function TDCLLogOn.GetVirtualScript(ScriptName: String): RVirtualScript;
+var
+  i:Integer;
+begin
+  RVirtualScriptsClear(Result);
+  i:=FindVirtualScript(ScriptName);
+  If i<>-1 then
+  Begin
+    Result.ScrCommand:='';
+    Result.ScriptName:=VirtualScripts[i].ScriptName;
+    Result.ScrText:=VirtualScripts[i].ScrText;
+  End;
+end;
+
+function TDCLLogOn.GetVirtualScriptNum(Index: Integer): RVirtualScript;
+begin
+  If (Index>=0) and (Index<Length(VirtualScripts)) then
+  Begin
+    Result.ScrCommand:='';
+    Result.ScriptName:=VirtualScripts[Index].ScriptName;
+    Result.ScrText:=VirtualScripts[Index].ScrText;
+  End;
+end;
+
 procedure TDCLLogOn.SignScriptFile(FileName, UserName: String);
 var
   Scr: TStringList;
@@ -9150,17 +9230,67 @@ end;
 
 procedure TDCLLogOn.RunSkriptFromFile(FileName: String);
 var
-  Scr: TStringList;
+  Scr, Scr2: TStringList;
   tmpMem: TMemoryStream;
-  Key, SecKey, User: String;
-  p: Integer;
+  Key, SecKey, User, Ver, VirtScrName: String;
+  p, vsi, vtmp: Integer;
   Command: TDCLCommand;
   Form: TDCLForm;
+  VRS:RVirtualScript;
+
+procedure MainParse(Scr:TStringList);
+Begin
+  If CompareString(Scr[0], '[FORM]') Then
+  begin
+    Scr.Delete(0);
+    Form:=CreateForm(VirtScrName, nil, nil, nil, nil, False,
+      chmNone, nil, Scr);
+  end
+  Else
+  begin
+    If CompareString(Scr[0], '[COMMAND]') Then
+      Scr.Delete(0);
+    Command:=TDCLCommand.Create(nil, Self);
+    Command.ExecCommand(Scr.Text, nil);
+    FreeAndNil(Command);
+  end;
+End;
+
+Function FindNextSkriptSection:TStringList;
+var
+  i, p, p1, j:Integer;
+Begin
+  Result:=TStringList.Create;
+  For i:=1 to Scr.Count do
+  Begin
+    If (PosEx('[ScriptName=', Scr[i-1])<>0) and (Pos(']', Scr[i-1])=Length(Scr[i-1])) then
+    Begin
+      VirtScrName:=FindParam('ScriptName=', Scr[i-1]);
+      VirtScrName:=Copy(VirtScrName, 1, Length(VirtScrName)-1);
+      p:=i;
+      For p1:=p to Scr.Count do
+      Begin
+        If Scr[p1]='[END SCRIPT]' then
+        Begin
+          For j:=p to p1 do
+          begin
+            Result.Append(Scr[p]);
+            Scr.Delete(p);
+          end;
+          Scr.Delete(p-1);
+          exit;
+        End;
+      End;
+    End;
+  End;
+End;
+
 begin
   If FileExists(FileName) Then
   begin
     tmpMem:=TMemoryStream.Create;
     tmpMem.LoadFromFile(FileName);
+    Ver:=GetScriptVersion(tmpMem);
     Scr:=DecodeScriptData(tmpMem);
     tmpMem.Clear;
 
@@ -9181,20 +9311,28 @@ begin
       SecKey:=GetSecKeyData(tmpMem, User);
       If SecKey=Key Then
       begin
-        If CompareString(Scr[0], '[FORM]') Then
-        begin
-          Scr.Delete(0);
-          Form:=CreateForm(ChangeFileExt(ExtractFileName(FileName), ''), nil, nil, nil, nil, False,
-            chmNone, nil, Scr);
-        end
-        Else
-        begin
-          If CompareString(Scr[0], '[COMMAND]') Then
-            Scr.Delete(0);
-          Command:=TDCLCommand.Create(nil, Self);
-          Command.ExecCommand(Scr.Text, nil);
-          FreeAndNil(Command);
-        end;
+        If Ver='1.2' then
+        Begin
+          VirtScrName:=ChangeFileExt(ExtractFileName(FileName), '');
+          MainParse(Scr);
+        End;
+        If Ver='1.3' then
+        Begin
+          vsi:=-1;
+          Scr2:=FindNextSkriptSection;
+          while Scr2.Count<>0 do
+          Begin
+            VRS.ScriptName:=VirtScrName;
+            VRS.ScrCommand:='';
+            VRS.ScrText:=Scr2.Text;
+            vtmp:=AddVirtualScript(VRS);
+            If vsi=-1 then
+              vsi:=vtmp;
+            Scr2:=FindNextSkriptSection;
+          End;
+          Scr2.Text:=GetVirtualScriptNum(vsi).ScrText;
+          MainParse(Scr2);
+        End;
       end;
     end;
     FreeAndNil(Scr);
@@ -9241,26 +9379,27 @@ begin
     FromStr:=GPT.DCLTable+' s';
     WhereStr1:=' where '+WhereStr;
   end
-  Else If GPT.MultiRolesMode Then
-  begin
-    FromStr:=GPT.DCLTable+' s, '+RolesMenuTable+' rm, '+RolesTable+' r, '+UsersTable+' u, '+
-      RolesToUsersTable+' ru ';
-    WhereStr1:='where r.'+RolesIDFiled+'=rm.'+RolesMenuIDFiled+' and rm.'+RoleMenuItemIDField+'=s.'+
-      GPT.NumSeqField+' and ru.'+RolesToUsersRoleIDField+'=r.'+RolesIDFiled+' and u.'+UserIDField+
-      '=ru.'+RolesToUsersUserIDField+' and u.'+UserIDField+'='+IntToStr(FUserID)+' and '+WhereStr;
-  end
   Else
-  begin
-{$IFDEF EMBEDDED}
-    FromStr:=GPT.DCLTable+' s ';
-    WhereStr1:='where '+WhereStr;
-{$ELSE}
-    FromStr:=GPT.DCLTable+' s, '+RolesMenuTable+' rm, '+RolesTable+' r, '+UsersTable+' u ';
-    WhereStr1:='where r.'+RolesIDFiled+'=rm.'+RolesMenuIDFiled+' and rm.'+RoleMenuItemIDField+'=s.'+
-      GPT.NumSeqField+' and u.'+UserRoleField+'=r.'+RolesIDFiled+' and u.'+UserIDField+'='+
-      IntToStr(FUserID)+' and '+WhereStr;
-{$ENDIF}
-  end;
+    If GPT.MultiRolesMode Then
+    begin
+      FromStr:=GPT.DCLTable+' s, '+RolesMenuTable+' rm, '+RolesTable+' r, '+UsersTable+' u, '+
+        RolesToUsersTable+' ru ';
+      WhereStr1:='where r.'+RolesIDFiled+'=rm.'+RolesMenuIDFiled+' and rm.'+RoleMenuItemIDField+'=s.'+
+        GPT.NumSeqField+' and ru.'+RolesToUsersRoleIDField+'=r.'+RolesIDFiled+' and u.'+UserIDField+
+        '=ru.'+RolesToUsersUserIDField+' and u.'+UserIDField+'='+IntToStr(FUserID)+' and '+WhereStr;
+    end
+    Else
+    begin
+  {$IFDEF EMBEDDED}
+      FromStr:=GPT.DCLTable+' s ';
+      WhereStr1:='where '+WhereStr;
+  {$ELSE}
+      FromStr:=GPT.DCLTable+' s, '+RolesMenuTable+' rm, '+RolesTable+' r, '+UsersTable+' u ';
+      WhereStr1:='where r.'+RolesIDFiled+'=rm.'+RolesMenuIDFiled+' and rm.'+RoleMenuItemIDField+'=s.'+
+        GPT.NumSeqField+' and u.'+UserRoleField+'=r.'+RolesIDFiled+' and u.'+UserIDField+'='+
+        IntToStr(FUserID)+' and '+WhereStr;
+  {$ENDIF}
+    end;
 
   Case QueryType of
   qtCount:
@@ -9274,13 +9413,22 @@ begin
 end;
 
 function TDCLLogOn.LoadScrText(ScrName: String): TStringList;
+var
+  v1:Integer;
 begin
   Result:=TStringList.Create;
-  ShadowQuery.Close;
-  ShadowQuery.SQL.Text:='select * from DCL_SCRIPTS where lower(DCLNAME)=lower('''+ScrName+''')';
-  ShadowQuery.Open;
-  Result.Text:=ShadowQuery.FieldByName('DCLTEXT').AsString;
-  ShadowQuery.Close;
+
+  v1:=FindVirtualScript(ScrName);
+  If v1=-1 then
+  Begin
+    ShadowQuery.Close;
+    ShadowQuery.SQL.Text:='select * from DCL_SCRIPTS where lower(DCLNAME)=lower('''+ScrName+''')';
+    ShadowQuery.Open;
+    Result.Text:=ShadowQuery.FieldByName('DCLTEXT').AsString;
+    ShadowQuery.Close;
+  End
+  Else
+    Result.Text:=GetVirtualScriptNum(v1).ScrText;
 end;
 
 procedure TDCLLogOn.Lock;
@@ -10728,14 +10876,14 @@ var
   v1, v2: Integer;
   TmpStr, tmpStr2, BrushKey, Colors: String;
 begin
-  l:=Length(BrushColors);
-  SetLength(BrushColors, l+1);
-
   BrushKey:=FindParam('BrushKey=', OPL);
   Colors:=FindParam('Color=', OPL);
 
   For v1:=1 to ParamsCount(Colors) do
   begin
+    l:=Length(BrushColors);
+    SetLength(BrushColors, l+1);
+
     TmpStr:=SortParams(Colors, v1);
     v2:=Pos('=', TmpStr);
     tmpStr2:=Copy(TmpStr, v2+1, Length(TmpStr)-v2+1);
@@ -12692,7 +12840,8 @@ begin
         If Not ReadOnly Then
           ReadOnly:=(FUserLevelLocal=ulReadOnly)or(FindNotAllowedOperation(dsoEdit));
         If (FUserLevelLocal=ulReadOnly)or(FindNotAllowedOperation(dsoEdit)) Then
-          Options:=Options-[dgEditing];
+          If dgEditing in FGrid.Options then
+            Options:=Options-[dgEditing];
       end;
       dctFields, dctFieldsStep:
       begin
@@ -13428,7 +13577,7 @@ end;
 
 function TDCLGrid.GetFingQuery: String;
 var
-  StrIndex, FieldIndex: Byte;
+  StrIndex, FieldIndex: Integer;
   Enything: Boolean;
 
   procedure GetGridExemle(Const GridExemple, FindFieldName: String; var QueryString: String);
@@ -13595,7 +13744,7 @@ begin
   If FDisplayMode in TDataGrid Then
   begin
     If Assigned(FGrid) Then
-      Result:=dgEditing in FGrid.Options
+      Result:=not (dgEditing in FGrid.Options)
     Else
       Result:=FReadOnly;
   end;
@@ -14475,14 +14624,16 @@ begin
     If Assigned(Navig) Then
       Navig.VisibleButtons:=Navig.VisibleButtons-NavigatorEditButtons;
     If Assigned(FGrid) Then
-      FGrid.Options:=FGrid.Options+[dgEditing];
+      If dgEditing in FGrid.Options then
+        FGrid.Options:=FGrid.Options-[dgEditing];
   end
   Else
   begin
     If Assigned(Navig) Then
       Navig.VisibleButtons:=Navig.VisibleButtons+NavigatorEditButtons;
     If Assigned(FGrid) Then
-      FGrid.Options:=FGrid.Options-[dgEditing];
+      If not (dgEditing in FGrid.Options) then
+        FGrid.Options:=FGrid.Options+[dgEditing];
   end
 end;
 
@@ -14557,13 +14708,12 @@ var
   end;
 
 begin
-  If FUserLevelLocal<ulExecute Then
-    If FUserLevelLocal<ulWrite Then
-    begin
-      AddNotAllowedOperation(dsoInsert);
-      AddNotAllowedOperation(dsoDelete);
-      AddNotAllowedOperation(dsoEdit);
-    end;
+  If FUserLevelLocal<ulWrite Then
+  begin
+    AddNotAllowedOperation(dsoInsert);
+    AddNotAllowedOperation(dsoDelete);
+    AddNotAllowedOperation(dsoEdit);
+  end;
 
   If Assigned(FQuery) Then
     FQuery.NotAllowOperations:=NotAllowedOperations;
@@ -14587,9 +14737,9 @@ begin
       FGrid.DataSource:=FData;
       Case FDisplayMode of
       dctMainGrid, dctTablePart, dctLookupGrid:
-      FGrid.Align:=alClient;
+        FGrid.Align:=alClient;
       dctSideGrid:
-      FGrid.Align:=alRight;
+        FGrid.Align:=alRight;
       end;
       FGrid.OnDblClick:=GridDblClick;
       FGrid.OnTitleClick:=SortDB;
@@ -14645,6 +14795,8 @@ begin
     If ToolButtonsCount=0 Then
       FreeAndNil(ToolButtonPanel);
   end;
+  SetReadOnly(FReadOnly);
+
   FShowed:=True;
 end;
 
@@ -17558,6 +17710,7 @@ begin
       end;
       DCLQuery.ExecSQL;
       DCLQuery.SQL.Text:=tmpSQL1;
+      DCLQuery.SaveDB;
       DCLQuery.Open;
     end;
     If Not (DCLQuery.State in dsEditModes) Then

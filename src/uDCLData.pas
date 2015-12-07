@@ -7,7 +7,7 @@ uses
 {$IFDEF FPC}
   EditBtn,
 {$ENDIF}
-  StdCtrls, ComCtrls, Controls, Graphics, ExtCtrls, DB, Buttons, dbctrls,
+  StdCtrls, ComCtrls, Controls, Graphics, ExtCtrls, DB, Buttons, DBCtrls, Classes,
   uDCLConst, uDCLTypes;
 
 type
@@ -213,6 +213,10 @@ TReturnFormValue=Record
   Choosen:Boolean;
 end;
 
+RVirtualScript=Record
+  ScriptName, ScrCommand, ScrText:string;
+End;
+
 { TReturnValueParams }
 
 TReturnValueParams=class
@@ -230,6 +234,8 @@ procedure ResetCalendarParams(var Calendar: RCalendar);
 procedure ResetFieldParams(var Field: RField);
 procedure ResetChooseValue(var Val:TReturnFormValue);
 procedure ResetDCLField(var F:TDCLDataFields);
+procedure RVirtualScriptsClear(var ScrStruct:RVirtualScript);
+
 
 var
   GPT: TGPT;
@@ -338,6 +344,13 @@ Begin
   F.Caption:='';
   F.ReadOnly:=False;
   F.Width:=0;
+End;
+
+procedure RVirtualScriptsClear(var ScrStruct:RVirtualScript);
+Begin
+  ScrStruct.ScriptName:='';
+  ScrStruct.ScrCommand:='';
+  ScrStruct.ScrText:='';
 End;
 
 { TReturnValueParams }

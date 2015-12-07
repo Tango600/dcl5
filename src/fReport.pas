@@ -11,18 +11,21 @@ uses
 {$ELSE}
   uGlass,
 {$ENDIF}
-  uDCLConst, uUDL, uDCLData, uStringParams, uDCLStringsRes;
+  uDCLConst, uUDL, uDCLData, uStringParams, uDCLMultiLang, ExtCtrls;
 
 type
   TMainForm = class(TForm)
     ButtonPrint: TButton;
     InDOSCodePage: TCheckBox;
     OpenDialog1: TOpenDialog;
+    Timer1: TTimer;
     procedure FormCreate(Sender: TObject);
     procedure ButtonPrintClick(Sender: TObject);
+    procedure Timer1Timer(Sender: TObject);
   private
     Rep: TStringList;
     OldMainWin:THandle;
+    RaE:Boolean;
 
     procedure LoadReportFromFile(FileName:String; InConsoleCodePage:Boolean);
 {$IFDEF MSWINDOWS}
@@ -113,7 +116,7 @@ begin
   AppendMenu(GetSystemMenu(Handle, False), MF_SEPARATOR, 0, '');
   AppendMenu(GetSystemMenu(Handle, False), MF_STRING, AboutMenuItem,
     Pchar('DCL version : '+uDCLConst.Version));
-  AppendMenu(GetSystemMenu(Handle, False), MF_STRING, LockMenuItem, Pchar(GetDCLMessageString(msLock)+'...'));
+  AppendMenu(GetSystemMenu(Handle, False), MF_STRING, LockMenuItem, PChar(GetDCLMessageString(msLock)+'...'));
 {$ENDIF}
 {$IFNDEF NEWDELPHI}
 {$IFNDEF FPC}
@@ -128,6 +131,7 @@ begin
   InDOSCodePage.Caption:=SourceToInterface(GetDCLMessageString(msCodePage)+' DOS');
   ButtonPrint.Caption:=SourceToInterface(GetDCLMessageString(msPrint));
 
+  RaE:=False;
   If ParamCount>0 then
   Begin
     For i:=1 to ParamCount do
@@ -145,10 +149,14 @@ begin
       Begin
         ReportCP:=True;
       End;
+      If CompareString(ParamStr(i), '-rae') then  // run and exit
+        RaE:=True;
     End;
     If FileExists(FileName) then
       LoadReportFromFile(FileName, ReportCP);
   End;
+  If RaE then
+    Timer1.Enabled:=True;
 end;
 
 procedure TMainForm.LoadReportFromFile(FileName:String; InConsoleCodePage:Boolean);
@@ -165,6 +173,12 @@ begin
     FreeAndNil(DCLTextReport);
     ExecApp(GPT.Viewer+' Result.txt');
   End;
+end;
+
+procedure TMainForm.Timer1Timer(Sender: TObject);
+begin
+  If RaE then
+    Self.Close;
 end;
 
 end.

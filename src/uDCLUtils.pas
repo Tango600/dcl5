@@ -121,6 +121,8 @@ function LoadFormatedBlock(Data:TMemoryStream):TMemoryStream;
 function DecodeScriptData(Data:TMemoryStream):TStringList;
 function EncodeScriptData(Script:TStringList):TMemoryStream;
 
+function GetScriptVersion(Data:TMemoryStream):String;
+
 function GetTimeFormat(mSec: Cardinal): String;
 
 function GetSystemLanguage: String;
@@ -1579,10 +1581,9 @@ Begin
         End;
 
       Delete(CallProc, StartSel, MaxMatch-StartSel);
-      If Factor=1 then
-        Insert(GetClearParam(TmpStr), CallProc, StartSel)
-      Else
-        Insert(TmpStr, CallProc, StartSel);
+//      If Factor=1 then
+      Insert(GetClearParam(TmpStr), CallProc, StartSel);
+//      Else Insert(TmpStr, CallProc, StartSel);
 
       Inc(StartSearch, Length(TmpStr)+1);
     End;
@@ -2669,6 +2670,25 @@ Begin
 
       Result.WriteBuffer(Buffer[0], p);
     End;
+  End;
+End;
+
+function GetScriptVersion(Data:TMemoryStream):String;
+var
+  tmp:TStringList;
+Begin
+  Result:='';
+  If Data.Size>0 then
+  Begin
+    Data.Position:=0;
+    tmp:=TStringList.Create;
+    tmp.LoadFromStream(Data);
+    If (Pos('[', tmp[0])<Pos(']', tmp[0])) and (Pos('[', tmp[0])>0) then
+      If tmp[0]='['+SignMethodVer+']' then
+      Begin
+        Result:=GetClearParam(tmp[0], '[]');
+      End;
+    FreeAndNil(tmp);
   End;
 End;
 

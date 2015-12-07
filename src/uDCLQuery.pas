@@ -102,8 +102,8 @@ type
     function GetAfterInsertEvent: TDataSetNotifyEvent;
     procedure SetAfterInsertEvent(Event: TDataSetNotifyEvent);
 
-    Procedure SetOperations(Value: TOperationsTypes);
-    Function GetOperations: TOperationsTypes;
+    Procedure SetNotAllowedOperations(Value: TOperationsTypes);
+    Function GetNotAllowedOperations: TOperationsTypes;
 
     procedure SetSQL(const AValue: {$IFDEF WITH_WIDEDATASET}TWideStrings{$ELSE}TStringList{$ENDIF});
     function GetSQL: {$IFDEF WITH_WIDEDATASET}TWideStrings{$ELSE}TStringList{$ENDIF};
@@ -127,7 +127,7 @@ type
     procedure DisableControls;
     procedure EnableControls;
 
-    property NotAllowOperations: TOperationsTypes read GetOperations write SetOperations;
+    property NotAllowOperations: TOperationsTypes read GetNotAllowedOperations write SetNotAllowedOperations;
     property KeyField: String read FKeyField;
     property MainTable: String read FMainTable;
   published
@@ -577,9 +577,9 @@ Begin
   l:=Length(FNotAllowOperations);
   Result:=False;
   If l>0 then
-    For i:=0 to l-1 do
+    For i:=1 to l do
     Begin
-      If FNotAllowOperations[i]=Value then
+      If FNotAllowOperations[i-1]=Value then
       Begin
         Result:=True;
         Break;
@@ -687,7 +687,7 @@ begin
   End;
 end;
 
-Function TDCLQuery.GetOperations: TOperationsTypes;
+Function TDCLQuery.GetNotAllowedOperations: TOperationsTypes;
 begin
   Result:=FNotAllowOperations;
 end;
@@ -899,9 +899,27 @@ begin
     FBeforePost:=Event;
 end;
 
-Procedure TDCLQuery.SetOperations(Value: TOperationsTypes);
+Procedure TDCLQuery.SetNotAllowedOperations(Value: TOperationsTypes);
+var
+  i:Integer;
 begin
   FNotAllowOperations:=Value;
+{$IFDEF CACHEON}
+  If not FUpdateSQLDefined then
+  Begin
+    FMainTable:=GetMainQueryTable;
+    FKeyField:=GetPrimaryKeyField(FMainTable);
+  End;
+  SetUpdateSQL(FKeyField, FMainTable);
+//  FillDatasetUpdateSQL(FKeyField, FMainTable, True);
+
+  If FindNotAllowedOperation(dsoDelete) then
+    FUpdateSQL.DeleteSQL.Clear;
+  If FindNotAllowedOperation(dsoInsert) then
+    FUpdateSQL.InsertSQL.Clear;
+  If FindNotAllowedOperation(dsoEdit) then
+    FUpdateSQL.{$IFNDEF SQLdbFamily}ModifySQL{$ELSE}UpdateSQL{$ENDIF}.Clear;
+{$ENDIF}
 end;
 
 procedure TDCLQuery.SetRequiredFields;

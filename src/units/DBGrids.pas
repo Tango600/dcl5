@@ -3143,13 +3143,13 @@ begin
         VK_RIGHT: MoveCol(ColCount - 1, -1);
         VK_HOME: First;
         VK_END: Last;
-        VK_DELETE:
+{        VK_DELETE:
           if (not ReadOnly) and not IsEmpty
             and CanModify and DeletePrompt then
           if FBookmarks.Count > 0 then
             FBookmarks.Delete
           else
-            Delete;
+            Delete; } //Tango
       end
     end
     else

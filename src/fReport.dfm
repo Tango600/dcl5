@@ -37,4 +37,11 @@ object MainForm: TMainForm
     Left = 17
     Top = 28
   end
+  object Timer1: TTimer
+    Enabled = False
+    Interval = 800
+    OnTimer = Timer1Timer
+    Left = 264
+    Top = 12
+  end
 end
