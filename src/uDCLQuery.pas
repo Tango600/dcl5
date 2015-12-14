@@ -608,7 +608,7 @@ begin
 {$IFDEF CACHEON}
   FreeAndNil(ShadowQuery);
 {$ENDIF}
-  inherited Destroy;
+  //inherited Destroy;
 end;
 
 procedure TDCLQuery.DisableControls;

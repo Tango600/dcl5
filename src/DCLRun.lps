@@ -58,15 +58,16 @@
       <Unit5>
         <Filename Value="uUDL.pas"/>
         <UnitName Value="uUDL"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1"/>
-        <CursorPos X="15" Y="11"/>
+        <TopLine Value="9322"/>
+        <CursorPos X="13" Y="9340"/>
         <UsageCount Value="100"/>
         <Bookmarks Count="7">
-          <Item0 X="11" Y="13475" ID="9"/>
-          <Item1 X="6" Y="16313" ID="4"/>
-          <Item2 X="1" Y="12282" ID="5"/>
+          <Item0 X="11" Y="13480" ID="9"/>
+          <Item1 X="6" Y="16318" ID="4"/>
+          <Item2 X="1" Y="12287" ID="5"/>
           <Item3 X="1" Y="7415" ID="2"/>
           <Item4 X="24" Y="8838" ID="3"/>
           <Item5 X="14" Y="7237" ID="0"/>
@@ -114,7 +115,6 @@
       <Unit10>
         <Filename Value="uDCLQuery.pas"/>
         <UnitName Value="uDCLQuery"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="1"/>
         <WindowIndex Value="0"/>
         <TopLine Value="129"/>
@@ -999,7 +999,7 @@
     <General>
       <ActiveWindowIndexAtStart Value="0"/>
     </General>
-    <JumpHistory Count="25" HistoryIndex="24">
+    <JumpHistory Count="23" HistoryIndex="22">
       <Position1>
         <Filename Value="uDCLQuery.pas"/>
         <Caret Line="775" Column="1" TopLine="755"/>
@@ -1089,17 +1089,9 @@
         <Caret Line="490" Column="3" TopLine="483"/>
       </Position22>
       <Position23>
-        <Filename Value="uDCLUtils.pas"/>
-        <Caret Line="2306" Column="30" TopLine="2318"/>
-      </Position23>
-      <Position24>
-        <Filename Value="uUDL.pas"/>
-        <Caret Line="500" Column="41" TopLine="535"/>
-      </Position24>
-      <Position25>
         <Filename Value="uDCLQuery.pas"/>
         <Caret Line="750" Column="5" TopLine="742"/>
-      </Position25>
+      </Position23>
     </JumpHistory>
   </ProjectSession>
   <Debugging>

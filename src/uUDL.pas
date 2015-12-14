@@ -94,7 +94,6 @@ Type
 
     FAccessLevel: TUserLevelsType;
     FForms: TList;
-    ActiveDCLForms: Array of Boolean;
     ReturnFormsValues: Array of TReturnFormValue;
     ShadowQuery: TDCLDialogQuery;
     PassRetries: Byte;
@@ -122,7 +121,6 @@ Type
     procedure RunInitSkripts;
 
     function GetConnected: Boolean;
-    function GetLastFormNum: Integer;
 
     procedure KillerForms(Sender:TObject);
   public
@@ -644,8 +642,6 @@ Type
 
     procedure CloseDialog;
     procedure Choose;
-    procedure SetInactive;
-    procedure SetActive;
     function GetActive: Boolean;
 
     procedure RePlaseVariables(var VariablesSet: String);
@@ -2778,7 +2774,7 @@ begin
     If Assigned(FDCLLogOn.FDCLMainMenu) Then
       If Assigned(FDCLLogOn.FDCLMainMenu.FormBar) Then
       begin
-        TB1:=(FDCLLogOn.FDCLMainMenu.FormBar.FindComponent('TB'+IntToStr(FFormNum))
+        TB1:=(FDCLLogOn.FDCLMainMenu.FormBar.FindComponent('TB'+IntToStr(FForm.Handle))
             as TFormPanelButton);
         If Assigned(TB1) then
           FreeAndNil(TB1);
@@ -2788,14 +2784,12 @@ begin
   For i:=1 to FDCLLogOn.FormsCount do
   begin
     If Assigned(FDCLLogOn.Forms[i-1]) Then
-      If FDCLLogOn.ActiveDCLForms[i-1] Then
-        If Self=FDCLLogOn.Forms[i-1].FParentForm Then
-          FDCLLogOn.CloseForm(FDCLLogOn.Forms[i-1]);
+      If Self=FDCLLogOn.Forms[i-1].FParentForm Then
+        FDCLLogOn.CloseForm(FDCLLogOn.Forms[i-1]);
   end;
 
   Pointer(FParentForm):=nil;
   Pointer(FCallerForm):=nil;
-  SetInactive;
   FForm.Release;
   inherited Destroy;
 end;
@@ -3581,7 +3575,6 @@ begin
   SetWindowLong(FForm.Handle, GWL_EXSTYLE, GetWindowLong(FForm.Handle, GWL_EXSTYLE)or
       WS_EX_APPWINDOW);
 {$ENDIF}
-  // SetActive;
 {$IFDEF DCLDEBUG}
   FForm.Show;
 {$ENDIF}
@@ -3590,7 +3583,8 @@ begin
       If FDCLLogOn.FDCLMainMenu.FormBar.Parent<>FForm Then
       begin
         TB:=TFormPanelButton.Create(FDCLLogOn.FDCLMainMenu.FormBar);
-        TB.Name:='TB'+IntToStr(FForm.Tag);
+        TB.Name:='TB'+IntToStr(FForm.Handle);
+        //FForm.Tag);
         TB.Parent:=FDCLLogOn.FDCLMainMenu.FormBar;
         TB.Width:=FormPanelButtonWidth;
         TB.Height:=FormPanelButtonHeight;
@@ -4980,7 +4974,7 @@ end;
 
 function TDCLForm.GetActive: Boolean;
 begin
-  Result:=FDCLLogOn.ActiveDCLForms[FFormNum];
+  Result:=FForm.Showing;
 end;
 
 function TDCLForm.GetDataSource: TDataSource;
@@ -5131,22 +5125,12 @@ begin
     end;
 end;
 
-procedure TDCLForm.SetActive;
-begin
-  FDCLLogOn.ActiveDCLForms[FFormNum]:=True;
-end;
-
 procedure TDCLForm.SetDBStatus(StatusStr: String);
 begin
   If Assigned(DBStatus) Then
   begin
     DBStatus.Panels[1].Text:=StatusStr;
   end;
-end;
-
-procedure TDCLForm.SetInactive;
-begin
-  FDCLLogOn.ActiveDCLForms[FFormNum]:=False;
 end;
 
 procedure TDCLForm.SetRecNo;
@@ -5406,39 +5390,36 @@ begin
     begin
       If Assigned(FDCLLogOn.Forms[v2]) Then
       begin
-        If FDCLLogOn.ActiveDCLForms[v2] Then
+        For sv_v2:=1 to Length(FDCLLogOn.Forms[v2].FGrids) do
         begin
-          For sv_v2:=1 to Length(FDCLLogOn.Forms[v2].FGrids) do
-          begin
-            If Assigned(FDCLLogOn.Forms[v2].FGrids[sv_v2-1]) Then
-              For i:=1 to Length(FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits) do
-              begin
-                Case FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits[i-1].EditsType of
-                fbtOutBox, fbtEditBox:
-                FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits[i-1].Edit.Text:=
-                  FDCLLogOn.Variables.Variables[FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits[i-1]
-                    .EditToVariables];
-                end;
+          If Assigned(FDCLLogOn.Forms[v2].FGrids[sv_v2-1]) Then
+            For i:=1 to Length(FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits) do
+            begin
+              Case FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits[i-1].EditsType of
+              fbtOutBox, fbtEditBox:
+              FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits[i-1].Edit.Text:=
+                FDCLLogOn.Variables.Variables[FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits[i-1]
+                  .EditToVariables];
               end;
+            end;
 
-            If Assigned(FDCLLogOn.Forms[v2]) Then
-              If Assigned(FDCLLogOn.Forms[v2].FGrids[sv_v2-1]) Then
-                For v0:=1 to Length(FDCLLogOn.Forms[v2].FGrids[sv_v2-1].FTableParts) do
-                  If Length(FDCLLogOn.Forms[v2].FGrids[sv_v2-1].FTableParts[v0-1].Edits)>0 Then
+          If Assigned(FDCLLogOn.Forms[v2]) Then
+            If Assigned(FDCLLogOn.Forms[v2].FGrids[sv_v2-1]) Then
+              For v0:=1 to Length(FDCLLogOn.Forms[v2].FGrids[sv_v2-1].FTableParts) do
+                If Length(FDCLLogOn.Forms[v2].FGrids[sv_v2-1].FTableParts[v0-1].Edits)>0 Then
+                begin
+                  For i:=1 to Length(FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits) do
                   begin
-                    For i:=1 to Length(FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits) do
-                    begin
-                      Case FDCLLogOn.Forms[v2].FGrids[sv_v2-1].FTableParts[v0-1].Edits[i-1]
-                        .EditsType of
-                      fbtOutBox, fbtEditBox:
-                      FDCLLogOn.Forms[v2].FGrids[sv_v2-1].FTableParts[v0-1].Edits[i-1].Edit.Text:=
-                        FDCLLogOn.Variables.Variables
-                        [FDCLLogOn.Forms[v2].FGrids[sv_v2-1].FTableParts[v0-1].Edits[i-1]
-                          .EditToVariables];
-                      end;
+                    Case FDCLLogOn.Forms[v2].FGrids[sv_v2-1].FTableParts[v0-1].Edits[i-1]
+                      .EditsType of
+                    fbtOutBox, fbtEditBox:
+                    FDCLLogOn.Forms[v2].FGrids[sv_v2-1].FTableParts[v0-1].Edits[i-1].Edit.Text:=
+                      FDCLLogOn.Variables.Variables
+                      [FDCLLogOn.Forms[v2].FGrids[sv_v2-1].FTableParts[v0-1].Edits[i-1]
+                        .EditToVariables];
                     end;
                   end;
-          end;
+                end;
         end;
       end;
     end;
@@ -8649,12 +8630,14 @@ begin
 
       If GPT.ServerName<>'' Then
       begin
-        FDBLogOn.DatabaseName:=GPT.ServerName+':'+GPT.DBPath;
+        FDBLogOn.DatabaseName:=GPT.DBPath;
+        FDBLogOn.HostName:=GPT.ServerName;
         DebugProc('  DBPath: '+GPT.ServerName+':'+GPT.DBPath);
       end
       Else
       begin
         FDBLogOn.DatabaseName:=GPT.DBPath;
+        FDBLogOn.HostName:='';
         DebugProc('  DBPath: '+GPT.DBPath);
       end;
       FDBLogOn.UserName:=GPT.DBUserName;
@@ -8734,12 +8717,14 @@ begin
       FDBLogOn.ConnectorType:=GPT.DBType;
       If GPT.ServerName<>'' Then
       begin
-        FDBLogOn.DatabaseName:=GPT.ServerName+':'+GPT.DBPath;
+        FDBLogOn.DatabaseName:=GPT.DBPath;
+        FDBLogOn.HostName:=GPT.ServerName;
         DebugProc('  DBPath: '+GPT.ServerName+':'+GPT.DBPath);
       end
       Else
       begin
         FDBLogOn.DatabaseName:=GPT.DBPath;
+        FDBLogOn.HostName:='';
         DebugProc('  DBPath: '+GPT.DBPath);
       end;
       FDBLogOn.UserName:=GPT.DBUserName;
@@ -8879,14 +8864,10 @@ begin
     Scr.Text:=Script.Text;
   End;
 
-  i:=FForms.Count;
-  SetLength(ActiveDCLForms, i+1);
   FForms.Add(TDCLForm.Create(FormName, Self, ParentForm, CallerForm, i, Scr, Query, Data, ModalMode,
     ReturnValueMode, ReturnValueParams));
   i:=FForms.Count-1;
   CurrentForm:=i;
-  SetLength(ActiveDCLForms, i+1);
-  ActiveDCLForms[i]:=True;
   If Assigned(ReturnValueParams) then
     If ReturnValueMode<>chmNone then
       Forms[i].Choose;
@@ -9340,19 +9321,6 @@ begin
   end;
 end;
 
-function TDCLLogOn.GetLastFormNum: Integer;
-var
-  i: Byte;
-begin
-  Result:= - 1;
-  For i:=FormsCount downto 1 do
-    If ActiveDCLForms[i-1] Then
-    begin
-      Result:=i;
-      break;
-    end;
-end;
-
 procedure TDCLLogOn.GetTableNames(var List: TStrings);
 begin
 {$IFDEF ADO}
@@ -9363,10 +9331,15 @@ begin
 {$ENDIF}
 {$IFDEF ZEOS}
   FDBLogOn.GetTableNames('', List);
-{$ELSE}
-{$IFDEF IBALL}
+{$ENDIF}
+{$IFDEF SQLdb}
   FDBLogOn.GetTableNames(List, False);
 {$ENDIF}
+{$IFDEF SQLdbIB}
+  FDBLogOn.GetTableNames(List, False);
+{$ENDIF}
+{$IFDEF IBX}
+  FDBLogOn.GetTableNames(List, False);
 {$ENDIF}
 end;
 
@@ -9848,53 +9821,52 @@ begin
   tmpCF:=CurrentForm;
   If FForms.Count>0 Then
     For i:=0 to FormsCount-1 do
-      If ActiveDCLForms[i] Then
-        If Assigned(FForms[i]) Then
-          Case Action of
-          fnaRefresh:
-          Forms[i].RefreshForm;
-          fnaClose:
-          Forms[i].CloseDialog;
-          fnaSetMDI:
-          Forms[i].FForm.Parent:=MainForm;
-          fnaResetMDI:
-          Forms[i].FForm.Parent:=nil;
-          fnaHide:
-          Forms[i].FForm.Hide;
-          fnaShow:
-          Forms[i].FForm.Show;
-          fnaStopAutoRefresh:
-          begin
-            For j:=1 to Forms[i].TablesCount do
+      If Assigned(FForms[i]) Then
+        Case Action of
+        fnaRefresh:
+        Forms[i].RefreshForm;
+        fnaClose:
+        Forms[i].CloseDialog;
+        fnaSetMDI:
+        Forms[i].FForm.Parent:=MainForm;
+        fnaResetMDI:
+        Forms[i].FForm.Parent:=nil;
+        fnaHide:
+        Forms[i].FForm.Hide;
+        fnaShow:
+        Forms[i].FForm.Show;
+        fnaStopAutoRefresh:
+        begin
+          For j:=1 to Forms[i].TablesCount do
+            If Assigned(Forms[i].Tables[j-1].RefreshTimer) Then
+              Forms[i].Tables[j-1].RefreshTimer.Enabled:=False;
+        end;
+        fnaStartAutoRefresh:
+        begin
+          For j:=1 to Forms[i].TablesCount do
+            If Assigned(Forms[i].Tables[j-1]) Then
               If Assigned(Forms[i].Tables[j-1].RefreshTimer) Then
-                Forms[i].Tables[j-1].RefreshTimer.Enabled:=False;
-          end;
-          fnaStartAutoRefresh:
-          begin
-            For j:=1 to Forms[i].TablesCount do
-              If Assigned(Forms[i].Tables[j-1]) Then
-                If Assigned(Forms[i].Tables[j-1].RefreshTimer) Then
-                  Forms[i].Tables[j-1].RefreshTimer.Enabled:=True;
-          end;
-          fnaPauseAutoRefresh:
-          begin
-            For j:=1 to Forms[i].TablesCount do
-              If Assigned(Forms[i].Tables[j-1]) Then
-                If Assigned(Forms[i].Tables[j-1].RefreshTimer) Then
-                  If Forms[i].Tables[j-1].RefreshTimer.Enabled Then
-                    Forms[i].Tables[j-1].LastStateTimer:=Forms[i].Tables[j-1]
-                      .RefreshTimer.Enabled;
-          end;
-          fnaResumeAutoRefresh:
-          begin
-            For j:=1 to Forms[i].TablesCount do
-              If Assigned(Forms[i].Tables[j-1]) Then
-                If Assigned(Forms[i].Tables[j-1].RefreshTimer) Then
-                  If Not Forms[i].Tables[j-1].RefreshTimer.Enabled Then
-                    Forms[i].Tables[j-1].RefreshTimer.Enabled:=
-                      Forms[i].Tables[j-1].LastStateTimer;
-          end;
-          end;
+                Forms[i].Tables[j-1].RefreshTimer.Enabled:=True;
+        end;
+        fnaPauseAutoRefresh:
+        begin
+          For j:=1 to Forms[i].TablesCount do
+            If Assigned(Forms[i].Tables[j-1]) Then
+              If Assigned(Forms[i].Tables[j-1].RefreshTimer) Then
+                If Forms[i].Tables[j-1].RefreshTimer.Enabled Then
+                  Forms[i].Tables[j-1].LastStateTimer:=Forms[i].Tables[j-1]
+                    .RefreshTimer.Enabled;
+        end;
+        fnaResumeAutoRefresh:
+        begin
+          For j:=1 to Forms[i].TablesCount do
+            If Assigned(Forms[i].Tables[j-1]) Then
+              If Assigned(Forms[i].Tables[j-1].RefreshTimer) Then
+                If Not Forms[i].Tables[j-1].RefreshTimer.Enabled Then
+                  Forms[i].Tables[j-1].RefreshTimer.Enabled:=
+                    Forms[i].Tables[j-1].LastStateTimer;
+        end;
+        end;
   CurrentForm:=tmpCF;
 end;
 
@@ -9977,7 +9949,6 @@ end;
 
 function TDCLLogOn.TableExists(TableName: String): Boolean;
 var
-//  TestQuery: TDCLDialogQuery;
   Tables:TStrings;
   i:Integer;
 begin
@@ -9992,38 +9963,6 @@ begin
       Break;
     End;
   End;
-
-{  TestQuery:=TDCLDialogQuery.Create(nil);
-  TestQuery.Name:='TebleExists_'+IntToStr(UpTime);
-  SetDBName(TestQuery);
-  If GPT.IBAll then
-  Begin
-    TestQuery.SQL.Text:=
-      'select count(*) from RDB$RELATION_FIELDS f where upper(f.RDB$RELATION_NAME)=upper('+
-        GPT.StringTypeChar+TableName+GPT.StringTypeChar+')';
-    try
-      TestQuery.Open;
-    Except
-      FreeAndNil(TestQuery);
-      Result:=False;
-      Exit;
-    end;
-    Result:=TestQuery.Fields[0].AsInteger>0;
-    FreeAndNil(TestQuery);
-  End
-  Else
-  Begin
-    TestQuery.SQL.Text:='select * from '+TableName+' where 1=0';
-    try
-      TestQuery.Open;
-      Result:=True;
-    Except
-      FreeAndNil(TestQuery);
-      Result:=False;
-      Exit;
-    end;
-    FreeAndNil(TestQuery);
-  End; }
 end;
 
 procedure TDCLLogOn.TranslateVal(var S: String);
@@ -10044,25 +9983,24 @@ begin
     If Assigned(FormBar) Then
     begin
       For i:=1 to FDCLLogOn.FormsCount do
-        If FDCLLogOn.ActiveDCLForms[i-1] Then
-          If Assigned(FDCLLogOn.Forms[i-1]) Then
+        If Assigned(FDCLLogOn.Forms[i-1]) Then
+        begin
+          TB1:=(FormBar.FindComponent('TB'+IntToStr(FDCLLogOn.Forms[i-1].FForm.Tag))
+              as TFormPanelButton);
+          If Assigned(TB1) Then
           begin
-            TB1:=(FormBar.FindComponent('TB'+IntToStr(FDCLLogOn.Forms[i-1].FForm.Tag))
-                as TFormPanelButton);
-            If Assigned(TB1) Then
+            If FDCLLogOn.Forms[i-1].FForm=Screen.ActiveForm Then
             begin
-              If FDCLLogOn.Forms[i-1].FForm=Screen.ActiveForm Then
-              begin
-                TB1.Glyph:=DrawBMPButton('FormDotActive');
-                TB1.Font.Style:=[fsBold];
-              end
-              Else
-              begin
-                TB1.Glyph:=DrawBMPButton('FormDotInActive');
-                TB1.Font.Style:=[];
-              end
-            end;
+              TB1.Glyph:=DrawBMPButton('FormDotActive');
+              TB1.Font.Style:=[fsBold];
+            end
+            Else
+            begin
+              TB1.Glyph:=DrawBMPButton('FormDotInActive');
+              TB1.Font.Style:=[];
+            end
           end;
+        end;
     end;
 end;
 
@@ -12156,25 +12094,23 @@ begin
   For v1:=1 to FDCLLogOn.FormsCount do
   begin
     If Assigned(FDCLLogOn.Forms[v1-1]) Then
-      If FDCLLogOn.ActiveDCLForms[v1-1] Then
-        If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) Then
-        begin
-          If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm Then
-            For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
-              FDCLLogOn.Forms[v1-1].Tables[v2-1].ScrollDB(FQuery);
-        end;
+      If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) Then
+      begin
+        If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm Then
+          For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
+            FDCLLogOn.Forms[v1-1].Tables[v2-1].ScrollDB(FQuery);
+      end;
   end;
 
   For v1:=1 to FDCLLogOn.FormsCount do
   begin
     If Assigned(FDCLLogOn.Forms[v1-1]) Then
-      If FDCLLogOn.ActiveDCLForms[v1-1] Then
-        If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) Then
-        begin
-          If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm Then
-            For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
-              FDCLLogOn.Forms[v1-1].Tables[v2-1].AfterCancel(FQuery);
-        end;
+      If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) Then
+      begin
+        If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm Then
+          For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
+            FDCLLogOn.Forms[v1-1].Tables[v2-1].AfterCancel(FQuery);
+      end;
   end;
 end;
 
@@ -12193,13 +12129,12 @@ begin
   For v1:=1 to FDCLLogOn.FormsCount do
   begin
     If Assigned(FDCLLogOn.Forms[v1-1]) Then
-      If FDCLLogOn.ActiveDCLForms[v1-1] Then
-        If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) Then
-        begin
-          If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm Then
-            For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
-              FDCLLogOn.Forms[v1-1].Tables[v2-1].ScrollDB(Data);
-        end;
+      If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) Then
+      begin
+        If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm Then
+          For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
+            FDCLLogOn.Forms[v1-1].Tables[v2-1].ScrollDB(Data);
+      end;
   end;
 end;
 
@@ -12226,13 +12161,12 @@ begin
   For v1:=1 to FDCLLogOn.FormsCount do
   begin
     If Assigned(FDCLLogOn.Forms[v1-1]) Then
-      If FDCLLogOn.ActiveDCLForms[v1-1] Then
-        If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) Then
-        begin
-          If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm Then
-            For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
-              FDCLLogOn.Forms[v1-1].Tables[v2-1].AfterInsert(Data);
-        end;
+      If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) Then
+      begin
+        If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm Then
+          For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
+            FDCLLogOn.Forms[v1-1].Tables[v2-1].AfterInsert(Data);
+      end;
   end;
 end;
 
@@ -12262,25 +12196,23 @@ begin
     For v1:=1 to FDCLLogOn.FormsCount do
     begin
       If Assigned(FDCLLogOn.Forms[v1-1]) Then
-        If FDCLLogOn.ActiveDCLForms[v1-1] Then
-          If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) Then
-          begin
-            If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm Then
-              For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
-                FDCLLogOn.Forms[v1-1].Tables[v2-1].ScrollDB(Data);
-          end;
+        If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) Then
+        begin
+          If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm Then
+            For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
+              FDCLLogOn.Forms[v1-1].Tables[v2-1].ScrollDB(Data);
+        end;
     end;
 
     For v1:=1 to FDCLLogOn.FormsCount do
     begin
       If Assigned(FDCLLogOn.Forms[v1-1]) Then
-        If FDCLLogOn.ActiveDCLForms[v1-1] Then
-          If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) Then
-          begin
-            If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm Then
-              For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
-                FDCLLogOn.Forms[v1-1].Tables[v2-1].AfterOpen(Data);
-          end;
+        If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) Then
+        begin
+          If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm Then
+            For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
+              FDCLLogOn.Forms[v1-1].Tables[v2-1].AfterOpen(Data);
+        end;
     end;
   end;
 end;
@@ -12295,25 +12227,23 @@ begin
   For v1:=1 to FDCLLogOn.FormsCount do
   begin
     If Assigned(FDCLLogOn.Forms[v1-1]) Then
-      If FDCLLogOn.ActiveDCLForms[v1-1] Then
-        If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) Then
-        begin
-          If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm Then
-            For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
-              FDCLLogOn.Forms[v1-1].Tables[v2-1].ScrollDB(FQuery);
-        end;
+      If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) Then
+      begin
+        If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm Then
+          For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
+            FDCLLogOn.Forms[v1-1].Tables[v2-1].ScrollDB(FQuery);
+      end;
   end;
 
   For v1:=1 to FDCLLogOn.FormsCount do
   begin
     If Assigned(FDCLLogOn.Forms[v1-1]) Then
-      If FDCLLogOn.ActiveDCLForms[v1-1] Then
-        If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) Then
-        begin
-          If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm Then
-            For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
-              FDCLLogOn.Forms[v1-1].Tables[v2-1].AfterPost(FQuery);
-        end;
+      If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) Then
+      begin
+        If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm Then
+          For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
+            FDCLLogOn.Forms[v1-1].Tables[v2-1].AfterPost(FQuery);
+      end;
   end;
   FDCLLogOn.NotifyForms(fnaRefresh);
 end;
@@ -12349,13 +12279,12 @@ begin
   For v1:=1 to FDCLLogOn.FormsCount do
   begin
     If Assigned(FDCLLogOn.Forms[v1-1]) Then
-      If FDCLLogOn.ActiveDCLForms[v1-1] Then
-        If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) Then
-        begin
-          If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm Then
-            For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
-              FDCLLogOn.Forms[v1-1].Tables[v2-1].BeforePost(FQuery);
-        end;
+      If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) Then
+      begin
+        If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm Then
+          For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
+            FDCLLogOn.Forms[v1-1].Tables[v2-1].BeforePost(FQuery);
+      end;
   end;
 end;
 
@@ -12368,13 +12297,12 @@ begin
   For v1:=1 to FDCLLogOn.FormsCount do
   begin
     If Assigned(FDCLLogOn.Forms[v1-1]) Then
-      If FDCLLogOn.ActiveDCLForms[v1-1] Then
-        If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) Then
-        begin
-          If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm Then
-            For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
-              FDCLLogOn.Forms[v1-1].Tables[v2-1].BeforeScroll(FQuery);
-        end;
+      If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) Then
+      begin
+        If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm Then
+          For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
+            FDCLLogOn.Forms[v1-1].Tables[v2-1].BeforeScroll(FQuery);
+      end;
   end;
 end;
 
@@ -12592,6 +12520,7 @@ begin
   PartButtonTop:=TablePartButtonTop;
   RowColor:=clWhite;
   RowTextColor:=clBlack;
+  PreviousColumnIndex:=-1;
 
   If Not Assigned(Query) Then
   begin
@@ -13505,7 +13434,6 @@ begin
   FDCLLogOn.SQLMon.DelTrace(FQueryGlob);
   If Assigned(FQueryGlob) then
     FreeAndNil(FQueryGlob);
-
 //  FromForm:='_Closed_'+FromForm;
 end;
 
@@ -14493,14 +14421,13 @@ begin
   For v1:=1 to FDCLLogOn.FormsCount do
   begin
     If Assigned(FDCLLogOn.Forms[v1-1]) Then
-      If FDCLLogOn.ActiveDCLForms[v1-1] Then
-        If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) Then
-        begin
-          If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm Then
-            For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
-              If FDCLLogOn.Forms[v1-1].Tables[v2-1]<>Self Then
-                FDCLLogOn.Forms[v1-1].Tables[v2-1].ScrollDB(FQuery);
-        end;
+      If Assigned(FDCLLogOn.Forms[v1-1].ParentForm) Then
+      begin
+        If FDCLLogOn.Forms[v1-1].ParentForm=FDCLForm Then
+          For v2:=1 to FDCLLogOn.Forms[v1-1].TablesCount do
+            If FDCLLogOn.Forms[v1-1].Tables[v2-1]<>Self Then
+              FDCLLogOn.Forms[v1-1].Tables[v2-1].ScrollDB(FQuery);
+      end;
   end;
 end;
 
@@ -15753,9 +15680,8 @@ end;
 procedure TDCLOfficeReport.ReportExcel(ParamStr: String; Save, Close: Boolean);
 var
   SQLStr, FileName, ColorStr: String;
-  v1: Byte;
   EnableRowChColor, EnableColChColor: Boolean;
-  RecRepNum: Word;
+  RecRepNum, v1: Word;
   RowRColor, RowBColor, RowGColor, ColRColor, ColBColor, ColGColor: Integer;
   DCLQuery: TDCLDialogQuery;
 begin
@@ -15963,8 +15889,7 @@ var
   GrabValueList: TComboBox;
   GrabDS: TDataSource;
   BtOk, BtCancel: TButton;
-  ParamsCountList: Byte;
-  ElementsTop: Word;
+  ParamsCountList, ElementsTop: Word;
   GrabLabel: TDialogLabel;
   GrabDate: DateTimePicker;
   LocalVar1, LocalVar2, RecCount: Word;
@@ -16539,8 +16464,7 @@ procedure TDCLTextReport.PrintigReport;
 var
   TmpStr, BodyText, BodyText1: String;
   StartPos, LengthParam, DelLen: Cardinal;
-  NameLength, StartSel, FFactor: Word;
-  FieldsCounter: Byte;
+  FieldsCounter, NameLength, StartSel, FFactor: Word;
   Alig: String;
 begin
   If DialogRes=mrCancel Then

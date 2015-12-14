@@ -37,7 +37,7 @@ Function HexToInt(HexStr: String): Integer;
 Function Pow(const Base:Cardinal; PowNum: Word): Cardinal; overload;
 Function Pow(Const Base: Real; PowNum: Word): Real; overload;
 Procedure DeleteNonPrintSimb(Var S: String);
-Function CountSimb(S: String; C: Char): byte;
+Function CountSimb(S: String; C: Char): Integer;
 Function TimeStampToStr(NowDate: TDateTime): String;
 Function TimeToStr_(Time: TDateTime): String;
 Function DateToStr_(Date: TDate): String;
@@ -124,10 +124,6 @@ function EncodeScriptData(Script:TStringList):TMemoryStream;
 function GetScriptVersion(Data:TMemoryStream):String;
 
 function GetTimeFormat(mSec: Cardinal): String;
-
-function GetSystemLanguage: String;
-function GetSystemLanguageID: Integer;
-procedure InitLangEnv;
 
 implementation
 
@@ -239,9 +235,9 @@ Begin
   End;
 End;
 
-Function CountSimb(S: String; C: Char): byte;
+Function CountSimb(S: String; C: Char): Integer;
 Var
-  L: byte;
+  L: Integer;
 Begin
   Result:=0;
   For L:=1 To Length(S) Do
@@ -1069,7 +1065,7 @@ end;
 
 Function FindDisableAction(Action: String): Boolean;
 Var
-  iI: byte;
+  iI: Byte;
 Begin
   Result:=False;
   For iI:=1 To ToolCommandsCount Do
@@ -1139,58 +1135,6 @@ Begin
 {$ENDIF}
 End;
 
-function GetSystemLanguage: String;
-{$IFDEF MSWINDOWS}
-var
-  OutputBuffer: PChar;
-  SelectedLCID: LCID;       //DWORD constand in Windows.pas
-{$ENDIF}
-begin
-{$IFDEF MSWINDOWS}
-  OutputBuffer:=StrAlloc(90);     //alocate memory for the PChar
-  try
-    try
-      SelectedLCID:=GetUserDefaultLCID and $FF;
-
-      GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SABBREVLANGNAME, OutputBuffer, 89);
-      Result:=UpperCase(OutputBuffer);
-    except
-      Result:=DefaultLanguage;
-      Abort;
-    end;
-  finally
-    StrDispose(OutputBuffer);   //alway's free the memory alocated
-  end;
-{$ENDIF}
-end;
-
-function GetSystemLanguageID: Integer;
-{$IFDEF MSWINDOWS}
-var
-  SelectedLCID: LCID;       //DWORD constand in Windows.pas
-{$ENDIF}
-begin
-{$IFDEF MSWINDOWS}
-  try
-    try
-      SelectedLCID:=GetUserDefaultLCID;// and $FF;
-      Result:=SelectedLCID
-    except
-      Result:=DefaultLanguageID;
-      Abort;
-    end;
-  finally
-    //
-  end;
-{$ENDIF}
-end;
-
-procedure InitLangEnv;
-begin
-  GPT.LangID:=GetSystemLanguageID;
-  GPT.LangName:=GetSystemLanguage;
-end;
-
 Procedure TranslateProc(Var CallProc: String; Var Factor: Word; Query: TDCLDialogQuery);
 Const
   ProcCount=27;
@@ -1205,7 +1149,7 @@ Var
     MaxMatch: Word;
   FindVar: Boolean;
   FunctionParams: Array Of String;
-  FunctionParamsCount: byte;
+  FunctionParamsCount: Byte;
   Sign:TSigns;
 Begin
   Inc(Factor);
@@ -2079,7 +2023,7 @@ var
   tmp1, DelimsSet, OpenerSet, CloseerSet:String;
 begin
   Result:=0;
-  DelimsSet:='( )[]/*\-+'#39#10#13#9;
+  DelimsSet:='( )[]'#39;
   OpenerSet:='(';
   CloseerSet:=')';
   First:=True;
@@ -2215,7 +2159,7 @@ End;
 Function HexToInt64(HexStr: String): Int64;
 Var
   RetVar: Int64;
-  i: byte;
+  i: Word;
 Begin
   HexStr:=UpperCase(HexStr);
   If UpperCase(HexStr[Length(HexStr)])='H' Then
@@ -2235,7 +2179,7 @@ End;
 Function HexToInt(HexStr: String): Integer;
 Var
   RetVar: Integer;
-  i: byte;
+  i: Word;
 Begin
   HexStr:=UpperCase(HexStr);
   If UpperCase(HexStr[Length(HexStr)])='H' Then
@@ -2338,7 +2282,7 @@ end;
 procedure SaveMainFormPosINI(FForm:TDBForm; DialogName:String);
 Var
   DialogsParams: TStringList;
-  i: Byte;
+  i: Integer;
   Yes: Boolean;
 begin
   If Assigned(FForm) Then
@@ -2349,10 +2293,10 @@ begin
       DialogsParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini');
     If DialogsParams.Count<>0 Then
     Begin
-      For i:=0 To DialogsParams.Count-1 Do
-        If PosEx(DialogName+'=', DialogsParams[i])=1 Then
+      For i:=1 To DialogsParams.Count Do
+        If PosEx(DialogName+'=', DialogsParams[i-1])=1 Then
         Begin
-          DialogsParams[i]:=GetFormPosString(FForm, DialogName);
+          DialogsParams[i-1]:=GetFormPosString(FForm, DialogName);
           Yes:=true;
           break;
         End;
@@ -2377,7 +2321,7 @@ End;
 procedure SaveMainFormPosBase(FDCLLogOn:TDCLLogOn; FForm:TDBForm; DialogName:String);
 Var
   DCLQueryL: TDCLDialogQuery;
-  i: Byte;
+  i: Integer;
 Begin
   If Assigned(FForm) Then
   Begin

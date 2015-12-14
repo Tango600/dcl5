@@ -235,8 +235,7 @@ const
   StopSimbols='( )[],.%:;&$#@*'#39;
 var
   FieldName: String;
-  L: Word;
-  i: Byte;
+  L, i: Word;
 Begin
   Result:=nil;
   If Pos(FieldObjectPrefix, Param)<>0 then
