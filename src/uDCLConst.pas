@@ -38,7 +38,8 @@ DefaultLibraryLocation='fbclient.so';
 {$IFDEF SQLdb}
   DBEngineType='SQLdb (Universal)';
 {$ENDIF}
-  Version='10.1.31.305';
+  Ver='10.1.35.307';
+  VersionS='$VersionSignature$'+Ver+'$';
 
   CompotableVersion='9.1.129.307';
 
@@ -284,6 +285,8 @@ DefaultLibraryLocation='fbclient.so';
   ExitTime=30;
   AutoResfreshInterval=90*1000;
 
+  MainFormName='MainForm';
+
   NavigatorEditButtons=[nbEdit, nbDelete, nbInsert, nbPost, nbCancel];
   NavigatorNavigateButtons=[nbFirst, nbLast, nbRefresh];
 
@@ -367,9 +370,21 @@ const
 
   DefaultFRScriptLanguage=fslPascal;
 
-
+ function Version:String;
 
 implementation
 
+function Version:String;
+var
+  i:Integer;
+begin
+  Result:='';
+  i:=19;
+  While VersionS[i]<>'$' do
+  begin
+    Result:=Result+VersionS[i];
+    Inc(i);
+  end;
+end;
 
 end.

@@ -91,6 +91,7 @@ Type
     RoleOK: TLogOnStatus;
     SQLMon: TDCLSQLMon;
     KillerDog: TTimer;
+    FBusyMode: Boolean;
 
     FAccessLevel: TUserLevelsType;
     FForms: TList;
@@ -123,6 +124,7 @@ Type
     function GetConnected: Boolean;
 
     procedure KillerForms(Sender:TObject);
+    Function GetBusyMode:Boolean;
   public
     // Command: TDCLCommand;
     CurrentForm: Integer;
@@ -138,6 +140,8 @@ Type
     procedure About(Sender: TObject);
     function Login(UserName, Password: String; ShowForm: Boolean): TLogOnStatus;
     procedure Lock;
+    procedure WriteBaseUID;
+    function GetBaseUID:String;
 
 {$IFDEF TRANSACTIONDB}
     function NewTransaction(RW:TTransactionType): TTransaction;
@@ -189,6 +193,7 @@ Type
     property Forms[Index: Integer]: TDCLForm read GetForm;
     property AccessLevel: TUserLevelsType read FAccessLevel;
     property Connected: Boolean read GetConnected;
+    property IsBusy:Boolean read GetBusyMode;
   end;
 
   TVariables=class(TObject)
@@ -3542,7 +3547,7 @@ begin
   end;
 
   FForm:=TDBForm.Create(Application);
-  FForm.Name:=Trim(DialogName)+IntToStr(FFormNum);
+  FForm.Name:=Trim(DialogName)+IntToStr(FForm.Handle);
   FForm.Width:=650;
   FForm.ClientHeight:=400;
   FForm.OnClose:=CloseForm;
@@ -3584,7 +3589,6 @@ begin
       begin
         TB:=TFormPanelButton.Create(FDCLLogOn.FDCLMainMenu.FormBar);
         TB.Name:='TB'+IntToStr(FForm.Handle);
-        //FForm.Tag);
         TB.Parent:=FDCLLogOn.FDCLMainMenu.FormBar;
         TB.Width:=FormPanelButtonWidth;
         TB.Height:=FormPanelButtonHeight;
@@ -8243,14 +8247,17 @@ end;
 
 function TDCLLogOn.CloseForm(Form: TDCLForm): TReturnFormValue;
 begin
+  FBusyMode:=True;
   If Assigned(Form) then
   begin
     Try
       Form.Destroy;
     Except
       KillerDog.Enabled:=False;
+      FBusyMode:=False;
     End;
   end;
+  FBusyMode:=False;
 end;
 
 procedure TDCLLogOn.CloseFormNum(FormNum: Integer);
@@ -8778,6 +8785,7 @@ begin
 {$IFDEF ADO}
   CoInitialize(nil);
 {$ENDIF}
+  FBusyMode:=False;
   FForms:=TList.Create;
   RoleOK:=lsNotNeed;
   CurrentForm:= - 1;
@@ -8900,7 +8908,7 @@ begin
 
   FDCLMainMenu:=TDCLMainMenu.Create(Self, MainForm);
   If ConnectErrorCode=0 Then
-    LoadMainFormPos(Self, MainForm, 'MainForm');
+    LoadMainFormPos(Self, MainForm, MainFormName);
 end;
 
 procedure TDCLLogOn.Disconnect;
@@ -9028,6 +9036,34 @@ begin
       Break;
     End;
   End;
+end;
+
+function TDCLLogOn.GetBaseUID: String;
+var
+  ParamsQuery: TReportQuery;
+begin
+  Result:='';
+  ParamsQuery:=TDCLDialogQuery.Create(nil);
+  ParamsQuery.Name:='UID_'+IntToStr(UpTime);
+  SetDBName(ParamsQuery);
+    ParamsQuery.SQL.Text:='select * from '+GPT.GPTTableName+' where '+GPT.UpperString+
+      GPT.GPTNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+'BaseUID'+
+      GPT.StringTypeChar+GPT.UpperStringEnd;
+  ParamsQuery.Open;
+  If ParamsQuery.FieldByName(GPT.GPTNameField).AsString='' then
+  Begin
+    WriteBaseUID;
+    Result:=GetBaseUID;
+  End
+  Else
+    Result:=ParamsQuery.FieldByName(GPT.GPTNameField).AsString;
+  ParamsQuery.Close;
+  FreeAndNil(ParamsQuery);
+end;
+
+function TDCLLogOn.GetBusyMode: Boolean;
+begin
+  Result:=FBusyMode;
 end;
 
 function TDCLLogOn.GetConfigInfo: String;
@@ -9777,6 +9813,7 @@ procedure TDCLLogOn.KillerForms(Sender: TObject);
 var
   i:Integer;
 begin
+  FBusyMode:=True;
   For i:=1 to FForms.Count do
   Begin
     If i<=FForms.Count then
@@ -9785,6 +9822,7 @@ begin
       If TDCLForm(FForms[i-1]).CloseAction=fcaClose then
         CloseForm(FForms[i-1]);
   End;
+  FBusyMode:=False;
 end;
 
 {$IFDEF TRANSACTIONDB}
@@ -10161,6 +10199,29 @@ begin
 {$ENDIF}
 end;
 
+procedure TDCLLogOn.WriteBaseUID;
+var
+  ParamsQuery: TReportQuery;
+begin
+  ParamsQuery:=TDCLDialogQuery.Create(nil);
+  ParamsQuery.Name:='UID_'+IntToStr(UpTime);
+  SetDBName(ParamsQuery);
+    ParamsQuery.SQL.Text:='select count(*) from '+GPT.GPTTableName+' where '+GPT.UpperString+
+      GPT.GPTNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+'BaseUID'+
+      GPT.StringTypeChar+GPT.UpperStringEnd;
+  ParamsQuery.Open;
+  If ParamsQuery.Fields[0].AsInteger=0 Then
+  begin
+    ParamsQuery.Close;
+    ParamsQuery.SQL.Text:='insert into '+GPT.GPTTableName+'('+GPT.GPTNameField+', '+
+      GPT.GPTValueField+') values('+GPT.StringTypeChar+'BaseUID'+GPT.StringTypeChar+', '+
+      GPT.StringTypeChar+MD5.MD5DigestToStr(MD5.MD5String(IntToStr(UpTime)))+GPT.StringTypeChar+')';
+    ParamsQuery.ExecSQL;
+//    ParamsQuery.Transaction.Commit;
+  end;
+  FreeAndNil(ParamsQuery);
+end;
+
 procedure TDCLLogOn.WriteConfig(ConfigName, NewValue, UserID: String);
 var
   ParamsQuery: TReportQuery;
@@ -10176,7 +10237,7 @@ begin
     ParamsQuery.Name:='WriteConfig_'+IntToStr(UpTime);
     SetDBName(ParamsQuery);
     ParamsQuery.SQL.Text:='select count(*) from '+GPT.GPTTableName+' where '+GPT.UpperString+
-      GPT.StringTypeChar+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+ConfigName+
+      GPT.GPTNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+ConfigName+
       GPT.StringTypeChar+GPT.UpperStringEnd+WhereUser;
     ParamsQuery.Open;
     If ParamsQuery.Fields[0].AsInteger>0 Then
@@ -14342,7 +14403,7 @@ begin
   end;
   If Not Assigned(FDCLForm) Then
     Exit;
-  If Not Assigned(FQueryGlob) Then
+  If Not Assigned(FQuery) Then //FQueryGlob
     Exit;
   If Not FQuery.Active Then
     Exit;
@@ -14367,7 +14428,10 @@ begin
     For v1:=1 to Length(DropBoxes) do
     begin
       If FieldExists(DropBoxes[v1-1].FieldName, FQuery) Then
-        DropBoxes[v1-1].DropList.ItemIndex:=FQuery.FieldByName(DropBoxes[v1-1].FieldName).AsInteger;
+        If GetStringDataType(FQuery.FieldByName(DropBoxes[v1-1].FieldName).AsString)=idDigit then
+          DropBoxes[v1-1].DropList.ItemIndex:=FQuery.FieldByName(DropBoxes[v1-1].FieldName).AsInteger
+        Else
+          DropBoxes[v1-1].DropList.ItemIndex:=DropBoxes[v1-1].DropList.Items.IndexOf(FQuery.FieldByName(DropBoxes[v1-1].FieldName).AsString);
     end;
 
   If Length(CheckBoxes)>0 Then
@@ -14956,7 +15020,7 @@ procedure TMainFormAction.CloseMainForm(Sender: TObject; var Action: TCloseActio
 begin
   If Assigned(DCLMainLogOn) then
   Begin
-    SaveMainFormPos(DCLMainLogOn, DCLMainLogOn.MainForm, 'MainForm');
+    SaveMainFormPos(DCLMainLogOn, DCLMainLogOn.MainForm, MainFormName);
 
     EndDCL;
   End;
@@ -16714,8 +16778,9 @@ begin
   begin
     If DCLMainLogOn.NewLogOn Then
     begin
-      DisconnectDB;
       FreeAndNil(DCLMainLogOn);
+      while DCLMainLogOn.IsBusy do Application.HandleMessage;
+      DisconnectDB;
     end;
   end;
 
@@ -16898,6 +16963,8 @@ begin
       GPT.RolesMenuTable:=RolesMenuTable;
 {$ENDIF}
       FreeAndNil(Params);
+
+      DCLMainLogOn.WriteBaseUID;
 
       GPT.TimeStampFormat:=GPT.DateFormat+' '+GPT.TimeFormat;
 
