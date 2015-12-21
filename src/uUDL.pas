@@ -48,7 +48,7 @@ Uses
   sqldb,
 {$ENDIF}
 {$IFDEF FPC}
-  FileUtil, EditBtn, LConvEncoding, {$IFDEF ZVComponents}ZVDateTimePicker, {$ENDIF}
+  FileUtil, LConvEncoding, {$IFDEF ZVComponents}ZVDateTimePicker, {$ENDIF}
 {$ENDIF}
 {$IFNDEF FPC}
   JPEG,
@@ -8277,6 +8277,7 @@ begin
     CloseFormNum(i-1);
     i:=FForms.Count;
   end;
+  while IsBusy do Application.HandleMessage;
 
   KillerDog.Enabled:=False;
   FreeAndNil(KillerDog);
@@ -16779,7 +16780,6 @@ begin
     If DCLMainLogOn.NewLogOn Then
     begin
       FreeAndNil(DCLMainLogOn);
-      while DCLMainLogOn.IsBusy do Application.HandleMessage;
       DisconnectDB;
     end;
   end;
