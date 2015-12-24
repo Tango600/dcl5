@@ -589,7 +589,6 @@ end;
 
 destructor TDCLQuery.Destroy;
 begin
-  Cancel;
   FAfterDelete:=nil;
   FAfterPost:=nil;
   FAfterCancel:=nil;
@@ -598,6 +597,8 @@ begin
   FBeforePost:=nil;
   FBeforeInsert:=nil;
 
+  Cancel;
+  Close;
 {$IFDEF TRANSACTIONDB}
   If Assigned(WriteTransaction) then
     FreeAndNil(WriteTransaction);
@@ -608,7 +609,7 @@ begin
 {$IFDEF CACHEON}
   FreeAndNil(ShadowQuery);
 {$ENDIF}
-  //inherited Destroy;
+  inherited Destroy;
 end;
 
 procedure TDCLQuery.DisableControls;

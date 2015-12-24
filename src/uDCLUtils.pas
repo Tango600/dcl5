@@ -2352,6 +2352,7 @@ Begin
       Try
         DCLQueryL.ExecSQL;
       Except
+        //Logger.WriteLog('', etError);
         //ShowMessage('Error!');
       End;
       FreeAndNil(DCLQueryL);

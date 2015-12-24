@@ -160,8 +160,10 @@ Type
     function CreateForm(FormName: String; ParentForm, CallerForm: TDCLForm; Query: TDCLDialogQuery;
       Data: TDataSource; ModalMode: Boolean; ReturnValueMode: TChooseMode;
       ReturnValueParams: TReturnValueParams=nil; Script:TStringList=nil): TDCLForm;
-    function CloseForm(Form: TDCLForm): TReturnFormValue;
+    procedure CloseForm(Form: TDCLForm);
     procedure CloseFormNum(FormNum: Integer);
+    procedure CloseAllForms;
+
     procedure SetDBName(var Query: TDCLDialogQuery);
 
     procedure NotifyForms(Action: TFormsNotifyAction);
@@ -193,7 +195,7 @@ Type
     property Forms[Index: Integer]: TDCLForm read GetForm;
     property AccessLevel: TUserLevelsType read FAccessLevel;
     property Connected: Boolean read GetConnected;
-    property IsBusy:Boolean read GetBusyMode;
+    property IsBusy:Boolean read GetBusyMode write FBusyMode;
   end;
 
   TVariables=class(TObject)
@@ -557,7 +559,7 @@ Type
     FOPL: TStringList;
     FFormNum, FormHeight, FormWidth: Integer;
     TB: TFormPanelButton;
-    FNewPage, NoVisual, NoStdKeys, FieldsSettingsReseted, SettingsLoaded: Boolean;
+    FNewPage, NoVisual, NoStdKeys, FieldsSettingsReseted, SettingsLoaded, NoCloseable: Boolean;
     FForm: TDBForm;
     FDCLLogOn: TDCLLogOn;
     FGrids: Array of TDCLGrid;
@@ -635,7 +637,7 @@ Type
     procedure SaveFieldsSettings(Sender: TObject);
   public
     LocalVariables: TVariables;
-    Modal, NotDestroyedDCLForm, ExitNoSave, NoCloseable: Boolean;
+    Modal, NotDestroyedDCLForm, ExitNoSave: Boolean;
     FDialogName: String;
     ExitCode: Byte;
 
@@ -2744,13 +2746,14 @@ var
   i, j: Word;
   TB1: TFormPanelButton;
 begin
+  FDCLLogOn.IsBusy:=True;
+  CloseAction:=fcaInProcess;
   FDCLLogOn.FForms.Remove(Self);
 
   FForm.OnResize:=nil;
   FForm.OnActivate:=nil;
   FForm.OnCloseQuery:=nil;
-  
-  CloseAction:=fcaInProcess;
+
   If ExitCode=0 Then
   begin
     SaveFormPos;
@@ -2803,7 +2806,7 @@ procedure TDCLForm.CloseForm(Sender: TObject; var Action: TCloseAction);
 begin
   FDCLLogOn.KillerDog.Enabled:=True;
   If not NoCloseable then
-    If GetActive and Not NotDestroyedDCLForm Then
+    If {GetActive and} Not NotDestroyedDCLForm Then
       CloseAction:=fcaClose;
 end;
 
@@ -8245,7 +8248,31 @@ begin
     RoleOK:=lsLogonOK;
 end;
 
-function TDCLLogOn.CloseForm(Form: TDCLForm): TReturnFormValue;
+procedure TDCLLogOn.CloseAllForms;
+var
+  i:Integer;
+begin
+  FBusyMode:=True;
+  i:=FForms.Count;
+  while FForms.Count<>0 do
+  begin
+    If Assigned(Forms[i-1]) then
+    Begin
+      Try
+        Forms[i-1].Destroy;
+      Except
+        //
+      End;
+    End
+    Else
+      FForms.Delete(i-1);
+    i:=FForms.Count;
+  end;
+  FBusyMode:=False;
+  while IsBusy do Application.HandleMessage;
+end;
+
+procedure TDCLLogOn.CloseForm(Form: TDCLForm);
 begin
   FBusyMode:=True;
   If Assigned(Form) then
@@ -8268,15 +8295,8 @@ begin
 end;
 
 destructor TDCLLogOn.Destroy;
-var
-  i:Integer;
 begin
-  i:=FForms.Count;
-  while i<>0 do
-  begin
-    CloseFormNum(i-1);
-    i:=FForms.Count;
-  end;
+  CloseAllForms;
   while IsBusy do Application.HandleMessage;
 
   KillerDog.Enabled:=False;
@@ -8915,7 +8935,10 @@ end;
 procedure TDCLLogOn.Disconnect;
 begin
   LoggingUser(False);
-  FDBLogOn.Connected:=False;
+{$IFNDEF EMBEDDED}
+  If FDBLogOn.Connected then
+    FDBLogOn.Connected:=False;
+{$ENDIF}  
 end;
 
 procedure TDCLLogOn.ReconnectDB;
@@ -9477,70 +9500,73 @@ procedure TDCLLogOn.LoggingUser(Login: Boolean);
 var
   LoggingQuery: TDCLDialogQuery;
 begin
-{$IFNDEF EMBEDDED}
-  LoggingQuery:=TDCLDialogQuery.Create(nil);
-  LoggingQuery.Name:='LoggingUser_'+IntToStr(UpTime);
-  SetDBName(LoggingQuery);
+//{$IFNDEF EMBEDDED}
+  If FDBLogOn.Connected then
+  Begin
+    LoggingQuery:=TDCLDialogQuery.Create(nil);
+    LoggingQuery.Name:='LoggingUser_'+IntToStr(UpTime);
+    SetDBName(LoggingQuery);
 
-  If Login Then
-  begin
-    DCLSession.LoginTime:=TimeStampToStr(Now);
-    DCLSession.ComputerName:=GetComputerName;
-    DCLSession.IPAdress:=GetLocalIP;
-    DCLSession.UserSystemName:=GetUserFromSystem;
-  end;
-
-  If GPT.UserLogging Then
-  begin
-    If DCLSession.LoginTime<>'' Then
+    If Login Then
     begin
-      If Login Then
+      DCLSession.LoginTime:=TimeStampToStr(Now);
+      DCLSession.ComputerName:=GetComputerName;
+      DCLSession.IPAdress:=GetLocalIP;
+      DCLSession.UserSystemName:=GetUserFromSystem;
+    end;
+
+    If GPT.UserLogging Then
+    begin
+      If DCLSession.LoginTime<>'' Then
       begin
-        LoggingQuery.SQL.Text:='insert into '+GPT.ACTIVE_USERS_TABLE+
-          '(ACTIVE_USER_ID, ACTIVE_USER_HOST, ACTIVE_USER_IP, ACTIVE_USER_DCL_VER, ACTIVE_USER_LOGIN_TIME) '
-          +'values('+GPT.UserID+', '''+DCLSession.ComputerName+'/'+DCLSession.UserSystemName+
-          ''', '''+DCLSession.IPAdress+''', '''+Version+''', '''+DCLSession.LoginTime+''' )';
-      end
-      Else
-        LoggingQuery.SQL.Text:='delete from '+GPT.ACTIVE_USERS_TABLE+' where ACTIVE_USER_ID='+
-          GPT.UserID+' and ACTIVE_USER_HOST='''+DCLSession.ComputerName+'/'+
-          DCLSession.UserSystemName+''' and '+'ACTIVE_USER_DCL_VER='''+Version+
-          ''' and ACTIVE_USER_LOGIN_TIME='''+DCLSession.LoginTime+'''';
+        If Login Then
+        begin
+          LoggingQuery.SQL.Text:='insert into '+GPT.ACTIVE_USERS_TABLE+
+            '(ACTIVE_USER_ID, ACTIVE_USER_HOST, ACTIVE_USER_IP, ACTIVE_USER_DCL_VER, ACTIVE_USER_LOGIN_TIME) '
+            +'values('+GPT.UserID+', '''+DCLSession.ComputerName+'/'+DCLSession.UserSystemName+
+            ''', '''+DCLSession.IPAdress+''', '''+Version+''', '''+DCLSession.LoginTime+''' )';
+        end
+        Else
+          LoggingQuery.SQL.Text:='delete from '+GPT.ACTIVE_USERS_TABLE+' where ACTIVE_USER_ID='+
+            GPT.UserID+' and ACTIVE_USER_HOST='''+DCLSession.ComputerName+'/'+
+            DCLSession.UserSystemName+''' and '+'ACTIVE_USER_DCL_VER='''+Version+
+            ''' and ACTIVE_USER_LOGIN_TIME='''+DCLSession.LoginTime+'''';
 
-      try
-        LoggingQuery.ExecSQL;
-      Except
+        try
+          LoggingQuery.ExecSQL;
+        Except
 
+        end;
       end;
     end;
-  end;
 
-  If GPT.UserLoggingHistory Then
-  begin
-    If DCLSession.LoginTime<>'' Then
+    If GPT.UserLoggingHistory Then
     begin
-      If Login Then
+      If DCLSession.LoginTime<>'' Then
       begin
-        LoggingQuery.SQL.Text:='insert into '+GPT.USER_LOGIN_HISTORY_TABLE+
-          '(UL_USER_ID, UL_LOGIN_TIME, UL_HOST_IP, UL_HOST_NAME, UL_DCL_VER) '+'values('+GPT.UserID+
-          ', '''+DCLSession.LoginTime+''', '''+DCLSession.IPAdress+''', '''+DCLSession.ComputerName+
-          '/'+DCLSession.UserSystemName+''', '''+Version+''')';
-      end
-      Else
-        LoggingQuery.SQL.Text:='update '+GPT.USER_LOGIN_HISTORY_TABLE+' set UL_LOGOFF_TIME='''+
-          TimeStampToStr(Now)+''' where '+'UL_USER_ID='+GPT.UserID+' and UL_LOGIN_TIME='''+
-          DCLSession.LoginTime+''' and UL_HOST_NAME='''+DCLSession.ComputerName+'/'+
-          DCLSession.UserSystemName+''' and UL_DCL_VER='''+Version+'''';
-      try
-        LoggingQuery.ExecSQL;
-      Except
+        If Login Then
+        begin
+          LoggingQuery.SQL.Text:='insert into '+GPT.USER_LOGIN_HISTORY_TABLE+
+            '(UL_USER_ID, UL_LOGIN_TIME, UL_HOST_IP, UL_HOST_NAME, UL_DCL_VER) '+'values('+GPT.UserID+
+            ', '''+DCLSession.LoginTime+''', '''+DCLSession.IPAdress+''', '''+DCLSession.ComputerName+
+            '/'+DCLSession.UserSystemName+''', '''+Version+''')';
+        end
+        Else
+          LoggingQuery.SQL.Text:='update '+GPT.USER_LOGIN_HISTORY_TABLE+' set UL_LOGOFF_TIME='''+
+            TimeStampToStr(Now)+''' where '+'UL_USER_ID='+GPT.UserID+' and UL_LOGIN_TIME='''+
+            DCLSession.LoginTime+''' and UL_HOST_NAME='''+DCLSession.ComputerName+'/'+
+            DCLSession.UserSystemName+''' and UL_DCL_VER='''+Version+'''';
+        try
+          LoggingQuery.ExecSQL;
+        Except
 
+        end;
       end;
     end;
-  end;
 
-  FreeAndNil(LoggingQuery);
-{$ENDIF}
+    FreeAndNil(LoggingQuery);
+  End;
+//{$ENDIF}
 end;
 
 function TDCLLogOn.Login(UserName, Password: String; ShowForm: Boolean): TLogOnStatus;
@@ -9819,7 +9845,6 @@ begin
   Begin
     If i<=FForms.Count then
     If Assigned(FForms[i-1]) then
-    If not TDCLForm(FForms[i-1]).NoCloseable then
       If TDCLForm(FForms[i-1]).CloseAction=fcaClose then
         CloseForm(FForms[i-1]);
   End;
@@ -16765,7 +16790,6 @@ begin
   If Assigned(DCLMainLogOn) Then
     If DCLMainLogOn.Connected Then
     begin
-      DCLMainLogOn.LoggingUser(False);
       DCLMainLogOn.Disconnect;
     end;
 end;
@@ -16777,11 +16801,9 @@ begin
 
   If Assigned(DCLMainLogOn) Then
   begin
-    If DCLMainLogOn.NewLogOn Then
-    begin
-      FreeAndNil(DCLMainLogOn);
-      DisconnectDB;
-    end;
+    DCLMainLogOn.CloseAllForms;
+//    DisconnectDB;
+    FreeAndNil(DCLMainLogOn);
   end;
 
 {$IFDEF ADO}
@@ -17484,7 +17506,6 @@ begin
   FDataField:=DataField;
 
   DCLQuery:=TDCLQuery.Create(FDCLLogOn.FDBLogOn);
-  DCLQuery.Name:='BaseBinStore'+IntToStr(UpTime);
   //DCLQuery.NoRefreshSQL:=True;
 end;
 
