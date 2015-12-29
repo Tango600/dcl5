@@ -882,7 +882,7 @@ Type
   public
     constructor Create(DCLLogOn: TDCLLogOn);
     destructor Destroy; override;
-    procedure Print(RepName, TemplateName, FileName, ScrStr: String; ReportType:TReportType);
+    procedure Print(RepName, TemplateName, FileName: String; ReportType:TReportType);
   end;
 {$ELSE}
 
@@ -1052,7 +1052,7 @@ begin
 end;
 
 {$IFDEF MSWINDOWS}
-procedure TDCLMultiReport.Print(RepName, TemplateName, FileName, ScrStr: String; ReportType:TReportType);
+procedure TDCLMultiReport.Print(RepName, TemplateName, FileName: String; ReportType:TReportType);
 var
   tmpDCL, tmpDCL2: TStringList;
   DCLQuery, RepParamsSet: TDCLDialogQuery;
@@ -5500,7 +5500,6 @@ var
   ReturnValueParams: TReturnValueParams;
   OpenDialog: TOpenDialog;
   SaveDialog: TSaveDialog;
-  BookMark: TBookmark;
   tmpDCL: TStringList;
   LocalCommand: TDCLCommand;
   Sign:TSigns;
@@ -6362,7 +6361,6 @@ begin
             begin
               FDCLForm.CurrentQuery.DisableControls;
 
-              BookMark:=FDCLForm.CurrentQuery.GetBookmark;
               TmpStr:=FindParam('GlobQuery=', ScrStr);
               FDCLForm.FGrids[FDCLForm.CurrentGridIndex].SetSQLToStore(TmpStr, qtMain, ulUndefined);
               TranslateValContext(TmpStr);
@@ -6412,7 +6410,7 @@ begin
             tmp2:=FindParam('TemplateName=', ScrStr);
             tmp3:=FindParam('FileName=', ScrStr);
             WordReport:=TDCLMultiReport.Create(FDCLLogOn);
-            WordReport.Print(tmp1, tmp2, tmp3, ScrStr, rtFast);
+            WordReport.Print(tmp1, tmp2, tmp3, rtFast);
             WordReport.Free;
 {$ENDIF}
           end;
@@ -6599,7 +6597,7 @@ begin
             tmp2:=FindParam('FileName=', ScrStr);
             tmp3:=FindParam('TemplateName=', ScrStr);
             WordReport:=TDCLMultiReport.Create(FDCLLogOn);
-            WordReport.Print(tmp1, tmp3, tmp2, ScrStr, rtWord);
+            WordReport.Print(tmp1, tmp3, tmp2, rtWord);
             WordReport.Free;
 {$ENDIF}
           end;
@@ -8893,6 +8891,7 @@ begin
     Scr.Text:=Script.Text;
   End;
 
+  i:=FForms.Count;
   FForms.Add(TDCLForm.Create(FormName, Self, ParentForm, CallerForm, i, Scr, Query, Data, ModalMode,
     ReturnValueMode, ReturnValueParams));
   i:=FForms.Count-1;

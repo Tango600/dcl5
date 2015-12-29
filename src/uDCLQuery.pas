@@ -23,7 +23,7 @@ uses
   uIBUpdateSQLW,
 {$ENDIF}
 {$IFDEF SQLdbFamily}
-  BufDataset, dbconst, sqldb,
+  BufDataset, sqldb,
 {$ENDIF}
 {$IFDEF ZEOS}
   //ZConnection, ZDataset, ZSqlUpdate,
@@ -824,6 +824,8 @@ begin
     ShadowQuery.SQL.Text:=SQL.Text;
     ShadowQuery.ExecSQL;
   End;
+{$ELSE}
+  inherited ExecSQL;
 {$ENDIF}
 end;
 
@@ -901,8 +903,6 @@ begin
 end;
 
 Procedure TDCLQuery.SetNotAllowedOperations(Value: TOperationsTypes);
-var
-  i:Integer;
 begin
   FNotAllowOperations:=Value;
 {$IFDEF CACHEON}

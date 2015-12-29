@@ -26,7 +26,8 @@ function MoneyToString(S: Currency; kpk: boolean; usd: boolean): string;
 
 implementation
 
-uses SysUtils, inifiles;
+uses
+  SysUtils;
 
 const
   m1: array [1..9] of string=('один ', 'два ', 'три ', 'четыре ', 'пять ', 'шесть ', 'семь ',

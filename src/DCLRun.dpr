@@ -2,17 +2,6 @@ program DCLRun;
 {$I DefineType.pas}
 
 uses
-  EMemLeaks,
-  EResLeaks,
-  EDialogWinAPIMSClassic,
-  EDialogWinAPIEurekaLogDetailed,
-  EDialogWinAPIStepsToReproduce,
-  EDebugExports,
-  EDebugMap,
-  EFixSafeCallException,
-  EMapWin32,
-  EAppVCL,
-  ExceptionLog7,
   {$IFDEF FPC}
   {$IFDEF UNIX}{$IFDEF UseCThreads}
   cthreads,
