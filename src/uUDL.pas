@@ -9066,22 +9066,25 @@ var
   ParamsQuery: TReportQuery;
 begin
   Result:='';
-  ParamsQuery:=TDCLDialogQuery.Create(nil);
-  ParamsQuery.Name:='UID_'+IntToStr(UpTime);
-  SetDBName(ParamsQuery);
-    ParamsQuery.SQL.Text:='select * from '+GPT.GPTTableName+' where '+GPT.UpperString+
-      GPT.GPTNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+'BaseUID'+
-      GPT.StringTypeChar+GPT.UpperStringEnd;
-  ParamsQuery.Open;
-  If ParamsQuery.FieldByName(GPT.GPTNameField).AsString='' then
+  if not GPT.NoParamsTable then
   Begin
-    WriteBaseUID;
-    Result:=GetBaseUID;
-  End
-  Else
-    Result:=ParamsQuery.FieldByName(GPT.GPTNameField).AsString;
-  ParamsQuery.Close;
-  FreeAndNil(ParamsQuery);
+    ParamsQuery:=TDCLDialogQuery.Create(nil);
+    ParamsQuery.Name:='UID_'+IntToStr(UpTime);
+    SetDBName(ParamsQuery);
+      ParamsQuery.SQL.Text:='select * from '+GPT.GPTTableName+' where '+GPT.UpperString+
+        GPT.GPTNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+'BaseUID'+
+        GPT.StringTypeChar+GPT.UpperStringEnd;
+    ParamsQuery.Open;
+    If ParamsQuery.FieldByName(GPT.GPTNameField).AsString='' then
+    Begin
+      WriteBaseUID;
+      Result:=GetBaseUID;
+    End
+    Else
+      Result:=ParamsQuery.FieldByName(GPT.GPTNameField).AsString;
+    ParamsQuery.Close;
+    FreeAndNil(ParamsQuery);
+  End;
 end;
 
 function TDCLLogOn.GetBusyMode: Boolean;
@@ -10228,23 +10231,26 @@ procedure TDCLLogOn.WriteBaseUID;
 var
   ParamsQuery: TReportQuery;
 begin
-  ParamsQuery:=TDCLDialogQuery.Create(nil);
-  ParamsQuery.Name:='UID_'+IntToStr(UpTime);
-  SetDBName(ParamsQuery);
-    ParamsQuery.SQL.Text:='select count(*) from '+GPT.GPTTableName+' where '+GPT.UpperString+
-      GPT.GPTNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+'BaseUID'+
-      GPT.StringTypeChar+GPT.UpperStringEnd;
-  ParamsQuery.Open;
-  If ParamsQuery.Fields[0].AsInteger=0 Then
-  begin
-    ParamsQuery.Close;
-    ParamsQuery.SQL.Text:='insert into '+GPT.GPTTableName+'('+GPT.GPTNameField+', '+
-      GPT.GPTValueField+') values('+GPT.StringTypeChar+'BaseUID'+GPT.StringTypeChar+', '+
-      GPT.StringTypeChar+MD5.MD5DigestToStr(MD5.MD5String(IntToStr(UpTime)))+GPT.StringTypeChar+')';
-    ParamsQuery.ExecSQL;
-//    ParamsQuery.Transaction.Commit;
-  end;
-  FreeAndNil(ParamsQuery);
+  if not GPT.NoParamsTable then
+  Begin
+    ParamsQuery:=TDCLDialogQuery.Create(nil);
+    ParamsQuery.Name:='UID_'+IntToStr(UpTime);
+    SetDBName(ParamsQuery);
+      ParamsQuery.SQL.Text:='select count(*) from '+GPT.GPTTableName+' where '+GPT.UpperString+
+        GPT.GPTNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+'BaseUID'+
+        GPT.StringTypeChar+GPT.UpperStringEnd;
+    ParamsQuery.Open;
+    If ParamsQuery.Fields[0].AsInteger=0 Then
+    begin
+      ParamsQuery.Close;
+      ParamsQuery.SQL.Text:='insert into '+GPT.GPTTableName+'('+GPT.GPTNameField+', '+
+        GPT.GPTValueField+') values('+GPT.StringTypeChar+'BaseUID'+GPT.StringTypeChar+', '+
+        GPT.StringTypeChar+MD5.MD5DigestToStr(MD5.MD5String(IntToStr(UpTime)))+GPT.StringTypeChar+')';
+      ParamsQuery.ExecSQL;
+      ParamsQuery.Transaction.Commit;
+    end;
+    FreeAndNil(ParamsQuery);
+  End;
 end;
 
 procedure TDCLLogOn.WriteConfig(ConfigName, NewValue, UserID: String);

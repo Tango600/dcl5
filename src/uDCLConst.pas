@@ -18,7 +18,7 @@ DefaultLibraryLocation='gds32.dll';
 DefaultLibraryLocation='fbclient.so';
 {$ENDIF}
 {$IFDEF ADO}
-  DBEngineType='ADODB';
+  DBEngineType='ADODB (Universal)';
 {$ENDIF}
 {$IFDEF BDE}
   DBEngineType='BDE (Universal)';
@@ -38,7 +38,7 @@ DefaultLibraryLocation='fbclient.so';
 {$IFDEF SQLdb}
   DBEngineType='SQLdb (Universal)';
 {$ENDIF}
-  Ver='10.1.35.314';
+  Ver='10.1.36.314';
   VersionS='$VersionSignature$'+Ver+'$';
 
   CompotableVersion='9.1.129.307';
