@@ -7,8 +7,12 @@
       <SessionStorage Value="InProjectDir"/>
       <MainUnit Value="0"/>
       <Title Value="DCLRun"/>
+      <UseAppBundle Value="False"/>
       <ResourceType Value="res"/>
       <UseXPManifest Value="True"/>
+      <XPManifest>
+        <DpiAware Value="True"/>
+      </XPManifest>
       <Icon Value="0"/>
     </General>
     <i18n>
@@ -18,7 +22,7 @@
       <UseVersionInfo Value="True"/>
       <AutoIncrementBuild Value="True"/>
       <MajorVersionNr Value="10"/>
-      <BuildNr Value="77"/>
+      <BuildNr Value="78"/>
       <Language Value="0419"/>
       <StringTable CompanyName="Unreal Software" ProductName="DCL5 plathform" ProductVersion=""/>
     </VersionInfo>
@@ -115,7 +119,7 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
-        <CommandLineParams Value="DCL0.ini"/>
+        <CommandLineParams Value="DCL1.ini BasesINI=&quot;D:\Tango\My Projects\DCL\ObjectiveUDL\Bases.ini&quot; INISection=&quot;Биллинг (Рабочий)&quot;"/>
       </local>
     </RunParams>
     <RequiredPackages Count="1">

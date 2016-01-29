@@ -6,9 +6,10 @@ interface
 uses
   SysUtils,
 {$IFDEF MSWINDOWS}
-  WinInet,
+  uNewFonts, WinInet,
 {$ENDIF}
   Forms, Classes, Controls, ExtCtrls, ComCtrls, Dialogs, Buttons,
+  uStringParams, uDCLMultiLang,
   uDCLTypes, uDCLConst;
 
 Type
@@ -59,7 +60,7 @@ Begin
   If Progress Then
   Begin
     ProgressForm:=TForm.Create(Nil);
-    ProgressForm.Caption:='Загрузка....';
+    ProgressForm.Caption:=SourceToInterface(GetDCLMessageString(msLoading))+'...';
     ProgressForm.Position:=poScreenCenter;
     ProgressForm.ClientWidth:=255;
     ProgressForm.ClientHeight:=110;
@@ -83,7 +84,7 @@ Begin
     Begin
       BCancel:=TDialogButton.Create(ProgressForm);
       BCancel.Parent:=ProgressForm;
-      BCancel.Caption:='Отменить';
+      BCancel.Caption:=SourceToInterface(GetDCLMessageString(msCancel));
       BCancel.Top:=32+15;
       BCancel.Left:=(250 Div 2)-(ButtonWidth Div 2);
       BCancel.Width:=ButtonWidth;
@@ -106,7 +107,7 @@ Begin
     ReWrite(f, 1);
   End;
   hInet:=InternetOpen('DCLRun', PRE_CONFIG_INTERNET_ACCESS, Nil, Nil, 0);
-  Header:='Accept: */*'; // открываем URL
+  Header:='Accept: */*'; // open URL
   hURL:=InternetOpenURL(hInet, PChar(URL), PChar(Header), StrLen(PChar(Header)), 0, 0);
 
   RLen:=4;
@@ -167,13 +168,12 @@ End;
 
 constructor TDownloader.Create;
 begin
-
+  inherited Create;
 end;
 
 destructor TDownloader.Destroy;
 begin
-
-  inherited;
+  inherited Destroy;
 end;
 
 procedure TDownloader.DownLoadHTTP(URL, FileName: String; ResetDownload, Progress, Cancel: Boolean);
@@ -182,7 +182,10 @@ Var
 Begin
   ResetDownload2:=ResetDownload;
   While Not InetGetFile(URL, FileName, ResetDownload2, Progress, Cancel) Do
+  begin
     ResetDownload2:=False;
+    Application.ProcessMessages;
+  end;
 End;
 
 end.

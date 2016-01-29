@@ -9,7 +9,7 @@ uses
   VCLFixPack, ControlsAtomFix,
 {$ENDIF}
 {$ENDIF}
-{$IFDEF MSWINDOWS} Windows, Messages, uNewFonts, {$ENDIF} SysUtils, Classes,
+{$IFDEF MSWINDOWS}uNewFonts, Windows, Messages, {$ENDIF} SysUtils, Classes,
   Controls, Forms, Dialogs,
 {$IFDEF FPC}
   LCLType, LConvEncoding, InterfaceBase,
@@ -120,6 +120,16 @@ begin
   Result:=FindCommandStrParam('MDI=')='1';
 end;
 
+function FindSetBaseUID: String;
+begin
+  Result:=FindCommandStrParam('INISection=');
+end;
+
+function FindBasesINI: String;
+begin
+  Result:=FindCommandStrParam('BasesINI=');
+end;
+
 procedure TMainForm.FormCreate(Sender: TObject);
 var
   MDI: Boolean;
@@ -130,6 +140,7 @@ begin
   PixelsPerInch:=96;
   Caption:='DCL Run v.'+uDCLConst.Version;
 {$IFDEF MSWINDOWS}
+  ParentFont:=True;
 {$IFNDEF NEWDELPHI}
   AppH:={$IFDEF FPC}WidgetSet.AppHandle{$ELSE}Application.Handle{$ENDIF};
   OldMainWin:=AppH;
@@ -151,6 +162,11 @@ begin
 {$ENDIF}
 {$ENDIF}
 {$ENDIF}
+  If (FindSetBaseUID<>'') and (FindBasesINI<>'') then
+  Begin
+    uUDL.DCLMainLogOn.WriteBaseUIDtoINI(FindBasesINI, FindSetBaseUID);
+  End;
+
   MDI:=False;
   if FileExists('interface.ini') then
   begin

@@ -50,7 +50,10 @@ uses uDCLConst, uDCLData;
 {$IFNDEF FPC}
 Function ConvertEncoding(Const S, FromEncoding, ToEncoding: String): String;
 Begin
-  Result:=S;
+  If (ToEncoding='utf8') and (PosEx('cp', FromEncoding)=1) and (FromEncoding<>'utf8') then
+    Result:=System.AnsiToUtf8(S)
+  Else
+    Result:=S;
 End;
 {$ENDIF}
 

@@ -142,3 +142,4 @@ msThursday:='Четверг';
 msFriday:='Пятница';
 msSaturday:='Суббота';
 msSunday:='Воскресенье';
+msTimeToExit:='Time to exit %d seconds';

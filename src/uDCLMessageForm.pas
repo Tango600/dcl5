@@ -3,12 +3,15 @@ unit uDCLMessageForm;
 interface
 
 uses
+{$IFDEF MSWINDOWS}
+  uNewFonts,
+{$ENDIF}
   SysUtils, Classes, Forms, Graphics, Controls, ExtCtrls,
   StdCtrls, DateUtils,
-  uDCLConst, uDCLData;
+  uDCLConst, uDCLData, uStringParams, uDCLMultiLang;
 
 type
-  TMessageFormObject=Class
+  TMessageFormObject=Class(TObject)
   private
     MessageForm: TForm;
     MessageLabel: TLabel;
@@ -16,6 +19,7 @@ type
     MessageMemo: TMemo;
   public
     constructor Create(nUserName, MessageText: String);
+    destructor Destroy;
   End;
 
 implementation
@@ -47,6 +51,7 @@ End;
 
 constructor TMessageFormObject.Create(nUserName, MessageText: String);
 begin
+  inherited Create;
   If (nUserName='')and(MessageText='') then
     Exit;
 
@@ -54,7 +59,7 @@ begin
   MessageForm.FormStyle:=fsStayOnTop;
   MessageForm.BorderStyle:=bsSingle;
   MessageForm.BorderIcons:=[biSystemMenu];
-  MessageForm.Caption:=AnsiToUTF8('Уведомление. '+TimeStampToStr(Date));
+  MessageForm.Caption:=SourceToInterface(GetDCLMessageString(msNotifycation))+TimeStampToStr(Date);
   MessageForm.Position:=poScreenCenter;
   MessageForm.ClientWidth:=400;
   MessageForm.ClientHeight:=300;
@@ -63,7 +68,7 @@ begin
   MessageLabel.Parent:=MessageForm;
   MessageLabel.Top:=10;
   MessageLabel.Left:=8;
-  MessageLabel.Caption:=AnsiToUTF8('Для пользователя : ');
+  MessageLabel.Caption:=SourceToInterface(GetDCLMessageString(msForUser))+' : ';
 
   MessageEdit:=TEdit.Create(MessageForm);
   MessageEdit.Parent:=MessageForm;
@@ -87,6 +92,13 @@ begin
     MessageMemo.Lines.Append(MessageText);
     MessageForm.Show;
   End;
+end;
+
+destructor TMessageFormObject.Destroy;
+begin
+  MessageForm.Release;
+
+  inherited Destroy;
 end;
 
 end.

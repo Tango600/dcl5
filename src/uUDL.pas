@@ -10,7 +10,7 @@ interface
 Uses
   SysUtils,
 {$IFDEF MSWINDOWS}
-  Windows, ComObj,
+  uNewFonts, Windows, ComObj,
 {$ENDIF}
 {$IFDEF UNIX}
   cwstring, process, unix, libc, lclintf, BaseUnix,
@@ -22,7 +22,7 @@ Uses
 {$ENDIF}
   Messages, Variants, Classes, Graphics, Controls, Forms, ExtCtrls, ToolWin,
   Grids, DB, StdCtrls, ComCtrls, Dialogs, DBCtrls, Buttons, ExtDlgs, Menus,
-  DBGrids, DateUtils,
+  DBGrids, DateUtils, IniFiles,
 {$IFNDEF NOFASTREPORTS}
   frxCross, frxClass, frxDBSet,
 {$ENDIF}
@@ -104,7 +104,6 @@ Type
     TimeToExit: Cardinal;
     DCLSession: TDCLSession;
     Timer1: TTimer;
-//    VirtulScript:RVirtualScripts;
     VirtualScripts:array of RVirtualScript;
 
     function AddVirtualScript(Scr:RVirtualScript):Integer;
@@ -186,6 +185,8 @@ Type
     procedure RunSkriptFromFile(FileName: String);
     procedure ExtractScriptFile(FileName: String);
 
+    procedure WriteBaseUIDtoINI(FileName, SectionName:string);
+    
     function ConnectDB: Integer;
     procedure Disconnect;
     procedure ReconnectDB;
@@ -617,6 +618,10 @@ Type
     procedure SaveFormPosINI;
     procedure SaveFormPosBase;
     function SaveFormPosUni: TStringList;
+    procedure DeleteFormPos(All:Boolean);
+    procedure DeleteFormPosBase(All:Boolean);
+    procedure DeleteFormPosINI(All:Boolean);
+    procedure DeleteAllFormPos;
 
     procedure SaveBookMarkMenu;
     procedure SaveBookmarkMenuINI;
@@ -633,6 +638,7 @@ Type
     procedure AddMainItem(Caption, ItemName, Pict: String; Action: TNotifyEvent);
 
     procedure ResetFieldsSettings(Sender: TObject);
+    procedure ResetAllFieldsSettings(Sender: TObject);
     procedure DeleteAllBookmarks(Sender: TObject);
     procedure SaveFieldsSettings(Sender: TObject);
   public
@@ -2256,7 +2262,7 @@ procedure TLogOnForm.CreateForm(NoClose, Relogin: Boolean; UserName: String);
 begin
   FormCreated:=True;
   DebugProc('Create LogOn Form');
-  Application.Title:=SourceToInterface('DCLRun '+GetDCLMessageString(msLogonToSystem)+'.');
+  Application.Title:=SourceToInterface('DCLRun '+GetDCLMessageString(msLogonToSystem));
   RoleForm:=TForm.Create(nil);
   RoleForm.Caption:=SourceToInterface(GetDCLMessageString(msLogonToSystem));
   RoleForm.BorderStyle:=bsDialog;
@@ -2344,7 +2350,7 @@ begin
   RoleButtonOK:=TDialogButton.Create(RoleForm);
   RoleButtonOK.Parent:=RoleForm;
   RoleButtonOK.Default:=True;
-  RoleButtonOK.Caption:=AnsiToUTF8('Принять');
+  RoleButtonOK.Caption:=SystemToInterface(GetDCLMessageString(msApplay));
   RoleButtonOK.Width:=LoginButtonWidth;
   RoleButtonOK.Height:=ButtonHeight;
   RoleButtonOK.OnClick:=OkButtonClick;
@@ -2361,8 +2367,7 @@ begin
   ChangePassButton:=TDialogButton.Create(RoleForm);
   ChangePassButton.Parent:=RoleForm;
   ChangePassButton.Caption:=SourceToInterface(GetDCLMessageString(msEdit));
-  ChangePassButton.Hint:=SourceToInterface(GetDCLMessageString(msEdit)+' '+
-      GetDCLMessageString(msPassword));
+  ChangePassButton.Hint:=SourceToInterface(GetDCLMessageString(msEditPassword));
   ChangePassButton.ShowHint:=True;
   ChangePassButton.Width:=LoginButtonWidth;
   ChangePassButton.Height:=ButtonHeight;
@@ -2442,7 +2447,7 @@ begin
   ChangePassForm.FormStyle:=fsStayOnTop;
   ChangePassForm.BorderStyle:=bsSingle;
   ChangePassForm.BorderIcons:=[biSystemMenu];
-  ChangePassForm.Caption:=SourceToInterface(GetDCLMessageString(msChangePassord)+'.');
+  ChangePassForm.Caption:=SourceToInterface(GetDCLMessageString(msChangePassord));
   ChangePassForm.ClientWidth:=(BeginStepLeft*3)+EditWidth;
   ChangePassForm.ClientHeight:=(BeginStepTop*2)+EditTopStep*5-FilterLabelTop*2;
   ChangePassForm.Position:=poScreenCenter;
@@ -2494,15 +2499,13 @@ begin
 
   LabelPass:=TDialogLabel.Create(ChangePassForm);
   LabelPass.Parent:=ChangePassForm;
-  LabelPass.Caption:=SourceToInterface(GetDCLMessageString(msOldM)+' '+
-      GetDCLMessageString(msPassword)+':');
+  LabelPass.Caption:=SourceToInterface(GetDCLMessageString(msOldPassword)+':');
   LabelPass.Top:=BeginStepTop-FilterLabelTop*2;
   LabelPass.Left:=BeginStepLeft;
 
   LabelPass:=TDialogLabel.Create(ChangePassForm);
   LabelPass.Parent:=ChangePassForm;
-  LabelPass.Caption:=SourceToInterface(GetDCLMessageString(msNewM)+' '+
-      GetDCLMessageString(msPassword)+':');
+  LabelPass.Caption:=SourceToInterface(GetDCLMessageString(msNewPassword)+':');
   LabelPass.Top:=BeginStepTop+EditTopStep-FilterLabelTop*2;
   LabelPass.Left:=BeginStepLeft;
 
@@ -2514,10 +2517,9 @@ begin
 
   HashPassChk:=TCheckbox.Create(ChangePassForm);
   HashPassChk.Parent:=ChangePassForm;
-  HashPassChk.Caption:=SourceToInterface(GetDCLMessageString(msHashed)+' '+
-      GetDCLMessageString(msPassword));
-  HashPassChk.Hint:=SourceToInterface(GetDCLMessageString(msToHashing)+' '+
-      GetDCLMessageString(msPassword));
+  HashPassChk.Caption:=SourceToInterface(GetDCLMessageString(msHashPassword));
+  {HashPassChk.Hint:=SourceToInterface(GetDCLMessageString(msToHashing)+' '+
+      GetDCLMessageString(msPassword));}
   HashPassChk.Top:=(BeginStepTop+EditTopStep*3)-FilterLabelTop;
   HashPassChk.Left:=BeginStepLeft;
   HashPassChk.Width:=200;
@@ -2628,7 +2630,7 @@ begin
 
   Pc:=FPages.PageCount;
   FTabs:=TTabSheet.Create(FPages);
-  FTabs.Caption:=SourceToInterface(GetDCLMessageString(msPage))+IntToStr(Pc+1);
+  FTabs.Caption:=SourceToInterface(GetDCLMessageString(msPage)+' ')+IntToStr(Pc+1);
   FTabs.Name:='Page_'+IntToStr(Pc+1);
   FTabs.PageControl:=FPages;
 
@@ -3438,29 +3440,33 @@ begin
   FFormMenu.Items.Add(ItemMenu);
 end;
 
-procedure TDCLForm.ResetFieldsSettings(Sender: TObject);
-var
-  ShadowQuery: TDCLQuery;
+procedure TDCLForm.ResetAllFieldsSettings(Sender: TObject);
 begin
-  If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msReset)+' '+
-        GetDCLMessageString(msSettings)+' '+GetDCLMessageString(msFields)+'?'))=1 Then
+  If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msResetAllFieldsSettingsQ)))=1 Then
   begin
     FieldsSettingsReseted:=True;
-    ShadowQuery:=TDCLQuery.Create(FDCLLogOn.FDBLogOn);
-    ShadowQuery.SQL.Text:='delete from '+INITable+' where '+IniDialogNameField+'='+
-      GPT.StringTypeChar+DialogName+GPT.StringTypeChar+' and '+IniUserFieldName+'='+GPT.UserID+
-      ' and INI_TYPE=1';
-    ShadowQuery.ExecSQL;
-    ShadowQuery.SaveDB;
-    FreeAndNil(ShadowQuery);
+    DeleteAllFormPos;
+  end;
+end;
+
+procedure TDCLForm.ResetFieldsSettings(Sender: TObject);
+begin
+  If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msResetFieldsSettingsQ)))=1 Then
+  begin
+    FieldsSettingsReseted:=True;
+    DeleteFormPos(False);
   end;
 end;
 
 procedure TDCLForm.DeleteAllBookmarks(Sender: TObject);
 begin
-  If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msDelete)+' '+
-        GetDCLMessageString(msAll)+' '+GetDCLMessageString(msBookmarks)+'?'))=1 Then
+  If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msDeleteAllBookmarksQ)))=1 Then
     FGrids[CurrentGridIndex].DeleteAllBookmarks;
+end;
+
+procedure TDCLForm.DeleteAllFormPos;
+begin
+  DeleteFormPos(True);
 end;
 
 procedure TDCLForm.SaveFieldsSettings(Sender: TObject);
@@ -3561,19 +3567,22 @@ begin
   FForm.OnCloseQuery:=OnCloseQuery;
   FForm.Tag:=aFormNum;
   FForm.Icon.Assign(GetIcon);
+{$IFDEF SYSTEMFONT}{$IFDEF MSWINDOWS}
+  FForm.ParentFont:=True;
+  FForm.Font:=GUIFont;
+{$ENDIF}{$ENDIF}
 
   FFormMenu:=TMainMenu.Create(FForm);
   // FFormMenu.Parent:=FForm;
 
   AddMainItem(SourceToInterface(InitCap(GetDCLMessageString(msSettings))), 'SettingsMenuItem',
     'Tools', nil);
-  AddSubItem(SourceToInterface(GetDCLMessageString(msReset)+' '+GetDCLMessageString(msSettings)+' '+
-        GetDCLMessageString(msFields)), 'ResetFieldsSettings', '', 0, ResetFieldsSettings);
-  AddSubItem(SourceToInterface(GetDCLMessageString(msDelete)+' '+GetDCLMessageString(msAll)+' '+
-        GetDCLMessageString(msBookmarks)), 'DeleteAllBookmarks', '', 0, DeleteAllBookmarks);
-  AddSubItem('-', 'Splitter76113C76B414', '', 0, nil);
-  AddSubItem(SourceToInterface(GetDCLMessageString(msSave)+' '+GetDCLMessageString(msSettings)+' '+
-        GetDCLMessageString(msFields)), 'SaveFieldsSettings', '', 0, SaveFieldsSettings);
+  AddSubItem(SourceToInterface(GetDCLMessageString(msResetFieldsSettings)), 'ResetFieldsSettings', '', 0, ResetFieldsSettings);
+  AddSubItem(SourceToInterface(GetDCLMessageString(msResetAllFieldsSettings)), 'ResetAllFieldsSettings', '', 0, ResetAllFieldsSettings);
+  AddSubItem(SourceToInterface(GetDCLMessageString(msDeleteAllBookmarks)), 'DeleteAllBookmarks', '', 0, DeleteAllBookmarks);
+
+  AddSubItem('-', 'Splitter76113C76B41E4', '', 0, nil);
+  AddSubItem(SourceToInterface(GetDCLMessageString(msSaveFieldsSettings)), 'SaveFieldsSettings', '', 0, SaveFieldsSettings);
 
 {$IFNDEF EMBEDDED}
   If Application.MainForm.FormStyle=fsMDIForm Then
@@ -3716,8 +3725,7 @@ begin
         end;
         If UserLevel>UserLevelLocal Then
         begin
-          ShowErrorMessage(0, SourceToInterface(GetDCLMessageString(msNotAllow)+' '+
-                GetDCLMessageString(msOpenForm)));
+          ShowErrorMessage(0, SourceToInterface(GetDCLMessageString(msNotAllowOpenForm)));
           ExitCode:=1;
           Exit;
         end;
@@ -4951,6 +4959,71 @@ begin
       DeleteStatus(i-1);
 end;
 
+procedure TDCLForm.DeleteFormPos(All:Boolean);
+begin
+  Case GPT.FormPosInDB of
+  isDisk:
+  DeleteFormPosINI(All);
+  isBase:
+  DeleteFormPosBase(All);
+  isDiskAndBase:
+  begin
+    DeleteFormPosINI(All);
+    DeleteFormPosBase(All);
+  end;
+  end;
+end;
+
+procedure TDCLForm.DeleteFormPosBase;
+var
+  INIStore: TBinStore;
+begin
+  INIStore:=TBinStore.Create(FDCLLogOn, ftSQL, INITable, IniKeyField, IniDialogNameField,
+    IniParamValField);
+  INIStore.DeleteData('delete from '+INITable+' where '+GPT.UpperString+IniDialogNameField+
+      GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+
+      GPT.UpperStringEnd+' and '+IniUserFieldName+'='+GPT.UserID+' and INI_TYPE=2');
+
+  FreeAndNil(INIStore);
+end;
+
+procedure TDCLForm.DeleteFormPosINI;
+var
+  FileParams: TStringList;
+  p1, p2, i, j: Integer;
+begin
+  p1:= - 1;
+  p2:= - 1;
+  FileParams:=TStringList.Create;
+  If DialogName<>'' Then
+    If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini') Then
+    begin
+      FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini');
+      For i:=1 to FileParams.Count do
+      begin
+        If PosEx('['+DialogName+']', FileParams[i-1])=1 Then
+        begin
+          p1:=i-1;
+          For j:=p1 to FileParams.Count-1 do
+          begin
+            If PosEx('[END '+DialogName+']', FileParams[j])=1 Then
+            begin
+              p2:=j;
+              break;
+            end;
+          end;
+        end;
+      end;
+    end;
+
+  If (p1<p2)and(p1> - 1) Then
+  begin
+    For i:=p1 to p2-p1 do
+      FileParams.Delete(p1);
+  end;
+  FileParams.SaveToFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini');
+end;
+
 procedure TDCLForm.DeleteStatus(StatusNum: Integer);
 begin
   If StatusNum<0 Then
@@ -5708,7 +5781,7 @@ begin
   begin
     If Assigned(FDCLForm.CurrentPartQuery) then
     If GetRaightsByContext(InContext)>ulReadOnly Then
-      If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msDeleteRecord)+'?'))=1 Then
+      If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msDeleteRecordQ)))=1 Then
         FDCLForm.CurrentPartQuery.Delete;
     Executed:=True;
   end;
@@ -6255,8 +6328,7 @@ begin
               end;
             End
             Else
-              ShowErrorMessage(0, SourceToInterface(GetDCLMessageString(msNotAllow)+' '+
-                    GetDCLMessageString(msExecuteApps)));
+              ShowErrorMessage(0, SourceToInterface(GetDCLMessageString(msNotAllowExecuteApps)));
           end;
 
           If PosEx('Sleep=', ScrStr)=1 Then
@@ -6962,8 +7034,7 @@ begin
             If GetRaightsByContext(InContext)>ulReadOnly Then
               If Assigned(FDCLForm) Then
               If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
-                If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msDeleteRecord)+
-                      '?'))=1 Then
+                If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msDeleteRecordQ)))=1 Then
                   FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Delete;
           end;
 
@@ -7076,43 +7147,51 @@ begin
 
           If PosEx('PostRefresh;', ScrStr)=1 Then
           begin
-            FDCLForm.CurrentQuery.Post;
-            FDCLForm.Tables[ - 1].ReFreshQuery;
+            If Assigned(FDCLForm) then
+            Begin
+              FDCLForm.CurrentQuery.Post;
+              FDCLForm.Tables[ - 1].ReFreshQuery;
+            End;
           end;
 
           If PosEx('Cancel;', ScrStr)=1 Then
           begin
-            If FDCLForm.CurrentQuery.State in dsEditModes Then
-              FDCLForm.CurrentQuery.Cancel;
+            If Assigned(FDCLForm) then
+              If FDCLForm.CurrentQuery.State in dsEditModes Then
+                FDCLForm.CurrentQuery.Cancel;
           end;
 
           If PosEx('Delete;', ScrStr)=1 Then
           begin
-            If GetRaightsByContext(InContext)>ulReadOnly Then
-              FDCLForm.CurrentQuery.Delete;
+            If Assigned(FDCLForm) then
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+                FDCLForm.CurrentQuery.Delete;
           end;
 
           If PosEx('DeleteConf;', ScrStr)=1 Then
           begin
-            If GetRaightsByContext(InContext)>ulReadOnly Then
-              If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msDeleteRecord)+
-                    '?'))=1 Then
-                FDCLForm.CurrentQuery.Delete;
+            If Assigned(FDCLForm) then
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+                If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msDeleteRecordQ)))=1 Then
+                  FDCLForm.CurrentQuery.Delete;
           end;
 
           If PosEx('Insert;', ScrStr)=1 Then
           begin
-            FDCLForm.CurrentQuery.Insert;
+            If Assigned(FDCLForm) then
+              FDCLForm.CurrentQuery.Insert;
           end;
 
           If PosEx('Append;', ScrStr)=1 Then
           begin
-            FDCLForm.CurrentQuery.Append;
+            If Assigned(FDCLForm) then
+              FDCLForm.CurrentQuery.Append;
           end;
 
           If PosEx('Refresh;', ScrStr)=1 Then
           begin
-            FDCLForm.Tables[ - 1].ReFreshQuery;
+            If Assigned(FDCLForm) then
+              FDCLForm.Tables[ - 1].ReFreshQuery;
           end;
 
           If PosEx('EvalFormula=', ScrStr)=1 Then
@@ -7138,24 +7217,25 @@ begin
                 FindParam('ModifyField=', ScrStr));
             end;
 
-            If FindParam('Child=', ScrStr)='1' Then
-              FDCLForm:=FDCLLogOn.CreateForm(TmpStr, FDCLForm, nil, FDCLForm.CurrentQuery, nil,
-                ModalOpen, ChooseMode, ReturnValueParams)
-            Else
-            begin
-              tmpStr2:=Trim(FindParam('TablePart=', ScrStr));
-              If tmpStr2<>'' Then
-              begin
-                v1:=StrToIntEx(tmpStr2)-1;
-                If Assigned(FDCLForm.Tables[ - 1].TableParts[v1]) Then
-                  FDCLForm:=FDCLLogOn.CreateForm(TmpStr, nil, FDCLForm,
-                    FDCLForm.Tables[ - 1].TableParts[v1].Query, nil, ModalOpen, ChooseMode,
-                    ReturnValueParams);
-              end
+            If Assigned(FDCLForm) then
+              If FindParam('Child=', ScrStr)='1' Then
+                FDCLForm:=FDCLLogOn.CreateForm(TmpStr, FDCLForm, nil, FDCLForm.CurrentQuery, nil,
+                  ModalOpen, ChooseMode, ReturnValueParams)
               Else
-                FDCLForm:=FDCLLogOn.CreateForm(TmpStr, nil, FDCLForm, nil, nil, ModalOpen, ChooseMode,
-                  ReturnValueParams);
-            end;
+              begin
+                tmpStr2:=Trim(FindParam('TablePart=', ScrStr));
+                If tmpStr2<>'' Then
+                begin
+                  v1:=StrToIntEx(tmpStr2)-1;
+                  If Assigned(FDCLForm.Tables[ - 1].TableParts[v1]) Then
+                    FDCLForm:=FDCLLogOn.CreateForm(TmpStr, nil, FDCLForm,
+                      FDCLForm.Tables[ - 1].TableParts[v1].Query, nil, ModalOpen, ChooseMode,
+                      ReturnValueParams);
+                end
+                Else
+                  FDCLForm:=FDCLLogOn.CreateForm(TmpStr, nil, FDCLForm, nil, nil, ModalOpen, ChooseMode,
+                    ReturnValueParams);
+              end;
 
             If Assigned(FDCLForm) Then
               If FDCLForm.ReturnFormValue.Choosen Then
@@ -7211,14 +7291,16 @@ begin
           If PosEx('Hold;', ScrStr)=1 Then
           begin
 {$IFNDEF DCLDEBUG}
-            FDCLForm.Form.FormStyle:=fsStayOnTop;
+            If Assigned(FDCLForm) then
+              FDCLForm.Form.FormStyle:=fsStayOnTop;
 {$ENDIF}
           end;
 
           If PosEx('HoldDown;', ScrStr)=1 Then
           begin
-            If Not FDCLForm.Modal Then
-              FDCLForm.Form.FormStyle:=fsNormal;
+            If Assigned(FDCLForm) then
+              If Not FDCLForm.Modal Then
+                FDCLForm.Form.FormStyle:=fsNormal;
           end;
 
           If PosEx('Declare=', ScrStr)=1 Then
@@ -7315,7 +7397,8 @@ begin
             v2:= - 1;
             If FindParam('Width=', ScrStr)<>'' Then
               v2:=StrToIntEx(Trim(FindParam('Width=', ScrStr)));
-            FDCLForm.SetStatus(TmpStr, v1-1, v2);
+            If Assigned(FDCLForm) then
+              FDCLForm.SetStatus(TmpStr, v1-1, v2);
           end;
 
           If PosEx('StatusWidth=', ScrStr)=1 Then
@@ -7334,7 +7417,8 @@ begin
             v2:= - 1;
             If FindParam('Width=', ScrStr)<>'' Then
               v2:=StrToIntEx(Trim(FindParam('Width=', ScrStr)));
-            FDCLForm.SetStatusWidth(v1-1, v2);
+            If Assigned(FDCLForm) then
+              FDCLForm.SetStatusWidth(v1-1, v2);
           end;
 
           If PosEx('DeleteStatus=', ScrStr)=1 Then
@@ -7350,7 +7434,8 @@ begin
             Else
               v1:=0;
 
-            FDCLForm.DeleteStatus(v1);
+            If Assigned(FDCLForm) then
+              FDCLForm.DeleteStatus(v1);
           end;
 
           If PosEx('DeleteAllStatus;', ScrStr)=1 Then
@@ -7580,11 +7665,13 @@ begin
 
           If PosEx('ReadOnly=', ScrStr)=1 Then
           begin
-            FDCLForm.Tables[ - 1].ReadOnly:=Trim(FindParam('ReadOnly=', ScrStr))='1';
+            If Assigned(FDCLForm) then
+              FDCLForm.Tables[ - 1].ReadOnly:=Trim(FindParam('ReadOnly=', ScrStr))='1';
           end;
 
           If LowerCase(ScrStr)='print' Then
-            FDCLForm.Tables[FDCLForm.CurrentGridIndex].Print(nil);
+            If Assigned(FDCLForm) then
+              FDCLForm.Tables[FDCLForm.CurrentGridIndex].Print(nil);
 
         end
         Else
@@ -8349,8 +8436,7 @@ begin
   begin
     DebugProc('  DBPath: '+GPT.DBPath);
     DebugProc('UNC paths not supported.');
-    ShowErrorMessage(0, SourceToInterface('UNC '+GetDCLMessageString(msPaths)+' '+
-          GetDCLMessageString(msNotSupportedS)+'.'));
+    ShowErrorMessage(0, SourceToInterface('UNC '+GetDCLMessageString(msPathsNotSupported)+'.'));
     Result:=255;
     Exit;
   end;
@@ -8464,8 +8550,7 @@ begin
       begin
         DebugProc('  DBPath: '+GPT.DBPath);
         DebugProc('UNC paths not supported.');
-        ShowErrorMessage(0, SourceToInterface('UNC '+GetDCLMessageString(msPaths)+' '+
-              GetDCLMessageString(msNotSupportedS)+'.'));
+        ShowErrorMessage(0, SourceToInterface('UNC '+GetDCLMessageString(msPathsNotSupported)+'.'));
         Result:=255;
         Exit;
       end;
@@ -8493,7 +8578,7 @@ begin
       If GPT.ServerCodePage='' Then
         FDBLogOn.Params.Append('lc_ctype=WIN1251')
       Else
-        FDBLogOn.Params.Append('lc_ctype='+GPT.ServerCodePage);
+        FDBLogOn.Params.Append('lc_ctype='+UpperCase(GPT.ServerCodePage));
 
       FDBLogOn.SQLDialect:=GPT.SQLDialect;
       try
@@ -8546,8 +8631,7 @@ begin
     begin
       DebugProc('  DBPath: '+GPT.DBPath);
       DebugProc('UNC paths not supported.');
-      ShowErrorMessage(0, SourceToInterface('UNC '+GetDCLMessageString(msPaths)+' '+
-            GetDCLMessageString(msNotSupportedS)+'.'));
+      ShowErrorMessage(0, SourceToInterface('UNC '+GetDCLMessageString(msmsPathsNotSupportedPaths)+'.'));
       Result:=255;
       Exit;
     end;
@@ -8607,7 +8691,7 @@ begin
       GPT.ServerCodePage:='cp1251';
     end
     Else
-      FDBLogOn.Properties.Append('lc_ctype='+GPT.ServerCodePage);
+      FDBLogOn.Properties.Append('lc_ctype='+UpperCase(GPT.ServerCodePage));
 
     try
       DebugProc('Connected...');
@@ -9075,13 +9159,13 @@ begin
         GPT.GPTNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+'BaseUID'+
         GPT.StringTypeChar+GPT.UpperStringEnd;
     ParamsQuery.Open;
-    If ParamsQuery.FieldByName(GPT.GPTNameField).AsString='' then
+    If ParamsQuery.FieldByName(GPT.GPTValueField).AsString='' then
     Begin
       WriteBaseUID;
       Result:=GetBaseUID;
     End
     Else
-      Result:=ParamsQuery.FieldByName(GPT.GPTNameField).AsString;
+      Result:=ParamsQuery.FieldByName(GPT.GPTValueField).AsString;
     ParamsQuery.Close;
     FreeAndNil(ParamsQuery);
   End;
@@ -10202,7 +10286,7 @@ begin
         begin
           If ExitFlag=0 Then
           begin
-            MessageToUser(AnsiToUTF8('Выход из системы через '+IntToStr(ExitTime)+' секунд.'));
+            MessageToUser(SystemToInterface(Format(GetDCLMessageString(msTimeToExit), [ExitTime])));
             ExitFlag:=1;
             TimeToExit:=UpTime+(ExitTime*1000);
           end;
@@ -10229,13 +10313,12 @@ end;
 
 procedure TDCLLogOn.WriteBaseUID;
 var
-  ParamsQuery: TReportQuery;
+  ParamsQuery: TDCLQuery;
 begin
   if not GPT.NoParamsTable then
   Begin
-    ParamsQuery:=TDCLDialogQuery.Create(nil);
+    ParamsQuery:=TDCLQuery.Create(Self.FDBLogOn);
     ParamsQuery.Name:='UID_'+IntToStr(UpTime);
-    SetDBName(ParamsQuery);
       ParamsQuery.SQL.Text:='select count(*) from '+GPT.GPTTableName+' where '+GPT.UpperString+
         GPT.GPTNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+'BaseUID'+
         GPT.StringTypeChar+GPT.UpperStringEnd;
@@ -10247,10 +10330,29 @@ begin
         GPT.GPTValueField+') values('+GPT.StringTypeChar+'BaseUID'+GPT.StringTypeChar+', '+
         GPT.StringTypeChar+MD5.MD5DigestToStr(MD5.MD5String(IntToStr(UpTime)))+GPT.StringTypeChar+')';
       ParamsQuery.ExecSQL;
-      ParamsQuery.Transaction.Commit;
+      ParamsQuery.SaveDB;
     end;
+    ParamsQuery.Close;
     FreeAndNil(ParamsQuery);
   End;
+end;
+
+procedure TDCLLogOn.WriteBaseUIDtoINI(FileName, SectionName: string);
+var
+  S:String;
+  Ini:TIniFile;
+begin
+  If SectionName<>'' then
+  If Not GPT.NoParamsTable Then
+  If FileExists(FileName) then
+  begin
+    S:=GetBaseUID;
+    Ini:=TIniFile.Create(FileName);
+
+    If Ini.SectionExists(SectionName) then
+      Ini.WriteString(SectionName, 'BaseUID', S);
+    Ini.Free;
+  end;
 end;
 
 procedure TDCLLogOn.WriteConfig(ConfigName, NewValue, UserID: String);
@@ -10657,7 +10759,7 @@ begin
       MenuQuery.Open;
       tmpSQL:=TrimRight(MenuQuery.FieldByName(GPT.DCLNameField).AsString);
       FDCLLogOn.RePlaseVariables(tmpSQL);
-      tmpSQL:=tmpSQL+AnsiToUTF8(GPT.MainFormCaption);
+      tmpSQL:=tmpSQL+SystemToInterface(GPT.MainFormCaption);
       FForm.Caption:=tmpSQL;
 
       If NewMainForm Then
@@ -12694,8 +12796,7 @@ begin
         KeyMarks.KeyBookMarks[v3].Title:=FindParam('Title=', FileLine)
       Else
       begin
-        ShowErrorMessage(0, SourceToInterface(GetDCLMessageString(msOldFormat)+
-              GetDCLMessageString(msOldBookmarkFormat)));
+        ShowErrorMessage(0, SourceToInterface(GetDCLMessageString(msOldBookmarkFormat)));
         Exit;
       end;
     end;
@@ -13503,8 +13604,7 @@ begin
         If FQuery.Active Then
           If FQuery.State in dsEditModes Then
             If ShowErrorMessage(Ord(mbtConfirmation),
-              SourceToInterface(GetDCLMessageString(msSave)+' '+GetDCLMessageString(msEditings)+
-                  '?'))=1 Then
+              SourceToInterface(GetDCLMessageString(msSaveEditingsQ)))=1 Then
             begin
               try
                 FQuery.Post;
@@ -15063,14 +15163,12 @@ begin
   If (Not GPT.ExitCnf)and(Not DownLoadProcess) Then
     CanClose:=True;
   If (GPT.ExitCnf)and(Not DownLoadProcess) Then
-    If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msDoYouWontTerminate)+' '+
-          GetDCLMessageString(msApplication)+'?'))=1 Then
+    If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msDoYouWontTerminateApplicationQ)))=1 Then
       CanClose:=True;
 
   If DownLoadProcess Then
-    If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msDownloadInProgress)+'.'+
-          GetDCLMessageString(msDoYouWontTerminate)+' '+GetDCLMessageString(msApplication)+
-          '?'))=1 Then
+    If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msDownloadInProgress)+'. '+
+          GetDCLMessageString(msDoYouWontTerminateApplicationQ)))=1 Then
       CanClose:=True;
 end;
 
@@ -16877,7 +16975,7 @@ begin
 {$IFDEF FPC}
   DefaultSystemEncoding:=GetDefaultTextEncoding;
 {$ELSE}
-  DefaultSystemEncoding:=DefaultSourceEncoding;
+  DefaultSystemEncoding:='cp'+IntToStr(GetACP);
 {$ENDIF}
   Params:=TStringList.Create;
   If ParamStr(1)<>'' Then
@@ -17051,8 +17149,7 @@ begin
   End
   Else
   begin
-    ShowErrorMessage(1, SourceToInterface(GetDCLMessageString(msConfigurationFile)+' '+
-          GetDCLMessageString(msNotFoundM)+'. 0010'));
+    ShowErrorMessage(1, SourceToInterface(GetDCLMessageString(msConfigurationFileNotFound)+' . 0010'));
     DebugProc('Bye, Configuration file not fund.');
     ConnectErrorCode:=100;
   end;
@@ -17071,7 +17168,7 @@ end;
 
 procedure TFieldGroup.Clear(Sender: TObject);
 begin
-  If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msClearContent)+'?'))=1 Then
+  If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msClearContentQ)))=1 Then
   begin
     FData.Edit;
     FData.DataSet.FieldByName(FieldName).Clear;
