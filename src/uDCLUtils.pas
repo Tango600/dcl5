@@ -53,10 +53,6 @@ Function ExecAndWait(Const FileName: ShortString; Const WinState: Word; Wait:Boo
 Procedure Exec(Const FileName, Directory: String);
 Procedure ExecApp(const App: String);
 Procedure OpenDir(Dir: string);
-function GetComputerName: string;
-Function GetUserFromSystem: String;
-Function GetLocalIP: String;
-function GetMacAddress: string;
 Procedure InitGetAppConfigDir;
 function GetUserDocumentsDir: String;
 Function IsUNCPath(Path: String): Boolean;
@@ -305,105 +301,7 @@ Begin
   Result:=FilePath+NewFileName;
 End;
 
-Function GetComputerName: String;
 {$IFDEF MSWINDOWS}
-Var
-  buffer: Array [0..MAX_COMPUTERNAME_LENGTH+1] Of Char;
-  Size: Cardinal;
-{$ENDIF}
-Begin
-{$IFDEF MSWINDOWS}
-  Size:=MAX_COMPUTERNAME_LENGTH+1;
-  Windows.GetComputerName(@buffer, Size);
-  Result:=StrPas(buffer);
-{$ELSE}
-  Result:=unix.GetHostName;
-{$ENDIF}
-End;
-
-Function GetUserFromSystem: String;
-Var
-  UserName: String;
-  UserNameLen: Dword;
-Begin
-{$IFDEF MSWINDOWS}
-  UserNameLen:=255;
-  SetLength(UserName, UserNameLen);
-  If Windows.GetUserName(PChar(UserName), UserNameLen) Then
-    Result:=Copy(UserName, 1, UserNameLen-1)
-  Else
-    Result:='<Unk.>';
-{$ENDIF}
-{$IFDEF UNIX}
-  UserName:=GetEnvironmentVariable('HOME');
-  Result:=Copy(UserName, 7, Length(UserName));
-{$ENDIF}
-End;
-
-{$IFDEF MSWINDOWS}
-
-Function GetLocalIP: String;
-Const
-  WSVer=$101;
-Var
-  wsaData: TWSAData;
-  P: PHostEnt;
-  Buf: Array [0..127] Of Char;
-Begin
-  Result:='127.0.0.1';
-  If WSAStartup(WSVer, wsaData)=0 Then
-  Begin
-    If GetHostName(@Buf, 128)=0 Then
-    Begin
-      P:=GetHostByName(@Buf);
-      If P<>Nil Then
-        Result:=iNet_ntoa(PInAddr(P^.h_addr_list^)^);
-    End;
-    WSACleanup;
-  End;
-End;
-
-{$ELSE}
-
-Function GetLocalIP: String;
-Var
-  listDevInfo, listDev, ipList: TStringList;
-  i: Integer;
-  sfp: LongInt;
-  req: TIfreq;
-Begin
-  Result:='127.0.0.1';
-  listDevInfo:=TStringList.Create;
-  listDev:=TStringList.Create;
-  Try
-    listDevInfo.LoadFromFile('/proc/net/dev');
-    For i:=2 To listDevInfo.Count-1 Do
-      If Trim(LeftStr(listDevInfo[i], Pos(':', listDevInfo[i])-1))<>'lo' Then
-        listDev.Append(Trim(LeftStr(listDevInfo[i], Pos(':', listDevInfo[i])-1)));
-
-    sfp:=socket(AF_INET, SOCK_DGRAM, 0);
-
-    If sfp>-1 Then
-    Begin
-      ipList:=TStringList.Create;
-      req.ifr_ifrn.ifrn_name:=PChar(listDev[0]);
-      If ioctl(sfp, SIOCGIFADDR, @req)>-1 Then
-        ipList.Append(iNet_ntoa(req.ifr_ifru.ifru_addr.sin_addr));
-      If ipList.Count>0 Then
-        Result:=ipList[0]
-      Else
-        Result:='127.0.0.1';
-    End
-    Else
-      Result:='127.0.0.1';
-  Finally
-    FreeAndNil(listDevInfo);
-    FreeAndNil(listDev);
-  End;
-End;
-{$ENDIF}
-{$IFDEF MSWINDOWS}
-
 Function KeyState(Key: Integer): Boolean;
 Begin
 {$R-}
@@ -505,58 +403,6 @@ Procedure OpenDir(Dir: string);
 Begin
   ExecApp('EXPLORER.exe /e, '+PChar(Dir));
 End;
-
-function GetAdapterInfo(Lana: Char): string;
-var
-  Adapter: TAdapterStatus;
-  NCB: TNCB;
-begin
-  FillChar(NCB, SizeOf(NCB), 0);
-  NCB.ncb_command:= {$IFDEF FPC} NCBRESET {$ELSE} Char(NCBRESET) {$ENDIF};
-  NCB.ncb_lana_num:= {$IFDEF FPC} Ord(Lana) {$ELSE} AnsiChar(Lana) {$ENDIF};
-  if Netbios(@NCB)<> {$IFDEF FPC} NRC_GOODRET {$ELSE} Char(NRC_GOODRET) {$ENDIF} then
-  begin
-    Result:='00-00-00-00-00-00';
-    Exit;
-  end;
-
-  FillChar(NCB, SizeOf(NCB), 0);
-  NCB.ncb_command:= {$IFDEF FPC} NCBASTAT {$ELSE} Char(NCBASTAT) {$ENDIF};
-  NCB.ncb_lana_num:= {$IFDEF FPC} Ord(Lana) {$ELSE} AnsiChar(Lana) {$ENDIF};
-{$IFDEF FPC}
-  NCB.ncb_callname[0]:=Ord('*');
-{$ELSE}
-  NCB.ncb_callname[0]:='*';
-{$ENDIF}
-  FillChar(Adapter, SizeOf(Adapter), 0);
-  NCB.ncb_buffer:=@Adapter;
-  NCB.ncb_length:=SizeOf(Adapter);
-  if Netbios(@NCB)<> {$IFDEF FPC} NRC_GOODRET {$ELSE} Char(NRC_GOODRET) {$ENDIF} then
-  begin
-    Result:='00-00-00-00-00-00';
-    Exit;
-  end;
-  Result:=IntToHex(byte(Adapter.adapter_address[0]), 2)+'-'+
-    IntToHex(byte(Adapter.adapter_address[1]), 2)+'-'+IntToHex(byte(Adapter.adapter_address[2]), 2)+
-    '-'+IntToHex(byte(Adapter.adapter_address[3]), 2)+'-'+IntToHex(byte(Adapter.adapter_address[4]),
-    2)+'-'+IntToHex(byte(Adapter.adapter_address[5]), 2);
-end;
-
-function GetMacAddress: string;
-var
-  AdapterList: TLanaEnum;
-  NCB: TNCB;
-begin
-  FillChar(NCB, SizeOf(NCB), 0);
-  NCB.ncb_command:= {$IFDEF FPC} NCBENUM {$ELSE} Char(NCBENUM) {$ENDIF};
-  NCB.ncb_buffer:=@AdapterList;
-  NCB.ncb_length:=SizeOf(AdapterList);
-  Netbios(@NCB);
-  if byte(AdapterList.Length)>0 then
-    Result:=GetAdapterInfo(Char(AdapterList.Lana[0]))
-  else
-    Result:='00-00-00-00-00-00';
-end;
 
 function GetSpecialPath(CSIDL: Word): string;
 var

@@ -54,7 +54,7 @@ Uses
   JPEG,
 {$ENDIF}
 {$IFDEF MSWINDOWS}uOfficeDocs, {$ENDIF} uDCLDownloader,
-  uDCLMessageForm, uDCLSQLMonitor, uDCLQuery, uLogging, MD5,
+  uDCLMessageForm, uDCLSQLMonitor, uDCLQuery, uLogging, MD5, uDCLNetUtils,
   uStringParams, uDCLData, uDCLConst, uDCLTypes;
 
 Type
@@ -9585,6 +9585,7 @@ end;
 procedure TDCLLogOn.LoggingUser(Login: Boolean);
 var
   LoggingQuery: TDCLDialogQuery;
+  AddSQLStr1, AddSQLStr2:string;
 begin
 //{$IFNDEF EMBEDDED}
   If FDBLogOn.Connected then
@@ -9595,10 +9596,13 @@ begin
 
     If Login Then
     begin
+      AddSQLStr1:='';
+      AddSQLStr2:='';
       DCLSession.LoginTime:=TimeStampToStr(Now);
       DCLSession.ComputerName:=GetComputerName;
       DCLSession.IPAdress:=GetLocalIP;
       DCLSession.UserSystemName:=GetUserFromSystem;
+      DCLSession.MAC:=GetMacAddress;
     end;
 
     If GPT.UserLogging Then
@@ -9607,10 +9611,16 @@ begin
       begin
         If Login Then
         begin
+          If FieldExists(AU_MAC, nil, GPT.ACTIVE_USERS_TABLE) then
+          begin
+            AddSQLStr1:=', '+AU_MAC;
+            AddSQLStr2:=', '+Quote+DCLSession.MAC+Quote;
+          end;
+
           LoggingQuery.SQL.Text:='insert into '+GPT.ACTIVE_USERS_TABLE+
-            '(ACTIVE_USER_ID, ACTIVE_USER_HOST, ACTIVE_USER_IP, ACTIVE_USER_DCL_VER, ACTIVE_USER_LOGIN_TIME) '
+            '(ACTIVE_USER_ID, ACTIVE_USER_HOST, ACTIVE_USER_IP, ACTIVE_USER_DCL_VER, ACTIVE_USER_LOGIN_TIME'+AddSQLStr1+') '
             +'values('+GPT.UserID+', '''+DCLSession.ComputerName+'/'+DCLSession.UserSystemName+
-            ''', '''+DCLSession.IPAdress+''', '''+Version+''', '''+DCLSession.LoginTime+''' )';
+            ''', '''+DCLSession.IPAdress+''', '''+Version+''', '''+DCLSession.LoginTime+''' '+AddSQLStr2+')';
         end
         Else
           LoggingQuery.SQL.Text:='delete from '+GPT.ACTIVE_USERS_TABLE+' where ACTIVE_USER_ID='+
@@ -9631,12 +9641,19 @@ begin
       If DCLSession.LoginTime<>'' Then
       begin
         If Login Then
-        begin
+        Begin
+          If FieldExists(UL_MAC, nil, GPT.USER_LOGIN_HISTORY_TABLE) then
+          begin
+            AddSQLStr1:=', '+UL_MAC;
+            AddSQLStr2:=', '+Quote+DCLSession.MAC+Quote;
+          end;
+
           LoggingQuery.SQL.Text:='insert into '+GPT.USER_LOGIN_HISTORY_TABLE+
-            '(UL_USER_ID, UL_LOGIN_TIME, UL_HOST_IP, UL_HOST_NAME, UL_DCL_VER) '+'values('+GPT.UserID+
+            '(UL_USER_ID, UL_LOGIN_TIME, UL_HOST_IP, UL_HOST_NAME, UL_DCL_VER'+AddSQLStr1+') '+
+            'values('+GPT.UserID+
             ', '''+DCLSession.LoginTime+''', '''+DCLSession.IPAdress+''', '''+DCLSession.ComputerName+
-            '/'+DCLSession.UserSystemName+''', '''+Version+''')';
-        end
+            '/'+DCLSession.UserSystemName+''', '''+Version+''''+AddSQLStr2+')';
+        End
         Else
           LoggingQuery.SQL.Text:='update '+GPT.USER_LOGIN_HISTORY_TABLE+' set UL_LOGOFF_TIME='''+
             TimeStampToStr(Now)+''' where '+'UL_USER_ID='+GPT.UserID+' and UL_LOGIN_TIME='''+

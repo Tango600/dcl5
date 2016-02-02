@@ -42,6 +42,7 @@ uses
   uStringParams in 'uStringParams.pas',
   uDCLData in 'uDCLData.pas',
   uDCLConst in 'uDCLConst.pas',
+  uDCLNetUtils in 'uDCLNetUtils.pas',
   uDCLUtils in 'uDCLUtils.pas',
   uDCLTypes in 'uDCLTypes.pas',
   SumProps in 'SumProps.pas',
@@ -62,7 +63,7 @@ uses
   FileBuffer in 'FileBuffer.pas',
   uDCLQuery in 'uDCLQuery.pas';
 
-//{$R *.res}
+{$R DCLReports.res}
 
 var
   MainForm: TMainForm;

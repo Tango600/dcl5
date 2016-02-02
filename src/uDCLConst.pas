@@ -38,7 +38,7 @@ DefaultLibraryLocation='fbclient.so';
 {$IFDEF SQLdb}
   DBEngineType='SQLdb (Universal)';
 {$ENDIF}
-  Ver='10.1.40.322';
+  Ver='10.1.40.324';
   VersionS='$VersionSignature$'+Ver+'$';
 
   CompotableVersion='9.1.129.307';
@@ -184,6 +184,9 @@ DefaultLibraryLocation='fbclient.so';
   RolesToUsersUserIDField='ru_userid';
   RolesToUsersRoleIDField='ru_roleid';
 
+  AU_MAC='ACTIVE_USER_MAC';
+  UL_MAC='UL_MAC';
+
   ScriptControlLanguage='VBScript';
 
   UserLevelsSet='ulDeny,ulReadOnly,ulWrite,ulExecute,ulLevel,ulDeveloper';
@@ -266,6 +269,7 @@ DefaultLibraryLocation='fbclient.so';
 
   FloatDelimiterFrom=',';
   FloatDelimiterTo='.';
+  Quote=#39;
 
   /// Math
   AllOperands='*^/+-';

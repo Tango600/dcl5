@@ -131,6 +131,7 @@ begin
   InDOSCodePage.Caption:=SourceToInterface(GetDCLMessageString(msCodePage)+' DOS');
   ButtonPrint.Caption:=SourceToInterface(GetDCLMessageString(msPrint));
 
+  ReportCP:=False;
   RaE:=False;
   If ParamCount>0 then
   Begin
