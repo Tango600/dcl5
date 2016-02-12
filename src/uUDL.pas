@@ -9367,6 +9367,7 @@ var
 
 procedure MainParse(Scr:TStringList);
 Begin
+  If Scr.Count>0 then
   If CompareString(Scr[0], '[FORM]') Then
   begin
     Scr.Delete(0);
@@ -9397,7 +9398,7 @@ Begin
       p:=i;
       For p1:=p to Scr.Count do
       Begin
-        If Scr[p1]='[END SCRIPT]' then
+        If (Scr[p1]='[END SCRIPT]') or (p1+1>=Scr.Count) then
         Begin
           For j:=p to p1 do
           begin

@@ -41,7 +41,7 @@ DefaultLibraryLocation='fbclient.so';
   Ver='10.1.40.324';
   VersionS='$VersionSignature$'+Ver+'$';
 
-  CompotableVersion='9.1.129.307';
+  CompotableVersion='9.1.129.309';
 
   JPEGCompressionQuality=85;
 
