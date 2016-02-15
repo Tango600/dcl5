@@ -10,7 +10,7 @@ uses
   ActiveX, ComObj,
 {$ENDIF}
 {$IFDEF UNIX}
-  cwstring, process, unix, libc, lclintf,
+  cwstring, process, unix, lclintf,
 {$ENDIF}
 {$IFDEF FPC}
   InterfaceBase, LCLType,
@@ -482,12 +482,12 @@ End;
 
 Procedure Exec(Const FileName, Directory: String);
 Begin
-  Shell(FileName);
+  ExecuteApp(FileName);
 End;
 
 Procedure OpenDir(Dir: string);
 Begin
-  Shell('xdg-open '+Dir);
+  ExecuteApp('xdg-open '+Dir);
 End;
 
 {$ENDIF}
@@ -2557,4 +2557,4 @@ begin
 end;
 
 
-end.
+end.

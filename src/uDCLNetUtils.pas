@@ -9,7 +9,7 @@ uses
   Windows, WinSock,
 {$ENDIF}
 {$IFDEF UNIX}
-  cwstring, process, unix, libc, lclintf,
+  cwstring, process, unix, sockets, linux, lclintf,
 {$ENDIF}
 {$IFDEF FPC}
   InterfaceBase, LCLType,
@@ -148,39 +148,34 @@ end;
 
 function GetLocalIP: string;
 var
-  listDevInfo, listDev, ipList: TStringList;
-  i: Integer;
-  sfp: Longint;
-  req: TIfreq;
+  aProcess: TProcess;
+  aStrings: TStringList;
+  aString, aBuffer: string;
+  i, p: Integer;
 Begin
-  Result:='127.0.0.1';
-  listDevInfo:=TStringList.Create;
-  listDev:=TStringList.Create;
-  Try
-    listDevInfo.LoadFromFile('/proc/net/dev');
-    For i:=2 To listDevInfo.Count-1 Do
-      If Trim(LeftStr(listDevInfo[i], Pos(':', listDevInfo[i])-1))<>'lo' Then
-        listDev.Append(Trim(LeftStr(listDevInfo[i], Pos(':', listDevInfo[i])-1)));
-
-    sfp:=socket(AF_INET, SOCK_DGRAM, 0);
-
-    If sfp> - 1 Then
+  Result:='00-00-00-00-00-00';
+  aProcess:=TProcess.Create(Nil);
+  aProcess.Commandline:='/sbin/ifconfig';
+  aProcess.Options:=[poUsePipes, poNoConsole];
+  aProcess.Execute;
+  SetLength(aBuffer, 3000);
+  repeat
+    i:=aProcess.Output.Read(aBuffer[1], Length(aBuffer));
+    aString:=aString+Copy(aBuffer, 1, i);
+  until i=0;
+  aProcess.Free;
+  aStrings:=TStringList.Create;
+  aStrings.Text:=aString;
+  For i:=0 To aStrings.Count-1 Do
+    If Not (Pos('inet addr:', aStrings[i])=0) Then
     Begin
-      ipList:=TStringList.Create;
-      req.ifr_ifrn.ifrn_name:=PChar(listDev[0]);
-      If ioctl(sfp, SIOCGIFADDR, @req)> - 1 Then
-        ipList.Append(iNet_ntoa(req.ifr_ifru.ifru_addr.sin_addr));
-      If ipList.Count>0 Then
-        Result:=ipList[0]
-      Else
-        Result:='127.0.0.1';
-    end
-    Else
-      Result:='127.0.0.1';
-  Finally
-    FreeAndNil(listDevInfo);
-    FreeAndNil(listDev);
-  end;
+      aString:=aStrings[i];
+      Delete(aString, 1, Pos('inet addr:', aString)+9);
+      p:=Pos(' ', aString);
+      Result:=Copy(aString, 1, p);
+      break;
+    end;
+  aStrings.Free;
 end;
 {$ENDIF}
 {$IFDEF MSWINDOWS}
@@ -269,9 +264,10 @@ Begin
       aString:=aStrings[i];
       Delete(aString, 1, Pos('HWaddr ', aString)+6);
       Result:=aString;
+      break;
     end;
   aStrings.Free;
 end;
 {$ENDIF}
 
-end.
+end.

@@ -13,7 +13,7 @@ Uses
   uNewFonts, Windows, ComObj,
 {$ENDIF}
 {$IFDEF UNIX}
-  cwstring, process, unix, libc, lclintf, BaseUnix,
+  cwstring, process, unix, lclintf, BaseUnix,
 {$ENDIF}
 {$IFNDEF FPC}
 {$IFDEF VCLFIX}
@@ -17986,4 +17986,4 @@ Initialization
 {$ENDIF}
 
 end.
-
+
