@@ -16,11 +16,12 @@ object Form1: TForm1
   Position = poScreenCenter
   LCLVersion = '1.4.4.0'
   object ListBox1: TListBox
-    Left = 0
-    Height = 269
-    Top = 0
-    Width = 318
-    Align = alClient
+    Left = 8
+    Height = 261
+    Top = 8
+    Width = 310
+    Align = alCustom
+    Anchors = [akTop, akLeft, akRight, akBottom]
     Font.Color = clWindowText
     Font.Height = -13
     Font.Name = 'MS Sans Serif'
