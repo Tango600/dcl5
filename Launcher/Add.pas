@@ -79,19 +79,17 @@ end;
 procedure TfAddBase.FormShow(Sender: TObject);
 begin
   Case EditMode of
-  teaAdding:
-    Begin
-      leNameBase.Clear;
-      lePathIni.Clear;
-      leParams.Clear;
-    End;
-    teaEditing:
-    Begin
-      Params:=GetSection(Path+'Bases.ini', BaseName);
-      leNameBase.Text:=Params.Title;
-      lePathIni.Text:=Params.IniPath;
-      leParams.Text:=Params.Params;
-    End;
+  teaAdding:Begin
+  leNameBase.Clear;
+  lePathIni.Clear;
+  leParams.Clear;
+  End;
+  teaEditing:Begin
+  Params:=GetSection(Path+'Bases.ini', BaseName);
+  leNameBase.Text:=Params.Title;
+  lePathIni.Text:=Params.IniPath;
+  leParams.Text:=Params.Params;
+  End;
   End;
   leNameBase.SetFocus;
 end;

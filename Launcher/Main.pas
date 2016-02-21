@@ -113,7 +113,7 @@ end;
 function TForm1.SetBaseUID(Index:Integer):String;
 begin
   If FileExists(DCLRunPath) and (Index<>-1) and (GetBaseUID(Path+'Bases.ini', BaseParams[Index].Title)='') then
-    Result:=' BasesINI="'+ToSystem(Path)+'Bases.ini" INISection="'+ToSystem(BaseParams[Index].Title)+'"';
+    Result:=' BasesINI="'+Path+'Bases.ini" INISection="'+BaseParams[Index].Title+'"';
 end;
 
 
@@ -131,18 +131,9 @@ Begin
   ReadIni(Path+'Bases.ini', BaseParams);
   RefreshBaseList;
 
-  IniLancher:=TIniFile.Create(Path+'Lancher.ini');
-  If FileExists(Path+'Lancher.ini') then
-  begin
-    DCLRunPath:=IniLancher.ReadString('Applications', 'DCLRun', '');
-    DCLDeveloperPath:=IniLancher.ReadString('Applications', 'DCLDeveloper', '');
-  end
-  else
-  begin
-    IniLancher.WriteString('Applications', 'DCLRun', 'DCLRun.exe');
-    IniLancher.WriteString('Applications', 'DCLDeveloper', 'Friday.exe');
-  end;
-
+  IniLancher:=TIniFile.Create('Lancher.ini');
+  DCLRunPath:=IniLancher.ReadString('Applications', 'DCLRun', '');
+  DCLDeveloperPath:=IniLancher.ReadString('Applications', 'DCLDeveloper', '');
   IniCodePage:=DefaultSystemEncoding;
 
   StatusBar1.Panels[0].Text:=GetBaseParam(0, BaseParams);

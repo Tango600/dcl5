@@ -334,7 +334,6 @@ end;
 constructor TDCLQuery.Create(DatabaseObj: TDBLogOn);
 begin
   inherited Create(nil);
-  //Name:='DCLQuery'+IntToStr(UpTime);
   FUpdateSQLDefined:=False;
 {$IFDEF ZEOS}
   FFieldsDefsDefined:=False;
@@ -914,13 +913,16 @@ begin
   SetUpdateSQL(FKeyField, FMainTable);
 //  FillDatasetUpdateSQL(FKeyField, FMainTable, True);
 
-  If FindNotAllowedOperation(dsoDelete) then
-    FUpdateSQL.DeleteSQL.Clear;
-  If FindNotAllowedOperation(dsoInsert) then
-    FUpdateSQL.InsertSQL.Clear;
-  If FindNotAllowedOperation(dsoEdit) then
-    FUpdateSQL.{$IFNDEF SQLdbFamily}ModifySQL{$ELSE}UpdateSQL{$ENDIF}.Clear;
-{$ENDIF}
+  If Assigned(FUpdateSQL) then
+  Begin
+    If FindNotAllowedOperation(dsoDelete) then
+      FUpdateSQL.DeleteSQL.Clear;
+    If FindNotAllowedOperation(dsoInsert) then
+      FUpdateSQL.InsertSQL.Clear;
+    If FindNotAllowedOperation(dsoEdit) then
+      FUpdateSQL.{$IFNDEF SQLdbFamily}ModifySQL{$ELSE}UpdateSQL{$ENDIF}.Clear;
+  {$ENDIF}
+  End;
 end;
 
 procedure TDCLQuery.SetRequiredFields;

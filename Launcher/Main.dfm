@@ -21,9 +21,13 @@ object Form1: TForm1
     Top = 0
     Width = 318
     Align = alClient
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'MS Sans Serif'
     ItemHeight = 0
     OnClick = ListBox1Click
     OnDblClick = ListBox1DblClick
+    ParentFont = False
     TabOrder = 0
   end
   object Panel1: TPanel
@@ -142,9 +146,8 @@ object Form1: TForm1
     Width = 455
     Panels = <    
       item
-        Width = 250
+        Width = 50
       end>
-    SimplePanel = False
   end
   object Panel3: TPanel
     Left = 0
