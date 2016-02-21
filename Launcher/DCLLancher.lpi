@@ -12,9 +12,7 @@
       <Title Value="DCLLancher"/>
       <ResourceType Value="res"/>
       <UseXPManifest Value="True"/>
-      <XPManifest>
-        <DpiAware Value="True"/>
-      </XPManifest>
+      <Icon Value="0"/>
     </General>
     <i18n>
       <EnableI18N LFM="False"/>
@@ -38,7 +36,7 @@
         <PackageName Value="LCL"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="5">
+    <Units Count="4">
       <Unit0>
         <Filename Value="DCLLancher.dpr"/>
         <IsPartOfProject Value="True"/>
@@ -58,15 +56,10 @@
         <ResourceBaseClass Value="Form"/>
       </Unit2>
       <Unit3>
-        <Filename Value="udata.pas"/>
-        <IsPartOfProject Value="True"/>
-        <UnitName Value="uData"/>
-      </Unit3>
-      <Unit4>
         <Filename Value="ubaseesstorage.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="uBaseesStorage"/>
-      </Unit4>
+      </Unit3>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
