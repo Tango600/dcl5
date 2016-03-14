@@ -410,9 +410,9 @@ begin
         begin
           PenRecall := TPenRecall.Create(Canvas.Pen);
           try
-            Canvas.Pen.Color := clWhite;
-            DrawArrow(Canvas, sdRight, Point(lCellRect.Left + 4, lCellRect.Top + 3), 5);
-            Canvas.Pen.Color := clBlack;
+            Canvas.Pen.Color := clGray; //  clWhite;
+            DrawArrow(Canvas, sdRight, Point(lCellRect.Left + 5, lCellRect.Top + 5), 5);
+            Canvas.Pen.Color := $00404040;
             DrawArrow(Canvas, sdRight, Point(lCellRect.Left + 3, lCellRect.Top + 3), 5);
           finally
             PenRecall.Free;
@@ -423,10 +423,11 @@ begin
           if Canvas.CanvasOrientation = coRightToLeft then
             Inc(ARect.Left);
           Indicators := TPrivateCustomDBGrid(Self).FIndicators; // get access to the private field
-          Indicators.Draw(Canvas,
-            ARect.Left + ((ARect.Right - ARect.Left) - Indicators.Width) div 2,
-            ARect.Top + ((ARect.Bottom - ARect.Top) - Indicators.Height) div 2,
-            Indicator, dsTransparent, itImage, True);
+          if Assigned(Indicators) then
+            Indicators.Draw(Canvas,
+              ARect.Left + ((ARect.Right - ARect.Left) - Indicators.Width) div 2,
+              ARect.Top + ((ARect.Bottom - ARect.Top) - Indicators.Height) div 2,
+              Indicator, dsTransparent, itImage, True);
         end;
       end;
     end;

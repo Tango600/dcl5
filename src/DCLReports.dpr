@@ -72,7 +72,6 @@ begin
   {$IFDEF FPC}
   RequireDerivedFormResource := True;
   {$ENDIF}
-  Application.Title := 'DCL Reports v.'+Version;
   Application.Initialize;
   Application.CreateForm(TMainForm, MainForm);
   Application.Run;

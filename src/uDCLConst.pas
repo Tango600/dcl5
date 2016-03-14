@@ -38,7 +38,7 @@ DefaultLibraryLocation='fbclient.so';
 {$IFDEF SQLdb}
   DBEngineType='SQLdb (Universal)';
 {$ENDIF}
-  Ver='10.1.40.328';
+  Ver='10.1.40.330';
   VersionS='$VersionSignature$'+Ver+'$';
 
   CompotableVersion='9.1.129.309';
@@ -249,7 +249,11 @@ DefaultLibraryLocation='fbclient.so';
   EncodingUTF8='utf8';
   UTF8BOM=#$EF#$BB#$BF;
   UTF16LEBOM=#$FF#$FE;
+  {$IFDEF NEWDELPHI}
+  DefaultInterfaceEncoding='utf8';
+  {$ELSE}
   DefaultInterfaceEncoding='cp1251';
+  {$ENDIF}
 {$ENDIF}
 {$IFDEF FPC}
   DefaultInterfaceEncoding=EncodingUTF8;
@@ -368,9 +372,6 @@ const
   ReliseStatues:Array[TReliseStatus] of String=('Alpha', 'Betta', 'Pre relase', 'Unstable', 'Stable');
   Signs:Array[TSigns] of String=('=', '<', '>', '<>', '<=', '>=');
   FastReportsScriptLanguages:array[TFastReportsScriptLanguage] of String=('PascalScript', 'BasicScript', 'C++Script', 'JScript');
-
-  DefaultLanguage='RUS';
-  DefaultLanguageID=1049;
 
   DefaultFRScriptLanguage=fslPascal;
 

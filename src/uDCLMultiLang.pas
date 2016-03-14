@@ -8,9 +8,12 @@ uses
 {$IFDEF MSWINDOWS}
   Windows, 
 {$ENDIF}
-  uDCLData, uDCLConst;
+  uDCLConst;
 
 type
+  TLangID=LongWord;
+  TLangName=String;
+
   TTranscodeDataType=(tdtUTF8, tdtDOS, tdtTranslit);
   TStringMessages=(msNone, msClose, msOpen, msEdit, msDelete, msModified, msInputVulues, msInBegin,
     msInEnd, msPrior, msNext, msCancel, msRefresh, msInsert, msPost, msEmptyUserName, msPage, msApplay,
@@ -38,7 +41,7 @@ type
     msLoading, msTimeToExit);
 
 
-procedure LoadLangRes(Lang:TLangID);
+procedure LoadLangRes(Lang:TLangID; Path:String);
 function GetDCLMessageString(MessID: TStringMessages): String;
 function GetDCLErrorString(ErrorCode: Integer; AddText: String=''):string;
 function LoadTranscodeFile(DataType:TTranscodeDataType; FileName:String; LangID:TLangID):Boolean;
@@ -53,6 +56,12 @@ procedure InitLangEnv;
 
 const
   DefaultLangDir='Lang';
+  DefaultLanguage='RUS';
+  DefaultLanguageID=1049;
+
+var
+  LangID:TLangID;//   //TISO639_3;
+  LangName:TLangName;
 
 implementation
 
@@ -392,7 +401,7 @@ var
 
 function GetDCLMessageStringDefault(MesID: TStringMessages): String;
 begin
-  Case GPT.LangID of
+  Case LangID of
   DefaultLanguageID:
     case MesID of
     msNone:
@@ -1134,7 +1143,7 @@ begin
   End;
 end;
 
-procedure LoadLangRes(Lang:TLangID);
+procedure LoadLangRes(Lang:TLangID; Path:String);
 var
   FileName:string;
 begin
@@ -1254,8 +1263,8 @@ end;
 
 procedure InitLangEnv;
 begin
-  GPT.LangID:=GetSystemLanguageID;
-  GPT.LangName:=GetSystemLanguage;
+  LangID:=GetSystemLanguageID;
+  LangName:=GetSystemLanguage;
 end;
 
 end.

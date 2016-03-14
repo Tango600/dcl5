@@ -19,7 +19,8 @@ uses
   JPEG,
 {$ENDIF}
   Dialogs,
-  uUDL, uLZW, uDCLTypes,
+  uUDL,
+  uLZW, uDCLTypes,
   Controls, Classes, Graphics, DateUtils,
   uDCLData, uDCLConst, uStringParams;
 
@@ -412,7 +413,7 @@ begin
   if not SHGetSpecialFolderPath(0, PChar(S), CSIDL, True) then
     S:='';
   S:=S+#0#0;
-  Result:=PChar(S);
+  Result:=String(PChar(S));
 end;
 
 {$ENDIF}
@@ -1727,7 +1728,7 @@ Begin
 
         If PosEx('Language=', Params[i])=1 Then
         Begin
-          GPT.LangID:=LangNameToID(Trim(FindParam('Language=', Params[i])));
+          LangID:=LangNameToID(Trim(FindParam('Language=', Params[i])));
         End;
 
         If PosEx('DateSeparator=', Params[i])=1 Then
@@ -2177,8 +2178,9 @@ Begin
       DCLQueryL.Name:='SaveFormPosOLD_'+IntToStr(UpTime);
       FDCLLogOn.SetDBName(DCLQueryL);
 
-      DCLQueryL.SQL.Text:='select count(*) from '+INITable+' where '+IniUserFieldName+'='+GPT.UserID+
-        ' and '+IniDialogNameField+'='+GPT.StringTypeChar+DialogName+GPT.StringTypeChar;
+      DCLQueryL.SQL.Text:='select count(*) from '+INITable+' where '+GetIniToRole(GPT.UserID)+
+        IniDialogNameField+'='+GPT.StringTypeChar+DialogName+GPT.StringTypeChar;
+
       DCLQueryL.Open;
       i:=DCLQueryL.Fields[0].AsInteger;
       DCLQueryL.Close;
@@ -2191,9 +2193,14 @@ Begin
       End
       Else
       Begin
-        DCLQueryL.SQL.Text:='insert into '+INITable+'('+IniUserFieldName+', '+IniDialogNameField+', '+
-          IniParamValField+') values('+GPT.UserID+', '+GPT.StringTypeChar+DialogName+
-          GPT.StringTypeChar+', '+GPT.StringTypeChar+GetFormPosString(FForm, DialogName)+GPT.StringTypeChar+')';
+        if GPT.UserID<>'' then
+          DCLQueryL.SQL.Text:='insert into '+INITable+'('+IniUserFieldName+', '+IniDialogNameField+', '+
+            IniParamValField+') values('+GPT.UserID+', '+GPT.StringTypeChar+DialogName+
+            GPT.StringTypeChar+', '+GPT.StringTypeChar+GetFormPosString(FForm, DialogName)+GPT.StringTypeChar+')'
+        else
+          DCLQueryL.SQL.Text:='insert into '+INITable+'('+IniDialogNameField+', '+
+            IniParamValField+') values('+GPT.StringTypeChar+DialogName+
+            GPT.StringTypeChar+', '+GPT.StringTypeChar+GetFormPosString(FForm, DialogName)+GPT.StringTypeChar+')';
       End;
       Try
         DCLQueryL.ExecSQL;

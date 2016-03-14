@@ -23,8 +23,6 @@ type
   {$ENDIF}
   TDialogLabel=TLabel;
   TOrientation=(oVertical, oHorizontal);
-  TLangID=LongWord;
-  TLangName=String;
 
   TGPT=record
   // EnableSQLTrace,
@@ -35,8 +33,6 @@ type
     DateSeparator, TimeSeparator: Char;
     ServerCodePage, DateFormat, TimeFormat, Viewer, ConnectionString, MainFormCaption,
     NewConnectionString, DBPath, ServerName, NewDBUserName, DBType, GeneratorName: String;
-    LangID:TLangID;//   //TISO639_3;
-    LangName:TLangName;
     SQLDialect:Byte;
     NoParamsTable, NoUsersTable, DisableLogOnWithoutUser, MultiRolesMode: Boolean;
     DBUserName, DCLUserName, DCLUserPass, EnterPass, LongRoleName, GetValueSeparator, UpperString,

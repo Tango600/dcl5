@@ -31,6 +31,7 @@ Function PosSet(SubSet, S: String; SepChar: String=DefaultValuesSeparator;
   Delim: String=DefaultParamDelim): Cardinal;
 Function SourceToInterface(S: String): String;
 Function BaseToSystem(S: String): String;
+//Function InterfaceToBase(S: String): String;
 {$IFNDEF FPC}
 Function ConvertEncoding(Const S, FromEncoding, ToEncoding: String): String;
 {$ENDIF}
@@ -42,6 +43,7 @@ function TrimChars(CharsSet, S:string):String;
 Function SystemToInterface(S:String): String;
 Function InterfaceToSystem(S:String): String;
 
+Function DoublingApostrof(const S: String):String;
 
 implementation
 
@@ -98,7 +100,12 @@ End;
 
 Function BaseToSystem(S: String): String;
 Begin
-  Result:=ConvertEncoding(S, GPT.ServerCodePage, DefaultSystemEncoding)
+  Result:=ConvertEncoding(S, GPT.ServerCodePage, DefaultSystemEncoding);
+End;
+
+Function InterfaceToBase(S: String): String;
+Begin
+  Result:=ConvertEncoding(S, DefaultInterfaceEncoding, GPT.ServerCodePage);
 End;
 
 Function SourceToInterface(S: String): String;
@@ -416,5 +423,18 @@ begin
   End;
 end;
 
+Function DoublingApostrof(const S: String):String;
+var
+  i, l:Integer;
+begin
+  Result:='';
+  l:=Length(S);
+  For i:=1 to l do
+  begin
+    Result:=Result+S[i];
+    If S[i]=#39 then
+      Result:=Result+#39;
+  end;
+end;
 
 end.

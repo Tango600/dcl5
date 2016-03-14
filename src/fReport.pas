@@ -7,7 +7,7 @@ uses
 {$IFDEF MSWINDOWS} Windows, Messages, {$ENDIF} SysUtils, Classes,
   Controls, Forms, Dialogs, StdCtrls,
 {$IFDEF FPC}
-  LCLType, InterfaceBase, EditBtn,
+  LCLType, InterfaceBase,
 {$ELSE}
   uGlass,
 {$ENDIF}

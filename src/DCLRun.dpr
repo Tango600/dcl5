@@ -51,7 +51,6 @@ uses
   uDCLOLE in 'uDCLOLE.pas',
   uDCLMultiLang in 'uDCLMultiLang.pas',
   uDCLOfficeUtils in 'uDCLOfficeUtils.pas',
-  uLogging in 'uLogging.pas',
   uDCLResources in 'uDCLResources.pas',
   uDCLSQLMonitor in 'uDCLSQLMonitor.pas',
   uDCLDownloader in 'uDCLDownloader.pas',
@@ -61,7 +60,14 @@ uses
   {$ENDIF}
   uLZW in 'uLZW.pas',
   FileBuffer in 'FileBuffer.pas',
-  uDCLQuery in 'uDCLQuery.pas';
+  uDCLQuery in 'uDCLQuery.pas',
+  {$IFDEF USEDELPHIThemes}
+  {$IFDEF NEWDELPHI}
+  Vcl.Themes,
+  Vcl.Styles,
+  {$ENDIF}
+  {$ENDIF}
+  uLogging in 'uLogging.pas';
 
 {$R DCLRun.res}
 
@@ -73,6 +79,11 @@ begin
   RequireDerivedFormResource := True;
   {$ENDIF}
   Application.Initialize;
+  {$IFDEF USEDELPHIThemes}
+  {$IFDEF NEWDELPHI}
+  TStyleManager.TrySetStyle('Silver');
+  {$ENDIF}
+  {$ENDIF}
   Application.CreateForm(TMainForm, MainForm);
   Application.Run;
 end.
