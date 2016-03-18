@@ -20,8 +20,10 @@ uses
   VCLFixPack in 'VCLFixPack.pas',
   ControlsAtomFix in 'ControlsAtomFix.pas',
   {$ENDIF}
+  {$IFnDEF USEDELPHIThemes}
   {$IFDEF ThemedDBGrid}
   ThemedDBGrid in 'ThemedDBGrid.pas',
+  {$ENDIF}
   {$ENDIF}
   {$IFDEF IBX}
   {$IFNDEF NEWDELPHI}

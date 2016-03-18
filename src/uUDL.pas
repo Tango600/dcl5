@@ -610,6 +610,10 @@ Type
 
     function GetQueryToRaights(S: String): String;
 
+    function ReadBaseINI(IniType:TINIType):TStringList;
+    procedure WriteBaseINI(IniType:TINIType; Params:TStringList);
+    procedure DeleteBaseINI(IniType:TINIType; All:Boolean);
+
     procedure LoadFormPos;
     procedure LoadFormPosINI;
     procedure LoadFormPosBase;
@@ -618,6 +622,7 @@ Type
     procedure SaveFormPosINI;
     procedure SaveFormPosBase;
     function SaveFormPosUni: TStringList;
+
     procedure DeleteFormPos(All:Boolean);
     procedure DeleteFormPosBase(All:Boolean);
     procedure DeleteFormPosINI(All:Boolean);
@@ -2897,30 +2902,8 @@ begin
 end;
 
 procedure TDCLForm.LoadFormPosBase;
-var
-  DialogsParams, FileParams: TStringList;
-  INIQuery:TDCLQuery;
 begin
-  If DialogName<>'' Then
-    If GPT.DialogsSettings Then
-    begin
-      FileParams:=TStringList.Create;
-      INIQuery:=TDCLQuery.Create(FDCLLogOn.FDBLogOn);
-      INIQuery.SQL.Text:='select '+IniParamValField+' from '+INITable+' where '+GetIniToRole(GPT.UserID)+
-        GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+DialogName+
-          GPT.StringTypeChar+GPT.UpperStringEnd+' and INI_TYPE=1';
-      INIQuery.Open;
-      If not INIQuery.IsEmpty Then
-      begin
-        FileParams.Text:=INIQuery.FieldByName(IniParamValField).AsString;
-
-        DialogsParams:=CopyStrings('['+DialogName+']', '[END '+DialogName+']', FileParams);
-        LoadFormPosUni(DialogsParams);
-        FreeAndNil(DialogsParams);
-      end;
-      FreeAndNil(FileParams);
-      FreeAndNil(INIQuery);
-    end;
+  LoadFormPosUni(ReadBaseINI(itFormPos));
 end;
 
 procedure TDCLForm.LoadFormPosUni(DialogParams: TStringList);
@@ -3099,42 +3082,13 @@ end;
 
 procedure TDCLForm.SaveFormPosBase;
 var
-  INIQuery:TDCLQuery;
   DialogSettings: TStringList;
-  SQLParams, INIData:String;
 begin
+  DialogSettings:=TStringList.Create;
   DialogSettings:=SaveFormPosUni;
-
-  INIQuery:=TDCLQuery.Create(FDCLLogOn.FDBLogOn);
-  INIQuery.SQL.Text:='select * from '+INITable+' where '+GetIniToRole(GPT.UserID)+
-    GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+
-      GPT.UpperStringEnd+' and INI_TYPE=1';
-  INIQuery.Open;
-
-  INIData:=GPT.StringTypeChar+DoublingApostrof(DialogSettings.Text)+GPT.StringTypeChar;
-  If INIQuery.IsEmpty then
-  Begin
-    If GPT.UserID<>'' then
-      SQLParams:='insert into '+INITable+'('+IniDialogNameField+', '+IniParamValField+', INI_TYPE, '+IniUserFieldName+') '+
-        'values('+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+', '+
-        INIData+', 1, '+GPT.UserID+')'
-    Else
-      SQLParams:='insert into '+INITable+'('+IniDialogNameField+', '+IniParamValField+', INI_TYPE) '+
-        'values('+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+', '+
-        INIData+', 1)';
-  End
-  Else
-  Begin
-    SQLParams:='update '+INITable+' set '+IniParamValField+'='+
-      INIData+' where '+GetIniToRole(GPT.UserID)+
-      GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+
-      GPT.UpperStringEnd+'and INI_TYPE=1';
-  End;
-  INIQuery.Close;
-  INIQuery.SQL.Text:=SQLParams;
-  INIQuery.ExecSQL;
-
-  FreeAndNil(INIQuery);
+  If DialogSettings.Count>0 then
+    WriteBaseINI(itFormPos, SaveFormPosUni);
+  FreeAndNil(DialogSettings);
 end;
 
 function TDCLForm.SaveFormPosUni: TStringList;
@@ -3253,42 +3207,13 @@ end;
 
 procedure TDCLForm.SaveBookmarkMenuBase;
 var
-  INIQuery:TDCLQuery;
   DialogSettings: TStringList;
-  SQLParams, INIData:String;
 begin
+  DialogSettings:=TStringList.Create;
   DialogSettings:=SaveBookMarkMenuUni;
-
-  INIQuery:=TDCLQuery.Create(FDCLLogOn.FDBLogOn);
-  INIQuery.SQL.Text:='select * from '+INITable+' where '+GetIniToRole(GPT.UserID)+
-    GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+
-      GPT.UpperStringEnd+' and INI_TYPE=2';
-  INIQuery.Open;
-
-  INIData:=GPT.StringTypeChar+DoublingApostrof(DialogSettings.Text)+GPT.StringTypeChar;
-  If INIQuery.IsEmpty then
-  Begin
-    If GPT.UserID<>'' then
-      SQLParams:='insert into '+INITable+'('+IniDialogNameField+', '+IniParamValField+', INI_TYPE, '+IniUserFieldName+') '+
-        'values('+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+', '+
-        INIData+', 2, '+GPT.UserID+')'
-    Else
-      SQLParams:='insert into '+INITable+'('+IniDialogNameField+', '+IniParamValField+', INI_TYPE) '+
-        'values('+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+', '+
-        INIData+', 2)';
-  End
-  Else
-  Begin
-    SQLParams:='update '+INITable+' set '+IniParamValField+'='+
-      INIData+' where '+GetIniToRole(GPT.UserID)+
-      GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+
-      GPT.UpperStringEnd+'and INI_TYPE=2';
-  End;
-  INIQuery.Close;
-  INIQuery.SQL.Text:=SQLParams;
-  INIQuery.ExecSQL;
-
-  FreeAndNil(INIQuery);
+  if DialogSettings.Count>0 then
+    WriteBaseINI(itBookmarkMenu, DialogSettings);
+  FreeAndNil(DialogSettings);
 end;
 
 procedure TDCLForm.LoadBookmarkMenu;
@@ -3322,29 +3247,8 @@ begin
 end;
 
 procedure TDCLForm.LoadBookmarkMenuBase;
-var
-  DialogsParams, FileParams: TStringList;
-  INIQuery:TDCLQuery;
 begin
-  If DialogName<>'' Then
-  begin
-    FileParams:=TStringList.Create;
-    INIQuery:=TDCLQuery.Create(FDCLLogOn.FDBLogOn);
-    INIQuery.SQL.Text:='select '+IniParamValField+' from '+INITable+' where '+GetIniToRole(GPT.UserID)+
-      GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+DialogName+
-        GPT.StringTypeChar+GPT.UpperStringEnd+' and INI_TYPE=2';
-    INIQuery.Open;
-    If not INIQuery.IsEmpty Then
-    begin
-      FileParams.Text:=INIQuery.FieldByName(IniParamValField).AsString;
-
-      DialogsParams:=CopyStrings('['+DialogName+']', '[END '+DialogName+']', FileParams);
-      CreateBookMarkMenuUni(DialogsParams);
-      FreeAndNil(DialogsParams);
-    end;
-    FreeAndNil(FileParams);
-    FreeAndNil(INIQuery);
-  end;
+  CreateBookMarkMenuUni(ReadBaseINI(itBookmarkMenu));
 end;
 
 procedure TDCLForm.CreateBookMarkMenuUni(MenuList: TStringList);
@@ -4987,6 +4891,26 @@ begin
       DeleteStatus(i-1);
 end;
 
+procedure TDCLForm.DeleteBaseINI(IniType: TINIType; All:Boolean);
+var
+  INIQuery:TDCLQuery;
+  SQLParams:String;
+begin
+  INIQuery:=TDCLQuery.Create(FDCLLogOn.FDBLogOn);
+
+  SQLParams:='delete from '+INITable+' where '+GetIniToRole(GPT.UserID)+
+    ' and INI_TYPE='+IntToStr(Ord(IniType));
+  if All then
+    SQLParams:=SQLParams+' '+GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+
+      '='+GPT.UpperString+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+
+        GPT.UpperStringEnd;
+
+  INIQuery.SQL.Text:=SQLParams;
+  INIQuery.ExecSQL;
+
+  FreeAndNil(INIQuery);
+end;
+
 procedure TDCLForm.DeleteFormPos(All:Boolean);
 begin
   Case GPT.FormPosInDB of
@@ -5002,20 +4926,12 @@ begin
   end;
 end;
 
-procedure TDCLForm.DeleteFormPosBase;
-var
-  INIStore: TBinStore;
+procedure TDCLForm.DeleteFormPosBase(All:Boolean);
 begin
-  INIStore:=TBinStore.Create(FDCLLogOn, ftSQL, INITable, IniKeyField, IniDialogNameField,
-    IniParamValField);
-  INIStore.DeleteData('delete from '+INITable+' where '+GetIniToRole(GPT.UserID)+
-    GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+
-      GPT.UpperStringEnd+' and INI_TYPE=2');
-
-  FreeAndNil(INIStore);
+  DeleteBaseINI(itFormPos, All);
 end;
 
-procedure TDCLForm.DeleteFormPosINI;
+procedure TDCLForm.DeleteFormPosINI(All:Boolean);
 var
   FileParams: TStringList;
   p1, p2, i, j: Integer;
@@ -5023,26 +4939,27 @@ begin
   p1:= - 1;
   p2:= - 1;
   FileParams:=TStringList.Create;
-  If DialogName<>'' Then
-    If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini') Then
-    begin
-      FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini');
-      For i:=1 to FileParams.Count do
+  if not All then
+    If DialogName<>'' Then
+      If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini') Then
       begin
-        If PosEx('['+DialogName+']', FileParams[i-1])=1 Then
+        FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini');
+        For i:=1 to FileParams.Count do
         begin
-          p1:=i-1;
-          For j:=p1 to FileParams.Count-1 do
+          If PosEx('['+DialogName+']', FileParams[i-1])=1 Then
           begin
-            If PosEx('[END '+DialogName+']', FileParams[j])=1 Then
+            p1:=i-1;
+            For j:=p1 to FileParams.Count-1 do
             begin
-              p2:=j;
-              break;
+              If PosEx('[END '+DialogName+']', FileParams[j])=1 Then
+              begin
+                p2:=j;
+                break;
+              end;
             end;
           end;
         end;
       end;
-    end;
 
   If (p1<p2)and(p1> - 1) Then
   begin
@@ -5157,6 +5074,31 @@ end;
 function TDCLForm.GetTablesCount: Integer;
 begin
   Result:=Length(FGrids);
+end;
+
+function TDCLForm.ReadBaseINI(IniType: TINIType):TStringList;
+var
+  FileParams: TStringList;
+  INIQuery:TDCLQuery;
+begin
+  Result:=TStringList.Create;
+  If DialogName<>'' Then
+    If GPT.DialogsSettings Then
+    Begin
+      FileParams:=TStringList.Create;
+      INIQuery:=TDCLQuery.Create(FDCLLogOn.FDBLogOn);
+      INIQuery.SQL.Text:='select '+IniParamValField+' from '+INITable+' where '+GetIniToRole(GPT.UserID)+
+        GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+DialogName+
+          GPT.StringTypeChar+GPT.UpperStringEnd+' and INI_TYPE='+IntToStr(Ord(IniType));
+      INIQuery.Open;
+      If not INIQuery.IsEmpty then
+      Begin
+        FileParams.Text:=INIQuery.FieldByName(IniParamValField).AsString;
+        Result:=CopyStrings('['+DialogName+']', '[END '+DialogName+']', FileParams);
+      End;
+      FreeAndNil(FileParams);
+      FreeAndNil(INIQuery);
+    End;
 end;
 
 procedure TDCLForm.RefreshForm;
@@ -5386,6 +5328,46 @@ begin
   RePlaseVariables(Params);
   Factor:=0;
   TranslateProc(Params, Factor, nil);
+end;
+
+procedure TDCLForm.WriteBaseINI(IniType: TINIType; Params:TStringList);
+var
+  INIQuery:TDCLQuery;
+  SQLParams, INIData:String;
+begin
+  If Assigned(Params) then
+  Begin
+    INIQuery:=TDCLQuery.Create(FDCLLogOn.FDBLogOn);
+    INIQuery.SQL.Text:='select * from '+INITable+' where '+GetIniToRole(GPT.UserID)+
+      GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+
+        GPT.UpperStringEnd+' and INI_TYPE='+IntToStr(Ord(IniType));
+    INIQuery.Open;
+
+    INIData:=GPT.StringTypeChar+DoublingApostrof(Params.Text)+GPT.StringTypeChar;
+    If INIQuery.IsEmpty then
+    Begin
+      If GPT.UserID<>'' then
+        SQLParams:='insert into '+INITable+'('+IniDialogNameField+', '+IniParamValField+', INI_TYPE, '+IniUserFieldName+') '+
+          'values('+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+', '+
+          INIData+', '+IntToStr(Ord(IniType))+', '+GPT.UserID+')'
+      Else
+        SQLParams:='insert into '+INITable+'('+IniDialogNameField+', '+IniParamValField+', INI_TYPE) '+
+          'values('+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+', '+
+          INIData+', '+IntToStr(Ord(IniType))+')';
+    End
+    Else
+    Begin
+      SQLParams:='update '+INITable+' set '+IniParamValField+'='+
+        INIData+' where '+GetIniToRole(GPT.UserID)+
+        GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+
+        GPT.UpperStringEnd+'and INI_TYPE='+IntToStr(Ord(IniType));
+    End;
+    INIQuery.Close;
+    INIQuery.SQL.Text:=SQLParams;
+    INIQuery.ExecSQL;
+
+    FreeAndNil(INIQuery);
+  End;
 end;
 
 { TDCLCommand }

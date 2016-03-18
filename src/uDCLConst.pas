@@ -38,7 +38,7 @@ DefaultLibraryLocation='fbclient.so';
 {$IFDEF SQLdb}
   DBEngineType='SQLdb (Universal)';
 {$ENDIF}
-  Ver='10.1.40.330';
+  Ver='10.1.40.334';
   VersionS='$VersionSignature$'+Ver+'$';
 
   CompotableVersion='9.1.129.309';
@@ -366,6 +366,7 @@ Type
   TSimplyFieldType=(sftNotDefine, sftString, sftDigit, sftFloat, sftDateTime);
   TDCLFormCloseAction=(fcaNone, fcaClose, fcaInProcess);
   TFastReportsScriptLanguage=(fslPascal, fslBasic, fslCppScript, fslJScript);
+  TINIType=(itNone, itFormPos, itBookmarkMenu);
 
 const
   ReleaseStatus=rsBetta;
