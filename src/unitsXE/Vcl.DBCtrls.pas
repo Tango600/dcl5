@@ -6,7 +6,7 @@
 {                                                       }
 {*******************************************************}
 
-unit DBCtrls;
+unit Vcl.DBCtrls;
 
 {$R-,H+,X+}
 
@@ -4474,7 +4474,7 @@ begin
   Buttons[nbEdit].Enabled := CanModify and not FDataLink.Editing;
   Buttons[nbPost].Enabled := CanModify and FDataLink.Editing;
   Buttons[nbCancel].Enabled := CanModify and FDataLink.Editing;
-  Buttons[nbRefresh].Enabled := True;  // Tango
+  Buttons[nbRefresh].Enabled := True; // Tango
   Buttons[nbApplyUpdates].Enabled := CanModify and Self.CanApplyUpdates;
   Buttons[nbCancelUpdates].Enabled := CanModify and Self.CanCancelUpdates;
 end;

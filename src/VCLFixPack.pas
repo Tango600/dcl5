@@ -285,7 +285,12 @@ uses
   Character,
   {$IFEND}
   {$IFDEF VCLFIXPACK_DB_SUPPORT}
-  DB, DBClient, DBGrids, DBCtrls,
+  DB, DBClient,
+  {$IFDEF NEWDELPHI}
+  Vcl.DBCtrls, Vcl.DBGrids,
+  {$ELSE}
+  DBCtrls, DBGrids,
+  {$ENDIF}
   {$ENDIF VCLFIXPACK_DB_SUPPORT}
   Graphics, Controls, Forms, Dialogs, StdCtrls, Grids, ComCtrls, Buttons,
   CommCtrl;

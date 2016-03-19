@@ -7,8 +7,15 @@ uses
 {$IFDEF FPC}
   EditBtn,
 {$ENDIF}
-  StdCtrls, ComCtrls, Controls, Graphics, ExtCtrls, DB, Buttons, DBCtrls, Classes,
+  StdCtrls, ComCtrls, Controls, Graphics, ExtCtrls, DB, Buttons, Classes,
+{$IFDEF NEWDELPHI}
+  //Vcl.
+  DBCtrls,
+{$ELSE}
+  DBCtrls,
+{$ENDIF}
   uDCLConst, uDCLTypes;
+
 
 type
   {$IFNDEF FPC}

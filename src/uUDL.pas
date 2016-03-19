@@ -21,8 +21,13 @@ Uses
 {$ENDIF}
 {$ENDIF}
   Messages, Variants, Classes, Graphics, Controls, Forms, ExtCtrls, ToolWin,
-  Grids, DB, StdCtrls, ComCtrls, Dialogs, DBCtrls, Buttons, ExtDlgs, Menus,
-  DBGrids, DateUtils, IniFiles,
+  Grids, DB, StdCtrls, ComCtrls, Dialogs, Buttons, ExtDlgs, Menus,
+{$IFDEF NEWDELPHI}
+  Vcl.DBCtrls, Vcl.DBGrids,
+{$ELSE}
+  DBCtrls, DBGrids,
+{$ENDIF}
+  DateUtils, IniFiles,
 {$IFNDEF NOFASTREPORTS}
   frxCross, frxClass, frxDBSet,
 {$ENDIF}
@@ -34,10 +39,10 @@ Uses
 {$ENDIF}
 {$IFDEF IBX}
 {$IFDEF NEWDELPHI}
-  IBX.IBDatabase, IBX.IBTable, IBX.IBCustomDataSet, IBX.IBSQL, IBX.IBQuery,
+  IBX.IBDatabase, IBX.IBTable, IBX.IBCustomDataSet, IBX.IBHeader, IBX.IBSQL, IBX.IBQuery,
   IBX.IBVisualConst, IBX.IBXConst,
 {$ELSE}
-  IBDatabase, IBTable, IBCustomDataSet, IBSQL, IBQuery,
+  IBDatabase, IBTable, IBCustomDataSet, IBHeader, IBSQL, IBQuery,
   IBVisualConst, IBXConst,
 {$ENDIF}
 {$ENDIF}
@@ -3517,8 +3522,9 @@ begin
   AddSubItem(SourceToInterface(GetDCLMessageString(msSaveFieldsSettings)), 'SaveFieldsSettings', '', 0, SaveFieldsSettings);
 
 {$IFNDEF EMBEDDED}
-  If Application.MainForm.FormStyle=fsMDIForm Then
-    FForm.FormStyle:=fsMDIChild;
+  If Assigned(Application.MainForm) then
+    If Application.MainForm.FormStyle=fsMDIForm Then
+      FForm.FormStyle:=fsMDIChild;
 {$ENDIF}
 {$IFDEF MSWINDOWS}
   SetWindowLong(FForm.Handle, GWL_EXSTYLE, GetWindowLong(FForm.Handle, GWL_EXSTYLE)or

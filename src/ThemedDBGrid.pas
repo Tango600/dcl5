@@ -52,7 +52,12 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Grids,
-  DBGrids, DB, ImgList, Themes;
+  {$IFDEF NEWDELPHI}
+  Vcl.DBCtrls, Vcl.DBGrids,
+  {$ELSE}
+  DBCtrls, DBGrids,
+  {$ENDIF}
+  DB, ImgList, Themes;
 
 type
   TPaintInfo = record
@@ -63,7 +68,7 @@ type
     ColMoving: Boolean; // currently moving a column
   end;
 
-  TDBGrid = class(DBGrids.TDBGrid) // keep TDBGrid.ClassName = 'TDBGrid'
+  TDBGrid = class({$IFDEF NEWDELPHI}Vcl.{$ENDIF}DBGrids.TDBGrid) // keep TDBGrid.ClassName = 'TDBGrid'
   private
     FPaintInfo: TPaintInfo;
     FCell: TGridCoord; // currently selected cell
@@ -616,10 +621,10 @@ var
 
 initialization
   OrgTDBGrid_NewInstance := GetVirtualMethod(TDBGrid, vmtNewInstance);
-  SetVirtualMethod(DBGrids.TDBGrid, vmtNewInstance, @TDBGrid_NewInstance);
+  SetVirtualMethod({$IFDEF NEWDELPHI}Vcl.{$ENDIF}DBGrids.TDBGrid, vmtNewInstance, @TDBGrid_NewInstance);
 
 finalization
-  SetVirtualMethod(DBGrids.TDBGrid, vmtNewInstance, OrgTDBGrid_NewInstance);
+  SetVirtualMethod({$IFDEF NEWDELPHI}Vcl.{$ENDIF}DBGrids.TDBGrid, vmtNewInstance, OrgTDBGrid_NewInstance);
 
 end.
 

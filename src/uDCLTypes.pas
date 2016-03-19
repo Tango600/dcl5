@@ -5,7 +5,12 @@ interface
 
 Uses
   Controls,
-  StdCtrls, ComCtrls, dbctrls, Buttons, DBGrids,
+  StdCtrls, ComCtrls, Buttons,
+{$IFDEF NEWDELPHI}
+  Vcl.DBCtrls, Vcl.DBGrids,
+{$ELSE}
+  DBCtrls, DBGrids,
+{$ENDIF}
 {$IFNDEF FPC}
 {$IFDEF ThemedDBGrid}
   ThemedDBGrid,

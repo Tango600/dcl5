@@ -110,6 +110,11 @@ begin
   Result:=FindCommandStrParam('Form=');
 end;
 
+function FindScryptFileCall: String;
+begin
+  Result:=FindCommandStrParam('ScryptFile=');
+end;
+
 function FindMainMenu: Boolean;
 begin
   Result:=FindCommandStrParam('MainMenu=')='1';
@@ -180,6 +185,10 @@ begin
     end;
     CloseFile(T);
   end;
+
+  S:=FindScryptFileCall;
+  If S<>'' then
+    uUDL.DCLMainLogOn.RunSkriptFromFile(S);
 
   if MDI or FindMDI then
     Self.FormStyle:=fsMDIForm;
