@@ -4905,9 +4905,9 @@ begin
   INIQuery:=TDCLQuery.Create(FDCLLogOn.FDBLogOn);
 
   SQLParams:='delete from '+INITable+' where '+GetIniToRole(GPT.UserID)+
-    ' and INI_TYPE='+IntToStr(Ord(IniType));
+    ' INI_TYPE='+IntToStr(Ord(IniType));
   if All then
-    SQLParams:=SQLParams+' '+GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+
+    SQLParams:=SQLParams+' and '+GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+
       '='+GPT.UpperString+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+
         GPT.UpperStringEnd;
 
@@ -8593,8 +8593,8 @@ begin
 
       If GPT.ServerCodePage='' Then
       Begin
-        GPT.ServerCodePage:='WIN'+DefaultSystemEncoding;
-        FDBLogOn.Params.Append('lc_ctype=WIN1251');
+        GPT.ServerCodePage:=ReplaseCPtoWIN(DefaultSystemEncoding);
+        FDBLogOn.Params.Append('lc_ctype='+ReplaseCPtoWIN(DefaultSystemEncoding));
       End
       Else
         FDBLogOn.Params.Append('lc_ctype='+UpperCase(GPT.ServerCodePage));
@@ -8706,8 +8706,8 @@ begin
 {$ENDIF}
     If GPT.ServerCodePage='' Then
     begin
-      FDBLogOn.Properties.Append('lc_ctype=cp1251');
-      GPT.ServerCodePage:='cp1251';
+      FDBLogOn.Properties.Append('lc_ctype='+DefaultSystemEncoding);
+      GPT.ServerCodePage:=DefaultSystemEncoding;
     end
     Else
       FDBLogOn.Properties.Append('lc_ctype='+UpperCase(GPT.ServerCodePage));
@@ -10821,6 +10821,7 @@ begin
       Except
         DebugProc('  ... Fail');
       end;
+
       If RecCount>0 Then
       begin
         MenuQuery.Close;

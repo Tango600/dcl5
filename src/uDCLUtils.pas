@@ -44,6 +44,8 @@ Function TimeToStr_(Time: TDateTime): String;
 Function DateToStr_(Date: TDate): String;
 Function LeadingZero(Const aVal: Word): String;
 Function CopyCut(Var S: String; From, Count: Word): String;
+function ReplaseCPtoWIN(CodePageName:String):String;
+function ReplaseWINtoCP(CodePageName:String):String;
 //Function FindInArray(KeyWord:String; SourceArray:Array);
 
 {$IFDEF MSWINDOWS}
@@ -2563,5 +2565,22 @@ begin
       GetDCLMessageString(msSecond)+'. '+IntToStr(mSec)+' '+GetDCLMessageString(msMSecond)+'.';
 end;
 
+function ReplaseCPtoWIN(CodePageName:String):String;
+begin
+  Result:='';
+  If PosEx('cp', CodePageName)=1 then
+  Begin
+    Result:='WIN'+Copy(CodePageName, 3, Length(CodePageName));
+  End;
+end;
+
+function ReplaseWINtoCP(CodePageName:String):String;
+begin
+  Result:='';
+  If PosEx('win', CodePageName)=1 then
+  Begin
+    Result:='cp'+Copy(CodePageName, 4, Length(CodePageName));
+  End;
+end;
 
 end.

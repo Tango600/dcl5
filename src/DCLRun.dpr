@@ -83,9 +83,10 @@ begin
   RequireDerivedFormResource := True;
   {$ENDIF}
   Application.Initialize;
-  {$IFDEF USEDELPHIThemes}
   {$IFDEF NEWDELPHI}
-  TStyleManager.TrySetStyle('Silver');
+  Application.MainFormOnTaskbar := True;
+  {$IFDEF USEDELPHIThemes}
+  TStyleManager.TrySetStyle('Smokey Quartz Kamri');
   {$ENDIF}
   {$ENDIF}
   Application.CreateForm(TMainForm, MainForm);
