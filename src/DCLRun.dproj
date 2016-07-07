@@ -3,7 +3,7 @@
         <ProjectGuid>{1F2D6FCB-7E1F-4861-B435-F92E1402D8D2}</ProjectGuid>
         <MainSource>DCLRun.dpr</MainSource>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">Debug</Config>
+        <Config Condition="'$(Config)'==''">Release</Config>
         <TargetedPlatforms>17</TargetedPlatforms>
         <AppType>Application</AppType>
         <FrameworkType>VCL</FrameworkType>

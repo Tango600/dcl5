@@ -7213,7 +7213,10 @@ begin
           If PosEx('EvalFormula=', ScrStr)=1 Then
           begin
             tmp1:=FindParam('EvalFormula=', ScrStr);
-            TranslateVals(tmp1, FDCLForm.CurrentQuery);
+            If Assigned(FDCLForm) then
+              TranslateVals(tmp1, FDCLForm.CurrentQuery)
+            Else
+              TranslateVals(tmp1, nil);
 
             FDCLLogOn.EvalFormula:=Calculate(tmp1);
           end;
@@ -7233,25 +7236,30 @@ begin
                 FindParam('ModifyField=', ScrStr));
             end;
 
-            If Assigned(FDCLForm) then
-              If FindParam('Child=', ScrStr)='1' Then
+            If FindParam('Child=', ScrStr)='1' Then
+            Begin
+              If Assigned(FDCLForm) then
                 FDCLForm:=FDCLLogOn.CreateForm(TmpStr, FDCLForm, nil, FDCLForm.CurrentQuery, nil,
-                  ModalOpen, ChooseMode, ReturnValueParams)
-              Else
+                  ModalOpen, ChooseMode, ReturnValueParams);
+            End
+            Else
+            Begin
+              tmpStr2:=Trim(FindParam('TablePart=', ScrStr));
+              If tmpStr2<>'' Then
               begin
-                tmpStr2:=Trim(FindParam('TablePart=', ScrStr));
-                If tmpStr2<>'' Then
-                begin
+                If Assigned(FDCLForm) then
+                Begin
                   v1:=StrToIntEx(tmpStr2)-1;
                   If Assigned(FDCLForm.Tables[ - 1].TableParts[v1]) Then
                     FDCLForm:=FDCLLogOn.CreateForm(TmpStr, nil, FDCLForm,
                       FDCLForm.Tables[ - 1].TableParts[v1].Query, nil, ModalOpen, ChooseMode,
                       ReturnValueParams);
-                end
-                Else
-                  FDCLForm:=FDCLLogOn.CreateForm(TmpStr, nil, FDCLForm, nil, nil, ModalOpen, ChooseMode,
-                    ReturnValueParams);
-              end;
+                End;
+              end
+              Else
+                FDCLForm:=FDCLLogOn.CreateForm(TmpStr, nil, FDCLForm, nil, nil, ModalOpen, ChooseMode,
+                  ReturnValueParams);
+            End;
 
             If Assigned(FDCLForm) Then
               If FDCLForm.ReturnFormValue.Choosen Then
@@ -7365,9 +7373,12 @@ begin
 
           If PosEx('SetFormCaption=', ScrStr)=1 Then
           begin
-            TmpStr:=FindParam('SetFormCaption=', ScrStr);
-            TranslateValContext(TmpStr);
-            FDCLForm.FForm.Caption:=TmpStr;
+            If Assigned(FDCLForm) then
+            Begin
+              TmpStr:=FindParam('SetFormCaption=', ScrStr);
+              TranslateValContext(TmpStr);
+              FDCLForm.FForm.Caption:=TmpStr;
+            End;
           end;
 
           If PosEx('ApplicationTitle=', ScrStr)=1 Then
@@ -7379,42 +7390,49 @@ begin
 
           If PosEx('Status=', ScrStr)=1 Then
           begin
-            TmpStr:=FindParam('Status=', ScrStr);
-            TranslateValContext(TmpStr);
-            If Assigned(FDCLForm) Then
+            If Assigned(FDCLForm) then
+            Begin
+              TmpStr:=FindParam('Status=', ScrStr);
+              TranslateValContext(TmpStr);
               FDCLForm.SetDBStatus(TmpStr);
+            End;
           end;
 
           If PosEx('AddStatus=', ScrStr)=1 Then
           begin
-            TmpStr:=FindParam('AddStatus=', ScrStr);
-            v1:= - 1;
-            If FindParam('Width=', ScrStr)<>'' Then
-              v1:=StrToIntEx(FindParam('Width=', ScrStr));
+            If Assigned(FDCLForm) then
+            Begin
+              TmpStr:=FindParam('AddStatus=', ScrStr);
+              v1:= - 1;
+              If FindParam('Width=', ScrStr)<>'' Then
+                v1:=StrToIntEx(FindParam('Width=', ScrStr));
 
-            FDCLForm.AddStatus(TmpStr, v1);
+              FDCLForm.AddStatus(TmpStr, v1);
+            End;
           end;
 
           If PosEx('SetStatusText=', ScrStr)=1 Then
           begin
-            TmpStr:=FindParam('Status=', ScrStr);
-            If TmpStr<>'' Then
-            begin
-              If LowerCase(TmpStr)='last' Then
-                v1:=0
-              Else
-                v1:=StrToIntEx(Trim(FindParam('Status=', ScrStr)))
-            end
-            Else
-              v1:=0;
-
-            TmpStr:=FindParam('SetStatusText=', ScrStr);
-            TranslateValContext(TmpStr);
-            v2:= - 1;
-            If FindParam('Width=', ScrStr)<>'' Then
-              v2:=StrToIntEx(Trim(FindParam('Width=', ScrStr)));
             If Assigned(FDCLForm) then
+            Begin
+              TmpStr:=FindParam('Status=', ScrStr);
+              If TmpStr<>'' Then
+              begin
+                If LowerCase(TmpStr)='last' Then
+                  v1:=0
+                Else
+                  v1:=StrToIntEx(Trim(FindParam('Status=', ScrStr)))
+              end
+              Else
+                v1:=0;
+
+              TmpStr:=FindParam('SetStatusText=', ScrStr);
+              TranslateValContext(TmpStr);
+              v2:= - 1;
+              If FindParam('Width=', ScrStr)<>'' Then
+                v2:=StrToIntEx(Trim(FindParam('Width=', ScrStr)));
               FDCLForm.SetStatus(TmpStr, v1-1, v2);
+            End;
           end;
 
           If PosEx('StatusWidth=', ScrStr)=1 Then
@@ -7456,7 +7474,8 @@ begin
 
           If PosEx('DeleteAllStatus;', ScrStr)=1 Then
           begin
-            FDCLForm.DeleteAllStatus;
+            If Assigned(FDCLForm) then
+              FDCLForm.DeleteAllStatus;
           end;
 
           If PosEx('WriteConfig=', ScrStr)=1 Then
@@ -7647,7 +7666,8 @@ begin
                 GPT.StringTypeChar+TmpStr+GPT.StringTypeChar+GPT.UpperStringEnd;
               DCLQuery.Open;
               TmpStr:=DCLQuery.FieldByName(GPT.DCLTextField).AsString;
-              TranslateVals(TmpStr, FDCLForm.Tables[ - 1].FQuery);
+              If Assigned(FDCLForm) then
+                TranslateVals(TmpStr, FDCLForm.Tables[ - 1].FQuery);
               tmpDCL.Text:=TmpStr;
               AddCodeScript(tmpDCL);
             end;
@@ -7673,7 +7693,8 @@ begin
                 GPT.StringTypeChar+TmpStr+GPT.StringTypeChar+GPT.UpperStringEnd;
               DCLQuery.Open;
               TmpStr:=DCLQuery.FieldByName(GPT.DCLTextField).AsString;
-              TranslateVals(TmpStr, FDCLForm.Tables[ - 1].FQuery);
+              If Assigned(FDCLForm) then
+                TranslateVals(TmpStr, FDCLForm.Tables[ - 1].FQuery);
               ExecVBS(TmpStr);
             end;
             FreeAndNil(tmpDCL);
@@ -16590,7 +16611,7 @@ procedure TDCLTextReport.ReplaseRepParams(var ReplaseText: TStringList);
 var
   ParamValue, TmpStr, BodyText: String;
   InsMode:Boolean;
-  ParamFill, CuteLen, k, k1, k3, DopLength, StringsCounter, StringNum, StartSel: Integer;
+  ParamFill, ParamLen, CuteLen, k, k1, k3, DopLength, StringsCounter, StringNum, StartSel: Integer;
 begin
   BodyText:=ReplaseText.Text;
   RePlaseVariables(BodyText);
@@ -16617,14 +16638,18 @@ begin
               inc(k);
             TmpStr:=Copy(BodyText, k1+1, k-k1-1);
             ParamFill:=StrToIntEx(TmpStr);
+            ParamLen:=ParamFill;
             DopLength:=k-k1+1;
-          end;
+          end
+          else
+            ParamLen:=Length(ParamValue);
+
         If StartSel<>0 Then
           If ParamFill=0 Then
             ParamFill:=Length(ParamValue);
         If ParamFill>Length(ParamValue) then
         Begin
-          ParamFill:=Length(ParamValue);
+          ParamFill:=ParamFill-Length(ParamValue);
         End;
 
         If PosEx('i', TmpStr)<>0 Then
@@ -16638,7 +16663,7 @@ begin
           If PosEx('r', TmpStr)<>0 Then
           begin
             If ParamFill>0 Then
-              For k:=Length(ParamValue)+1 to ParamFill do
+              For k:=1 to ParamFill do
                 ParamValue:=' '+ParamValue;
           end
           Else If PosEx('m', TmpStr)<>0 Then
@@ -16655,14 +16680,14 @@ begin
           Else
           begin
             If ParamFill>0 Then
-              For k:=Length(ParamValue)+1 to ParamFill do
+              For k:=1 to ParamFill do
                 ParamValue:=ParamValue+' ';
           end;
           Delete(BodyText, StartSel, Length(RepParams[StringNum])+DopLength);
         end;
 
         If not InsMode then
-          Insert(Copy(ParamValue, 1, ParamFill), BodyText, StartSel)
+          Insert(Copy(ParamValue, 1, ParamLen), BodyText, StartSel)
         Else
         Begin
           If CuteLen>=ParamFill then
