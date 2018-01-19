@@ -53,7 +53,7 @@ Uses
   sqldb,
 {$ENDIF}
 {$IFDEF FPC}
-  FileUtil, LConvEncoding, {$IFDEF ZVComponents}ZVDateTimePicker, {$ENDIF}
+  FileUtil, LazUTF8, LConvEncoding, {$IFDEF ZVComponents}ZVDateTimePicker, {$ENDIF}
 {$ENDIF}
 {$IFNDEF FPC}
   JPEG,
@@ -5134,6 +5134,7 @@ procedure TDCLForm.CloseDialog;
 begin
   If Assigned(FForm) then
     FForm.Close;
+  CloseAction:=fcaClose;
 end;
 
 procedure TDCLForm.ResumeDatasets;
@@ -6323,8 +6324,7 @@ begin
               If tmpStr1='' Then
                 tmpStr1:=Path;
 
-              If Not {$IFDEF FPC}DirectoryExistsUTF8(tmpStr1){$ELSE}DirectoryExists
-                (tmpStr1){$ENDIF} Then
+              If Not DirectoryExists(tmpStr1) Then
                 SetCurrentDir(Path)
               Else
                 SetCurrentDir(tmpStr1);
@@ -7511,7 +7511,7 @@ begin
 
               If Not IsFullPAth(TmpStr) Then
                 TmpStr:=IncludeTrailingPathDelimiter(AppConfigDir)+TmpStr;
-              If {$IFDEF FPC}FileExistsUTF8(TmpStr){$ELSE}FileExists(TmpStr){$ENDIF} Then
+              If FileExists(TmpStr) Then
               begin
                 If Not Assigned(BinStore) Then
                   BinStore:=TBinStore.Create(FDCLLogOn, ftSQL, '', '', '',
@@ -18035,4 +18035,4 @@ Initialization
 {$ENDIF}
 
 end.
-
+
