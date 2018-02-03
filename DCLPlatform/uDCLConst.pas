@@ -38,7 +38,7 @@ DefaultLibraryLocation='fbclient.so';
 {$IFDEF SQLdb}
   DBEngineType='SQLdb (Universal)';
 {$ENDIF}
-  Ver='10.1.42.343';
+  Ver='10.1.42.347';
   VersionS='$VersionSignature$'+Ver+'$';
 
   CompotableVersion='9.1.129.309';
@@ -244,7 +244,6 @@ DefaultLibraryLocation='fbclient.so';
 {$ENDIF}
   MemFileName='DCL_Run_Unit_'+DBEngineType;
 
-  DefaultSourceEncoding='cp1251';
 {$IFDEF DELPHI}
   EncodingUTF8='utf8';
   UTF8BOM=#$EF#$BB#$BF;
@@ -302,8 +301,6 @@ DefaultLibraryLocation='fbclient.so';
 
   DefaultNavigButtonsSet='First,Last,Edit,Delete,Insert,Post,Cancel,Refresh';
 
-  {MonthsNames: Array [0..12] of String=(' ', 'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь');}
   MonthsNamesRusW: Array [0..12] of String=(' ', 'Января', 'Февраля', 'Марта', 'Апреля', 'Майя', 'Июня',
     'Июля', 'Августа', 'Сентября', 'Октября', 'Ноября', 'Декабря');
 
@@ -393,4 +390,4 @@ begin
   end;
 end;
 
-end.
+end.

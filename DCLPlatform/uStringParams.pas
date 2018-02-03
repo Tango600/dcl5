@@ -29,13 +29,10 @@ Function InitCap(const S: String): String;
 Function TrimSymbols(S: String; TrimS: String): String;
 Function PosSet(SubSet, S: String; SepChar: String=DefaultValuesSeparator;
   Delim: String=DefaultParamDelim): Cardinal;
-Function SourceToInterface(S: String): String;
 Function BaseToSystem(S: String): String;
-//Function InterfaceToBase(S: String): String;
 {$IFNDEF FPC}
 Function ConvertEncoding(Const S, FromEncoding, ToEncoding: String): String;
 {$ENDIF}
-Function AnsiToUTF8(S: String): String;
 Function UTF8ToAnsi(S: String): String;
 Function TextToString(Text: String): String;
 function TrimChars(CharsSet, S:string):String;
@@ -58,11 +55,6 @@ Begin
     Result:=S;
 End;
 {$ENDIF}
-
-function AnsiToUTF8(S: String): string;
-begin
-  Result:=ConvertEncoding(S, DefaultSourceEncoding, EncodingUTF8);
-end;
 
 Function TextToString(Text: String): String;
 Var
@@ -101,16 +93,6 @@ End;
 Function BaseToSystem(S: String): String;
 Begin
   Result:=ConvertEncoding(S, GPT.ServerCodePage, DefaultSystemEncoding);
-End;
-
-Function InterfaceToBase(S: String): String;
-Begin
-  Result:=ConvertEncoding(S, DefaultInterfaceEncoding, GPT.ServerCodePage);
-End;
-
-Function SourceToInterface(S: String): String;
-Begin
-  Result:=ConvertEncoding(S, DefaultSourceEncoding, DefaultInterfaceEncoding);
 End;
 
 Function UTF8ToAnsi(S: String): String;

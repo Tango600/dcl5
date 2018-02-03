@@ -91,9 +91,6 @@ Function AddToFileName(Const FileName, AddStr: String): String;
 Function ExtractSection(Var SectionStr: String): String;
 function GetGraficFileType(FileName: string): TGraficFileType;
 function GetExtByType(FileType:TGraficFileType):String;
-{$IFNDEF FPC}
-Function UTF8ToSys(S: String): String;
-{$ENDIF}
 {$IFDEF FPC}
 Function Date: TDateTime;
 Function Time: TDateTime;
@@ -142,12 +139,6 @@ Begin
     Result:=IntToStr(aVal);
 End;
 
-{$IFNDEF FPC}
-Function UTF8ToSys(S: String): String;
-Begin
-  Result:=S;
-End;
-{$ENDIF}
 {$IFDEF FPC}
 Function Date: TDateTime;
 Begin
@@ -193,9 +184,9 @@ Begin
   If ErrorCode<0 Then
   Begin
     If GPT.CurrentRunningScrString>0 Then
-      MessageText:=SourceToInterface(MessageText)+' / '+AddText+LineEnding+
-        SourceToInterface(GetDCLMessageString(msIn)+' '+GetDCLMessageString(msStringNum)+'('+GetDCLMessageString(msVisualCommand)+') : '+
-        IntToStr(GPT.CurrentRunningScrString)+'/-1');
+      MessageText:=MessageText+' / '+AddText+LineEnding+
+        GetDCLMessageString(msIn)+' '+GetDCLMessageString(msStringNum)+'('+GetDCLMessageString(msVisualCommand)+') : '+
+        IntToStr(GPT.CurrentRunningScrString)+'/-1';
 
     Result:=MessageDlg(MessageText, mtError, [mbOK], 0);
   End
@@ -2583,4 +2574,4 @@ begin
   End;
 end;
 
-end.
+end.

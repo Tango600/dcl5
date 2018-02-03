@@ -9,7 +9,7 @@ uses
   VCLFixPack, ControlsAtomFix,
 {$ENDIF}
 {$ENDIF}
-{$IFDEF MSWINDOWS}uNewFonts, Windows, Messages, {$ENDIF} SysUtils, Classes,
+{$IFDEF MSWINDOWS}uNewFonts, Windows, Messages,{$ENDIF} SysUtils, Classes,
   Controls, Forms, Dialogs,
 {$IFDEF FPC}
   LCLType, LConvEncoding, InterfaceBase,
@@ -155,8 +155,8 @@ begin
 {$ENDIF}
   AppendMenu(GetSystemMenu(Handle, False), MF_SEPARATOR, 0, '');
   AppendMenu(GetSystemMenu(Handle, False), MF_STRING, AboutMenuItem,
-    Pchar('DCL '+ConvertEncoding(GetDCLMessageString(msVersion), DefaultSourceEncoding, DefaultSystemEncoding)+' : '+uDCLConst.Version));
-  AppendMenu(GetSystemMenu(Handle, False), MF_STRING, LockMenuItem, PChar(ConvertEncoding(GetDCLMessageString(msLock), DefaultSourceEncoding, DefaultSystemEncoding)+'...'));
+    Pchar('DCL '+GetDCLMessageString(msVersion)+' : '+uDCLConst.Version));
+  AppendMenu(GetSystemMenu(Handle, False), MF_STRING, LockMenuItem, PChar(GetDCLMessageString(msLock)+'...'));
 
 {$IFNDEF NEWDELPHI}
   ShowWindow(OldMainWin, SW_HIDE);
