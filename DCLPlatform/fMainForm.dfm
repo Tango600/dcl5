@@ -1,8 +1,8 @@
 object MainForm: TMainForm
   Left = 94
-  Height = 62
+  Height = 50
   Top = 140
-  Width = 471
+  Width = 455
   Caption = 'MainForm'
   Color = clBtnFace
   Font.Color = clWindowText

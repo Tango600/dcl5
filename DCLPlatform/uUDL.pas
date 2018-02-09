@@ -1,4 +1,4 @@
-unit uUDL;
+п»їunit uUDL;
 // DCLDialog multi platform
 // forum : http://www.dcl5.5bb.ru/
 // Unreal Software (C) 2002
@@ -325,7 +325,7 @@ Type
     function GetSummQuery: String;
     function QueryBuilder(GetQueryMode, QueryMode: Byte): String;
     function GetFingQuery: String;
-    function FindRaightQuery(St: String): String;
+    function FindRaightQuery(): String;
     procedure ChangeTabPage(Sender: TObject);
     function GetTablePartsCount:Integer;
 
@@ -1270,7 +1270,7 @@ var
                   dmReport[ACurrentForm].DMForm.VariablesClass.RePlaceParams(QSQLText, IBDQ as TIBCustomDataSet, False); }
               end;
             Except
-              LogObj.WriteLog('...Ошибка интерпритации параметров/ '+sQueryToDataSources
+              LogObj.WriteLog('...РћС€РёР±РєР° РёРЅС‚РµСЂРїСЂРёС‚Р°С†РёРё РїР°СЂР°РјРµС‚СЂРѕРІ/ '+sQueryToDataSources
                   [QueryNum][Pc]);
               Errors:=True;
             end;
@@ -1281,35 +1281,35 @@ var
 
         // RePlaceParams(QSQLText, dmData.dmReport[ACurrentForm].DMForm.idsAReportLst, False);
 
-        LogObj.WriteLog('Обработка['+IntToStr(QueryNum)+']... Query:'+mQueries[QueryNum].Name);
+        LogObj.WriteLog('РћР±СЂР°Р±РѕС‚РєР°['+IntToStr(QueryNum)+']... Query:'+mQueries[QueryNum].Name);
         If Assigned(mQueries[QueryNum].DataSource) Then
           LogObj.WriteLog('     Data source: '+mQueries[QueryNum].DataSource.Name);
         LogObj.WriteLog('========SQL begin========');
         LogObj.WriteLog(QSQLText);
         LogObj.WriteLog('========SQL end==========');
-        LogObj.WriteLog('Пытаемся открыть....');
+        LogObj.WriteLog('РџС‹С‚Р°РµРјСЃСЏ РѕС‚РєСЂС‹С‚СЊ....');
         If IsReturningQuery(mQueries[QueryNum].SQL.Text) Then
         begin
           St:=GetTickCount;
           mQueries[QueryNum].Open;
           // mQueries[QueryNum].FetchAll;
-          LogObj.WriteLog('... Успешно.');
-          LogObj.WriteLog('Время выполнения: '+GetTimeFormat(GetTickCount-St));
-          LogObj.WriteLog('Количество записей: '+IntToStr(mQueries[QueryNum].RecordCount));
+          LogObj.WriteLog('... РЈСЃРїРµС€РЅРѕ.');
+          LogObj.WriteLog('Р’СЂРµРјСЏ РІС‹РїРѕР»РЅРµРЅРёСЏ: '+GetTimeFormat(GetTickCount-St));
+          LogObj.WriteLog('РљРѕР»РёС‡РµСЃС‚РІРѕ Р·Р°РїРёСЃРµР№: '+IntToStr(mQueries[QueryNum].RecordCount));
           LogObj.WriteLog('');
           // mQueries[QueryNum].FetchAll;
         end
         Else
         begin
           mQueries[QueryNum].ExecSQL;
-          LogObj.WriteLog('... Выполнен.');
+          LogObj.WriteLog('... Р’С‹РїРѕР»РЅРµРЅ.');
         end;
 
       Except
         On E: Exception do
         begin
           LogObj.WriteLog('Query['+IntToStr(QueryNum)+']: '+mQueries[QueryNum].Name);
-          LogObj.WriteLog('Текст ошибки :');
+          LogObj.WriteLog('РўРµРєСЃС‚ РѕС€РёР±РєРё :');
           LogObj.WriteLog(E.Message);
           LogObj.WriteLog('----------------------------');
           AllOk:=False;
@@ -1319,8 +1319,8 @@ var
     end
     Else
     begin
-      LogObj.WriteLog('Обработка['+IntToStr(QueryNum)+']... Query:'+mQueries[QueryNum].Name);
-      LogObj.WriteLog('... Пустое SQL предложение.');
+      LogObj.WriteLog('РћР±СЂР°Р±РѕС‚РєР°['+IntToStr(QueryNum)+']... Query:'+mQueries[QueryNum].Name);
+      LogObj.WriteLog('... РџСѓСЃС‚РѕРµ SQL РїСЂРµРґР»РѕР¶РµРЅРёРµ.');
     end;
     LogObj.WriteLog('');
   end;
@@ -1363,17 +1363,17 @@ begin
     TemplateExists:=True;
     If TemplatesCount>1 Then
     begin
-      LogObj.WriteLog('Файлы шаблонов ('+IntToStr(TemplatesCount)+') :');
+      LogObj.WriteLog('Р¤Р°Р№Р»С‹ С€Р°Р±Р»РѕРЅРѕРІ ('+IntToStr(TemplatesCount)+') :');
       For TemplatesCounter:=1 to TemplatesCount do
       begin
         vStrTmp1:=SortParams(ATemplate, TemplatesCounter);
-        LogObj.WriteLog('Файл шаблона №'+IntToStr(TemplatesCounter)+' : '+vStrTmp1);
+        LogObj.WriteLog('Р¤Р°Р№Р» С€Р°Р±Р»РѕРЅР° в„–'+IntToStr(TemplatesCounter)+' : '+vStrTmp1);
         TemplateExists:=FileExists(vStrTmp1);
         If TemplateExists Then
           Templates[TemplatesCounter]:=vStrTmp1;
         If Not TemplateExists Then
         begin
-          LogObj.WriteLog('Файл шаблона не найден : '+Templates[TemplatesCounter]);
+          LogObj.WriteLog('Р¤Р°Р№Р» С€Р°Р±Р»РѕРЅР° РЅРµ РЅР°Р№РґРµРЅ : '+Templates[TemplatesCounter]);
           break;
         end;
       end;
@@ -1382,7 +1382,7 @@ begin
     begin
       TemplateExists:=FileExists(ATemplate);
       Templates[1]:=ATemplate;
-      LogObj.WriteLog('Файл шаблона : '+ATemplate);
+      LogObj.WriteLog('Р¤Р°Р№Р» С€Р°Р±Р»РѕРЅР° : '+ATemplate);
     end;
 
     TemplatesCounter:=1;
@@ -1392,14 +1392,14 @@ begin
       rtWord:
       begin
         PrintWord:=TPrintDoc.Create(dmData, otOpOffice, LogObj);
-        LogObj.WriteLog('Веррсия PrintWord: '+PrintWord.Version);
+        LogObj.WriteLog('Р’РµСЂСЂСЃРёСЏ PrintWord: '+PrintWord.Version);
         Case PrintWord.OfficeType of
         otNone:
-        LogObj.WriteLog('Не установлен никакой офис.');
+        LogObj.WriteLog('РќРµ СѓСЃС‚Р°РЅРѕРІР»РµРЅ РЅРёРєР°РєРѕР№ РѕС„РёСЃ.');
         otMSOffice:
-        LogObj.WriteLog('Тип офиса : MS');
+        LogObj.WriteLog('РўРёРї РѕС„РёСЃР° : MS');
         otOpOffice:
-        LogObj.WriteLog('Тип офиса : Open/Libre Office');
+        LogObj.WriteLog('РўРёРї РѕС„РёСЃР° : Open/Libre Office');
         end;
         LogObj.WriteLog('');
       end;
@@ -1564,7 +1564,7 @@ begin
       FirstRun:=True;
       For TemplatesCounter:=1 to TemplatesCount do
       begin
-        LogObj.WriteLog('Время старта: '+TimeToStr(Now));
+        LogObj.WriteLog('Р’СЂРµРјСЏ СЃС‚Р°СЂС‚Р°: '+TimeToStr(Now));
         LogObj.WriteLog('');
         For i:=1 to vQueryIndex do
         begin
@@ -1576,32 +1576,32 @@ begin
 
         FirstRun:=False;
         If AllOk Then
-          LogObj.WriteLog('Все SQL-запросы выполнены без ошибок!');
+          LogObj.WriteLog('Р’СЃРµ SQL-Р·Р°РїСЂРѕСЃС‹ РІС‹РїРѕР»РЅРµРЅС‹ Р±РµР· РѕС€РёР±РѕРє!');
 
         LogObj.WriteLog('');
 
         Case FReportOutputType of
         rtWord:
         begin
-          LogObj.WriteLog('Генерация отчёта...');
+          LogObj.WriteLog('Р“РµРЅРµСЂР°С†РёСЏ РѕС‚С‡С‘С‚Р°...');
           PrintWord:=TPrintDoc.Create(dmData, otMSOffice, LogObj);
           try
             PrintWord.PrintTemplate(Templates[TemplatesCounter], GPT.DebugOn);
           Except
             On E: Exception do
             begin
-              LogObj.WriteLog('Ошибка генерации отчёта:');
-              LogObj.WriteLog('  Текст ошибки :');
+              LogObj.WriteLog('РћС€РёР±РєР° РіРµРЅРµСЂР°С†РёРё РѕС‚С‡С‘С‚Р°:');
+              LogObj.WriteLog('  РўРµРєСЃС‚ РѕС€РёР±РєРё :');
               LogObj.WriteLog(E.Message);
-              LogObj.WriteLog('...НЕ успешно.');
+              LogObj.WriteLog('...РќР• СѓСЃРїРµС€РЅРѕ.');
               Errors:=True;
             end;
           end;
           If Not Errors Then
-            LogObj.WriteLog('...Успешно.');
+            LogObj.WriteLog('...РЈСЃРїРµС€РЅРѕ.');
 
           If PrintWord.OfficeType=otMSOffice Then
-            LogObj.WriteLog('Версия MS офис : '+IntToStr(PrintWord.MSOVer));
+            LogObj.WriteLog('Р’РµСЂСЃРёСЏ MS РѕС„РёСЃ : '+IntToStr(PrintWord.MSOVer));
 
           LogObj.WriteLog('[PrintVariables]');
           For i:=1 to FDCLLogOn.Variables.VariablesList.Count do
@@ -1636,9 +1636,9 @@ begin
             end;
           end;
 
-          LogObj.WriteLog('Сохранение в : '+AFileName);
+          LogObj.WriteLog('РЎРѕС…СЂР°РЅРµРЅРёРµ РІ : '+AFileName);
           PrintWord.SaveReport(AFileName);
-          LogObj.WriteLog('Запуск документа ...');
+          LogObj.WriteLog('Р—Р°РїСѓСЃРє РґРѕРєСѓРјРµРЅС‚Р° ...');
           PrintWord.ShowReport;
         end;
 {$IFNDEF NOFASTREPORTS}
@@ -1654,11 +1654,11 @@ begin
         end;
 
         LogObj.WriteLog('');
-        LogObj.WriteLog('Время финиша: '+TimeToStr(Now));
+        LogObj.WriteLog('Р’СЂРµРјСЏ С„РёРЅРёС€Р°: '+TimeToStr(Now));
         LogObj.WriteLog('');
       end;
 
-      LogObj.WriteLog('Обработка завершающих Query.');
+      LogObj.WriteLog('РћР±СЂР°Р±РѕС‚РєР° Р·Р°РІРµСЂС€Р°СЋС‰РёС… Query.');
       For i:=1 to vQueryIndex do
       begin
         If Assigned(mQueries[i]) Then
@@ -1671,20 +1671,20 @@ begin
     Else
     begin
       Errors:=True;
-      LogObj.WriteLog('Файл шаблона не найден!!!');
+      LogObj.WriteLog('Р¤Р°Р№Р» С€Р°Р±Р»РѕРЅР° РЅРµ РЅР°Р№РґРµРЅ!!!');
       LogObj.WriteLog(Templates[TemplatesCounter]);
     end;
 
     LogObj.WriteLog('=====================================');
     LogObj.WriteLog('');
-    LogObj.WriteLog('=====Конец блока выполнения=====');
+    LogObj.WriteLog('=====РљРѕРЅРµС† Р±Р»РѕРєР° РІС‹РїРѕР»РЅРµРЅРёСЏ=====');
     LogObj.WriteLog('');
   finally
     try
       If Errors Then
       begin
         LogObj.WriteLog('');
-        LogObj.WriteLog('!!!!!!!!Что-то пошло не так.!!!!!!!!');
+        LogObj.WriteLog('!!!!!!!!Р§С‚Рѕ-С‚Рѕ РїРѕС€Р»Рѕ РЅРµ С‚Р°Рє.!!!!!!!!');
         LogObj.WriteLog('');
       end;
 
@@ -2360,7 +2360,7 @@ begin
   RoleButtonOK:=TDialogButton.Create(RoleForm);
   RoleButtonOK.Parent:=RoleForm;
   RoleButtonOK.Default:=True;
-  RoleButtonOK.Caption:=SystemToInterface(GetDCLMessageString(msApplay));
+  RoleButtonOK.Caption:=GetDCLMessageString(msApplay);
   RoleButtonOK.Width:=LoginButtonWidth;
   RoleButtonOK.Height:=ButtonHeight;
   RoleButtonOK.OnClick:=OkButtonClick;
@@ -4343,7 +4343,7 @@ begin
         tmpSQL:=InitCap(FindParam('caption=', ScrStr));
         FForm.Caption:=tmpSQL;
         If GPT.MainFormCaption<>'' then
-          FForm.Caption:=FForm.Caption+' \'+Trim(SystemToInterface(GPT.MainFormCaption))+'\';
+          FForm.Caption:=FForm.Caption+' \'+Trim(GPT.MainFormCaption)+'\';
       end;
 
       If PosEx('Style=', ScrStr)=1 Then
@@ -5946,7 +5946,7 @@ begin
     begin
       FCommandDCL.Clear;
       FCommandDCL.Text:=Command;
-      /// DebugProc('Попытка исполнить команду: '+Command);
+      /// DebugProc('РџРѕРїС‹С‚РєР° РёСЃРїРѕР»РЅРёС‚СЊ РєРѕРјР°РЅРґСѓ: '+Command);
       /// If PosEx('script type=visual', FCommandDCL[0])<>0 Then Open(Nil, Nil, Nil, '', FCommandDCL);
     end
     Else
@@ -8587,7 +8587,7 @@ begin
       begin
         DebugProc('  DBPath: '+GPT.DBPath);
         DebugProc('UNC paths not supported.');
-        ShowErrorMessage(0, SourceToInterface('UNC '+GetDCLMessageString(msPathsNotSupported)+'.'));
+        ShowErrorMessage(0, 'UNC '+GetDCLMessageString(msPathsNotSupported)+'.');
         Result:=255;
         Exit;
       end;
@@ -8618,7 +8618,7 @@ begin
         FDBLogOn.Params.Append('lc_ctype='+ReplaseCPtoWIN(DefaultSystemEncoding));
       End
       Else
-        FDBLogOn.Params.Append('lc_ctype='+UpperCase(GPT.ServerCodePage));
+        FDBLogOn.Params.Append('lc_ctype='+UpperCase(ReplaseCPtoWIN(GPT.ServerCodePage)));
 
       FDBLogOn.SQLDialect:=GPT.SQLDialect;
       try
@@ -8637,8 +8637,8 @@ begin
         begin
           DebugProc('  ... Fail');
           ConnectErrorCode:=255;
-          ShowErrorMessage(0, SourceToInterface(GetDCLMessageString(msConnectDBError)+' 0000 / '+
-                E.Message));
+          ShowErrorMessage(0, GetDCLMessageString(msConnectDBError)+' 0000 / '+
+                E.Message);
           Result:=255;
         end;
       end;
@@ -8806,7 +8806,7 @@ begin
       If GPT.ServerCodePage='' Then
         FDBLogOn.Charset:='utf8'
       Else
-        FDBLogOn.Charset:=GPT.ServerCodePage;
+        FDBLogOn.Charset:=ReplaseCPtoWIN(GPT.ServerCodePage);
 
       FDBLogOn.Dialect:=GPT.SQLDialect;
       IBTransaction.Database:=FDBLogOn;
@@ -8893,7 +8893,7 @@ begin
       If GPT.ServerCodePage='' Then
         FDBLogOn.Charset:='utf8'
       Else
-        FDBLogOn.Charset:=GPT.ServerCodePage;
+        FDBLogOn.Charset:=ReplaseCPtoWIN(GPT.ServerCodePage);
 
       IBTransaction.Database:=FDBLogOn;
       try
@@ -10243,10 +10243,10 @@ var
   end;
 
 begin
-  // 4 - Выход по дате.
-  // 2,3 - Запуск приложения.
-  // 1 - Сообщение.
-  // 5 - Запуск скрипта.
+  // 4 - Р’С‹С…РѕРґ РїРѕ РґР°С‚Рµ.
+  // 2,3 - Р—Р°РїСѓСЃРє РїСЂРёР»РѕР¶РµРЅРёСЏ.
+  // 1 - РЎРѕРѕР±С‰РµРЅРёРµ.
+  // 5 - Р—Р°РїСѓСЃРє СЃРєСЂРёРїС‚Р°.
 {$IFNDEF NODCLMESSAGES}
   If Not GPT.UseMessages Then
     Exit;
@@ -10347,7 +10347,7 @@ begin
         begin
           If ExitFlag=0 Then
           begin
-            MessageToUser(SystemToInterface(Format(GetDCLMessageString(msTimeToExit), [ExitTime])));
+            MessageToUser(Format(GetDCLMessageString(msTimeToExit), [ExitTime]));
             ExitFlag:=1;
             TimeToExit:=UpTime+(ExitTime*1000);
           end;
@@ -10474,7 +10474,7 @@ begin
 
   ItemMenu:=TMenuItem.Create(MainMenu);
   ItemMenu.Name:='ItemMeu_About';
-  ItemMenu.Caption:='О...';
+  ItemMenu.Caption:='Рћ...';
   ItemMenu.OnClick:=DCLMainLogOn.About;
 
   {$IFDEF MSWINDOWS}
@@ -10820,7 +10820,7 @@ begin
       MenuQuery.Open;
       tmpSQL:=TrimRight(MenuQuery.FieldByName(GPT.DCLNameField).AsString);
       FDCLLogOn.RePlaseVariables(tmpSQL);
-      tmpSQL:=tmpSQL+SystemToInterface(GPT.MainFormCaption);
+      tmpSQL:=tmpSQL+GPT.MainFormCaption;
       FForm.Caption:=tmpSQL;
 
       If NewMainForm Then
@@ -11094,7 +11094,7 @@ begin
     If Not FieldExists(BrushColors[l].Key, FQuery) Then
     begin
       DebugProc('//!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-      DebugProc('В предложении Color=, указанно несуществующее поле : '+BrushColors[l].Key);
+      DebugProc('Р’ РїСЂРµРґР»РѕР¶РµРЅРёРё Color=, СѓРєР°Р·Р°РЅРЅРѕ РЅРµСЃСѓС‰РµСЃС‚РІСѓСЋС‰РµРµ РїРѕР»Рµ : '+BrushColors[l].Key);
       DebugProc(OPL);
       DebugProc('//!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
     end;
@@ -12574,7 +12574,7 @@ begin
   If Calendars[CalendarIdx].ReOpen Then
   begin
     FQuery.Close;
-    EdDate:='Query='+FindRaightQuery('Query=');
+    EdDate:='Query='+FindRaightQuery();
     EdDate:=FindParam('Query=', EdDate);
     TranslateVal(EdDate);
     FQuery.SQL.Text:=EdDate;
@@ -13162,7 +13162,7 @@ begin
 
         If FindParam('ReadOnly=', FField.OPL)<>'' Then
         begin
-          // Убрать везде
+          // РЈР±СЂР°С‚СЊ РІРµР·РґРµ
           FField.ReadOnly:=StrToIntEx(FindParam('ReadOnly=', FField.OPL))=1;
         end;
 
@@ -13409,30 +13409,30 @@ begin
     Key:=FloatDelimiterTo;
   If (Key='/') or (Key='?') or (Key='<') then
     Key:=FloatDelimiterTo;
-  If (Key='б') or (Key='Б') or (Key='ю') or (Key='Ю') then
+  If (Key='Р±') or (Key='Р‘') or (Key='СЋ') or (Key='Р®') then
     Key:=FloatDelimiterTo;
 
   Case Key of
-  // разрешаем ввод цифр
+  // СЂР°Р·СЂРµС€Р°РµРј РІРІРѕРґ С†РёС„СЂ
   '0'..'9':Key:=Key;
-  // разрешаем ввод всего, что похоже на десятичный разделитель
+  // СЂР°Р·СЂРµС€Р°РµРј РІРІРѕРґ РІСЃРµРіРѕ, С‡С‚Рѕ РїРѕС…РѕР¶Рµ РЅР° РґРµСЃСЏС‚РёС‡РЅС‹Р№ СЂР°Р·РґРµР»РёС‚РµР»СЊ
   '.', ',':
   Begin
-    // запрещаем ввод более 1 десятичного разделителя
+    // Р·Р°РїСЂРµС‰Р°РµРј РІРІРѕРґ Р±РѕР»РµРµ 1 РґРµСЃСЏС‚РёС‡РЅРѕРіРѕ СЂР°Р·РґРµР»РёС‚РµР»СЏ
     If Pos(FloatDelimiterTo, Text)=0 then
       Key:=FloatDelimiterTo
     Else key:=#0;
   End;
   '-':
   Begin
-    // запрещаем ввод более 1 минуса
+    // Р·Р°РїСЂРµС‰Р°РµРј РІРІРѕРґ Р±РѕР»РµРµ 1 РјРёРЅСѓСЃР°
     If (Pos('-', Text)=0) then
       Key:='-'
     Else key:=#0;
   End;
-  // разрешаем использование клавиш BackSpace и Delete
+  // СЂР°Р·СЂРµС€Р°РµРј РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ РєР»Р°РІРёС€ BackSpace Рё Delete
   #8:Key:=Key;
-  // "гасим" все прочие клавиши
+  // "РіР°СЃРёРј" РІСЃРµ РїСЂРѕС‡РёРµ РєР»Р°РІРёС€Рё
   Else key:=#0;
   End;
 end;
@@ -13634,7 +13634,7 @@ begin
       [loCaseInsensitive]);
 end;
 
-function TDCLGrid.FindRaightQuery(St: String): String;
+function TDCLGrid.FindRaightQuery(): String;
 var
   v1: Integer;
 begin
@@ -15244,11 +15244,11 @@ var
 begin
   PrintBox:=TStringList.Create;
   If DefaultSystemEncoding=EncodingUTF8 Then
-    PrintBox.Append(UTF8BOM+InterfaceToSystem(Caption))
+    PrintBox.Append(UTF8BOM+Caption)
   Else If DefaultSystemEncoding='utf16' Then
-    PrintBox.Append(UTF16LEBOM+InterfaceToSystem(Caption))
+    PrintBox.Append(UTF16LEBOM+Caption)
   Else
-    PrintBox.Append(InterfaceToSystem(Caption));
+    PrintBox.Append(Caption);
 
   PrintBox.Append('');
   S:='|';
@@ -15257,11 +15257,11 @@ begin
     For FieldsCounter:=0 to Query.FieldCount-1 do
     begin
       S1:='';
-      S2:=InterfaceToSystem(Query.Fields[FieldsCounter].FieldName);
+      S2:=TrimRight(Query.Fields[FieldsCounter].FieldName);
       If Length(S2)>Query.Fields[FieldsCounter].DataSize Then
         SetLength(S2, Query.Fields[FieldsCounter].DataSize+1);
       S:=S+S2;
-      For k:=Length(InterfaceToSystem(Query.Fields[FieldsCounter].FieldName)) to Query.Fields
+      For k:=Length(TrimRight(Query.Fields[FieldsCounter].FieldName)) to Query.Fields
         [FieldsCounter].DataSize do
         S1:=S1+' ';
       S:=S+S1+'|';
@@ -15280,11 +15280,11 @@ begin
       For FieldsCounter:=0 to Query.FieldCount-1 do
       begin
         S1:='';
-        S2:=InterfaceToSystem(Query.Fields[FieldsCounter].AsString);
+        S2:=TrimRight(Query.Fields[FieldsCounter].AsString);
         If Length(S2)>Query.Fields[FieldsCounter].DataSize Then
           SetLength(S2, Query.Fields[FieldsCounter].DataSize+1);
         S:=S+S2;
-        For k:=Length(InterfaceToSystem(Query.Fields[FieldsCounter].AsString)) to Query.Fields
+        For k:=Length(TrimRight(Query.Fields[FieldsCounter].AsString)) to Query.Fields
           [FieldsCounter].DataSize do
           S1:=S1+' ';
         S:=S+S1+'|';
@@ -15300,11 +15300,11 @@ begin
     For FieldsCounter:=0 to Grid.Columns.Count-1 do
     begin
       S1:='';
-      S2:=InterfaceToSystem(Grid.Columns[FieldsCounter].Title.Caption);
+      S2:=TrimRight(Grid.Columns[FieldsCounter].Title.Caption);
       If Length(S2)>(Grid.Columns[FieldsCounter].Width div 7) Then
         SetLength(S2, (Grid.Columns[FieldsCounter].Width div 7)+1);
       S:=S+S2;
-      For k:=Length(InterfaceToSystem(Grid.Columns[FieldsCounter].Title.Caption))
+      For k:=Length(TrimRight(Grid.Columns[FieldsCounter].Title.Caption))
         to (Grid.Columns[FieldsCounter].Width div 7) do
         S1:=S1+' ';
       S:=S+S1+'|';
@@ -15333,12 +15333,12 @@ begin
         If Length(S2)>(Grid.Columns[FieldsCounter].Width div 7) Then
           SetLength(S2, (Grid.Columns[FieldsCounter].Width div 7)+1);
         S:=S+S2;
-        For k:=Length(InterfaceToSystem(Grid.Columns[FieldsCounter].Field.AsString))
+        For k:=Length(TrimRight(Grid.Columns[FieldsCounter].Field.AsString))
           to (Grid.Columns[FieldsCounter].Width div 7) do
           S1:=S1+' ';
         S:=S+S1+'|';
       end;
-      PrintBox.Append(InterfaceToSystem(S));
+      PrintBox.Append(TrimRight(S));
       Query.Next;
     end;
     Query.EnableControls;
@@ -15726,7 +15726,7 @@ begin
         For v1:=0 to DCLQuery.FieldCount-1 do
         begin
           SQLStr:=TrimRight(DCLQuery.Fields[v1].AsString);
-          InsertTextByXY(Sheet, Cell, uStringParams.UTF8ToAnsi(SQLStr), RecRepNum+StartRow-1,
+          InsertTextByXY(Sheet, Cell, BaseToInterface(SQLStr), RecRepNum+StartRow-1,
             v1+1+StartCol-1);
           If EnableRowChColor Then
             If RecRepNum Mod 2=0 Then
@@ -18035,4 +18035,3 @@ Initialization
 {$ENDIF}
 
 end.
-

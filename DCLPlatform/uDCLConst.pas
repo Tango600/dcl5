@@ -38,7 +38,7 @@ DefaultLibraryLocation='fbclient.so';
 {$IFDEF SQLdb}
   DBEngineType='SQLdb (Universal)';
 {$ENDIF}
-  Ver='10.1.42.347';
+  Ver='10.1.42.353';
   VersionS='$VersionSignature$'+Ver+'$';
 
   CompotableVersion='9.1.129.309';
@@ -300,9 +300,6 @@ DefaultLibraryLocation='fbclient.so';
   EditButtonsSet=[nbFirst, nbLast, nbEdit, nbDelete, nbInsert, nbPost, nbCancel, nbRefresh];
 
   DefaultNavigButtonsSet='First,Last,Edit,Delete,Insert,Post,Cancel,Refresh';
-
-  MonthsNamesRusW: Array [0..12] of String=(' ', 'Января', 'Февраля', 'Марта', 'Апреля', 'Майя', 'Июня',
-    'Июля', 'Августа', 'Сентября', 'Октября', 'Ноября', 'Декабря');
 
   DCLDir='DCL5'+PathDelim;
   DBFormNAme='DBForm';

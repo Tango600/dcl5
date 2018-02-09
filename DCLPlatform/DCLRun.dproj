@@ -3,7 +3,7 @@
         <ProjectGuid>{1F2D6FCB-7E1F-4861-B435-F92E1402D8D2}</ProjectGuid>
         <MainSource>DCLRun.dpr</MainSource>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">Release</Config>
+        <Config Condition="'$(Config)'==''">Debug</Config>
         <TargetedPlatforms>17</TargetedPlatforms>
         <AppType>Application</AppType>
         <FrameworkType>VCL</FrameworkType>
@@ -93,7 +93,6 @@
         <VerInfo_MajorVer>10</VerInfo_MajorVer>
         <VerInfo_MinorVer>1</VerInfo_MinorVer>
         <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=10.1.0.0;InternalName=DCLRun;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=DCL platform runner;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
-        <Debugger_RunParams>DCL_rt.ini</Debugger_RunParams>
         <DCC_MapFile>3</DCC_MapFile>
         <DCC_DebugDCUs>true</DCC_DebugDCUs>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>

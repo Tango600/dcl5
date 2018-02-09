@@ -1319,7 +1319,7 @@ Begin
           tmpStr:=FunctionParams[1];
           pv1:=StrToIntEx(tmpStr);
           If ((pv1>0) and (pv1<13)) then
-            TmpStr:=GetLacalaizedMonthName(StrToInt(FunctionParams[1]));
+            TmpStr:=GetLacalaizedMonthName(pv1);
         End;
         19: // LeadingZero
         Begin
@@ -1338,9 +1338,13 @@ Begin
         22: // MonthByDate
         Begin
           tmpStr:=FunctionParams[1];
-          pv1:=StrToIntEx(tmpStr);
-          If ((pv1>0) and (pv1<13)) then
-            TmpStr:=MonthsNamesRusW[pv1];
+          try
+            pv1:=MonthOf(StrToDate(tmpStr));
+            If ((pv1>0) and (pv1<13)) then
+              TmpStr:=GetLacalaizedMonthName(pv1);
+          Except
+            TmpStr:='';
+          End;
         End;
         23:
         Begin

@@ -29,16 +29,16 @@ Function InitCap(const S: String): String;
 Function TrimSymbols(S: String; TrimS: String): String;
 Function PosSet(SubSet, S: String; SepChar: String=DefaultValuesSeparator;
   Delim: String=DefaultParamDelim): Cardinal;
-Function BaseToSystem(S: String): String;
 {$IFNDEF FPC}
 Function ConvertEncoding(Const S, FromEncoding, ToEncoding: String): String;
 {$ENDIF}
-Function UTF8ToAnsi(S: String): String;
 Function TextToString(Text: String): String;
 function TrimChars(CharsSet, S:string):String;
 
-Function SystemToInterface(S:String): String;
-Function InterfaceToSystem(S:String): String;
+//Function SystemToInterface(S:String): String;
+//Function InterfaceToSystem(S:String): String;
+Function BaseToInterface(S: String): String;
+Function InterfaceToBase(S: String): String;
 
 Function DoublingApostrof(const S: String):String;
 
@@ -49,7 +49,7 @@ uses uDCLConst, uDCLData;
 {$IFNDEF FPC}
 Function ConvertEncoding(Const S, FromEncoding, ToEncoding: String): String;
 Begin
-  If (ToEncoding='utf8') and (PosEx('cp', FromEncoding)=1) and (FromEncoding<>'utf8') then
+  If (ToEncoding='utf8') and (PosEx('cp', FromEncoding)=1) and (FromEncoding<>'utf8') and (FromEncoding<>ToEncoding) then
     Result:=System.AnsiToUtf8(S)
   Else
     Result:=S;
@@ -80,24 +80,14 @@ Begin
   Result:=Text;
 End;
 
-Function InterfaceToSystem(S:String): String;
+Function BaseToInterface(S: String): String;
 Begin
-  Result:=ConvertEncoding(S, DefaultInterfaceEncoding, DefaultSystemEncoding);
+  Result:=ConvertEncoding(S, GPT.ServerCodePage, DefaultInterfaceEncoding);
 End;
 
-Function SystemToInterface(S:String): String;
+Function InterfaceToBase(S: String): String;
 Begin
-  Result:=ConvertEncoding(S, DefaultSystemEncoding, DefaultInterfaceEncoding);
-End;
-
-Function BaseToSystem(S: String): String;
-Begin
-  Result:=ConvertEncoding(S, GPT.ServerCodePage, DefaultSystemEncoding);
-End;
-
-Function UTF8ToAnsi(S: String): String;
-Begin
-  Result:=ConvertEncoding(S, EncodingUTF8, DefaultSystemEncoding);
+  Result:=ConvertEncoding(S, DefaultInterfaceEncoding, GPT.ServerCodePage);
 End;
 
 Function TrimSymbols(S: String; TrimS: String): String;

@@ -1,10 +1,10 @@
-unit uDCLDBUtils;
+п»їunit uDCLDBUtils;
 {$I DefineType.pas}
 
 interface
 
 uses
-  SysUtils, uDCLTypes, uDCLConst, uDCLData, uUDL,
+  SysUtils, uDCLTypes, uDCLConst, uDCLData, uUDL, uStringParams, uDCLMultiLang,
 {$IFDEF ADO}
   ADODB, ADOConst, ADOInt,
 {$ENDIF}
@@ -35,10 +35,16 @@ End;
 Function GetNameDSState(State: TDataSetState): String;
 Const
   StatesCount=12;
-  DataSetStateNames: Array [0..StatesCount] Of String=('Не активен', 'Просмотр', 'Редактирование',
-    'Вставка', 'Установка ключа', 'Вычисляемые поля', 'Фильтрация', 'Новое значение',
-    'Старое значение', 'Текущее значение', 'Блочное чтение', 'Внутренне вычисление', 'Открытие');
+Var
+  DataSetStateNames: Array [0..StatesCount] Of String;
+  StatesSet:String;
+  i:Integer;
 Begin
+  StatesSet:=GetDCLMessageString(msDSStateSet);
+  For i:=1 to ParamsCount(GetDCLMessageString(msDSStateSet), ',') do
+  Begin
+    DataSetStateNames[i-1]:=SortParams(StatesSet, i, ',');
+  End;
   Result:=DataSetStateNames[Ord(State)];
 End;
 
