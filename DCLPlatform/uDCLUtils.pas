@@ -124,7 +124,7 @@ function GetTimeFormat(mSec: Cardinal): String;
 implementation
 
 uses
-  SumProps, uDCLResources, uDCLDBUtils, uDCLMultiLang, MD5;
+  SumProps, uDCLResources, uDCLDBUtils, uDCLMultiLang, uDCLOfficeUtils, MD5;
 
 function ValidObject(const AObj: TObject): Boolean;
 begin
@@ -1464,6 +1464,9 @@ Procedure GetParamsStructure(Params:TStringList);
 Var
   i: Word;
 Begin
+  GPT.OfficeTemplateFormat:=odtMSO;
+  GPT.OfficeDocumentFormat:=odtMSO;
+
   If Params.Count>0 Then
     For i:=0 To Params.Count-1 Do
     Begin
@@ -1725,7 +1728,7 @@ Begin
 
         If PosEx('Language=', Params[i])=1 Then
         Begin
-          LangID:=LangNameToID(Trim(FindParam('Language=', Params[i])));
+          LangName:=Trim(FindParam('Language=', Params[i]));
         End;
 
         If PosEx('DateSeparator=', Params[i])=1 Then
@@ -1745,12 +1748,12 @@ Begin
 
         If PosEx('OfficeTemplateFormat=', Params[i])=1 Then
         Begin
-          // OfficeTemplateFormat:=ConvertOfficeType(Trim(FindParam('OfficeTemplateFormat=', Params[i])));
+          GPT.OfficeTemplateFormat:=ConvertOfficeType(Trim(FindParam('OfficeTemplateFormat=', Params[i])));
         End;
 
         If PosEx('OfficeDocumentFormat=', Params[i])=1 Then
         Begin
-          // OfficeDocumentFormat:=ConvertOfficeType(Trim(FindParam('OfficeDocumentFormat=', Params[i])));
+          GPT.OfficeDocumentFormat:=ConvertOfficeType(Trim(FindParam('OfficeDocumentFormat=', Params[i])));
         End;
 
         If PosEx('UserLocalProfile=', Params[i])=1 Then

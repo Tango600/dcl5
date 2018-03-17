@@ -242,7 +242,7 @@ begin
         Except
           ShowErrorMessage(-5004, FileName);
           If Assigned(FLogObject) then
-            FLogObject.WriteLog('-5004 / Шаблон не загружен, нет такого шаблона');
+            FLogObject.WriteLog('-5004 / Шаблон не загружен, нет такого шаблона.');
         End;
         // vWordDocument.Activate;
       end;

@@ -398,7 +398,6 @@ begin
 {$IFDEF SQLdbFamily}
   ShadowQuery.Database:=DatabaseObj;
 {$ENDIF}
-//  ShadowQuery.Name:='ShadowQueryDCLQuery_'+IntToStr(UpTime);
 {$ENDIF}
 end;
 
@@ -713,7 +712,6 @@ end;
 function TDCLQuery.CreateTR(RW:TTransactionType): TTransaction;
 begin
   Result:=TTransaction.Create(Self);
-  //Result.Name:='tmp_WTR_'+IntToStr(UpTime);
   {$IFDEF IBX}
   Result.DefaultDatabase:=Database;
   Result.DefaultAction:=TACommit;
@@ -742,7 +740,7 @@ begin
   Result:='';
   If GPT.IBAll then
   Begin
-{$IFDEF CACHEON}
+{$IFDEF CACHEON}{$IFDEF IBALL}
     If TableName<>'' then
     Begin
       ShadowQuery.SQL.Text:='select RDB$FIELD_NAME '+
@@ -781,7 +779,7 @@ begin
       If Result<>'' then
         Result:=Copy(Result, 1, Length(Result)-1);
     End;
-{$ENDIF}    
+{$ENDIF}{$ENDIF}
   End;
 end;
 

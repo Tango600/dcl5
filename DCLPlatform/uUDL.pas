@@ -1062,8 +1062,8 @@ begin
 
   BinStor:=TDCLBinStore.Create(DCLLogOn);
   FDCLLogOn:=DCLLogOn;
-  OfficeDocumentFormat:=odtMSO;
-  OfficeTemplateFormat:=odtMSO;
+  OfficeDocumentFormat:=GPT.OfficeDocumentFormat;
+  OfficeTemplateFormat:=GPT.OfficeTemplateFormat;
 {$ENDIF}
 end;
 
@@ -16868,8 +16868,8 @@ begin
   BinStor:=TDCLBinStore.Create(DCLLogOn);
   FDCLLogOn:=DCLLogOn;
   FDCLGrid:=DCLGrid;
-  OfficeDocumentFormat:=odtMSO;
-  OfficeTemplateFormat:=odtMSO;
+  OfficeDocumentFormat:=GPT.OfficeDocumentFormat;
+  OfficeTemplateFormat:=GPT.OfficeTemplateFormat;
 end;
 
 { TDCLBinStore }
@@ -17000,7 +17000,7 @@ begin
   InitGetAppConfigDir;
   DCLMainLogOn:=TDCLLogOn.Create(DBLogOn);
   DCLMainLogOn.RoleOK:=lsNotNeed;
-  LoadLangRes(LangID, Path);
+  LoadLangRes(LangName, Path);
 
   For v1:=1 to ParamCount do
     If ParamStr(v1)='/debug' Then
@@ -17077,7 +17077,7 @@ begin
 {$ENDIF}
     GetParamsStructure(Params);
 
-    LoadLangRes(LangID, Path);
+    LoadLangRes(LangName, Path);
 
 {$IFNDEF EMBEDDED}
     If ParamCount>0 Then

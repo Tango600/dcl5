@@ -35,10 +35,8 @@ Function ConvertEncoding(Const S, FromEncoding, ToEncoding: String): String;
 Function TextToString(Text: String): String;
 function TrimChars(CharsSet, S:string):String;
 
-//Function SystemToInterface(S:String): String;
-//Function InterfaceToSystem(S:String): String;
 Function BaseToInterface(S: String): String;
-Function InterfaceToBase(S: String): String;
+//Function InterfaceToBase(S: String): String;
 
 Function DoublingApostrof(const S: String):String;
 

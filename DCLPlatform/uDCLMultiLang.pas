@@ -11,7 +11,7 @@ uses
   uDCLConst;
 
 type
-  TLangID=LongWord;
+  //TLangID=LongWord;
   TLangName=String;
 
   TTranscodeDataType=(tdtUTF8, tdtDOS, tdtTranslit);
@@ -41,26 +41,21 @@ type
     msLoading, msTimeToExit, msDSStateSet);
 
 
-procedure LoadLangRes(Lang:TLangID; Path:String);
+procedure LoadLangRes(Lang:TLangName; Path:String);
 function GetDCLMessageString(MessID: TStringMessages): String;
 function GetDCLErrorString(ErrorCode: Integer; AddText: String=''):string;
-function LoadTranscodeFile(DataType:TTranscodeDataType; FileName:String; LangID:TLangID):Boolean;
+function LoadTranscodeFile(DataType:TTranscodeDataType; FileName:String; Lang:TLangName):Boolean;
 Function Transcode(DataType:TTranscodeDataType; const Buf: String): String;
 function GetLacalaizedMonthName(MonthNum:Integer):string;
-function LangIDToString(LangID:TLangID):String;
-function LangNameToID(LangName:String):TLangID;
 
 function GetSystemLanguage: String;
-function GetSystemLanguageID: Integer;
 procedure InitLangEnv;
 
 const
   DefaultLangDir='Lang';
   DefaultLanguage='RUS';
-  DefaultLanguageID=1049;
 
 var
-  LangID:TLangID;//   //TISO639_3;
   LangName:TLangName;
 
 implementation
@@ -105,12 +100,6 @@ type
     TranscodeType:TTranscodeType;
   end;
 
-  TLangIDName=record
-    ID:Integer;
-    LangNameISO639, ShortName:string;
-  end;
-
-
 const
   TranscodeToDOS:Array[0..3] of TTranscodeData=((CodeFrom1:168;CodeFrom2:168; TagertCode:Chr(72); TranscodeType:ttAdd),
                                              (CodeFrom1:184;CodeFrom2:184; TagertCode:Chr(57); TranscodeType:ttAdd),
@@ -127,13 +116,6 @@ const
     '''', '', 'e', 'ju', 'ja', 'A', 'B', 'V', 'G', 'D', 'JE', 'JO', 'ZH', 'Z', 'I', 'J', 'K', 'L',
     'M', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'F', 'H', 'CE', 'CH', 'SH', 'SCH', 'Y', '''', '', 'E',
     'JU', 'JA', '_', '#');
-
-  LangIDsToName:Array[1..4] of TLangIDName=(
-  (ID:1049; LangNameISO639:'RUS'; ShortName:'RU'),
-  (ID:1033; LangNameISO639:'ENG'; ShortName:'EN'),
-  (ID:1045; LangNameISO639:'POL'; ShortName:'PL'),
-  (ID:1029; LangNameISO639:'CES'; ShortName:'CS')
-  );
 
   ArrayCP1251ToUTF8: TCharToUTF8Table=(
     #0, // #0
@@ -401,8 +383,8 @@ var
 
 function GetDCLMessageStringDefault(MesID: TStringMessages): String;
 begin
-  Case LangID of
-  DefaultLanguageID:
+  If LangName=DefaultLanguage then
+  Begin
     case MesID of
     msNone:
     Result:='<Нет>';
@@ -822,7 +804,7 @@ begin
   Data.TranscodeType:=ttDirect;
 end;
 
-function LoadTranscodeFile(DataType:TTranscodeDataType; FileName:String; LangID:TLangID):Boolean;
+function LoadTranscodeFile(DataType:TTranscodeDataType; FileName:String; Lang:TLangName):Boolean;
 var
   LangResFile:TStringList;
   S, c, vs1, tmp1:String;
@@ -831,7 +813,7 @@ var
   lt:TIsDigitType;
 begin
   If not FileExists(FileName) then
-    FileName:=FileName+'.'+LangIDToString(LangID);
+    FileName:=FileName+'.'+UpperCase(Lang);
 
   Result:=False;
 {$IFNDEF SINGLELANG}
@@ -974,8 +956,8 @@ begin
   while i<=Length(Buf) Do
   Begin
     Match:=False;
-	  For j:=1 to Length(TranscodeData[DataType]) do
-	  Begin
+    For j:=1 to Length(TranscodeData[DataType]) do
+    Begin
       If (TranscodeData[DataType][j-1].SourceLiteral<>'') then
       Begin
         If TranscodeData[DataType][j-1].SourceLiteral[1]=Buf[i] then
@@ -1019,7 +1001,7 @@ begin
                 break;
               End;
           End;
-		End;
+    End;
 
     If Match then
     Begin
@@ -1039,7 +1021,7 @@ begin
 
     Result:=Result+ts;
     Inc(i);
-	End;
+  End;
 end;
 
 procedure LoadLangFile(FileName:String);
@@ -1108,7 +1090,7 @@ begin
   End
   Else
 {$ENDIF}
-    For k:=0 to Ord(High(NamedStringMessages))-1 do
+    For k:=0 to Ord(High(NamedStringMessages)) do
       StringMessages[TStringMessages(k)]:=GetDCLMessageStringDefault(TStringMessages(k));
 end;
 
@@ -1146,11 +1128,11 @@ begin
   End;
 end;
 
-procedure LoadLangRes(Lang:TLangID; Path:String);
+procedure LoadLangRes(Lang:TLangName; Path:String);
 var
   FileName:string;
 begin
-  FileName:=IncludeTrailingPathDelimiter(DefaultLangDir)+'DCLTranslate.'+LangIDToString(Lang);
+  FileName:=IncludeTrailingPathDelimiter(DefaultLangDir)+'DCLTranslate.'+UpperCase(Lang);
 
   LoadLangFile(Path+FileName);
   If not LoadTranscodeFile(tdtDOS, 'DCLTranscodeDOS', Lang) then
@@ -1169,51 +1151,6 @@ begin
     Result:='';
 end;
 
-function LangIDToString(LangID:TLangID):String;
-var
-  i:Integer;
-begin
-  Result:=IntToStr(LangID);
-  For i:=1 to Length(LangIDsToName) do
-  Begin
-    If LangIDsToName[i].ID=LangID then
-    Begin
-      Result:=LangIDsToName[i].LangNameISO639;
-      Break;
-    End;
-  End;
-end;
-
-function LangNameToID(LangName:String):TLangID;
-var
-  i:Integer;
-begin
-  Result:=DefaultLanguageID;
-  For i:=1 to Length(LangIDsToName) do
-  Begin
-    If UpperCase(LangIDsToName[i].LangNameISO639)=UpperCase(LangName) then
-    Begin
-      Result:=LangIDsToName[i].ID;
-      Break;
-    End;
-  End;
-end;
-
-function GetLangNameISO639ByShort(LangName:String):String;
-var
-  i:Integer;
-begin
-  Result:=DefaultLanguage;
-  For i:=1 to Length(LangIDsToName) do
-  Begin
-    If UpperCase(LangIDsToName[i].ShortName)=UpperCase(LangName) then
-    Begin
-      Result:=LangIDsToName[i].LangNameISO639;
-      Break;
-    End;
-  End;
-end;
-
 function GetSystemLanguage: String;
 var
 {$IFDEF MSWINDOWS}
@@ -1224,14 +1161,11 @@ var
 {$ENDIF}
 begin
 {$IFDEF MSWINDOWS}
+  Result:=DefaultLanguage;
   OutputBuffer:=StrAlloc(90);     //alocate memory for the PChar
   try
-    try
-      GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SABBREVLANGNAME, OutputBuffer, 89);
-      Result:=UpperCase(OutputBuffer);
-    except
-      Result:=DefaultLanguage;
-    end;
+    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SABBREVLANGNAME, OutputBuffer, 89);
+    Result:=UpperCase(OutputBuffer);
   finally
     StrDispose(OutputBuffer);   //alway's free the memory alocated
   end;
@@ -1243,37 +1177,8 @@ begin
 {$ENDIF}
 end;
 
-function GetSystemLanguageID: Integer;
-var
-{$IFDEF MSWINDOWS}
-  SelectedLCID: LCID;       //DWORD constand in Windows.pas
-{$ENDIF}
-{$IFDEF UNIX}
-  S, Lang:string;
-{$ENDIF}
-begin
-{$IFDEF MSWINDOWS}
-  try
-    try
-      SelectedLCID:=GetUserDefaultLCID;
-      Result:=SelectedLCID
-    except
-      Result:=DefaultLanguageID;
-    end;
-  finally
-    //
-  end;
-{$ENDIF}
-{$IFDEF UNIX}
-  S:=SysUtils.GetEnvironmentVariable('LANG');
-  Lang:=Copy(S, 1, Pos('_', S)-1);
-  Result:=LangNameToID(GetLangNameISO639ByShort(Lang));
-{$ENDIF}
-end;
-
 procedure InitLangEnv;
 begin
-  LangID:=GetSystemLanguageID;
   LangName:=GetSystemLanguage;
 end;
 

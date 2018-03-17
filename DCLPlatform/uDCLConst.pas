@@ -38,7 +38,7 @@ DefaultLibraryLocation='fbclient.so';
 {$IFDEF SQLdb}
   DBEngineType='SQLdb (Universal)';
 {$ENDIF}
-  Ver='10.1.42.353';
+  Ver='10.1.44.357';
   VersionS='$VersionSignature$'+Ver+'$';
 
   CompotableVersion='9.1.129.309';
@@ -251,7 +251,7 @@ DefaultLibraryLocation='fbclient.so';
   {$IFDEF NEWDELPHI}
   DefaultInterfaceEncoding='utf8';
   {$ELSE}
-  DefaultInterfaceEncoding='cp1251';
+  DefaultInterfaceEncoding='win1251';
   {$ENDIF}
 {$ENDIF}
 {$IFDEF FPC}
