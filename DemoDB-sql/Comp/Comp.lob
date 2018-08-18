@@ -1,0 +1,203 @@
+Caption=Компьютеры;
+Query=select * from Hardware hw left join HW_Types ht on ht.ID_HWT=hw.HW_Type left join Vendors v on hw.VendNum=v.ID_Vendor left join Filial f on hw.FLID=f.ID_Fl left join Departments d on hw.DepID=d.ID_Dep left join Employers em on hw.EmplID=em.EmpID left join State s on hw.State=s.StateID;
+UpdateQuery=UpdateTable=Hardware;KeyFields=HWID;
+UniqueTable=Hardware;
+[Page]
+Title=Таблица;
+TablePart=SQL=select * from SOFTWARE s where s.SOFT_HW_ID=:HWID;Title=Программное обеспечение;Columns=SOFTWARENAME/Наименование,COASTSOFT/Стоимость;MasterDataField=HWID;DependField=SOFT_HW_ID;UpdateQuery=UpdateTable=SOFTWARE;KeyFields=SOFT_ID;
+TablePart=SQL=select * from REPAIRS r where r.REP_HW_ID=:HWID;Title=Ремонты;Columns=REPAIRDESC/Назначение,REPAIRDATE/Дата,REPAIRPRICE/Цена;REPAIRTYPE/Тип;MasterDataField=HWID;DependField=REP_HW_ID;UpdateQuery=UpdateTable=REPAIRS;KeyFields=REP_ID;
+TablePartToolButton=Label=Изменить;CommandName=Comp_Edit_Rep_Scr;
+Style=2;
+[Fields]
+18
+Ид
+HWID
+Наименование
+HW_Name
+Инвентарный ном.
+InvNo
+Серийный
+SerialNum
+Сетевое имя
+NetName
+IP адрес
+IP
+Цена
+Coast
+Дата покупки
+BuyDate
+Гарантия
+Guarantee
+Дата окончания гарантии
+EndGuarantee
+Тип
+HW_TypeName
+Поставщик
+VendorName
+Филиал
+FLName
+Подразделение
+DepName
+Сотруднудник
+EmplName
+Статус
+StateName
+Путь к документам
+DocPath
+Дата обновления
+UpdDate
+
+[Page]
+Title=Поля;
+Style=0;
+[Fields]
+20
+Ид
+HWID
+Наименование
+HW_Name
+Тех характеристики
+HW_TTH
+Инвентарный ном.
+InvNo
+Серийный
+SerialNum
+Сетевое имя
+NetName
+IP адрес
+IP
+Цена
+Coast
+Дата покупки
+BuyDate
+Гарантия
+Guarantee
+Дата окончания гарантии
+EndGuarantee
+Тип\Lookup=Key=ID_HWT;List=HW_TYPENAME;ModifyingField=HW_TYPE;QueryLookup=select * from HW_TYPES;
+HW_TYPE
+Поставщик\Lookup=Key=ID_Vendor;List=VendorNAME;QueryLookup=select * from Vendors;
+VENDNUM
+Филиал\Lookup=Key=ID_FL;List=FLNAME;ModifyingField=FLID;QueryLookup=select * from Filial;
+FLID
+Подразделение\Lookup=Key=ID_DEP;List=DEPNAME;ModifyingField=DepID;QueryLookup=select * from DEPARTMENTS;
+DepID
+Сотруднудник\Lookup=Key=EmpID;List=EMPLNAME;ModifyingField=EMPLID;QueryLookup=select * from EMPLOYERS;
+EMPLID
+Статус\Lookup=Key=STATEID;List=STATENAME;ModifyingField=STATE;QueryLookup=select * from STATE;
+STATE
+Путь к документам
+DocPath
+Дата обновления
+UpdDate
+Заметки
+NotesCaption=Ремонт
+Navigator=1;Buttons=Post,Edit,Cancel;Flat=1;
+Style=0;
+[Fields]
+4
+Дата
+REPAIRDATE
+Назначение\As_Memo;
+REPAIRDESC
+Тип\Lookup=Key=REPAIR_TYPE_ID;List=REPAIRTYPE;ModifyingField=REPAIRTYPE;QueryLookup=select * from REPAIR_TYPE;
+REPAIRTYPE
+Цена
+REPAIRPRICECaption=Филиалы
+Query=select * from Filial;
+UpdateQuery=UpdateTable=Filial;KeyFields=ID_FL;
+Live=1;
+Navigator=1;Buttons=First,Prior,Next,Last,Post,Insert,Edit,Delete,Cancel,Refresh;Flat=1;
+CommandButton=Action=Structure;Label=Структура
+CommandButton=Action=Print;Label=Печать
+Style=2;
+[Fields]
+3
+ID
+ID_FL
+Название
+FLNAME
+Эл. почта
+MAIL
+Caption=Поставщики
+Query=select * from Vendors;
+UpdateQuery=UpdateTable=Vendors;KeyFields=ID_VENDOR;
+Live=1;
+Navigator=1;Buttons=First,Prior,Next,Last,Post,Insert,Edit,Delete,Cancel,Refresh;Flat=1;
+CommandButton=Action=Structure;Label=Структура
+CommandButton=Action=Print;Label=Печать
+Style=2;
+[Fields]
+2
+ID
+ID_VENDOR
+Название
+VENDORNAMECaption=Типы техники
+Query=select * from HW_TYPES;
+UpdateQuery=UpdateTable=HW_TYPES;KeyFields=ID_HWT;
+Live=1;
+Navigator=1;Buttons=First,Prior,Next,Last,Post,Insert,Edit,Delete,Cancel,Refresh;Flat=1;
+CommandButton=Action=Structure;Label=Структура
+CommandButton=Action=Print;Label=Печать
+Style=2;
+[Fields]
+2
+ID
+ID_HWT
+Тип
+HW_TYPENAME
+Caption=Подразделения
+Query=select * from DEPARTMENTS;
+UpdateQuery=UpdateTable=DEPARTMENTS;KeyFields=ID_DEP;
+Navigator=1;Buttons=First,Prior,Next,Last,Post,Insert,Edit,Delete,Cancel,Refresh;Flat=1;
+CommandButton=Action=Structure;Label=Структура
+CommandButton=Action=Print;Label=Печать
+Style=2;
+[Fields]
+2
+ID
+ID_DEP
+Название
+DEPNAMEDialog=Repais;TablePart=2;Version;Caption=Типы ремонтов
+Query=select * from REPAIR_TYPE;
+UpdateQuery=UpdateTable=REPAIR_TYPE;KeyFields=REPAIR_TYPE_ID;
+Navigator=1;Buttons=First,Prior,Next,Last,Post,Insert,Edit,Delete,Cancel,Refresh;Flat=1;
+CommandButton=Action=Find;Label=Найти
+CommandButton=Action=Print;Label=Печать
+Style=2;
+[Fields]
+1
+Тип
+REPAIRTYPECaption=Сотрудники
+Query=select * from EMPLOYERS;
+UpdateQuery=UpdateTable=EMPLOYERS;KeyFields=EMPID;
+Live=1;
+Navigator=1;Buttons=First,Prior,Next,Last,Post,Insert,Edit,Delete,Cancel,Refresh;Flat=1;
+CommandButton=Action=Find;Label=Найти
+CommandButton=Action=Structure;Label=Структура
+CommandButton=Action=Print;Label=Печать
+Style=2;
+[Fields]
+5
+ID
+EMPID
+ФИО
+EMPLFNAME
+Внутр. тел.
+ITNPHONE
+Моб. тел
+MOBPHONE
+Телефон
+PHONECaption=Статусы
+Query=select * from STATE;
+UpdateQuery=UpdateTable=STATE;KeyFields=STATEID;
+Live=1;
+Navigator=1;Buttons=First,Prior,Next,Last,Post,Insert,Edit,Delete,Cancel,Refresh;Flat=1;
+CommandButton=Action=Print;Label=Печать
+Style=2;
+[Fields]
+2
+ID
+STATEID
+Статус
+STATENAME

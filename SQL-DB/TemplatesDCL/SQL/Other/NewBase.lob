@@ -1,0 +1,306 @@
+SetField=SetFieldValue=PROGRAMM_PARAM=1;
+Post;UserAccessRaight=7;
+Caption=Роли;
+Query=select * from DCL_ROLES order by ROLE_ACCESSLEVEL, ROLENAME;
+Style=2;
+[Fields]
+5
+ID роли
+ROLESID
+Название
+ROLENAME
+Длинное название роли
+LONGROLENAME
+Показывать роль
+SHOWINLIST
+Права роли
+ROLE_ACCESSLEVELUserAccessRaight=3;
+Caption=Хранилище двоичных данных;
+Query=select * from DCL_TEMPLATES;
+UpdateQuery=UpdateTable=DCL_TEMPLATES;KeyFields=TEID;
+Navigator=1;
+Style=2;
+ReadOnly=1;
+CommandButton=Label=Изменить;CommandName=BinStore_Edit_Scr;Pict=Edit;
+CommandButton=Label=Добавить;CommandName=BinStore_Add_Scr;Pict=New;
+CommandButton=Label=Сжать;CommandName=TemplateCompress;Pict=ZIP;
+CommandButton=Label=Расжать;CommandName=TemplateDeCompress;Pict=UnZIP;
+CommandButton=Label=Сохранить;CommandName=TemplateExport;Pict=SaveBS;
+CommandButton=Label=Загрузить;CommandName=TemplateImport;Pict=LoadBS;
+[Fields]
+2
+Ид.
+TEID
+Имя
+TEMPL_NAMEDialog=BinStore_Edit_Dlg;Child=1;
+Append;
+Dialog=BinStore_Edit_Dlg;Child=1;
+script type=command;
+OpenScript;Script Type=Command
+SignScript;Script Type=Command
+ReSignScript;Caption=Хранилище двоичных данных Редактирование;
+Style=0;
+Navigator=1;Buttons=Post,Cancel;
+DBImage=FieldName=TEMPL_DATA;
+[Fields]
+3
+Ид.;ReadOnly=1;
+TEID
+Имя
+TEMPL_NAME
+Данные
+TEMPL_DATACaption=Глобальные параметры;
+Query=select * from DCL_GLOBAL_PARAMS where PROGRAMM_PARAM is not null order by PARAM_NAME;
+Events=AfterPostEvents=GlobalParams_AP;
+Live=1;
+Modal=1;
+Navigator=1;Buttons=First,Edit,Insert,Post,Last,Delete,Refresh;
+CommandButton=Action=Find;Label=Найти
+CommandButton=Action=Print;Label=Печать
+Style=2;
+CommandButton=Label=Редактировать;CommandName=Global_Params_Edit_Scr;
+[Fields]
+3
+Наименование параметра
+PARAM_CAPT
+Параметр
+PARAM_NAME
+Значение
+PARAM_VALUECompressData=SQL=select * from DCL_TEMPLATES where TEID=:TEID;DataField=TEMPL_DATA;DeCompressData=SQL=select * from DCL_TEMPLATES where TEID=:TEID;DataField=TEMPL_DATA;script type=command
+Declare=TemplPath;
+ApplicationTitle=Шаблон приложения DCL5;Declare=FN;
+SaveFileDialog=FN;Ext=xls;
+GetFromDB=SQL=select * from DCL_TEMPLATES where TEID=:TEID;FileName=&FN;DataField=TEMPL_DATA;
+Dispose=FN;Declare=FN;
+OpenFileDialog=FN;
+PutInDB=SQL=select * from DCL_TEMPLATES where TEID=:TEID;FileName=&FN;DataField=TEMPL_DATA;
+Dispose=FN;Caption=Организации;
+Query=select o.oid, o.org_name, o.ord, case o.mainorg when 1 then 'Основная' end as MainOrg from organizations o where o.oid<>-1 order by o.mainorg, o.ord, o.org_name;
+Live=1;
+Navigator=1;Buttons=First,Prior,Next,Last,Post,Insert,Cancel,Refresh;
+Style=2;
+CommandButton=Label=Основной;CommandName=Orgs_Set_Main_Scr;;Hint=Сделать основной
+[Fields]
+4
+ID;ReadOnly=1;
+OID
+Наименование;Width=250;
+ORG_NAME
+Порядок
+ORD
+Основная;ReadOnly=1;
+MAINORGExecQuery=update organizations o set o.mainorg=null;
+ExecQuery=update organizations o set o.mainorg=1 where o.oid=:OID;
+ReOpen;lock;UserAccessRaight=7;
+Caption=Пользователи;
+Navigator=1;
+Live=1
+Query=Select * from &_DCL_USERS_TABLE_ order by 2;
+Style=2
+CommandButton=Action=Print;Label=Печать
+CommandButton=Label=Оповещение;CommandName=Roles_Notify_Add_Scr;;Hint=Создать оповещение.
+CommandButton=Label=Оповещения;CommandName=Dialog=Notifycations;Hint=Таблица оповещенеий.
+CommandButton=Label=Просмотр;CommandName=User_Edit_Scr;
+TablePart=Title=Роли;SQL=select r.rolesid, r.rolename, r.longrolename, r.role_accesslevel from DCL_ROLES_TO_USERS ru, dcl_Roles r where ru.ru_roleid=r.rolesid and ru.ru_userid=:UID union select -1 rolesid, r.rolename, r.longrolename, r.role_accesslevel from dcl_roles r where r.rolesid=:DCL_ROLE;MasterDataField=UID;DependField=ru_userid;Columns=ROLESID/ID роли,ROLENAME/Роль,LONGROLENAME/Полн. назв,ROLE_ACCESSLEVEL/Права роли;
+[Fields]
+5
+ID
+UID
+Имя пользователя
+DCL_USER_NAME
+Полное имя
+DCL_LONG_USER_NAME
+Показывать
+SHOWINLIST
+Права
+ACCESSLEVELUserAccessRaight=7;
+Caption=Меню ролей;
+Navigator=1;Buttons=First,Prior,Next,Last;
+Live=0;
+Query=select roleid, rolename, longrolename, MENUITEMID, dclname from ROLESTOMENU r2m order by roleid, MENUITEMID
+DBFilter=Label=Роль;List=LONGROLENAME;Key=ROLEID_R;FilterField=ROLEID;Width=150;DBFilterQuery=Select LONGROLENAME, ROLESID roleid_R from DCL_Roles Order by LONGROLENAME;
+Style=2;
+ReadOnly=1;
+Navigator=1;
+CommandButton=CommandName=Roles_AddRoleCallDialog;Label=Добавить;
+CommandButton=Label=Удалить;CommandName=Roles_DelRoleMenuItem;
+CommandButton=Label=Удалить роль;CommandName=Roles_DelRolesMenuItem_Call;
+CommandButton=Label=Копировать роль;CommandName=Roles_CopyRole_Call;
+CommandButton=Action=Print;Label=Печать
+CommandButton=Action=Find;Label=Найти
+CommandButton=Label=Недостающие;CommandName=Roles_Run_Test_RolesMenu;FontStyle=,Italic
+[Fields]
+*Caption=Добавление элемента меню;
+Navigator=0
+Style=0
+Modal=1
+FormHeight=200
+CommandButton=Label=Добавить;CommandName=Roles_AddMenuItemExec;
+[Fields]
+2
+Роль\LookUp=List=LongRoleName;Key=RolesID;VariableName=ROLEIDV;NoDataField=1;QueryLookup=select * from DCL_Roles order by LongRoleName;
+ROLESID
+Меню\LookUp=List=DCLName;Key=NumSeq;VariableName=MenuIDv;NoDataField=1;QueryLookup=select * from DCL_SCRIPTS t where t.ident between 0 and 60000 order by t.DCLName, t.NumSeq;
+MENUITEMIDDeclare=tmpAddMenuitem;
+SetValue=tmpAddMenuitem;ReturnQuery=select t.isappend from ADD_MENU_ITEM_TO_ROLE(&ROLEIDV, &MenuIDv) t;
+if Expression1=&tmpAddMenuitem; Expression2=1; then
+Reopen;
+Else
+Message=Такой элемент уже существует;
+EndIf
+Dispose=tmpAddMenuitem;Dialog=Roles_AddMenuItem;Child=1;Caption=Копирование роли;
+Navigator=0
+Style=0
+Modal=1
+FormHeight=200
+CommandButton=Label=Копировать;CommandName=Roles_CopyRoleExec;
+[Fields]
+2
+Копировать роль\LookUp=List=LongRoleName;Key=RolesID;VariableName=RoleIDFrom;NoDataField=1;QueryLookup=select * from DCL_Roles;
+ROLEID
+В роль\LookUp=List=LongRoleName;Key=RolesID;VariableName=RoleIDTo;NoDataField=1;QueryLookup=select * from DCL_Roles;
+MENUITEMIDModifyingQuery=execute procedure copy_role(&RoleIDFrom, &RoleIDTo);
+Dispose=RoleIDFrom, RoleIDTo
+ReOpen;Dialog=Roles_CopyRole;Child=1;Declare=YNv;
+Message=Удалить запись?;Flags=YesNo;VariableName=YNv;
+if Expression1=1; Expression2=&YNv; then
+ModifyingQuery=execute procedure DEL_ROLE_AND_MENU(:ROLESID);
+ReOpen;
+EndIf
+Dispose=YNv;ModifyingQuery=execute procedure DEL_ROLE_MENU(&RoleIDDel);
+Dispose=RoleIDDel;
+ReOpen;Declare=YNv;
+Message=Удалить запись?;Flags=YesNo;VariableName=YNv;
+if Expression1=1; Expression2=&YNv; then
+ModifyingQuery=delete from RolesMenu where RoleID=:RoleID and MenuItemID=:MenuItemID;
+ReOpen;
+EndIf
+Dispose=YNv;Caption=Удаление меню роли;
+Navigator=0
+Style=0
+Modal=1
+FormHeight=200
+CommandButton=Label=Удалить;CommandName=Roles_DelRoleExec;
+[Fields]
+1
+Роль\LookUp=List=LongRoleName;Key=RolesID;VariableName=RoleIDDel;NoDataField=1;QueryLookup=select * from DCL_Roles order by LongRoleName;
+ROLEIDDialog=Roles_DelRolesMenuItem;Child=1;Dialog=Roles_Test_RolesMenu;Caption=Недостающие элементы;
+Query=select * from rolesmenu_is_correct r order by r.role_id, r.dclname;
+Live=1;
+Navigator=1;Buttons=First,Prior,Next,Last,Refresh;
+CommandButton=Action=Find;Label=Найти
+CommandButton=Action=Structure;Label=Структура
+CommandButton=Action=Print;Label=Печать
+Style=2;
+ReadOnly=1
+[Fields]
+5
+№ скрипта
+NUMSEQ
+Эл. меню
+DCLNAME
+Поле Ид.
+IDENT
+Код роли
+ROLE_ID
+Роль
+ROLE_NAMESQLMon;Script Type=Command
+If Expression1=-1; Expression2=&Organization; then
+SetValue=Organization;ReturnQuery=select first 1 o.oid from organizations o where o.ord is not null and o.oid<>-1 order by o.ord;
+Else
+SetFieldValue=org=&Organization;
+EndIfVersion;Caption=Пользователь;
+Live=1;
+Style=0;
+TablePart=Title=Роли;SQL=select r.rolesid, r.rolename, r.longrolename, r.role_accesslevel from dcl_Roles r, DCL_ROLES_TO_USERS ru where ru.ru_roleid=r.rolesid and ru.ru_userid=:UID;MasterDataField=UID;DependField=ru_userid;Columns=ROLESID/ID роли,ROLENAME/Роль,LONGROLENAME/Полн. назв,ROLE_ACCESSLEVEL/Права роли;
+[Fields]
+6
+Имя
+DCL_USER_NAME
+Роль\Lookup=QueryLookup=select * from DCL_ROLES;Key=ROLESID;List=LONGROLENAME;
+DCL_ROLE
+Полное имя
+DCL_LONG_USER_NAME
+Пароль;HidePassword;
+DCL_USER_PASS
+Показывать
+SHOWINLIST
+Права\DropListBox=List=&_USERNAMEACCESSLEVELS_;SetIndexValue=1
+ACCESSLEVELDialog=User_Edit_Dlg;Child=1;ExecQuery=insert into DCL_NOTIFYCATIONS(USER_ID, NOTIFY_TIME, NOTIFY_ACTION, NOTIFY_TEXT, NOTIFY_STATE) values (&USER_ID, '&NOTIFY_TIME', &NOTIFY_ACTION, '&NOTIFY_TEXT', 1);
+CloseDialog;FormWidth=300;
+Caption=Добавление оповещения;
+Navigator=0;
+Query=;
+CommandButton=Label=Добавить;CommandName=Notify_Add_Scr;FontStyle=Bold;
+[Fields]
+3
+Дата и время оповещения (ДД.ММ.ГГГГ ЧЧ.ММ.СС)\InputBox=VariableName=NOTIFY_TIME;Width=110;_Value=&_DATETIME_;
+DER
+Действие\DropListBox=&_NOTIFYACTIONS_;VariableName=NOTIFY_ACTION;_Value=0;
+MER
+Текст оповещения\InputBox=VariableName=NOTIFY_TEXT;Width=260;
+CWEDeclare=USER_ID=:UID;
+Dialog=Notify_Add;Caption=Оповещения;
+Query=select * from DCL_NOTIFYCATIONS n order by NOTIFY_TIME, USER_ID, NOTIFY_STATE, NOTIFY_ACTION;
+OrderByFields=NOTIFY_ID,NOTIFY_TIME,NOTIFY_ACTION,NOTIFY_STATE,USER_ID;
+Live=1;
+Modal=1;
+Navigator=1;Buttons=First,Prior,Next,Last,Post,Insert,Edit,Delete,Cancel,Refresh;Flat=1;
+CommandButton=Action=Find;Label=Найти
+CommandButton=Action=Structure;Label=Структура
+CommandButton=Action=Print;Label=Печать
+Style=2;
+[Fields]
+5
+ID
+NOTIFY_ID
+Дата время
+NOTIFY_TIME
+ID пользователя
+USER_ID
+Статус
+NOTIFY_STATE
+Текст оповещения
+NOTIFY_TEXT
+
+
+Caption=Глобальные параметры редактирование;
+Live=1;
+Modal=1;
+Navigator=1;Buttons=Edit,Insert,Post;
+Style=0;
+[Fields]
+3
+Наименование параметра
+PARAM_CAPT
+Параметр
+PARAM_NAME
+Значение\As_Memo;Width=400;Height=200;
+PARAM_VALUEDialog=Global_Params_Edit_Dlg;Child=1;Caption=Подключения;
+Query=select MON$ATTACHMENT_ID, iif(a.MON$STATE = 0, 'idle', iif(a.MON$STATE = 1, 'active', '')) state, MON$ATTACHMENT_NAME, MON$USER, MON$REMOTE_ADDRESS, MON$REMOTE_PROCESS, MON$TIMESTAMP  from MON$ATTACHMENTS a order by MON$TIMESTAMP;
+OrderByFields=MON$ATTACHMENT_ID,MON$ATTACHMENT_NAME,MON$USER,MON$REMOTE_ADDRESS,MON$REMOTE_PROCESS,MON$TIMESTAMP;
+Modal=1;
+Navigator=1;Buttons=First,Prior,Next,Last,Refresh;
+CommandButton=Action=Find;Label=Найти
+CommandButton=Action=Structure;Label=Структура
+CommandButton=Action=Print;Label=Печать
+Style=2;
+ReadOnly=1;
+CommandButton=Label=Завершить;CommandName=Attachments_Terminate;
+[Fields]
+7
+ID
+MON$ATTACHMENT_ID
+Состояние
+STATE
+База;Width=250;
+MON$ATTACHMENT_NAME
+Адрес клиента;Width=90;
+MON$REMOTE_ADDRESS
+Исполняемый модуль;Width=250;
+MON$REMOTE_PROCESS
+Начало
+MON$TIMESTAMP
+Пользователь;Width=100;
+MON$USERExecQuery=delete from MON$ATTACHMENTS where MON$ATTACHMENT_ID=:MON$ATTACHMENT_ID;
+ReFresh;Exit;
