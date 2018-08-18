@@ -1,0 +1,169 @@
+Caption=Роли
+Navigator=1;Flat=1;
+UpdateQuery=UpdateTable=Roles;KeyFields=RoleID;UpdateFields=ROLENAME,LONGROLENAME,ROLEPASS,SHOWINLIST;
+Query=Select * from Roles order by ROLENAME
+Style=2
+CommandButton=Label=Удалить роль;CommandName=Roles_DelRole;
+CommandButton=Action=Print;Label=Печать
+CommandButton=Label=Оповещение;CommandName=Roles_Notify_Add_Scr;;Hint=Создать оповещение.
+CommandButton=Label=Оповещения;CommandName=Dialog=Notifycations;Hint=Таблица оповещенеий.
+[Fields]
+5
+ID
+ROLEID;Width=64
+Роль
+ROLENAME;Width=124
+Полное имя
+LONGROLENAME;Width=94
+Пароль
+ROLEPASS;Width=70
+Показывать в списке
+SHOWINLISTCaption=Меню ролей
+Navigator=1;Buttons=First,Prior,Next,Last;
+Query=select roleid, rolename, longrolename, MENUITEMID, dclname from RolesToMenu r2m order by roleid, MENUITEMID
+DBFilter=Label=Роль;List=LONGROLENAME;Key=ROLEID_R;FilterField=ROLEID;Width=150;DBFilterQuery=Select LONGROLENAME, ROLEID roleid_R from Roles Order by LONGROLENAME;
+Style=2
+ReadOnly=1
+Navigator=1;Flat=1;
+CommandButton=CommandName=Roles_AddRoleCallDialog;Label=Добавить;
+CommandButton=Label=Удалить;CommandName=Roles_DelRoleMenuItem;
+CommandButton=Label=Удалить роль;CommandName=Roles_DelRolesMenuItem_Call;
+CommandButton=Label=Копировать роль;CommandName=Roles_CopyRole_Call;
+CommandButton=Action=Print;Label=Печать
+CommandButton=Action=Find;Label=Найти
+CommandButton=Label=Недостающие;CommandName=Roles_Run_Test_RolesMenu;FontStyle=,Italic
+//LoadFromTable=SQL=select t.RDB$Description, t.RDB$Field_Name from RDB$RELATION_FIELDS t where upper(t.RDB$Relation_name)=upper('RolesToMenu')
+[Fields]
+5
+ID
+ROLEID;Width=64
+Роль
+ROLENAME;Width=124
+Полное имя
+LONGROLENAME;Width=94
+№ элемента
+MENUITEMID;Width=72
+Скрипт
+DCLNAME;Width=200Caption=Добавление элемента меню
+Navigator=0
+Style=0
+Modal=1
+FormHeight=200
+CommandButton=Label=Добавить;CommandName=Roles_AddMenuItemExec;
+[Fields]
+2
+Роль\LookUp=List=LongRoleName;Key=RoleID;VariableName=ROLEIDV;NoDataField=1;QueryLookup=select * from Roles order by LongRoleName;
+ROLEID
+Меню\LookUp=List=DCLName;Key=NumSeq;VariableName=MenuIDv;NoDataField=1;QueryLookup=select * from SCRIPTS t where t.ident between 0 and 60000 order by t.DCLName, t.NumSeq;
+MENUITEMIDDeclare=tmpAddMenuitem;
+SetValue=tmpAddMenuitem;ReturnQuery=select t.isappend from ADD_MENU_ITEM_TO_ROLE(&ROLEIDV, &MenuIDv) t;
+if Expression1=&tmpAddMenuitem; Expression2=1; then
+Reopen;
+Else
+Message=Такой элемент уже существует;
+EndIf
+Dispose=tmpAddMenuitem;Dialog=Roles_AddMenuItem;Child=1;Caption=Копирование роли
+Navigator=0
+Style=0
+Modal=1
+FormHeight=200
+CommandButton=Label=Копировать;CommandName=Roles_CopyRoleExec;
+[Fields]
+2
+Копировать роль\LookUp=List=LongRoleName;Key=RoleID;VariableName=RoleIDFrom;NoDataField=1;QueryLookup=select * from Roles order by LongRoleName;
+ROLEID
+В роль\LookUp=List=LongRoleName;Key=RoleID;VariableName=RoleIDTo;NoDataField=1;QueryLookup=select * from Roles order by LongRoleName;
+MENUITEMIDModifyingQuery=execute procedure copy_role(&RoleIDFrom, &RoleIDTo);
+Dispose=RoleIDFrom, RoleIDTo
+ReOpen;Dialog=Roles_CopyRole;Child=1;Declare=YNv;
+Message=Удалить запись?;Flags=YesNo;VariableName=YNv;
+if Expression1=1; Expression2=&YNv; then
+ModifyingQuery=execute procedure DEL_ROLE_AND_MENU(:ROLEID);
+ReOpen;
+EndIf
+Dispose=YNv;ModifyingQuery=execute procedure DEL_ROLE_MENU(&RoleIDDel);
+Dispose=RoleIDDel;
+ReOpen;Declare=YNv;
+Message=Удалить запись?;Flags=YesNo;VariableName=YNv;
+if Expression1=1; Expression2=&YNv; then
+ModifyingQuery=delete from RolesMenu where RoleID=:RoleID and MenuItemID=:MenuItemID;
+ReOpen;
+EndIf
+Dispose=YNv;Caption=Удаление меню роли
+Navigator=0
+Style=0
+Modal=1
+FormHeight=200
+CommandButton=Label=Удалить;CommandName=Roles_DelRoleExec;
+[Fields]
+1
+Роль\LookUp=List=LongRoleName;Key=RoleID;VariableName=RoleIDDel;NoDataField=1;QueryLookup=select * from Roles order by LongRoleName;
+ROLEIDDialog=Roles_DelRolesMenuItem;Child=1;Dialog=Roles_Test_RolesMenu;Caption=Недостающие элементы
+Query=select * from rolesmenu_is_correct r order by r.role_id, r.dclname;
+Live=1;
+Navigator=1;Buttons=First,Prior,Next,Last,Refresh;Flat=1;
+CommandButton=Action=Find;Label=Найти
+CommandButton=Action=Structure;Label=Структура
+CommandButton=Action=Print;Label=Печать
+Style=2;
+ReadOnly=1
+[Fields]
+5
+№ скрипта
+NUMSEQ
+Эл. меню
+DCLNAME
+Поле Ид.
+IDENT
+Код роли
+ROLE_ID
+Роль
+ROLE_NAMEVersion;Caption=Оповещения
+Query=select * from NOTIFYCATIONS n order by NOTIFY_TIME, USER_ID, NOTIFY_STATE, NOTIFY_ACTION;
+OrderByFields=NOTIFY_ID,NOTIFY_TIME,NOTIFY_ACTION,NOTIFY_STATE,USER_ID;
+Live=1;
+Modal=1;
+Navigator=1;Buttons=First,Prior,Next,Last,Post,Insert,Edit,Delete,Cancel,Refresh;Flat=1;
+CommandButton=Action=Find;Label=Найти
+CommandButton=Action=Structure;Label=Структура
+CommandButton=Action=Print;Label=Печать
+Style=2;
+Color=<>100=clMaroon;BrushKey=NOTIFY_STATE;
+[Fields]
+5
+ID
+NOTIFY_ID
+Дата время
+NOTIFY_TIME
+ID пользователя
+USER_ID
+Статус
+NOTIFY_STATE
+Текст оповещения
+NOTIFY_TEXTDeclare=USER_ID=:ROLEID;
+Dialog=Notify_Add;FormWidth=300;
+Caption=Добавление оповещения;
+Navigator=0;
+Query=;
+CommandButton=Label=Добавить;CommandName=Notify_Add_Scr;FontStyle=Bold;
+[Fields]
+3
+Дата Время оповещения (ДД.ММ.ГГГГ ЧЧ.ММ.СС)\InputBox=VariableName=NOTIFY_TIME;Width=90;
+DER
+Действие (99 для завершения работы)\InputBox=VariableName=NOTIFY_ACTION;Width=50;
+MER
+Текст оповещения\InputBox=VariableName=NOTIFY_TEXT;Width=260;
+CWEExecQuery=insert into NOTIFYCATIONS(USER_ID, NOTIFY_TIME, NOTIFY_ACTION, NOTIFY_TEXT) values (&USER_ID, '&NOTIFY_TIME', &NOTIFY_ACTION, '&NOTIFY_TEXT');
+CloseDialog;Caption=Добавление роли
+Navigator=0;
+Style=0
+CommandButton=Label=Записать;CommandName=Roles_DelRole;
+[Fields]
+3
+Роль\InputBox=;Width=125;VariableName=ROLENAME;
+ROLENAME
+Полное имя\InputBox=;Width=200;VariableName=LONGROLENAME;
+LONGROLENAME
+Пароль\InputBox=;Width=100;VariableName=ROLEPASS;PasswordChar=#;
+ROLEPASSExecQuery=insert into Roles(ROLENAME, LONGROLENAME, ROLEPASS) Values('&ROLENAME', '&LONGROLENAME', '&ROLEPASS');
+Dispose=ROLENAME, LONGROLENAME, ROLEPASS;
