@@ -10375,6 +10375,8 @@ end;
 procedure TDCLLogOn.WriteBaseUID;
 var
   ParamsQuery: TDCLQuery;
+  guid:TGUID;
+  sGuid:String;
 begin
   if not GPT.NoParamsTable then
   Begin
@@ -10386,12 +10388,17 @@ begin
     ParamsQuery.Open;
     If ParamsQuery.Fields[0].AsInteger=0 Then
     begin
-      ParamsQuery.Close;
-      ParamsQuery.SQL.Text:='insert into '+GPT.GPTTableName+'('+GPT.GPTNameField+', '+
-        GPT.GPTValueField+') values('+GPT.StringTypeChar+'BaseUID'+GPT.StringTypeChar+', '+
-        GPT.StringTypeChar+MD5.MD5DigestToStr(MD5.MD5String(IntToStr(UpTime)))+GPT.StringTypeChar+')';
-      ParamsQuery.ExecSQL;
-      ParamsQuery.SaveDB;
+      If CreateGUID(guid)=0 then
+      Begin
+        sGuid:=GUIDToString(guid);
+        sGuid:=sGuid.Replace('-', '').Replace('{', '').Replace('}', '');
+        ParamsQuery.Close;
+        ParamsQuery.SQL.Text:='insert into '+GPT.GPTTableName+'('+GPT.GPTNameField+', '+
+          GPT.GPTValueField+') values('+GPT.StringTypeChar+'BaseUID'+GPT.StringTypeChar+', '+
+          GPT.StringTypeChar+sGuid {MD5.MD5DigestToStr(MD5.MD5String(IntToStr(UpTime)))}+GPT.StringTypeChar+')';
+        ParamsQuery.ExecSQL;
+        ParamsQuery.SaveDB;
+      End;
     end;
     ParamsQuery.Close;
     FreeAndNil(ParamsQuery);
