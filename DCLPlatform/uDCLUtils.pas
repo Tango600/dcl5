@@ -2565,7 +2565,7 @@ end;
 
 function ReplaseCPtoWIN(CodePageName:String):String;
 begin
-  Result:='';
+  Result:=CodePageName;
   If PosEx('cp', CodePageName)=1 then
   Begin
     Result:='WIN'+Copy(CodePageName, 3, Length(CodePageName));
