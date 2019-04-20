@@ -10395,7 +10395,7 @@ begin
         ParamsQuery.Close;
         ParamsQuery.SQL.Text:='insert into '+GPT.GPTTableName+'('+GPT.GPTNameField+', '+
           GPT.GPTValueField+') values('+GPT.StringTypeChar+'BaseUID'+GPT.StringTypeChar+', '+
-          GPT.StringTypeChar+sGuid {MD5.MD5DigestToStr(MD5.MD5String(IntToStr(UpTime)))}+GPT.StringTypeChar+')';
+          GPT.StringTypeChar+sGuid+GPT.StringTypeChar+')';
         ParamsQuery.ExecSQL;
         ParamsQuery.SaveDB;
       End;
@@ -14355,8 +14355,7 @@ end;
 
 function TDCLGrid.QueryBuilder(GetQueryMode, QueryMode: Byte): String;
 var
-  QFilterField, WhereStr, ExeplStr, Exempl2, OrderBy, GroupBy, tmpSQL, tmpSQL1,
-    Query1String: String;
+  QFilterField, WhereStr, ExeplStr, Exempl2, OrderBy, GroupBy, tmpSQL, tmpSQL1: String;
   FN, FFactor: Word;
 
   function ConstructQueryString(ExemplStr, FilterField: String; Upper, NotLike: Boolean;
@@ -14460,7 +14459,6 @@ begin
   end;
   end;
 
-  Query1String:='';
   WhereStr:='';
   If FindSQLWhere(tmpSQL, 'where')<>0 then
     WhereStr:=' ';
@@ -14512,13 +14510,6 @@ begin
       WhereStr:=' and '+WhereStr
     Else
       WhereStr:=' where '+WhereStr;
-
-  Query1String:=GetFingQuery;
-  If Query1String<>'' Then
-    If (WhereStr>' ')or(FindSQLWhere(tmpSQL, 'where')<>0) Then
-      WhereStr:=WhereStr+' and '+Query1String
-    Else
-      WhereStr:=' where '+Query1String;
 
   Case QueryMode of
   0:
