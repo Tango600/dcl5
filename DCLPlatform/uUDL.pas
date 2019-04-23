@@ -5166,8 +5166,9 @@ end;
 
 procedure TDCLForm.ResizeDBForm(Sender: TObject);
 var
-  ToolBtnSize, i, j: Integer;
+  Left, ToolBtnSize, i, j: Integer;
 begin
+  Left:=0;
   If Assigned(FForm) then
     For j:=1 to Length(FGrids) do
     begin
@@ -5175,9 +5176,13 @@ begin
       If Assigned(FGrids[j-1].ToolButtonPanel) Then
         If (FGrids[j-1].ToolButtonPanel.Width>0)and(FGrids[j-1].ToolButtonsCount>0) Then
         begin
-          ToolBtnSize:=FGrids[j-1].ToolButtonPanel.Width div FGrids[j-1].ToolButtonsCount;
+          ToolBtnSize:=(FGrids[j-1].ToolButtonPanel.Width-FGrids[j-1].ToolButtonsCount) div FGrids[j-1].ToolButtonsCount;
           For i:=1 to FGrids[j-1].ToolButtonsCount do
+          begin
             FGrids[j-1].ToolButtonPanelButtons[i].Width:=ToolBtnSize;
+            FGrids[j-1].ToolButtonPanelButtons[i].Left:=Left;
+            Inc(Left, ToolBtnSize+1);
+          end;
         end;
     end;
 end;
@@ -10395,7 +10400,7 @@ begin
         ParamsQuery.Close;
         ParamsQuery.SQL.Text:='insert into '+GPT.GPTTableName+'('+GPT.GPTNameField+', '+
           GPT.GPTValueField+') values('+GPT.StringTypeChar+'BaseUID'+GPT.StringTypeChar+', '+
-          GPT.StringTypeChar+sGuid+GPT.StringTypeChar+')';
+          GPT.StringTypeChar+sGuid {MD5.MD5DigestToStr(MD5.MD5String(IntToStr(UpTime)))}+GPT.StringTypeChar+')';
         ParamsQuery.ExecSQL;
         ParamsQuery.SaveDB;
       End;
@@ -13861,6 +13866,7 @@ var
   end;
 
 begin
+  Result:='';
   If Assigned(FindGrid) Then
   begin
     Enything:=False;
@@ -14355,7 +14361,8 @@ end;
 
 function TDCLGrid.QueryBuilder(GetQueryMode, QueryMode: Byte): String;
 var
-  QFilterField, WhereStr, ExeplStr, Exempl2, OrderBy, GroupBy, tmpSQL, tmpSQL1: String;
+  QFilterField, WhereStr, ExeplStr, Exempl2, OrderBy, GroupBy, tmpSQL, tmpSQL1,
+    Query1String: String;
   FN, FFactor: Word;
 
   function ConstructQueryString(ExemplStr, FilterField: String; Upper, NotLike: Boolean;
@@ -14459,11 +14466,10 @@ begin
   end;
   end;
 
+  Query1String:='';
   WhereStr:='';
   If FindSQLWhere(tmpSQL, 'where')<>0 then
     WhereStr:=' ';
-{  If PosEx(' where ', tmpSQL)<>0 Then
-    WhereStr:=' ';}
 
   If Length(DBFilters)>0 Then
     For FN:=0 to Length(DBFilters)-1 do
@@ -14510,6 +14516,13 @@ begin
       WhereStr:=' and '+WhereStr
     Else
       WhereStr:=' where '+WhereStr;
+
+  Query1String:=GetFingQuery;
+  If Query1String<>'' Then
+    If (WhereStr>' ')or(FindSQLWhere(tmpSQL, 'where')<>0) Then
+      WhereStr:=WhereStr+' and '+Query1String
+    Else
+      WhereStr:=' where '+Query1String;
 
   Case QueryMode of
   0:
@@ -14852,7 +14865,7 @@ end;
 
 procedure TDCLGrid.Show;
 var
-  i1: Integer;
+  i1, ToolButtWidth, ActiveToolButtonsCount: Integer;
   TollButton: TDialogSpeedButton;
 
   procedure SetPopupMenuItems(WithStructure: Boolean);
@@ -14954,21 +14967,30 @@ begin
       FieldPanel.PopupMenu:=PopupGridMenu;
     end;
 
+    ToolButtWidth:=0;
     ToolButtonsCount:=0;
+    ActiveToolButtonsCount:=0;
+    For i1:=1 to ToolCommandsCount do
+    begin
+      If ((FDisplayMode in TDataGrid)and(i1=1))or(FQuery.Active and(i1 in [2, 3])) Then
+        Inc(ActiveToolButtonsCount);
+    end;
+    ToolButtWidth:=ToolButtonPanel.Width div ActiveToolButtonsCount;
     For i1:=1 to ToolCommandsCount do
     begin
       If ((FDisplayMode in TDataGrid)and(i1=1))or(FQuery.Active and(i1 in [2, 3])) Then
       begin
         TollButton:=TSpeedButton.Create(ToolButtonPanel);
         TollButton.Parent:=ToolButtonPanel;
+        TollButton.Left:=(ToolButtWidth*(ToolButtonsCount))+1;
+        TollButton.Width:=ToolButtWidth;
         TollButton.Align:=alLeft;
-        TollButton.Left:=50;
         TollButton.Flat:=ToolButtonsFlat;
         TollButton.Glyph:=DrawBMPButton(ToolButtonsCmd[i1]);
         TollButton.OnClick:=ToolButtonsOnClick;
         TollButton.Tag:=i1;
 
-        inc(ToolButtonsCount);
+        Inc(ToolButtonsCount);
         ToolButtonPanelButtons[ToolButtonsCount]:=TollButton;
         ToolCommands[ToolButtonsCount]:=ToolButtonsCmd[i1];
       end;
