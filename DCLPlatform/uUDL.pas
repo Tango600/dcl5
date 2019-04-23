@@ -14975,7 +14975,8 @@ begin
       If ((FDisplayMode in TDataGrid)and(i1=1))or(FQuery.Active and(i1 in [2, 3])) Then
         Inc(ActiveToolButtonsCount);
     end;
-    ToolButtWidth:=ToolButtonPanel.Width div ActiveToolButtonsCount;
+    if Assigned(ToolButtonPanel) then
+      ToolButtWidth:=ToolButtonPanel.Width div ActiveToolButtonsCount;
     For i1:=1 to ToolCommandsCount do
     begin
       If ((FDisplayMode in TDataGrid)and(i1=1))or(FQuery.Active and(i1 in [2, 3])) Then
