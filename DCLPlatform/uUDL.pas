@@ -3050,6 +3050,7 @@ procedure TDCLForm.SaveFormPosINI;
 var
   FileParams, DialogsParams: TStringList;
   p1, p2, i, j: Integer;
+  appName:String;
 begin
   p1:= - 1;
   p2:= - 1;
@@ -3058,9 +3059,10 @@ begin
     If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini') Then
     begin
       FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini');
+      appName:='BaseUID:'+InternalAppName+FDCLLogOn.GetBaseUID+'/';
       For i:=1 to FileParams.Count do
       begin
-        If PosEx('['+DialogName+']', FileParams[i-1])=1 Then
+        If PosEx(appName+'['+DialogName+']', FileParams[i-1])=1 Then
         begin
           p1:=i-1;
           For j:=p1 to FileParams.Count-1 do
@@ -3099,12 +3101,14 @@ end;
 function TDCLForm.SaveFormPosUni: TStringList;
 var
   i, j, T: Word;
+  appName:String;
 begin
   Result:=TStringList.Create;
+  appName:='BaseUID:'+InternalAppName+FDCLLogOn.GetBaseUID+'/';
   If Not FieldsSettingsReseted Then
     If DialogName<>'' Then
     begin
-      Result.Append('['+DialogName+']');
+      Result.Append(appName+'['+DialogName+']');
       Result.Append('FormTop='+IntToStr(Form.Top));
       Result.Append('FormLeft='+IntToStr(Form.Left));
       Result.Append('FormHeight='+IntToStr(Form.Height));
@@ -3144,7 +3148,7 @@ begin
         end;
       end;
 
-      Result.Append('[END '+DialogName+']');
+      Result.Append('[END '+DialogName+']'+appName);
       Result.Append('');
       {$IFDEF DCLDEBUG}
       Result.SaveToFile(DialogName+'.txt');
@@ -14967,33 +14971,37 @@ begin
       FieldPanel.PopupMenu:=PopupGridMenu;
     end;
 
-    ToolButtWidth:=0;
-    ToolButtonsCount:=0;
-    ActiveToolButtonsCount:=0;
-    For i1:=1 to ToolCommandsCount do
-    begin
-      If ((FDisplayMode in TDataGrid)and(i1=1))or(FQuery.Active and(i1 in [2, 3])) Then
-        Inc(ActiveToolButtonsCount);
-    end;
     if Assigned(ToolButtonPanel) then
-      ToolButtWidth:=ToolButtonPanel.Width div ActiveToolButtonsCount;
-    For i1:=1 to ToolCommandsCount do
     begin
-      If ((FDisplayMode in TDataGrid)and(i1=1))or(FQuery.Active and(i1 in [2, 3])) Then
+      ToolButtWidth:=0;
+      ToolButtonsCount:=0;
+      ActiveToolButtonsCount:=0;
+      For i1:=1 to ToolCommandsCount do
       begin
-        TollButton:=TSpeedButton.Create(ToolButtonPanel);
-        TollButton.Parent:=ToolButtonPanel;
-        TollButton.Left:=(ToolButtWidth*(ToolButtonsCount))+1;
-        TollButton.Width:=ToolButtWidth;
-        TollButton.Align:=alLeft;
-        TollButton.Flat:=ToolButtonsFlat;
-        TollButton.Glyph:=DrawBMPButton(ToolButtonsCmd[i1]);
-        TollButton.OnClick:=ToolButtonsOnClick;
-        TollButton.Tag:=i1;
+        If ((FDisplayMode in TDataGrid)and(i1=1))or(FQuery.Active and(i1 in [2, 3])) Then
+          Inc(ActiveToolButtonsCount);
+      end;
 
-        Inc(ToolButtonsCount);
-        ToolButtonPanelButtons[ToolButtonsCount]:=TollButton;
-        ToolCommands[ToolButtonsCount]:=ToolButtonsCmd[i1];
+      ToolButtWidth:=ToolButtonPanel.Width div ActiveToolButtonsCount;
+      For i1:=1 to ToolCommandsCount do
+      begin
+        If ((FDisplayMode in TDataGrid)and(i1=1))or(FQuery.Active and(i1 in [2, 3])) Then
+        begin
+          TollButton:=TSpeedButton.Create(ToolButtonPanel);
+          TollButton.Parent:=ToolButtonPanel;
+          TollButton.Top:=2;
+          TollButton.Left:=(ToolButtWidth*(ToolButtonsCount))+1;
+          TollButton.Width:=ToolButtWidth;
+          TollButton.Align:=alLeft;
+          TollButton.Flat:=ToolButtonsFlat;
+          TollButton.Glyph:=DrawBMPButton(ToolButtonsCmd[i1]);
+          TollButton.OnClick:=ToolButtonsOnClick;
+          TollButton.Tag:=i1;
+
+          Inc(ToolButtonsCount);
+          ToolButtonPanelButtons[ToolButtonsCount]:=TollButton;
+          ToolCommands[ToolButtonsCount]:=ToolButtonsCmd[i1];
+        end;
       end;
     end;
 

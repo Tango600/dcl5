@@ -38,7 +38,7 @@ DefaultLibraryLocation='fbclient.so';
 {$IFDEF SQLdb}
   DBEngineType='SQLdb (Universal)';
 {$ENDIF}
-  Ver='10.1.44.359';
+  Ver='10.1.46.363';
   VersionS='$VersionSignature$'+Ver+'$';
 
   CompotableVersion='9.1.129.309';
@@ -192,7 +192,9 @@ DefaultLibraryLocation='fbclient.so';
   UserLevelsSet='ulDeny,ulReadOnly,ulWrite,ulExecute,ulLevel,ulDeveloper';
 
   SW_SHOWNORMAL=1;
+
 {$IFDEF FPC}
+  InternalAppNameSuffix='FPC';
   IndicatorWidth=12;
 
   AppBuildDate={$I %DATE%};
@@ -201,6 +203,7 @@ DefaultLibraryLocation='fbclient.so';
   TargetOS={$I %FPCTARGETOS%};
 {$ENDIF}
 {$IFDEF DELPHI}
+  InternalAppNameSuffix='Delphi';
 {$IFDEF MSWINDOWS}
   LineEnding=#13#10;
 {$ENDIF}
@@ -257,6 +260,9 @@ DefaultLibraryLocation='fbclient.so';
 {$IFDEF FPC}
   DefaultInterfaceEncoding=EncodingUTF8;
 {$ENDIF}
+  InternalAppName='DCLPlatform_'+InternalAppNameSuffix;
+
+
   PAGSignatureSize=3;
   PAGSignature=$474150;
   ParamPrefix=':';
@@ -302,7 +308,7 @@ DefaultLibraryLocation='fbclient.so';
   DefaultNavigButtonsSet='First,Last,Edit,Delete,Insert,Post,Cancel,Refresh';
 
   DCLDir='DCL5'+PathDelim;
-  DBFormNAme='DBForm';
+  DBFormName='DBForm';
   DefaultTimeSeparator=':';
   DefaultDateSeparator='.';
   DefaultDateFormat='dd'+DefaultDateSeparator+'mm'+DefaultDateSeparator+'yyyy';
