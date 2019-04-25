@@ -2890,6 +2890,7 @@ end;
 procedure TDCLForm.LoadFormPosINI;
 var
   FileParams, DialogsParams: TStringList;
+  appName:String;
 begin
   If DialogName<>'' Then
     If GPT.DialogsSettings Then
@@ -2898,7 +2899,8 @@ begin
       begin
         FileParams:=TStringList.Create;
         FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini');
-        DialogsParams:=CopyStrings('['+DialogName+']', '[END '+DialogName+']', FileParams);
+        appName:='BaseUID:'+InternalAppName+FDCLLogOn.GetBaseUID+'/';
+        DialogsParams:=CopyStrings(appName+'['+DialogName+']', appName+'[END '+DialogName+']', FileParams);
         LoadFormPosUni(DialogsParams);
         FreeAndNil(FileParams);
         FreeAndNil(DialogsParams);
@@ -3148,7 +3150,7 @@ begin
         end;
       end;
 
-      Result.Append('[END '+DialogName+']'+appName);
+      Result.Append(appName+'[END '+DialogName+']');
       Result.Append('');
       {$IFDEF DCLDEBUG}
       Result.SaveToFile(DialogName+'.txt');
@@ -4912,7 +4914,7 @@ begin
     ' INI_TYPE='+IntToStr(Ord(IniType));
   if All then
     SQLParams:=SQLParams+' and '+GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+
-      '='+GPT.UpperString+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+
+      '='+GPT.UpperString+GPT.StringTypeChar+InternalAppName+'_'+DialogName+GPT.StringTypeChar+
         GPT.UpperStringEnd;
 
   INIQuery.SQL.Text:=SQLParams;
@@ -5090,6 +5092,7 @@ function TDCLForm.ReadBaseINI(IniType: TINIType):TStringList;
 var
   FileParams: TStringList;
   INIQuery:TDCLQuery;
+  appName:String;
 begin
   Result:=TStringList.Create;
   If DialogName<>'' Then
@@ -5098,13 +5101,14 @@ begin
       FileParams:=TStringList.Create;
       INIQuery:=TDCLQuery.Create(FDCLLogOn.FDBLogOn);
       INIQuery.SQL.Text:='select '+IniParamValField+' from '+INITable+' where '+GetIniToRole(GPT.UserID)+
-        GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+DialogName+
+        GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+InternalAppName+'_'+DialogName+
           GPT.StringTypeChar+GPT.UpperStringEnd+' and INI_TYPE='+IntToStr(Ord(IniType));
       INIQuery.Open;
       If not INIQuery.IsEmpty then
       Begin
+        appName:='BaseUID:'+InternalAppName+FDCLLogOn.GetBaseUID+'/';
         FileParams.Text:=INIQuery.FieldByName(IniParamValField).AsString;
-        Result:=CopyStrings('['+DialogName+']', '[END '+DialogName+']', FileParams);
+        Result:=CopyStrings(appName+'['+DialogName+']', appName+'[END '+DialogName+']', FileParams);
       End;
       FreeAndNil(FileParams);
       FreeAndNil(INIQuery);
@@ -5355,7 +5359,7 @@ begin
   Begin
     INIQuery:=TDCLQuery.Create(FDCLLogOn.FDBLogOn);
     INIQuery.SQL.Text:='select * from '+INITable+' where '+GetIniToRole(GPT.UserID)+
-      GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+
+      GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+InternalAppName+'_'+DialogName+GPT.StringTypeChar+
         GPT.UpperStringEnd+' and INI_TYPE='+IntToStr(Ord(IniType));
     INIQuery.Open;
 
@@ -5364,18 +5368,18 @@ begin
     Begin
       If GPT.UserID<>'' then
         SQLParams:='insert into '+INITable+'('+IniDialogNameField+', '+IniParamValField+', INI_TYPE, '+IniUserFieldName+') '+
-          'values('+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+', '+
+          'values('+GPT.StringTypeChar+InternalAppName+'_'+DialogName+GPT.StringTypeChar+', '+
           INIData+', '+IntToStr(Ord(IniType))+', '+GPT.UserID+')'
       Else
         SQLParams:='insert into '+INITable+'('+IniDialogNameField+', '+IniParamValField+', INI_TYPE) '+
-          'values('+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+', '+
+          'values('+GPT.StringTypeChar+InternalAppName+'_'+DialogName+GPT.StringTypeChar+', '+
           INIData+', '+IntToStr(Ord(IniType))+')';
     End
     Else
     Begin
       SQLParams:='update '+INITable+' set '+IniParamValField+'='+
         INIData+' where '+GetIniToRole(GPT.UserID)+
-        GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+
+        GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+InternalAppName+'_'+DialogName+GPT.StringTypeChar+
         GPT.UpperStringEnd+'and INI_TYPE='+IntToStr(Ord(IniType));
     End;
     INIQuery.Close;
