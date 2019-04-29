@@ -24,10 +24,6 @@ uses
   ThemedDBGrid in 'ThemedDBGrid.pas',
   {$ENDIF}
   {$IFDEF IBX}
-  {$IFNDEF NEWDELPHI}
-  IBHeader in 'units\IBHeader.pas',
-  IBSQL in 'units\IBSQL.pas',
-  {$ENDIF}
   {$ENDIF}
   {$IFNDEF NEWDELPHI}
   DBCtrls in 'units\DBCtrls.pas',

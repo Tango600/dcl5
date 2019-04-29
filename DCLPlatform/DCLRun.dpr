@@ -26,17 +26,9 @@ uses
   {$ENDIF}
   {$ENDIF}
   {$IFNDEF NEWDELPHI}
-  {$IFDEF IBX}
-  IBHeader in 'units\IBHeader.pas',
-  IBSQL in 'units\IBSQL.pas',
-  {$ENDIF}
   DBCtrls in 'units\DBCtrls.pas',
   DBGrids in 'units\DBGrids.pas',
   {$ELSE}
-  {$IFDEF IBX}
-  IBX.IBHeader in 'unitsXE\IBX.IBHeader.pas',
-  IBX.IBSQL in 'unitsXE\IBX.IBSQL.pas',
-  {$ENDIF}
   Vcl.DBCtrls in 'unitsXE\Vcl.DBCtrls.pas',
   Vcl.DBGrids in 'unitsXE\Vcl.DBGrids.pas',
   {$ENDIF}
