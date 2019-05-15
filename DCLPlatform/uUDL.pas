@@ -10209,8 +10209,7 @@ begin
       For i:=1 to FDCLLogOn.FormsCount do
         If Assigned(FDCLLogOn.Forms[i-1]) Then
         begin
-          TB1:=(FormBar.FindComponent('TB'+IntToStr(FDCLLogOn.Forms[i-1].FForm.Tag))
-              as TFormPanelButton);
+          TB1:=(FormBar.FindComponent('TB'+IntToStr(FDCLLogOn.Forms[i-1].FForm.Handle)) as TFormPanelButton);
           If Assigned(TB1) Then
           begin
             If FDCLLogOn.Forms[i-1].FForm=Screen.ActiveForm Then
