@@ -52,7 +52,6 @@ type
 
 implementation
 
-
 {$R *.dfm}
 
 {$IFDEF UNIX}
@@ -131,7 +130,7 @@ Begin
   ReadIni(Path+'Bases.ini', BaseParams);
   RefreshBaseList;
 
-  IniLancher:=TIniFile.Create('Lancher.ini');
+  IniLancher:=TIniFile.Create('Launcher.ini');
   DCLRunPath:=IniLancher.ReadString('Applications', 'DCLRun', '');
   DCLDeveloperPath:=IniLancher.ReadString('Applications', 'DCLDeveloper', '');
   IniCodePage:=DefaultSystemEncoding;
@@ -236,7 +235,7 @@ end;
 
 procedure TForm1.RunApplication(ListNum: Integer);
 Begin
-  If ListNum<> - 1 then
+  If ListNum<>-1 then
   Begin
     BasePath:=GetBaseParam(ListNum, BaseParams);
     If FileExists(DCLRunPath) then

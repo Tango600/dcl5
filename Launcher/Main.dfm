@@ -14,7 +14,7 @@ object Form1: TForm1
   OnClose = FormClose
   OnCreate = FormCreate
   Position = poScreenCenter
-  LCLVersion = '1.4.4.0'
+  LCLVersion = '2.0.0.4'
   object ListBox1: TListBox
     Left = 8
     Height = 261
@@ -149,6 +149,7 @@ object Form1: TForm1
       item
         Width = 50
       end>
+    SimplePanel = False
   end
   object Panel3: TPanel
     Left = 0
