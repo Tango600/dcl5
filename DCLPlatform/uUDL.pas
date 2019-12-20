@@ -14985,25 +14985,28 @@ begin
           Inc(ActiveToolButtonsCount);
       end;
 
-      ToolButtWidth:=ToolButtonPanel.Width div ActiveToolButtonsCount;
-      For i1:=1 to ToolCommandsCount do
+      if ActiveToolButtonsCount>0 then
       begin
-        If ((FDisplayMode in TDataGrid)and(i1=1))or(FQuery.Active and(i1 in [2, 3])) Then
+        ToolButtWidth:=ToolButtonPanel.Width div ActiveToolButtonsCount;
+        For i1:=1 to ToolCommandsCount do
         begin
-          TollButton:=TSpeedButton.Create(ToolButtonPanel);
-          TollButton.Parent:=ToolButtonPanel;
-          TollButton.Top:=2;
-          TollButton.Left:=(ToolButtWidth*(ToolButtonsCount))+1;
-          TollButton.Width:=ToolButtWidth;
-          TollButton.Align:=alLeft;
-          TollButton.Flat:=ToolButtonsFlat;
-          TollButton.Glyph:=DrawBMPButton(ToolButtonsCmd[i1]);
-          TollButton.OnClick:=ToolButtonsOnClick;
-          TollButton.Tag:=i1;
+          If ((FDisplayMode in TDataGrid)and(i1=1))or(FQuery.Active and(i1 in [2, 3])) Then
+          begin
+            TollButton:=TSpeedButton.Create(ToolButtonPanel);
+            TollButton.Parent:=ToolButtonPanel;
+            TollButton.Top:=2;
+            TollButton.Left:=(ToolButtWidth*(ToolButtonsCount))+1;
+            TollButton.Width:=ToolButtWidth;
+            TollButton.Align:=alLeft;
+            TollButton.Flat:=ToolButtonsFlat;
+            TollButton.Glyph:=DrawBMPButton(ToolButtonsCmd[i1]);
+            TollButton.OnClick:=ToolButtonsOnClick;
+            TollButton.Tag:=i1;
 
-          Inc(ToolButtonsCount);
-          ToolButtonPanelButtons[ToolButtonsCount]:=TollButton;
-          ToolCommands[ToolButtonsCount]:=ToolButtonsCmd[i1];
+            Inc(ToolButtonsCount);
+            ToolButtonPanelButtons[ToolButtonsCount]:=TollButton;
+            ToolCommands[ToolButtonsCount]:=ToolButtonsCmd[i1];
+          end;
         end;
       end;
     end;
