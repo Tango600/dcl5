@@ -29,19 +29,14 @@ Function InitCap(const S: String): String;
 Function TrimSymbols(S: String; TrimS: String): String;
 Function PosSet(SubSet, S: String; SepChar: String=DefaultValuesSeparator;
   Delim: String=DefaultParamDelim): Cardinal;
-Function SourceToInterface(S: String): String;
-Function BaseToSystem(S: String): String;
-//Function InterfaceToBase(S: String): String;
 {$IFNDEF FPC}
 Function ConvertEncoding(Const S, FromEncoding, ToEncoding: String): String;
 {$ENDIF}
-Function AnsiToUTF8(S: String): String;
-Function UTF8ToAnsi(S: String): String;
 Function TextToString(Text: String): String;
 function TrimChars(CharsSet, S:string):String;
 
-Function SystemToInterface(S:String): String;
-Function InterfaceToSystem(S:String): String;
+Function BaseToInterface(S: String): String;
+//Function InterfaceToBase(S: String): String;
 
 Function DoublingApostrof(const S: String):String;
 
@@ -52,17 +47,12 @@ uses uDCLConst, uDCLData;
 {$IFNDEF FPC}
 Function ConvertEncoding(Const S, FromEncoding, ToEncoding: String): String;
 Begin
-  If (ToEncoding='utf8') and (PosEx('cp', FromEncoding)=1) and (FromEncoding<>'utf8') then
+  If (ToEncoding='utf8') and (PosEx('cp', FromEncoding)=1) and (FromEncoding<>'utf8') and (FromEncoding<>ToEncoding) then
     Result:=System.AnsiToUtf8(S)
   Else
     Result:=S;
 End;
 {$ENDIF}
-
-function AnsiToUTF8(S: String): string;
-begin
-  Result:=ConvertEncoding(S, DefaultSourceEncoding, EncodingUTF8);
-end;
 
 Function TextToString(Text: String): String;
 Var
@@ -88,34 +78,14 @@ Begin
   Result:=Text;
 End;
 
-Function InterfaceToSystem(S:String): String;
+Function BaseToInterface(S: String): String;
 Begin
-  Result:=ConvertEncoding(S, DefaultInterfaceEncoding, DefaultSystemEncoding);
-End;
-
-Function SystemToInterface(S:String): String;
-Begin
-  Result:=ConvertEncoding(S, DefaultSystemEncoding, DefaultInterfaceEncoding);
-End;
-
-Function BaseToSystem(S: String): String;
-Begin
-  Result:=ConvertEncoding(S, GPT.ServerCodePage, DefaultSystemEncoding);
+  Result:=ConvertEncoding(S, GPT.ServerCodePage, DefaultInterfaceEncoding);
 End;
 
 Function InterfaceToBase(S: String): String;
 Begin
   Result:=ConvertEncoding(S, DefaultInterfaceEncoding, GPT.ServerCodePage);
-End;
-
-Function SourceToInterface(S: String): String;
-Begin
-  Result:=ConvertEncoding(S, DefaultSourceEncoding, DefaultInterfaceEncoding);
-End;
-
-Function UTF8ToAnsi(S: String): String;
-Begin
-  Result:=ConvertEncoding(S, EncodingUTF8, DefaultSystemEncoding);
 End;
 
 Function TrimSymbols(S: String; TrimS: String): String;

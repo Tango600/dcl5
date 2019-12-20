@@ -136,9 +136,9 @@ end;
 
 procedure TDataModule1.DataModuleCreate(Sender: TObject);
 begin
-  Query1:=DCLMainLogOn.CreateDCLQuery;  //TDCLQuery.Create(DCLMainLogOn.d);
-  Query2:=DCLMainLogOn.CreateDCLQuery;
-  Query3:=DCLMainLogOn.CreateDCLQuery;
+  Query1:=TDCLQuery.Create(DCLMainLogOn.DBLogOn);
+  Query2:=TDCLQuery.Create(DCLMainLogOn.DBLogOn);
+  Query3:=TDCLQuery.Create(DCLMainLogOn.DBLogOn);
 
   DataSource1.DataSet:=Query1;
   DataSource2.DataSet:=Query3;

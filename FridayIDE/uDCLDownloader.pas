@@ -60,7 +60,7 @@ Begin
   If Progress Then
   Begin
     ProgressForm:=TForm.Create(Nil);
-    ProgressForm.Caption:=SourceToInterface(GetDCLMessageString(msLoading))+'...';
+    ProgressForm.Caption:=GetDCLMessageString(msLoading)+'...';
     ProgressForm.Position:=poScreenCenter;
     ProgressForm.ClientWidth:=255;
     ProgressForm.ClientHeight:=110;
@@ -84,7 +84,7 @@ Begin
     Begin
       BCancel:=TDialogButton.Create(ProgressForm);
       BCancel.Parent:=ProgressForm;
-      BCancel.Caption:=SourceToInterface(GetDCLMessageString(msCancel));
+      BCancel.Caption:=GetDCLMessageString(msCancel);
       BCancel.Top:=32+15;
       BCancel.Left:=(250 Div 2)-(ButtonWidth Div 2);
       BCancel.Width:=ButtonWidth;

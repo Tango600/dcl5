@@ -91,9 +91,6 @@ Function AddToFileName(Const FileName, AddStr: String): String;
 Function ExtractSection(Var SectionStr: String): String;
 function GetGraficFileType(FileName: string): TGraficFileType;
 function GetExtByType(FileType:TGraficFileType):String;
-{$IFNDEF FPC}
-Function UTF8ToSys(S: String): String;
-{$ENDIF}
 {$IFDEF FPC}
 Function Date: TDateTime;
 Function Time: TDateTime;
@@ -127,7 +124,7 @@ function GetTimeFormat(mSec: Cardinal): String;
 implementation
 
 uses
-  SumProps, uDCLResources, uDCLDBUtils, uDCLMultiLang, MD5;
+  SumProps, uDCLResources, uDCLDBUtils, uDCLMultiLang, uDCLOfficeUtils, MD5;
 
 function ValidObject(const AObj: TObject): Boolean;
 begin
@@ -142,12 +139,6 @@ Begin
     Result:=IntToStr(aVal);
 End;
 
-{$IFNDEF FPC}
-Function UTF8ToSys(S: String): String;
-Begin
-  Result:=S;
-End;
-{$ENDIF}
 {$IFDEF FPC}
 Function Date: TDateTime;
 Begin
@@ -193,9 +184,9 @@ Begin
   If ErrorCode<0 Then
   Begin
     If GPT.CurrentRunningScrString>0 Then
-      MessageText:=SourceToInterface(MessageText)+' / '+AddText+LineEnding+
-        SourceToInterface(GetDCLMessageString(msIn)+' '+GetDCLMessageString(msStringNum)+'('+GetDCLMessageString(msVisualCommand)+') : '+
-        IntToStr(GPT.CurrentRunningScrString)+'/-1');
+      MessageText:=MessageText+' / '+AddText+LineEnding+
+        GetDCLMessageString(msIn)+' '+GetDCLMessageString(msStringNum)+'('+GetDCLMessageString(msVisualCommand)+') : '+
+        IntToStr(GPT.CurrentRunningScrString)+'/-1';
 
     Result:=MessageDlg(MessageText, mtError, [mbOK], 0);
   End
@@ -1328,7 +1319,7 @@ Begin
           tmpStr:=FunctionParams[1];
           pv1:=StrToIntEx(tmpStr);
           If ((pv1>0) and (pv1<13)) then
-            TmpStr:=GetLacalaizedMonthName(StrToInt(FunctionParams[1]));
+            TmpStr:=GetLacalaizedMonthName(pv1);
         End;
         19: // LeadingZero
         Begin
@@ -1347,9 +1338,13 @@ Begin
         22: // MonthByDate
         Begin
           tmpStr:=FunctionParams[1];
-          pv1:=StrToIntEx(tmpStr);
-          If ((pv1>0) and (pv1<13)) then
-            TmpStr:=MonthsNamesRusW[pv1];
+          try
+            pv1:=MonthOf(StrToDate(tmpStr));
+            If ((pv1>0) and (pv1<13)) then
+              TmpStr:=GetLacalaizedMonthName(pv1);
+          Except
+            TmpStr:='';
+          End;
         End;
         23:
         Begin
@@ -1469,6 +1464,9 @@ Procedure GetParamsStructure(Params:TStringList);
 Var
   i: Word;
 Begin
+  GPT.OfficeTemplateFormat:=odtMSO;
+  GPT.OfficeDocumentFormat:=odtMSO;
+
   If Params.Count>0 Then
     For i:=0 To Params.Count-1 Do
     Begin
@@ -1723,7 +1721,7 @@ Begin
 
         If PosEx('Language=', Params[i])=1 Then
         Begin
-          LangID:=LangNameToID(Trim(FindParam('Language=', Params[i])));
+          LangName:=Trim(FindParam('Language=', Params[i]));
         End;
 
         If PosEx('DateSeparator=', Params[i])=1 Then
@@ -1743,12 +1741,12 @@ Begin
 
         If PosEx('OfficeTemplateFormat=', Params[i])=1 Then
         Begin
-          // OfficeTemplateFormat:=ConvertOfficeType(Trim(FindParam('OfficeTemplateFormat=', Params[i])));
+          GPT.OfficeTemplateFormat:=ConvertOfficeType(Trim(FindParam('OfficeTemplateFormat=', Params[i])));
         End;
 
         If PosEx('OfficeDocumentFormat=', Params[i])=1 Then
         Begin
-          // OfficeDocumentFormat:=ConvertOfficeType(Trim(FindParam('OfficeDocumentFormat=', Params[i])));
+          GPT.OfficeDocumentFormat:=ConvertOfficeType(Trim(FindParam('OfficeDocumentFormat=', Params[i])));
         End;
 
         If PosEx('UserLocalProfile=', Params[i])=1 Then
@@ -2560,7 +2558,7 @@ end;
 
 function ReplaseCPtoWIN(CodePageName:String):String;
 begin
-  Result:='';
+  Result:=CodePageName;
   If PosEx('cp', CodePageName)=1 then
   Begin
     Result:='WIN'+Copy(CodePageName, 3, Length(CodePageName));
@@ -2576,4 +2574,4 @@ begin
   End;
 end;
 
-end.
+end.

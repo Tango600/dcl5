@@ -27,6 +27,10 @@ object FormDialogMaster: TFormDialogMaster
     TabOrder = 0
     object TabSheet1: TTabSheet
       Caption = #1047#1072#1075#1086#1083#1086#1074#1086#1082' '#1080' '#1089#1082#1088#1080#1087#1090
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Label2: TLabel
         Left = 32
         Top = 152
@@ -83,6 +87,10 @@ object FormDialogMaster: TFormDialogMaster
     object TabSheet2: TTabSheet
       Caption = #1054#1090#1086#1073#1088#1072#1078#1077#1085#1080#1077' '#1076#1072#1085#1085#1099#1093
       ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object rgFieldsStyle: TRadioGroup
         Left = 16
         Top = 16
@@ -101,6 +109,10 @@ object FormDialogMaster: TFormDialogMaster
     object TabSheet3: TTabSheet
       Caption = #1056#1077#1076#1072#1082#1090#1080#1088#1086#1074#1072#1085#1080#1077
       ImageIndex = 2
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object rgEditingStyle: TRadioGroup
         Left = 223
         Top = 16
@@ -156,6 +168,10 @@ object FormDialogMaster: TFormDialogMaster
     object TabSheet4: TTabSheet
       Caption = #1042#1085#1077#1096#1085#1080#1081' '#1074#1080#1076
       ImageIndex = 3
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Label1: TLabel
         Left = 32
         Top = 45

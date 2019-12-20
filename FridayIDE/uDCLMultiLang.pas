@@ -1,4 +1,4 @@
-unit uDCLMultiLang;
+п»їunit uDCLMultiLang;
 {$I DefineType.pas}
 
 interface
@@ -11,7 +11,7 @@ uses
   uDCLConst;
 
 type
-  TLangID=LongWord;
+  //TLangID=LongWord;
   TLangName=String;
 
   TTranscodeDataType=(tdtUTF8, tdtDOS, tdtTranslit);
@@ -38,29 +38,24 @@ type
     msResetFieldsSettings, msResetFieldsSettingsQ, msDeleteAllBookmarks, msDeleteAllBookmarksQ, msSaveFieldsSettings,
     msNotAllowOpenForm, msDeleteRecordQ, msNotAllowExecuteApps, msPathsNotSupported, msSaveEditings, msSaveEditingsQ,
     msDoYouWontTerminateApplicationQ, msConfigurationFileNotFound, msClearContentQ, msNotifycation, msForUser,
-    msLoading, msTimeToExit);
+    msLoading, msTimeToExit, msDSStateSet);
 
 
-procedure LoadLangRes(Lang:TLangID; Path:String);
+procedure LoadLangRes(Lang:TLangName; Path:String);
 function GetDCLMessageString(MessID: TStringMessages): String;
 function GetDCLErrorString(ErrorCode: Integer; AddText: String=''):string;
-function LoadTranscodeFile(DataType:TTranscodeDataType; FileName:String; LangID:TLangID):Boolean;
+function LoadTranscodeFile(DataType:TTranscodeDataType; FileName:String; Lang:TLangName):Boolean;
 Function Transcode(DataType:TTranscodeDataType; const Buf: String): String;
 function GetLacalaizedMonthName(MonthNum:Integer):string;
-function LangIDToString(LangID:TLangID):String;
-function LangNameToID(LangName:String):TLangID;
 
 function GetSystemLanguage: String;
-function GetSystemLanguageID: Integer;
 procedure InitLangEnv;
 
 const
   DefaultLangDir='Lang';
   DefaultLanguage='RUS';
-  DefaultLanguageID=1049;
 
 var
-  LangID:TLangID;//   //TISO639_3;
   LangName:TLangName;
 
 implementation
@@ -93,7 +88,7 @@ const
     'msResetFieldsSettings', 'msResetFieldsSettingsQ', 'msDeleteAllBookmarks', 'msDeleteAllBookmarksQ', 'msSaveFieldsSettings',
     'msNotAllowOpenForm', 'msDeleteRecordQ', 'msNotAllowExecuteApps', 'msPathsNotSupported', 'msSaveEditings', 'msSaveEditingsQ',
     'msDoYouWontTerminateApplicationQ', 'msConfigurationFileNotFound', 'msClearContentQ', 'msNotifycation', 'msForUser',
-    'msLoading', 'msTimeToExit');
+    'msLoading', 'msTimeToExit', 'msDSStateSet');
 
 type
   TCharToUTF8Table=array [0..255] of String;
@@ -105,12 +100,6 @@ type
     TranscodeType:TTranscodeType;
   end;
 
-  TLangIDName=record
-    ID:Integer;
-    LangNameISO639, ShortName:string;
-  end;
-
-
 const
   TranscodeToDOS:Array[0..3] of TTranscodeData=((CodeFrom1:168;CodeFrom2:168; TagertCode:Chr(72); TranscodeType:ttAdd),
                                              (CodeFrom1:184;CodeFrom2:184; TagertCode:Chr(57); TranscodeType:ttAdd),
@@ -118,22 +107,15 @@ const
                                              (CodeFrom1:240;CodeFrom2:255; TagertCode:Chr(16); TranscodeType:ttSub));
 
   TransliteSimbolsCount=68;
-  RusTab: Array [0..TransliteSimbolsCount-1] Of Char=('а', 'б', 'в', 'г', 'д', 'е', 'ё', 'ж', 'з', 'и', 'й',
-    'к', 'л', 'м', 'н', 'о', 'п', 'р', 'с', 'т', 'у', 'ф', 'х', 'ц', 'ч', 'ш', 'щ', 'ы', 'ъ', 'ь',
-    'э', 'ю', 'я', 'А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ё', 'Ж', 'З', 'И', 'Й', 'К', 'Л', 'М', 'Н', 'О',
-    'П', 'Р', 'С', 'Т', 'У', 'Ф', 'Х', 'Ц', 'Ч', 'Ш', 'Щ', 'Ы', 'Ъ', 'Ь', 'Э', 'Ю', 'Я', ' ', '№');
+  RusTab: Array [0..TransliteSimbolsCount-1] Of String=('Р°', 'Р±', 'РІ', 'Рі', 'Рґ', 'Рµ', 'С‘', 'Р¶', 'Р·', 'Рё', 'Р№',
+    'Рє', 'Р»', 'Рј', 'РЅ', 'Рѕ', 'Рї', 'СЂ', 'СЃ', 'С‚', 'Сѓ', 'С„', 'С…', 'С†', 'С‡', 'С€', 'С‰', 'С‹', 'СЉ', 'СЊ',
+    'СЌ', 'СЋ', 'СЏ', 'Рђ', 'Р‘', 'Р’', 'Р“', 'Р”', 'Р•', 'РЃ', 'Р–', 'Р—', 'Р', 'Р™', 'Рљ', 'Р›', 'Рњ', 'Рќ', 'Рћ',
+    'Рџ', 'Р ', 'РЎ', 'Рў', 'РЈ', 'Р¤', 'РҐ', 'Р¦', 'Р§', 'РЁ', 'Р©', 'Р«', 'РЄ', 'Р¬', 'Р­', 'Р®', 'РЇ', ' ', 'в„–');
   LatTab: Array [0..TransliteSimbolsCount-1] Of String=('a', 'b', 'v', 'g', 'd', 'je', 'jo', 'zh', 'z', 'i',
     'j', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'f', 'h', 'ce', 'ch', 'sh', 'sch', 'y',
     '''', '', 'e', 'ju', 'ja', 'A', 'B', 'V', 'G', 'D', 'JE', 'JO', 'ZH', 'Z', 'I', 'J', 'K', 'L',
     'M', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'F', 'H', 'CE', 'CH', 'SH', 'SCH', 'Y', '''', '', 'E',
     'JU', 'JA', '_', '#');
-
-  LangIDsToName:Array[1..4] of TLangIDName=(
-  (ID:1049; LangNameISO639:'RUS'; ShortName:'RU'),
-  (ID:1033; LangNameISO639:'ENG'; ShortName:'EN'),
-  (ID:1045; LangNameISO639:'POL'; ShortName:'PL'),
-  (ID:1029; LangNameISO639:'CES'; ShortName:'CS')
-  );
 
   ArrayCP1251ToUTF8: TCharToUTF8Table=(
     #0, // #0
@@ -401,347 +383,349 @@ var
 
 function GetDCLMessageStringDefault(MesID: TStringMessages): String;
 begin
-  Case LangID of
-  DefaultLanguageID:
+  If LangName=DefaultLanguage then
+  Begin
     case MesID of
     msNone:
-    Result:='<Нет>';
+    Result:='<РќРµС‚>';
     msNot:
-    Result:='не';
+    Result:='РЅРµ';
     msIn:
-    Result:='В';
+    Result:='Р’';
     msClose:
-    Result:='Закрыть';
+    Result:='Р—Р°РєСЂС‹С‚СЊ';
     msOpen:
-    Result:='Открыть';
+    Result:='РћС‚РєСЂС‹С‚СЊ';
     msEdit:
-    Result:='Изменить';
+    Result:='РР·РјРµРЅРёС‚СЊ';
     msDelete:
-    Result:='Удалить';
+    Result:='РЈРґР°Р»РёС‚СЊ';
     msDeleteRecord:
-    Result:='Удалить запись';
+    Result:='РЈРґР°Р»РёС‚СЊ Р·Р°РїРёСЃСЊ';
     msClearContent:
-    Result:='Очистить содержимое';
+    Result:='РћС‡РёСЃС‚РёС‚СЊ СЃРѕРґРµСЂР¶РёРјРѕРµ';
     msModified:
-    Result:='Изменено';
+    Result:='РР·РјРµРЅРµРЅРѕ';
     msInputVulues:
-    Result:='Ввод значений';
+    Result:='Р’РІРѕРґ Р·РЅР°С‡РµРЅРёР№';
     msInBegin:
-    Result:='В начало';
+    Result:='Р’ РЅР°С‡Р°Р»Рѕ';
     msInEnd:
-    Result:='В конец';
+    Result:='Р’ РєРѕРЅРµС†';
     msPrior:
-    Result:='Назад';
+    Result:='РќР°Р·Р°Рґ';
     msNext:
-    Result:='Вперёд';
+    Result:='Р’РїРµСЂС‘Рґ';
     msCancel:
-    Result:='Отменить';
+    Result:='РћС‚РјРµРЅРёС‚СЊ';
     msRefresh:
-    Result:='Обновить';
+    Result:='РћР±РЅРѕРІРёС‚СЊ';
     msInsert:
-    Result:='Добавить';
+    Result:='Р”РѕР±Р°РІРёС‚СЊ';
     msPost:
-    Result:='Записать';
+    Result:='Р—Р°РїРёСЃР°С‚СЊ';
     msEmptyUserName:
-    Result:='Не заполнено имя пользователя.';
+    Result:='РќРµ Р·Р°РїРѕР»РЅРµРЅРѕ РёРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ.';
     msPage:
-    Result:='Страница';
+    Result:='РЎС‚СЂР°РЅРёС†Р°';
     msConnectDBError:
-    Result:='Не удалось подсоединиться к БД.';
+    Result:='РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕРґСЃРѕРµРґРёРЅРёС‚СЊСЃСЏ Рє Р‘Р”.';
     msConnectionStringIncorrect:
-    Result:='Строка соединения не корректна.';
+    Result:='РЎС‚СЂРѕРєР° СЃРѕРµРґРёРЅРµРЅРёСЏ РЅРµ РєРѕСЂСЂРµРєС‚РЅР°.';
     msNoField:
-    Result:='Нет поля:';
+    Result:='РќРµС‚ РїРѕР»СЏ:';
     msLoad:
-    Result:='Загрузить';
+    Result:='Р—Р°РіСЂСѓР·РёС‚СЊ';
     msClear:
-    Result:='Очистить';
+    Result:='РћС‡РёСЃС‚РёС‚СЊ';
     msApplay:
-    Result:='Принять';
+    Result:='РџСЂРёРЅСЏС‚СЊ';
     msSave:
-    Result:='Сохранить';
+    Result:='РЎРѕС…СЂР°РЅРёС‚СЊ';
     msNotAllow:
-    Result:='Вам не разрешено';
+    Result:='Р’Р°Рј РЅРµ СЂР°Р·СЂРµС€РµРЅРѕ';
     msOpenForm:
-    Result:='открывать эту форму.';
+    Result:='РѕС‚РєСЂС‹РІР°С‚СЊ СЌС‚Сѓ С„РѕСЂРјСѓ.';
     msExecuteApps:
-    Result:='запускать приложения.';
+    Result:='Р·Р°РїСѓСЃРєР°С‚СЊ РїСЂРёР»РѕР¶РµРЅРёСЏ.';
     msText:
-    Result:='Текст';
+    Result:='РўРµРєСЃС‚';
     msAll:
-    Result:='все';
+    Result:='РІСЃРµ';
     msFormated:
-    Result:='Форматированный';
+    Result:='Р¤РѕСЂРјР°С‚РёСЂРѕРІР°РЅРЅС‹Р№';
     msConfigurationFile:
-    Result:='Файл конфигурации';
+    Result:='Р¤Р°Р№Р» РєРѕРЅС„РёРіСѓСЂР°С†РёРё';
     msNotFoundM:
-    Result:='не найден';
+    Result:='РЅРµ РЅР°Р№РґРµРЅ';
     msNotFoundF:
-    Result:='не найдена';
+    Result:='РЅРµ РЅР°Р№РґРµРЅР°';
     msTable:
-    Result:='Таблица';
+    Result:='РўР°Р±Р»РёС†Р°';
     msAppRunning:
-    Result:='Приложение уже запущено (возможно оно свернуто на панели задач).';
+    Result:='РџСЂРёР»РѕР¶РµРЅРёРµ СѓР¶Рµ Р·Р°РїСѓС‰РµРЅРѕ (РІРѕР·РјРѕР¶РЅРѕ РѕРЅРѕ СЃРІРµСЂРЅСѓС‚Рѕ РЅР° РїР°РЅРµР»Рё Р·Р°РґР°С‡).';
     msNotSupportedS:
-    Result:='не поддерживаются';
+    Result:='РЅРµ РїРѕРґРґРµСЂР¶РёРІР°СЋС‚СЃСЏ';
     msPaths:
-    Result:='пути';
+    Result:='РїСѓС‚Рё';
     msTheProduct:
-    Result:='Продукт';
+    Result:='РџСЂРѕРґСѓРєС‚';
     msProducer:
-    Result:='Изготовитель';
+    Result:='РР·РіРѕС‚РѕРІРёС‚РµР»СЊ';
     msVersion:
-    Result:='Версия';
+    Result:='Р’РµСЂСЃРёСЏ';
     msStatus:
-    Result:='статус';
+    Result:='СЃС‚Р°С‚СѓСЃ';
     msUser:
-    Result:='Пользователь';
+    Result:='РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ';
     msRole:
-    Result:='Роль';
+    Result:='Р РѕР»СЊ';
     msDataBase:
-    Result:='База данных';
+    Result:='Р‘Р°Р·Р° РґР°РЅРЅС‹С…';
     msConfiguration:
-    Result:='Конфигурация';
+    Result:='РљРѕРЅС„РёРіСѓСЂР°С†РёСЏ';
     msDebugMode:
-    Result:='Режим отладки';
+    Result:='Р РµР¶РёРј РѕС‚Р»Р°РґРєРё';
     msInformationAbout:
-    Result:='Сведения о';
+    Result:='РЎРІРµРґРµРЅРёСЏ Рѕ';
     msBuildOf:
-    Result:='сборке';
+    Result:='СЃР±РѕСЂРєРµ';
     msOS:
-    Result:='ОС';
+    Result:='РћРЎ';
     msLang:
-    Result:='Язык';
+    Result:='РЇР·С‹Рє';
     msUsers:
-    Result:='пользователей';
+    Result:='РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№';
     msDoYouWontTerminate:
-    Result:='Хотите завершить';
+    Result:='РҐРѕС‚РёС‚Рµ Р·Р°РІРµСЂС€РёС‚СЊ';
     msApplication:
-    Result:='приложение';
+    Result:='РїСЂРёР»РѕР¶РµРЅРёРµ';
     msDownloadInProgress:
-    Result:='Идёт закачка';
+    Result:='РРґС‘С‚ Р·Р°РєР°С‡РєР°';
     msClearAllFind:
-    Result:='Очистить поиск';
+    Result:='РћС‡РёСЃС‚РёС‚СЊ РїРѕРёСЃРє';
     msFind:
-    Result:='Поиск';
+    Result:='РџРѕРёСЃРє';
     msFindCurrCell:
-    Result:='Поиск по текущей ячейки';
+    Result:='РџРѕРёСЃРє РїРѕ С‚РµРєСѓС‰РµР№ СЏС‡РµР№РєРё';
     msPrint:
-    Result:='Печать';
+    Result:='РџРµС‡Р°С‚СЊ';
     msCopy:
-    Result:='Копировать';
+    Result:='РљРѕРїРёСЂРѕРІР°С‚СЊ';
     msCut:
-    Result:='Вырезать';
+    Result:='Р’С‹СЂРµР·Р°С‚СЊ';
     msPast:
-    Result:='Вставить';
+    Result:='Р’СЃС‚Р°РІРёС‚СЊ';
     msBookmark:
-    Result:='закладка';
+    Result:='Р·Р°РєР»Р°РґРєР°';
     msBookmarks:
-    Result:='закладки';
+    Result:='Р·Р°РєР»Р°РґРєРё';
     msStructure:
-    Result:='Структура';
+    Result:='РЎС‚СЂСѓРєС‚СѓСЂР°';
     msGotoBookmark:
-    Result:='Перейти к закладке';
+    Result:='РџРµСЂРµР№С‚Рё Рє Р·Р°РєР»Р°РґРєРµ';
     msOldFormat:
-    Result:='Старый формат';
+    Result:='РЎС‚Р°СЂС‹Р№ С„РѕСЂРјР°С‚';
     msOldBookmarkFormat:
-    Result:='Старый формат закладок, нет секции Title';
+    Result:='РЎС‚Р°СЂС‹Р№ С„РѕСЂРјР°С‚ Р·Р°РєР»Р°РґРѕРє, РЅРµС‚ СЃРµРєС†РёРё Title';
     msVersionsGap:
-    Result:='Существенная разница в версиях. Всё может не работать.';
+    Result:='РЎСѓС‰РµСЃС‚РІРµРЅРЅР°СЏ СЂР°Р·РЅРёС†Р° РІ РІРµСЂСЃРёСЏС…. Р’СЃС‘ РјРѕР¶РµС‚ РЅРµ СЂР°Р±РѕС‚Р°С‚СЊ.';
     msOldVersion:
-    Result:='Старая версия. Некоторые особенности могут не работать.';
+    Result:='РЎС‚Р°СЂР°СЏ РІРµСЂСЃРёСЏ. РќРµРєРѕС‚РѕСЂС‹Рµ РѕСЃРѕР±РµРЅРЅРѕСЃС‚Рё РјРѕРіСѓС‚ РЅРµ СЂР°Р±РѕС‚Р°С‚СЊ.';
     msToAll:
-    Result:='Всем';
+    Result:='Р’СЃРµРј';
     msChangePassord:
-    Result:='Смена пароля';
+    Result:='РЎРјРµРЅР° РїР°СЂРѕР»СЏ';
     msOldM:
-    Result:='Старый';
+    Result:='РЎС‚Р°СЂС‹Р№';
     msNewM:
-    Result:='Новый';
+    Result:='РќРѕРІС‹Р№';
     msPassword:
-    Result:='пароль';
+    Result:='РїР°СЂРѕР»СЊ';
     msConfirm:
-    Result:='Подтверждение';
+    Result:='РџРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ';
     msHashed:
-    Result:='Хешированный';
+    Result:='РҐРµС€РёСЂРѕРІР°РЅРЅС‹Р№';
     msToHashing:
-    Result:='Хешировать';
+    Result:='РҐРµС€РёСЂРѕРІР°С‚СЊ';
     msLogonToSystem:
-    Result:='Вход в систему';
+    Result:='Р’С…РѕРґ РІ СЃРёСЃС‚РµРјСѓ';
     msUserName:
-    Result:='Имя пользователя';
+    Result:='РРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ';
     msNoYes:
-    Result:='Нет,Да';
+    Result:='РќРµС‚,Р”Р°';
     msDenyMessageDev:
-    Result:='У Вас нет права разработчика.';
+    Result:='РЈ Р’Р°СЃ РЅРµС‚ РїСЂР°РІР° СЂР°Р·СЂР°Р±РѕС‚С‡РёРєР°.';
     msDenyMessageUsr:
-    Result:='Вам не разрешён вход в систему.';
+    Result:='Р’Р°Рј РЅРµ СЂР°Р·СЂРµС€С‘РЅ РІС…РѕРґ РІ СЃРёСЃС‚РµРјСѓ.';
     msAccessLevelsSet:
-    Result:='Отключен,Только чтение,Правка,Полные права,Уровень 1,Уровень 2,Уровень 3,Уровень 4,Разработчик';
+    Result:='РћС‚РєР»СЋС‡РµРЅ,РўРѕР»СЊРєРѕ С‡С‚РµРЅРёРµ,РџСЂР°РІРєР°,РџРѕР»РЅС‹Рµ РїСЂР°РІР°,РЈСЂРѕРІРµРЅСЊ 1,РЈСЂРѕРІРµРЅСЊ 2,РЈСЂРѕРІРµРЅСЊ 3,РЈСЂРѕРІРµРЅСЊ 4,Р Р°Р·СЂР°Р±РѕС‚С‡РёРє';
     msNotifyActionsSet:
-    Result:='Выполнено,Запуск скрипта,Сообщение,Запуск приложения с ожиданием,Запуск приложения,Выход по времени';
+    Result:='Р’С‹РїРѕР»РЅРµРЅРѕ,Р—Р°РїСѓСЃРє СЃРєСЂРёРїС‚Р°,РЎРѕРѕР±С‰РµРЅРёРµ,Р—Р°РїСѓСЃРє РїСЂРёР»РѕР¶РµРЅРёСЏ СЃ РѕР¶РёРґР°РЅРёРµРј,Р—Р°РїСѓСЃРє РїСЂРёР»РѕР¶РµРЅРёСЏ,Р’С‹С…РѕРґ РїРѕ РІСЂРµРјРµРЅРё';
     msCodePage:
-    Result:='Кодовая страница';
+    Result:='РљРѕРґРѕРІР°СЏ СЃС‚СЂР°РЅРёС†Р°';
     msLock:
-    Result:='Заблокировать';
+    Result:='Р—Р°Р±Р»РѕРєРёСЂРѕРІР°С‚СЊ';
     msChoose:
-    Result:='Выбрать';
+    Result:='Р’С‹Р±СЂР°С‚СЊ';
     msEditings:
-    Result:='изменения';
+    Result:='РёР·РјРµРЅРµРЅРёСЏ';
     msData:
-    Result:='Данные';
+    Result:='Р”Р°РЅРЅС‹Рµ';
     msReset:
-    Result:='Сбросить';
+    Result:='РЎР±СЂРѕСЃРёС‚СЊ';
     msSettings:
-    Result:='настройки';
+    Result:='РЅР°СЃС‚СЂРѕР№РєРё';
     msFields:
-    Result:='полей';
+    Result:='РїРѕР»РµР№';
     msHour:
-    Result:='ч';
+    Result:='С‡';
     msMinute:
-    Result:='м';
+    Result:='Рј';
     msSecond:
-    Result:='сек';
+    Result:='СЃРµРє';
     msMSecond:
-    Result:='мсек';
+    Result:='РјСЃРµРє';
     msModeOff:
-    Result:='Выкл';
+    Result:='Р’С‹РєР»';
     msModeOn:
-    Result:='Вкл';
+    Result:='Р’РєР»';
     msStringNum:
-    Result:='строке №';
+    Result:='СЃС‚СЂРѕРєРµ в„–';
     msVisualCommand:
-    Result:='Визуальный/Коммандный';
+    Result:='Р’РёР·СѓР°Р»СЊРЅС‹Р№/РљРѕРјРјР°РЅРґРЅС‹Р№';
     msConnectionError:
-    Result:='Ошибка соединения';
+    Result:='РћС€РёР±РєР° СЃРѕРµРґРёРЅРµРЅРёСЏ';
     msErrorQuery:
-    Result:='Ошибочный запрос.';
+    Result:='РћС€РёР±РѕС‡РЅС‹Р№ Р·Р°РїСЂРѕСЃ.';
     msBadFindParams:
-    Result:='Ошибочный запрос или не верные условия поиска.';
+    Result:='РћС€РёР±РѕС‡РЅС‹Р№ Р·Р°РїСЂРѕСЃ РёР»Рё РЅРµ РІРµСЂРЅС‹Рµ СѓСЃР»РѕРІРёСЏ РїРѕРёСЃРєР°.';
     msErrorInExpression:
-    Result:='Ошибка в выражении.';
+    Result:='РћС€РёР±РєР° РІ РІС‹СЂР°Р¶РµРЅРёРё.';
     msErrorQueryInExpression:
-    Result:='Ошибочный запрос в параметре.';
+    Result:='РћС€РёР±РѕС‡РЅС‹Р№ Р·Р°РїСЂРѕСЃ РІ РїР°СЂР°РјРµС‚СЂРµ.';
     msTooMachParams:
-    Result:='Недостаточно или много параметров в предложении.';
+    Result:='РќРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РёР»Рё РјРЅРѕРіРѕ РїР°СЂР°РјРµС‚СЂРѕРІ РІ РїСЂРµРґР»РѕР¶РµРЅРёРё.';
     msBadFieldFormad:
-    Result:='Неверный формат полей.';
+    Result:='РќРµРІРµСЂРЅС‹Р№ С„РѕСЂРјР°С‚ РїРѕР»РµР№.';
     msNoDATARegion:
-    Result:='Нет области данных "DATA".';
+    Result:='РќРµС‚ РѕР±Р»Р°СЃС‚Рё РґР°РЅРЅС‹С… "DATA".';
     msNoTemplatesTable:
-    Result:='Нет таблицы шаблонов.';
+    Result:='РќРµС‚ С‚Р°Р±Р»РёС†С‹ С€Р°Р±Р»РѕРЅРѕРІ.';
     msTemplateNotFound:
-    Result:='Нет такого шаблона - ';
+    Result:='РќРµС‚ С‚Р°РєРѕРіРѕ С€Р°Р±Р»РѕРЅР° - ';
     msLabelNotFound:
-    Result:='Такой метки нет.';
+    Result:='РўР°РєРѕР№ РјРµС‚РєРё РЅРµС‚.';
     msTemplFileNotFound:
-    Result:='Нет файла шаблона.';
+    Result:='РќРµС‚ С„Р°Р№Р»Р° С€Р°Р±Р»РѕРЅР°.';
     msTableUsersNotFound:
-    Result:='Таблица пользователей не найдена.';
+    Result:='РўР°Р±Р»РёС†Р° РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РЅРµ РЅР°Р№РґРµРЅР°.';
     msOONotInstalled:
-    Result:='OpenOffice не установлен.';
+    Result:='OpenOffice РЅРµ СѓСЃС‚Р°РЅРѕРІР»РµРЅ.';
     msFailOpenDocument:
-    Result:='Открыть документ не удалось.';
+    Result:='РћС‚РєСЂС‹С‚СЊ РґРѕРєСѓРјРµРЅС‚ РЅРµ СѓРґР°Р»РѕСЃСЊ.';
     msMSNotInstalled:
-    Result:='Microsoft Office не установлен.';
+    Result:='Microsoft Office РЅРµ СѓСЃС‚Р°РЅРѕРІР»РµРЅ.';
     msWord2000Req:
-    Result:='Требуется WORD 2000/XP или выше.';
+    Result:='РўСЂРµР±СѓРµС‚СЃСЏ WORD 2000/XP РёР»Рё РІС‹С€Рµ.';
     msNoOfficeInstalled:
-    Result:='Никакой офис не установлен.';
+    Result:='РќРёРєР°РєРѕР№ РѕС„РёСЃ РЅРµ СѓСЃС‚Р°РЅРѕРІР»РµРЅ.';
     msConvertionError:
-    Result:='Ошибка преобразования.';
+    Result:='РћС€РёР±РєР° РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёСЏ.';
     msAppRunError:
-    Result:='Ошибка запуска.';
+    Result:='РћС€РёР±РєР° Р·Р°РїСѓСЃРєР°.';
     msFileNotFound:
-    Result:='Файл не найден.';
+    Result:='Р¤Р°Р№Р» РЅРµ РЅР°Р№РґРµРЅ.';
     msErrorInRaightExpression:
-    Result:='Ошибка в выражении прав доступа.';
+    Result:='РћС€РёР±РєР° РІ РІС‹СЂР°Р¶РµРЅРёРё РїСЂР°РІ РґРѕСЃС‚СѓРїР°.';
     msFieldNotFound:
-    Result:='Поле не найдено.';
+    Result:='РџРѕР»Рµ РЅРµ РЅР°Р№РґРµРЅРѕ.';
     msJanuary:
-    Result:='Январь';
+    Result:='РЇРЅРІР°СЂСЊ';
     msFebruary:
-    Result:='Февраль';
+    Result:='Р¤РµРІСЂР°Р»СЊ';
     msMarch:
-    Result:='Март';
+    Result:='РњР°СЂС‚';
     msApril:
-    Result:='Апрель';
+    Result:='РђРїСЂРµР»СЊ';
     msMay:
-    Result:='Май';
+    Result:='РњР°Р№';
     msJune:
-    Result:='Июнь';
+    Result:='РСЋРЅСЊ';
     msJuly:
-    Result:='Июль';
+    Result:='РСЋР»СЊ';
     msAugust:
-    Result:='Август';
+    Result:='РђРІРіСѓСЃС‚';
     msSeptember:
-    Result:='Сентябрь';
+    Result:='РЎРµРЅС‚СЏР±СЂСЊ';
     msOctober:
-    Result:='Октябрь';
+    Result:='РћРєС‚СЏР±СЂСЊ';
     msNovember:
-    Result:='Ноябрь';
+    Result:='РќРѕСЏР±СЂСЊ';
     msDecember:
-    Result:='Декабрь';
+    Result:='Р”РµРєР°Р±СЂСЊ';
     msMonday:
-    Result:='Понедельник';
+    Result:='РџРѕРЅРµРґРµР»СЊРЅРёРє';
     msTuesday:
-    Result:='Вторник';
+    Result:='Р’С‚РѕСЂРЅРёРє';
     msWednesday:
-    Result:='Среда';
+    Result:='РЎСЂРµРґР°';
     msThursday:
-    Result:='Четверг';
+    Result:='Р§РµС‚РІРµСЂРі';
     msFriday:
-    Result:='Пятница';
+    Result:='РџСЏС‚РЅРёС†Р°';
     msSaturday:
-    Result:='Суббота';
+    Result:='РЎСѓР±Р±РѕС‚Р°';
     msSunday:
-    Result:='Воскресенье';
+    Result:='Р’РѕСЃРєСЂРµСЃРµРЅСЊРµ';
     msEditPassword:
-    Result:='Изменить пароль';
+    Result:='РР·РјРµРЅРёС‚СЊ РїР°СЂРѕР»СЊ';
     msOldPassword:
-    Result:='Старый пароль';
+    Result:='РЎС‚Р°СЂС‹Р№ РїР°СЂРѕР»СЊ';
     msNewPassword:
-    Result:='Новый пароль';
+    Result:='РќРѕРІС‹Р№ РїР°СЂРѕР»СЊ';
     msHashPassword:
-    Result:='Хешировать пароль';
+    Result:='РҐРµС€РёСЂРѕРІР°С‚СЊ РїР°СЂРѕР»СЊ';
     msResetAllFieldsSettings:
-    Result:='Сбросить настройки всех полей';
+    Result:='РЎР±СЂРѕСЃРёС‚СЊ РЅР°СЃС‚СЂРѕР№РєРё РІСЃРµС… РїРѕР»РµР№';
     msResetAllFieldsSettingsQ:
     Result:=GetDCLMessageStringDefault(msResetAllFieldsSettings)+'?';
     msResetFieldsSettings:
-    Result:='Сбросить настройки полей';
+    Result:='РЎР±СЂРѕСЃРёС‚СЊ РЅР°СЃС‚СЂРѕР№РєРё РїРѕР»РµР№';
     msResetFieldsSettingsQ:
     Result:=GetDCLMessageStringDefault(msResetFieldsSettings)+'?';
     msDeleteAllBookmarks:
-    Result:='Удалить все закладки';
+    Result:='РЈРґР°Р»РёС‚СЊ РІСЃРµ Р·Р°РєР»Р°РґРєРё';
     msDeleteAllBookmarksQ:
     Result:=GetDCLMessageStringDefault(msDeleteAllBookmarks)+'?';
     msSaveFieldsSettings:
-    Result:='Сохранить настройки полей';
+    Result:='РЎРѕС…СЂР°РЅРёС‚СЊ РЅР°СЃС‚СЂРѕР№РєРё РїРѕР»РµР№';
     msNotAllowOpenForm:
-    Result:='Вам не разрешено открывать формы';
+    Result:='Р’Р°Рј РЅРµ СЂР°Р·СЂРµС€РµРЅРѕ РѕС‚РєСЂС‹РІР°С‚СЊ С„РѕСЂРјС‹';
     msDeleteRecordQ:
     Result:=GetDCLMessageStringDefault(msDeleteRecord)+'?';
     msPathsNotSupported:
-    Result:='пути не поддерживаются';
+    Result:='РїСѓС‚Рё РЅРµ РїРѕРґРґРµСЂР¶РёРІР°СЋС‚СЃСЏ';
     msSaveEditings:
-    Result:='Сохранить изменения';
+    Result:='РЎРѕС…СЂР°РЅРёС‚СЊ РёР·РјРµРЅРµРЅРёСЏ';
     msSaveEditingsQ:
     Result:=GetDCLMessageStringDefault(msSaveEditings)+'?';
     msDoYouWontTerminateApplicationQ:
-    Result:='Завершить приложение?';
+    Result:='Р—Р°РІРµСЂС€РёС‚СЊ РїСЂРёР»РѕР¶РµРЅРёРµ?';
     msConfigurationFileNotFound:
-    Result:='Файл конфигурации не найден';
+    Result:='Р¤Р°Р№Р» РєРѕРЅС„РёРіСѓСЂР°С†РёРё РЅРµ РЅР°Р№РґРµРЅ';
     msClearContentQ:
     Result:=GetDCLMessageStringDefault(msClearContent)+'?';
     msNotifycation:
-    Result:='Уведомление';
+    Result:='РЈРІРµРґРѕРјР»РµРЅРёРµ';
     msForUser:
-    Result:='Для пользователя';
+    Result:='Р”Р»СЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ';
     msLoading:
-    Result:='Загрузка';
+    Result:='Р—Р°РіСЂСѓР·РєР°';
     msTimeToExit:
-    Result:='Выход из системы через %d секунд.';
+    Result:='Р’С‹С…РѕРґ РёР· СЃРёСЃС‚РµРјС‹ С‡РµСЂРµР· %d СЃРµРєСѓРЅРґ.';
+    msDSStateSet:
+    Result:='РќРµ Р°РєС‚РёРІРµРЅ,РџСЂРѕСЃРјРѕС‚СЂ,Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ,Р’СЃС‚Р°РІРєР°,РЈСЃС‚Р°РЅРѕРІРєР° РєР»СЋС‡Р°,Р’С‹С‡РёСЃР»СЏРµРјС‹Рµ РїРѕР»СЏ,Р¤РёР»СЊС‚СЂР°С†РёСЏ,РќРѕРІРѕРµ Р·РЅР°С‡РµРЅРёРµ,РЎС‚Р°СЂРѕРµ Р·РЅР°С‡РµРЅРёРµ,РўРµРєСѓС‰РµРµ Р·РЅР°С‡РµРЅРёРµ,Р‘Р»РѕС‡РЅРѕРµ С‡С‚РµРЅРёРµ,Р’РЅСѓС‚СЂРµРЅРЅРµ РІС‹С‡РёСЃР»РµРЅРёРµ,РћС‚РєСЂС‹С‚РёРµ';
     end;
   End;
 end;
@@ -820,7 +804,7 @@ begin
   Data.TranscodeType:=ttDirect;
 end;
 
-function LoadTranscodeFile(DataType:TTranscodeDataType; FileName:String; LangID:TLangID):Boolean;
+function LoadTranscodeFile(DataType:TTranscodeDataType; FileName:String; Lang:TLangName):Boolean;
 var
   LangResFile:TStringList;
   S, c, vs1, tmp1:String;
@@ -829,7 +813,7 @@ var
   lt:TIsDigitType;
 begin
   If not FileExists(FileName) then
-    FileName:=FileName+'.'+LangIDToString(LangID);
+    FileName:=FileName+'.'+UpperCase(Lang);
 
   Result:=False;
 {$IFNDEF SINGLELANG}
@@ -972,8 +956,8 @@ begin
   while i<=Length(Buf) Do
   Begin
     Match:=False;
-	  For j:=1 to Length(TranscodeData[DataType]) do
-	  Begin
+    For j:=1 to Length(TranscodeData[DataType]) do
+    Begin
       If (TranscodeData[DataType][j-1].SourceLiteral<>'') then
       Begin
         If TranscodeData[DataType][j-1].SourceLiteral[1]=Buf[i] then
@@ -1017,7 +1001,7 @@ begin
                 break;
               End;
           End;
-		End;
+    End;
 
     If Match then
     Begin
@@ -1037,7 +1021,7 @@ begin
 
     Result:=Result+ts;
     Inc(i);
-	End;
+  End;
 end;
 
 procedure LoadLangFile(FileName:String);
@@ -1086,7 +1070,7 @@ begin
         Begin
           MessageString:=Copy(S, StartDelim, EndDelim-StartDelim+1);
 
-          For k:=0 to Ord(High(NamedStringMessages))-1 do
+          For k:=0 to Ord(High(NamedStringMessages)) do
           Begin
             If LowerCase(NamedStringMessages[TStringMessages(k)])=msID then
             Begin
@@ -1094,6 +1078,7 @@ begin
                 StringMessages[TStringMessages(k)]:=MessageString
               Else
                 StringMessages[TStringMessages(k)]:=GetDCLMessageStringDefault(TStringMessages(k));
+
               Break;
             End;
           End;
@@ -1105,7 +1090,7 @@ begin
   End
   Else
 {$ENDIF}
-    For k:=0 to Ord(High(NamedStringMessages))-1 do
+    For k:=0 to Ord(High(NamedStringMessages)) do
       StringMessages[TStringMessages(k)]:=GetDCLMessageStringDefault(TStringMessages(k));
 end;
 
@@ -1143,11 +1128,11 @@ begin
   End;
 end;
 
-procedure LoadLangRes(Lang:TLangID; Path:String);
+procedure LoadLangRes(Lang:TLangName; Path:String);
 var
   FileName:string;
 begin
-  FileName:=IncludeTrailingPathDelimiter(DefaultLangDir)+'DCLTranslate.'+LangIDToString(Lang);
+  FileName:=IncludeTrailingPathDelimiter(DefaultLangDir)+'DCLTranslate.'+UpperCase(Lang);
 
   LoadLangFile(Path+FileName);
   If not LoadTranscodeFile(tdtDOS, 'DCLTranscodeDOS', Lang) then
@@ -1160,52 +1145,10 @@ end;
 
 function GetLacalaizedMonthName(MonthNum:Integer):string;
 begin
-  Result:=GetDCLMessageString(TStringMessages(MonthNum+Ord(msJanuary)-1));
-end;
-
-function LangIDToString(LangID:TLangID):String;
-var
-  i:Integer;
-begin
-  Result:=IntToStr(LangID);
-  For i:=1 to Length(LangIDsToName) do
-  Begin
-    If LangIDsToName[i].ID=LangID then
-    Begin
-      Result:=LangIDsToName[i].LangNameISO639;
-      Break;
-    End;
-  End;
-end;
-
-function LangNameToID(LangName:String):TLangID;
-var
-  i:Integer;
-begin
-  Result:=DefaultLanguageID;
-  For i:=1 to Length(LangIDsToName) do
-  Begin
-    If UpperCase(LangIDsToName[i].LangNameISO639)=UpperCase(LangName) then
-    Begin
-      Result:=LangIDsToName[i].ID;
-      Break;
-    End;
-  End;
-end;
-
-function GetLangNameISO639ByShort(LangName:String):String;
-var
-  i:Integer;
-begin
-  Result:=DefaultLanguage;
-  For i:=1 to Length(LangIDsToName) do
-  Begin
-    If UpperCase(LangIDsToName[i].ShortName)=UpperCase(LangName) then
-    Begin
-      Result:=LangIDsToName[i].LangNameISO639;
-      Break;
-    End;
-  End;
+  If (MonthNum>0) and (MonthNum<13) then
+    Result:=GetDCLMessageString(TStringMessages(MonthNum+Ord(msJanuary)-1))
+  Else
+    Result:='';
 end;
 
 function GetSystemLanguage: String;
@@ -1213,17 +1156,16 @@ var
 {$IFDEF MSWINDOWS}
   OutputBuffer: PChar;
 {$ENDIF}
+{$IFDEF UNIX}
   S, Lang:string;
+{$ENDIF}
 begin
 {$IFDEF MSWINDOWS}
+  Result:=DefaultLanguage;
   OutputBuffer:=StrAlloc(90);     //alocate memory for the PChar
   try
-    try
-      GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SABBREVLANGNAME, OutputBuffer, 89);
-      Result:=UpperCase(OutputBuffer);
-    except
-      Result:=DefaultLanguage;
-    end;
+    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SABBREVLANGNAME, OutputBuffer, 89);
+    Result:=UpperCase(OutputBuffer);
   finally
     StrDispose(OutputBuffer);   //alway's free the memory alocated
   end;
@@ -1235,35 +1177,8 @@ begin
 {$ENDIF}
 end;
 
-function GetSystemLanguageID: Integer;
-var
-{$IFDEF MSWINDOWS}
-  SelectedLCID: LCID;       //DWORD constand in Windows.pas
-{$ENDIF}
-  S, Lang:string;
-begin
-{$IFDEF MSWINDOWS}
-  try
-    try
-      SelectedLCID:=GetUserDefaultLCID;
-      Result:=SelectedLCID
-    except
-      Result:=DefaultLanguageID;
-    end;
-  finally
-    //
-  end;
-{$ENDIF}
-{$IFDEF UNIX}
-  S:=SysUtils.GetEnvironmentVariable('LANG');
-  Lang:=Copy(S, 1, Pos('_', S)-1);
-  Result:=LangNameToID(GetLangNameISO639ByShort(Lang));
-{$ENDIF}
-end;
-
 procedure InitLangEnv;
 begin
-  LangID:=GetSystemLanguageID;
   LangName:=GetSystemLanguage;
 end;
 

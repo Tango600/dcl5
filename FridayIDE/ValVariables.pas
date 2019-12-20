@@ -38,19 +38,22 @@ uses EditValVars;
 
 procedure TForm26.ScanVars;
 Var
-  AllVariables:TList<TVariable>;
   i:Word;
+  Variables:TList;
+  OneVar:^TVariable;
 Begin
-  AllVariables:=DCLMainLogOn.Variables.GetAllVariables;
-  If AllVariables.Count>0 then
+  Variables:=DCLMainLogOn.Variables.VariablesList;
+  If Variables.Count>0 then
   Begin
-    For i:=0 to AllVariables.Count-1 do
+    For i:=0 to Variables.Count-1 do
     Begin
-      StringGrid1.Cells[0, i+1]:=DCLMainLogOn.Variables.VariablesList[i].Name;
-      StringGrid1.Cells[1, i+1]:=DCLMainLogOn.Variables.VariablesList[i].Value;
+      OneVar:=Variables[i];
+
+      StringGrid1.Cells[0, i+1]:=OneVar.Name;
+      StringGrid1.Cells[1, i+1]:=OneVar.Value;
       StringGrid1.RowCount:=i+1;
     end;
-    StatusBar1.Panels[0].Text:='Всего переменных :'+IntToStr(AllVariables.Count);
+    StatusBar1.Panels[0].Text:='Всего переменных :'+IntToStr(Variables.Count);
   End;
 end;
 

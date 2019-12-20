@@ -38,7 +38,7 @@ DefaultLibraryLocation='fbclient.so';
 {$IFDEF SQLdb}
   DBEngineType='SQLdb (Universal)';
 {$ENDIF}
-  Ver='10.1.42.342';
+  Ver='10.1.46.365';
   VersionS='$VersionSignature$'+Ver+'$';
 
   CompotableVersion='9.1.129.309';
@@ -192,7 +192,9 @@ DefaultLibraryLocation='fbclient.so';
   UserLevelsSet='ulDeny,ulReadOnly,ulWrite,ulExecute,ulLevel,ulDeveloper';
 
   SW_SHOWNORMAL=1;
+
 {$IFDEF FPC}
+  InternalAppNameSuffix='FPC';
   IndicatorWidth=12;
 
   AppBuildDate={$I %DATE%};
@@ -201,6 +203,7 @@ DefaultLibraryLocation='fbclient.so';
   TargetOS={$I %FPCTARGETOS%};
 {$ENDIF}
 {$IFDEF DELPHI}
+  InternalAppNameSuffix='Delphi';
 {$IFDEF MSWINDOWS}
   LineEnding=#13#10;
 {$ENDIF}
@@ -244,7 +247,6 @@ DefaultLibraryLocation='fbclient.so';
 {$ENDIF}
   MemFileName='DCL_Run_Unit_'+DBEngineType;
 
-  DefaultSourceEncoding='cp1251';
 {$IFDEF DELPHI}
   EncodingUTF8='utf8';
   UTF8BOM=#$EF#$BB#$BF;
@@ -252,12 +254,15 @@ DefaultLibraryLocation='fbclient.so';
   {$IFDEF NEWDELPHI}
   DefaultInterfaceEncoding='utf8';
   {$ELSE}
-  DefaultInterfaceEncoding='cp1251';
+  DefaultInterfaceEncoding='win1251';
   {$ENDIF}
 {$ENDIF}
 {$IFDEF FPC}
   DefaultInterfaceEncoding=EncodingUTF8;
 {$ENDIF}
+  InternalAppName='DCLPlatform_'+InternalAppNameSuffix;
+
+
   PAGSignatureSize=3;
   PAGSignature=$474150;
   ParamPrefix=':';
@@ -302,13 +307,8 @@ DefaultLibraryLocation='fbclient.so';
 
   DefaultNavigButtonsSet='First,Last,Edit,Delete,Insert,Post,Cancel,Refresh';
 
-  {MonthsNames: Array [0..12] of String=(' ', 'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь');}
-  MonthsNamesRusW: Array [0..12] of String=(' ', 'Января', 'Февраля', 'Марта', 'Апреля', 'Майя', 'Июня',
-    'Июля', 'Августа', 'Сентября', 'Октября', 'Ноября', 'Декабря');
-
   DCLDir='DCL5'+PathDelim;
-  DBFormNAme='DBForm';
+  DBFormName='DBForm';
   DefaultTimeSeparator=':';
   DefaultDateSeparator='.';
   DefaultDateFormat='dd'+DefaultDateSeparator+'mm'+DefaultDateSeparator+'yyyy';
@@ -393,4 +393,4 @@ begin
   end;
 end;
 
-end.
+end.

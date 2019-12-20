@@ -1,4 +1,4 @@
-unit uUDL;
+п»їunit uUDL;
 // DCLDialog multi platform
 // forum : http://www.dcl5.5bb.ru/
 // Unreal Software (C) 2002
@@ -20,9 +20,8 @@ Uses
   VCLFixPack, ControlsAtomFix,
 {$ENDIF}
 {$ENDIF}
-  Messages, Variants, Classes, Generics.Collections, Graphics, Controls, Forms,
-  ExtCtrls, ToolWin, Grids, DB, StdCtrls, ComCtrls, Dialogs, Buttons, ExtDlgs,
-  Menus,
+  Messages, Variants, Classes, Graphics, Controls, Forms, ExtCtrls, ToolWin,
+  Grids, DB, StdCtrls, ComCtrls, Dialogs, Buttons, ExtDlgs, Menus,
 {$IFDEF NEWDELPHI}
   Vcl.DBCtrls, Vcl.DBGrids,
 {$ELSE}
@@ -54,7 +53,7 @@ Uses
   sqldb,
 {$ENDIF}
 {$IFDEF FPC}
-  FileUtil, LConvEncoding, {$IFDEF ZVComponents}ZVDateTimePicker, {$ENDIF}
+  FileUtil, LazUTF8, LConvEncoding, {$IFDEF ZVComponents}ZVDateTimePicker, {$ENDIF}
 {$ENDIF}
 {$IFNDEF FPC}
   JPEG,
@@ -173,7 +172,7 @@ Type
 
     procedure NotifyForms(Action: TFormsNotifyAction);
 
-    procedure GetTableNames(List: TStrings);
+    procedure GetTableNames(var List: TStrings);
 
     procedure RePlaseVariables(var VariablesSet: String);
     procedure TranslateVal(var S: String);
@@ -197,8 +196,7 @@ Type
     procedure Disconnect;
     procedure ReconnectDB;
 
-    function CreateDCLQuery:TDCLQuery;
-
+    property DBLogOn: TDBLogOn read FDBLogOn;
     property FormsCount: Integer read GetFormsCount;
     property MainForm: TForm read FMainForm;
     property Forms[Index: Integer]: TDCLForm read GetForm;
@@ -217,11 +215,11 @@ Type
     function VariableNumByName(Const VariableName: String): Integer;
     function GetVariableByName(Const VariableName: String): String;
     procedure SetVariableByName(Const VariableName, Value: String);
+    function GetAllVariables: TList;
   public
     constructor Create(var DCLLogOn: TDCLLogOn; DCLForm: TDCLForm);
     destructor Destroy; override;
 
-    function GetAllVariables: TList<TVariable>;
     procedure NewVariable(Const VariableName: String; Value: String='');
     procedure FreeVariable(Const VariableName: String);
     function Exists(Const VariableName: String): Boolean;
@@ -229,7 +227,7 @@ Type
 
     property Variables[Const VariableName: String]: String read GetVariableByName
       write SetVariableByName;
-    property VariablesList: TList<TVariable> read GetAllVariables;
+    property VariablesList: TList read GetAllVariables;
   end;
 
   TMainFormAction=class
@@ -328,7 +326,7 @@ Type
     function GetSummQuery: String;
     function QueryBuilder(GetQueryMode, QueryMode: Byte): String;
     function GetFingQuery: String;
-    function FindRaightQuery(St: String): String;
+    function FindRaightQuery(): String;
     procedure ChangeTabPage(Sender: TObject);
     function GetTablePartsCount:Integer;
 
@@ -1065,8 +1063,8 @@ begin
 
   BinStor:=TDCLBinStore.Create(DCLLogOn);
   FDCLLogOn:=DCLLogOn;
-  OfficeDocumentFormat:=odtMSO;
-  OfficeTemplateFormat:=odtMSO;
+  OfficeDocumentFormat:=GPT.OfficeDocumentFormat;
+  OfficeTemplateFormat:=GPT.OfficeTemplateFormat;
 {$ENDIF}
 end;
 
@@ -1273,7 +1271,7 @@ var
                   dmReport[ACurrentForm].DMForm.VariablesClass.RePlaceParams(QSQLText, IBDQ as TIBCustomDataSet, False); }
               end;
             Except
-              LogObj.WriteLog('...Ошибка интерпритации параметров/ '+sQueryToDataSources
+              LogObj.WriteLog('...РћС€РёР±РєР° РёРЅС‚РµСЂРїСЂРёС‚Р°С†РёРё РїР°СЂР°РјРµС‚СЂРѕРІ/ '+sQueryToDataSources
                   [QueryNum][Pc]);
               Errors:=True;
             end;
@@ -1284,35 +1282,35 @@ var
 
         // RePlaceParams(QSQLText, dmData.dmReport[ACurrentForm].DMForm.idsAReportLst, False);
 
-        LogObj.WriteLog('Обработка['+IntToStr(QueryNum)+']... Query:'+mQueries[QueryNum].Name);
+        LogObj.WriteLog('РћР±СЂР°Р±РѕС‚РєР°['+IntToStr(QueryNum)+']... Query:'+mQueries[QueryNum].Name);
         If Assigned(mQueries[QueryNum].DataSource) Then
           LogObj.WriteLog('     Data source: '+mQueries[QueryNum].DataSource.Name);
         LogObj.WriteLog('========SQL begin========');
         LogObj.WriteLog(QSQLText);
         LogObj.WriteLog('========SQL end==========');
-        LogObj.WriteLog('Пытаемся открыть....');
+        LogObj.WriteLog('РџС‹С‚Р°РµРјСЃСЏ РѕС‚РєСЂС‹С‚СЊ....');
         If IsReturningQuery(mQueries[QueryNum].SQL.Text) Then
         begin
           St:=GetTickCount;
           mQueries[QueryNum].Open;
           // mQueries[QueryNum].FetchAll;
-          LogObj.WriteLog('... Успешно.');
-          LogObj.WriteLog('Время выполнения: '+GetTimeFormat(GetTickCount-St));
-          LogObj.WriteLog('Количество записей: '+IntToStr(mQueries[QueryNum].RecordCount));
+          LogObj.WriteLog('... РЈСЃРїРµС€РЅРѕ.');
+          LogObj.WriteLog('Р’СЂРµРјСЏ РІС‹РїРѕР»РЅРµРЅРёСЏ: '+GetTimeFormat(GetTickCount-St));
+          LogObj.WriteLog('РљРѕР»РёС‡РµСЃС‚РІРѕ Р·Р°РїРёСЃРµР№: '+IntToStr(mQueries[QueryNum].RecordCount));
           LogObj.WriteLog('');
           // mQueries[QueryNum].FetchAll;
         end
         Else
         begin
           mQueries[QueryNum].ExecSQL;
-          LogObj.WriteLog('... Выполнен.');
+          LogObj.WriteLog('... Р’С‹РїРѕР»РЅРµРЅ.');
         end;
 
       Except
         On E: Exception do
         begin
           LogObj.WriteLog('Query['+IntToStr(QueryNum)+']: '+mQueries[QueryNum].Name);
-          LogObj.WriteLog('Текст ошибки :');
+          LogObj.WriteLog('РўРµРєСЃС‚ РѕС€РёР±РєРё :');
           LogObj.WriteLog(E.Message);
           LogObj.WriteLog('----------------------------');
           AllOk:=False;
@@ -1322,8 +1320,8 @@ var
     end
     Else
     begin
-      LogObj.WriteLog('Обработка['+IntToStr(QueryNum)+']... Query:'+mQueries[QueryNum].Name);
-      LogObj.WriteLog('... Пустое SQL предложение.');
+      LogObj.WriteLog('РћР±СЂР°Р±РѕС‚РєР°['+IntToStr(QueryNum)+']... Query:'+mQueries[QueryNum].Name);
+      LogObj.WriteLog('... РџСѓСЃС‚РѕРµ SQL РїСЂРµРґР»РѕР¶РµРЅРёРµ.');
     end;
     LogObj.WriteLog('');
   end;
@@ -1366,17 +1364,17 @@ begin
     TemplateExists:=True;
     If TemplatesCount>1 Then
     begin
-      LogObj.WriteLog('Файлы шаблонов ('+IntToStr(TemplatesCount)+') :');
+      LogObj.WriteLog('Р¤Р°Р№Р»С‹ С€Р°Р±Р»РѕРЅРѕРІ ('+IntToStr(TemplatesCount)+') :');
       For TemplatesCounter:=1 to TemplatesCount do
       begin
         vStrTmp1:=SortParams(ATemplate, TemplatesCounter);
-        LogObj.WriteLog('Файл шаблона №'+IntToStr(TemplatesCounter)+' : '+vStrTmp1);
+        LogObj.WriteLog('Р¤Р°Р№Р» С€Р°Р±Р»РѕРЅР° в„–'+IntToStr(TemplatesCounter)+' : '+vStrTmp1);
         TemplateExists:=FileExists(vStrTmp1);
         If TemplateExists Then
           Templates[TemplatesCounter]:=vStrTmp1;
         If Not TemplateExists Then
         begin
-          LogObj.WriteLog('Файл шаблона не найден : '+Templates[TemplatesCounter]);
+          LogObj.WriteLog('Р¤Р°Р№Р» С€Р°Р±Р»РѕРЅР° РЅРµ РЅР°Р№РґРµРЅ : '+Templates[TemplatesCounter]);
           break;
         end;
       end;
@@ -1385,7 +1383,7 @@ begin
     begin
       TemplateExists:=FileExists(ATemplate);
       Templates[1]:=ATemplate;
-      LogObj.WriteLog('Файл шаблона : '+ATemplate);
+      LogObj.WriteLog('Р¤Р°Р№Р» С€Р°Р±Р»РѕРЅР° : '+ATemplate);
     end;
 
     TemplatesCounter:=1;
@@ -1395,14 +1393,14 @@ begin
       rtWord:
       begin
         PrintWord:=TPrintDoc.Create(dmData, otOpOffice, LogObj);
-        LogObj.WriteLog('Веррсия PrintWord: '+PrintWord.Version);
+        LogObj.WriteLog('Р’РµСЂСЂСЃРёСЏ PrintWord: '+PrintWord.Version);
         Case PrintWord.OfficeType of
         otNone:
-        LogObj.WriteLog('Не установлен никакой офис.');
+        LogObj.WriteLog('РќРµ СѓСЃС‚Р°РЅРѕРІР»РµРЅ РЅРёРєР°РєРѕР№ РѕС„РёСЃ.');
         otMSOffice:
-        LogObj.WriteLog('Тип офиса : MS');
+        LogObj.WriteLog('РўРёРї РѕС„РёСЃР° : MS');
         otOpOffice:
-        LogObj.WriteLog('Тип офиса : Open/Libre Office');
+        LogObj.WriteLog('РўРёРї РѕС„РёСЃР° : Open/Libre Office');
         end;
         LogObj.WriteLog('');
       end;
@@ -1567,7 +1565,7 @@ begin
       FirstRun:=True;
       For TemplatesCounter:=1 to TemplatesCount do
       begin
-        LogObj.WriteLog('Время старта: '+TimeToStr(Now));
+        LogObj.WriteLog('Р’СЂРµРјСЏ СЃС‚Р°СЂС‚Р°: '+TimeToStr(Now));
         LogObj.WriteLog('');
         For i:=1 to vQueryIndex do
         begin
@@ -1579,38 +1577,38 @@ begin
 
         FirstRun:=False;
         If AllOk Then
-          LogObj.WriteLog('Все SQL-запросы выполнены без ошибок!');
+          LogObj.WriteLog('Р’СЃРµ SQL-Р·Р°РїСЂРѕСЃС‹ РІС‹РїРѕР»РЅРµРЅС‹ Р±РµР· РѕС€РёР±РѕРє!');
 
         LogObj.WriteLog('');
 
         Case FReportOutputType of
         rtWord:
         begin
-          LogObj.WriteLog('Генерация отчёта...');
+          LogObj.WriteLog('Р“РµРЅРµСЂР°С†РёСЏ РѕС‚С‡С‘С‚Р°...');
           PrintWord:=TPrintDoc.Create(dmData, otMSOffice, LogObj);
           try
             PrintWord.PrintTemplate(Templates[TemplatesCounter], GPT.DebugOn);
           Except
             On E: Exception do
             begin
-              LogObj.WriteLog('Ошибка генерации отчёта:');
-              LogObj.WriteLog('  Текст ошибки :');
+              LogObj.WriteLog('РћС€РёР±РєР° РіРµРЅРµСЂР°С†РёРё РѕС‚С‡С‘С‚Р°:');
+              LogObj.WriteLog('  РўРµРєСЃС‚ РѕС€РёР±РєРё :');
               LogObj.WriteLog(E.Message);
-              LogObj.WriteLog('...НЕ успешно.');
+              LogObj.WriteLog('...РќР• СѓСЃРїРµС€РЅРѕ.');
               Errors:=True;
             end;
           end;
           If Not Errors Then
-            LogObj.WriteLog('...Успешно.');
+            LogObj.WriteLog('...РЈСЃРїРµС€РЅРѕ.');
 
           If PrintWord.OfficeType=otMSOffice Then
-            LogObj.WriteLog('Версия MS офис : '+IntToStr(PrintWord.MSOVer));
+            LogObj.WriteLog('Р’РµСЂСЃРёСЏ MS РѕС„РёСЃ : '+IntToStr(PrintWord.MSOVer));
 
           LogObj.WriteLog('[PrintVariables]');
           For i:=1 to FDCLLogOn.Variables.VariablesList.Count do
           begin
-            vStrTmp1:=FDCLLogOn.Variables.VariablesList[i-1].Name;
-            vStrTmp2:=FDCLLogOn.Variables.VariablesList[i-1].Value;
+            vStrTmp1:=TVariable(FDCLLogOn.Variables.VariablesList[i-1]^).Name;
+            vStrTmp2:=TVariable(FDCLLogOn.Variables.VariablesList[i-1]^).Value;
 
             If PrintWord.Find(PrintWord.MarkerStr+vStrTmp1+PrintWord.MarkerStr) Then
               PrintWord.FindAndReplace(PrintWord.MarkerStr+vStrTmp1+PrintWord.MarkerStr, vStrTmp2);
@@ -1639,9 +1637,9 @@ begin
             end;
           end;
 
-          LogObj.WriteLog('Сохранение в : '+AFileName);
+          LogObj.WriteLog('РЎРѕС…СЂР°РЅРµРЅРёРµ РІ : '+AFileName);
           PrintWord.SaveReport(AFileName);
-          LogObj.WriteLog('Запуск документа ...');
+          LogObj.WriteLog('Р—Р°РїСѓСЃРє РґРѕРєСѓРјРµРЅС‚Р° ...');
           PrintWord.ShowReport;
         end;
 {$IFNDEF NOFASTREPORTS}
@@ -1657,11 +1655,11 @@ begin
         end;
 
         LogObj.WriteLog('');
-        LogObj.WriteLog('Время финиша: '+TimeToStr(Now));
+        LogObj.WriteLog('Р’СЂРµРјСЏ С„РёРЅРёС€Р°: '+TimeToStr(Now));
         LogObj.WriteLog('');
       end;
 
-      LogObj.WriteLog('Обработка завершающих Query.');
+      LogObj.WriteLog('РћР±СЂР°Р±РѕС‚РєР° Р·Р°РІРµСЂС€Р°СЋС‰РёС… Query.');
       For i:=1 to vQueryIndex do
       begin
         If Assigned(mQueries[i]) Then
@@ -1674,20 +1672,20 @@ begin
     Else
     begin
       Errors:=True;
-      LogObj.WriteLog('Файл шаблона не найден!!!');
+      LogObj.WriteLog('Р¤Р°Р№Р» С€Р°Р±Р»РѕРЅР° РЅРµ РЅР°Р№РґРµРЅ!!!');
       LogObj.WriteLog(Templates[TemplatesCounter]);
     end;
 
     LogObj.WriteLog('=====================================');
     LogObj.WriteLog('');
-    LogObj.WriteLog('=====Конец блока выполнения=====');
+    LogObj.WriteLog('=====РљРѕРЅРµС† Р±Р»РѕРєР° РІС‹РїРѕР»РЅРµРЅРёСЏ=====');
     LogObj.WriteLog('');
   finally
     try
       If Errors Then
       begin
         LogObj.WriteLog('');
-        LogObj.WriteLog('!!!!!!!!Что-то пошло не так.!!!!!!!!');
+        LogObj.WriteLog('!!!!!!!!Р§С‚Рѕ-С‚Рѕ РїРѕС€Р»Рѕ РЅРµ С‚Р°Рє.!!!!!!!!');
         LogObj.WriteLog('');
       end;
 
@@ -1907,16 +1905,16 @@ begin
   end;
 end;
 
-function TVariables.GetAllVariables: TList<TVariable>;
+function TVariables.GetAllVariables: TList;
 var
   vv1: Integer;
 begin
-  Result:=TList<TVariable>.Create;
+  Result:=TList.Create;
   Result.Clear;
   If Length(FVariables)>0 Then
   begin
     For vv1:=0 to Length(FVariables)-1 do
-      Result.Add(FVariables[vv1]);
+      Result.Add(@FVariables[vv1]);
   end;
 end;
 
@@ -2113,21 +2111,21 @@ begin
         33:
         TmpStr:=GPT.UserID;
         34:
-        TmpStr:=SourceToInterface(GetDCLMessageString(msAccessLevelsSet));
+        TmpStr:=GetDCLMessageString(msAccessLevelsSet);
         35:
         TmpStr:=IntToStr(Ord(FDCLLogOn.AccessLevel));
         36:
         TmpStr:=IntToStr(Ord(FDCLForm.UserLevelLocal));
         37:
-        TmpStr:=SourceToInterface(GetDCLMessageString(msNotifyActionsSet));
+        TmpStr:=GetDCLMessageString(msNotifyActionsSet);
         38:
-        TmpStr:=SourceToInterface(GetDCLMessageString(msNoYes));
+        TmpStr:=GetDCLMessageString(msNoYes);
         39:
         TmpStr:=FDCLLogOn.EvalFormula;
         40:
         TmpStr:=IntToStr(Ord(Query.State));
         41:
-        TmpStr:=SourceToInterface(GetNameDSState(Query.State));
+        TmpStr:=GetNameDSState(Query.State);
         42:
         TmpStr:=IntToStr(FDCLLogOn.RoleRaightsLevel);
         43:
@@ -2193,7 +2191,7 @@ begin
     ShowChangePasswordForm;
   end
   Else
-    ShowErrorMessage(0, SourceToInterface(GetDCLMessageString(msEmptyUserName)));
+    ShowErrorMessage(0, GetDCLMessageString(msEmptyUserName));
 end;
 
 procedure TLogOnForm.ChangePassword(AUserID, NewPassword: String);
@@ -2275,9 +2273,9 @@ procedure TLogOnForm.CreateForm(NoClose, Relogin: Boolean; UserName: String);
 begin
   FormCreated:=True;
   DebugProc('Create LogOn Form');
-  Application.Title:=SourceToInterface('DCLRun '+GetDCLMessageString(msLogonToSystem));
+  Application.Title:='DCLRun '+GetDCLMessageString(msLogonToSystem);
   RoleForm:=TForm.Create(nil);
-  RoleForm.Caption:=SourceToInterface(GetDCLMessageString(msLogonToSystem));
+  RoleForm.Caption:=GetDCLMessageString(msLogonToSystem);
   RoleForm.BorderStyle:=bsDialog;
 
   RoleForm.OnShow:=OnShowForm;
@@ -2348,7 +2346,7 @@ begin
   RoleLabel.Parent:=Panel;
   RoleLabel.Left:=BeginStepLeft;
   RoleLabel.Top:=BeginStepTop-15;
-  RoleLabel.Caption:=SourceToInterface(GetDCLMessageString(msUserName));
+  RoleLabel.Caption:=GetDCLMessageString(msUserName);
 
   RolePassEdit:=TEdit.Create(Panel);
   RolePassEdit.Parent:=Panel;
@@ -2358,12 +2356,12 @@ begin
   RoleLabel.Parent:=Panel;
   RoleLabel.Left:=BeginStepLeft;
   RoleLabel.Top:=BeginStepTop+EditTopStep-15;
-  RoleLabel.Caption:=SourceToInterface(GetDCLMessageString(msPassword));
+  RoleLabel.Caption:=GetDCLMessageString(msPassword);
 
   RoleButtonOK:=TDialogButton.Create(RoleForm);
   RoleButtonOK.Parent:=RoleForm;
   RoleButtonOK.Default:=True;
-  RoleButtonOK.Caption:=SystemToInterface(GetDCLMessageString(msApplay));
+  RoleButtonOK.Caption:=GetDCLMessageString(msApplay);
   RoleButtonOK.Width:=LoginButtonWidth;
   RoleButtonOK.Height:=ButtonHeight;
   RoleButtonOK.OnClick:=OkButtonClick;
@@ -2371,7 +2369,7 @@ begin
   RoleButtonCancel:=TDialogButton.Create(RoleForm);
   RoleButtonCancel.Parent:=RoleForm;
   RoleButtonCancel.Cancel:=True;
-  RoleButtonCancel.Caption:=SourceToInterface(GetDCLMessageString(msClose));
+  RoleButtonCancel.Caption:=GetDCLMessageString(msClose);
   RoleButtonCancel.Width:=LoginButtonWidth;
   RoleButtonCancel.Height:=ButtonHeight;
   If Not NoClose Then
@@ -2379,8 +2377,8 @@ begin
 
   ChangePassButton:=TDialogButton.Create(RoleForm);
   ChangePassButton.Parent:=RoleForm;
-  ChangePassButton.Caption:=SourceToInterface(GetDCLMessageString(msEdit));
-  ChangePassButton.Hint:=SourceToInterface(GetDCLMessageString(msEditPassword));
+  ChangePassButton.Caption:=GetDCLMessageString(msEdit);
+  ChangePassButton.Hint:=GetDCLMessageString(msEditPassword);
   ChangePassButton.ShowHint:=True;
   ChangePassButton.Width:=LoginButtonWidth;
   ChangePassButton.Height:=ButtonHeight;
@@ -2460,7 +2458,7 @@ begin
   ChangePassForm.FormStyle:=fsStayOnTop;
   ChangePassForm.BorderStyle:=bsSingle;
   ChangePassForm.BorderIcons:=[biSystemMenu];
-  ChangePassForm.Caption:=SourceToInterface(GetDCLMessageString(msChangePassord));
+  ChangePassForm.Caption:=GetDCLMessageString(msChangePassord);
   ChangePassForm.ClientWidth:=(BeginStepLeft*3)+EditWidth;
   ChangePassForm.ClientHeight:=(BeginStepTop*2)+EditTopStep*5-FilterLabelTop*2;
   ChangePassForm.Position:=poScreenCenter;
@@ -2496,7 +2494,7 @@ begin
   OkButton.Parent:=ChangePassForm;
   OkButton.Name:='OkButton';
   OkButton.OnClick:=OkChangePass;
-  OkButton.Caption:=SourceToInterface(GetDCLMessageString(msEdit));
+  OkButton.Caption:=GetDCLMessageString(msEdit);
   OkButton.Default:=True;
   OkButton.Top:=BeginStepTop+EditTopStep*4-FilterLabelTop*2;
   OkButton.Left:=BeginStepLeft;
@@ -2505,32 +2503,32 @@ begin
   CancelButton.Parent:=ChangePassForm;
   CancelButton.Name:='CancelButton';
   CancelButton.OnClick:=CancelChangePass;
-  CancelButton.Caption:=SourceToInterface(GetDCLMessageString(msCancel));;
+  CancelButton.Caption:=GetDCLMessageString(msCancel);;
   CancelButton.Cancel:=True;
   CancelButton.Top:=BeginStepTop+EditTopStep*4-FilterLabelTop*2;
   CancelButton.Left:=BeginStepLeft+ButtonsInterval+ButtonWidth;
 
   LabelPass:=TDialogLabel.Create(ChangePassForm);
   LabelPass.Parent:=ChangePassForm;
-  LabelPass.Caption:=SourceToInterface(GetDCLMessageString(msOldPassword)+':');
+  LabelPass.Caption:=GetDCLMessageString(msOldPassword)+':';
   LabelPass.Top:=BeginStepTop-FilterLabelTop*2;
   LabelPass.Left:=BeginStepLeft;
 
   LabelPass:=TDialogLabel.Create(ChangePassForm);
   LabelPass.Parent:=ChangePassForm;
-  LabelPass.Caption:=SourceToInterface(GetDCLMessageString(msNewPassword)+':');
+  LabelPass.Caption:=GetDCLMessageString(msNewPassword)+':';
   LabelPass.Top:=BeginStepTop+EditTopStep-FilterLabelTop*2;
   LabelPass.Left:=BeginStepLeft;
 
   LabelPass:=TDialogLabel.Create(ChangePassForm);
   LabelPass.Parent:=ChangePassForm;
-  LabelPass.Caption:=SourceToInterface(GetDCLMessageString(msConfirm)+':');
+  LabelPass.Caption:=GetDCLMessageString(msConfirm)+':';
   LabelPass.Top:=(BeginStepTop+EditTopStep*2)-FilterLabelTop*2;
   LabelPass.Left:=BeginStepLeft;
 
   HashPassChk:=TCheckbox.Create(ChangePassForm);
   HashPassChk.Parent:=ChangePassForm;
-  HashPassChk.Caption:=SourceToInterface(GetDCLMessageString(msHashPassword));
+  HashPassChk.Caption:=GetDCLMessageString(msHashPassword);
   {HashPassChk.Hint:=SourceToInterface(GetDCLMessageString(msToHashing)+' '+
       GetDCLMessageString(msPassword));}
   HashPassChk.Top:=(BeginStepTop+EditTopStep*3)-FilterLabelTop;
@@ -2643,7 +2641,7 @@ begin
 
   Pc:=FPages.PageCount;
   FTabs:=TTabSheet.Create(FPages);
-  FTabs.Caption:=SourceToInterface(GetDCLMessageString(msPage)+' ')+IntToStr(Pc+1);
+  FTabs.Caption:=GetDCLMessageString(msPage)+' '+IntToStr(Pc+1);
   FTabs.Name:='Page_'+IntToStr(Pc+1);
   FTabs.PageControl:=FPages;
 
@@ -2686,7 +2684,7 @@ begin
     FGrids[GridIndex].ButtonPanel.Align:=alBottom;
 
     ResetButtonParams(ButtonParams);
-    ButtonParams.Caption:=SourceToInterface(GetDCLMessageString(msClose));
+    ButtonParams.Caption:=GetDCLMessageString(msClose);
     ButtonParams.Command:='Close';
     ButtonParams.Pict:='esc';
     ButtonParams.Top:=ButtonTop;
@@ -2702,7 +2700,7 @@ begin
     If FReturningMode<>chmNone Then
     begin
       ResetButtonParams(ButtonParams);
-      ButtonParams.Caption:=SourceToInterface(GetDCLMessageString(msChoose));
+      ButtonParams.Caption:=GetDCLMessageString(msChoose);
       Case FReturningMode of
       chmChoose:
       ButtonParams.Command:='Choose';
@@ -2723,7 +2721,7 @@ begin
     { If Not AutoApply Then
       Begin
       ResetButtonParams(ButtonParams);
-      ButtonParams.Caption:=SourceToInterface(GetDCLMessageString());
+      ButtonParams.Caption:=GetDCLMessageString();
       ButtonParams.Command:='SaveDB';
       ButtonParams.Pict:='save';
       ButtonParams.Top:=ButtonTop;
@@ -2893,6 +2891,7 @@ end;
 procedure TDCLForm.LoadFormPosINI;
 var
   FileParams, DialogsParams: TStringList;
+  appName:String;
 begin
   If DialogName<>'' Then
     If GPT.DialogsSettings Then
@@ -2901,7 +2900,8 @@ begin
       begin
         FileParams:=TStringList.Create;
         FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini');
-        DialogsParams:=CopyStrings('['+DialogName+']', '[END '+DialogName+']', FileParams);
+        appName:='BaseUID:'+InternalAppName+FDCLLogOn.GetBaseUID+'/';
+        DialogsParams:=CopyStrings(appName+'['+DialogName+']', appName+'[END '+DialogName+']', FileParams);
         LoadFormPosUni(DialogsParams);
         FreeAndNil(FileParams);
         FreeAndNil(DialogsParams);
@@ -3053,6 +3053,7 @@ procedure TDCLForm.SaveFormPosINI;
 var
   FileParams, DialogsParams: TStringList;
   p1, p2, i, j: Integer;
+  appName:String;
 begin
   p1:= - 1;
   p2:= - 1;
@@ -3061,9 +3062,10 @@ begin
     If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini') Then
     begin
       FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini');
+      appName:='BaseUID:'+InternalAppName+FDCLLogOn.GetBaseUID+'/';
       For i:=1 to FileParams.Count do
       begin
-        If PosEx('['+DialogName+']', FileParams[i-1])=1 Then
+        If PosEx(appName+'['+DialogName+']', FileParams[i-1])=1 Then
         begin
           p1:=i-1;
           For j:=p1 to FileParams.Count-1 do
@@ -3102,12 +3104,14 @@ end;
 function TDCLForm.SaveFormPosUni: TStringList;
 var
   i, j, T: Word;
+  appName:String;
 begin
   Result:=TStringList.Create;
+  appName:='BaseUID:'+InternalAppName+FDCLLogOn.GetBaseUID+'/';
   If Not FieldsSettingsReseted Then
     If DialogName<>'' Then
     begin
-      Result.Append('['+DialogName+']');
+      Result.Append(appName+'['+DialogName+']');
       Result.Append('FormTop='+IntToStr(Form.Top));
       Result.Append('FormLeft='+IntToStr(Form.Left));
       Result.Append('FormHeight='+IntToStr(Form.Height));
@@ -3147,7 +3151,7 @@ begin
         end;
       end;
 
-      Result.Append('[END '+DialogName+']');
+      Result.Append(appName+'[END '+DialogName+']');
       Result.Append('');
       {$IFDEF DCLDEBUG}
       Result.SaveToFile(DialogName+'.txt');
@@ -3382,7 +3386,7 @@ end;
 
 procedure TDCLForm.ResetAllFieldsSettings(Sender: TObject);
 begin
-  If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msResetAllFieldsSettingsQ)))=1 Then
+  If ShowErrorMessage(10, GetDCLMessageString(msResetAllFieldsSettingsQ))=1 Then
   begin
     FieldsSettingsReseted:=True;
     DeleteAllFormPos;
@@ -3391,7 +3395,7 @@ end;
 
 procedure TDCLForm.ResetFieldsSettings(Sender: TObject);
 begin
-  If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msResetFieldsSettingsQ)))=1 Then
+  If ShowErrorMessage(10, GetDCLMessageString(msResetFieldsSettingsQ))=1 Then
   begin
     FieldsSettingsReseted:=True;
     DeleteFormPos(False);
@@ -3400,7 +3404,7 @@ end;
 
 procedure TDCLForm.DeleteAllBookmarks(Sender: TObject);
 begin
-  If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msDeleteAllBookmarksQ)))=1 Then
+  If ShowErrorMessage(10, GetDCLMessageString(msDeleteAllBookmarksQ))=1 Then
     FGrids[CurrentGridIndex].DeleteAllBookmarks;
 end;
 
@@ -3515,14 +3519,14 @@ begin
   FFormMenu:=TMainMenu.Create(FForm);
   // FFormMenu.Parent:=FForm;
 
-  AddMainItem(SourceToInterface(InitCap(GetDCLMessageString(msSettings))), 'SettingsMenuItem',
+  AddMainItem(InitCap(GetDCLMessageString(msSettings)), 'SettingsMenuItem',
     'Tools', nil);
-  AddSubItem(SourceToInterface(GetDCLMessageString(msResetFieldsSettings)), 'ResetFieldsSettings', '', 0, ResetFieldsSettings);
-  AddSubItem(SourceToInterface(GetDCLMessageString(msResetAllFieldsSettings)), 'ResetAllFieldsSettings', '', 0, ResetAllFieldsSettings);
-  AddSubItem(SourceToInterface(GetDCLMessageString(msDeleteAllBookmarks)), 'DeleteAllBookmarks', '', 0, DeleteAllBookmarks);
+  AddSubItem(GetDCLMessageString(msResetFieldsSettings), 'ResetFieldsSettings', '', 0, ResetFieldsSettings);
+  AddSubItem(GetDCLMessageString(msResetAllFieldsSettings), 'ResetAllFieldsSettings', '', 0, ResetAllFieldsSettings);
+  AddSubItem(GetDCLMessageString(msDeleteAllBookmarks), 'DeleteAllBookmarks', '', 0, DeleteAllBookmarks);
 
   AddSubItem('-', 'Splitter76113C76B41E4', '', 0, nil);
-  AddSubItem(SourceToInterface(GetDCLMessageString(msSaveFieldsSettings)), 'SaveFieldsSettings', '', 0, SaveFieldsSettings);
+  AddSubItem(GetDCLMessageString(msSaveFieldsSettings), 'SaveFieldsSettings', '', 0, SaveFieldsSettings);
 
 {$IFNDEF EMBEDDED}
   If Assigned(Application.MainForm) then
@@ -3666,7 +3670,7 @@ begin
         end;
         If UserLevel>UserLevelLocal Then
         begin
-          ShowErrorMessage(0, SourceToInterface(GetDCLMessageString(msNotAllowOpenForm)));
+          ShowErrorMessage(0, GetDCLMessageString(msNotAllowOpenForm));
           ExitCode:=1;
           Exit;
         end;
@@ -4346,7 +4350,7 @@ begin
         tmpSQL:=InitCap(FindParam('caption=', ScrStr));
         FForm.Caption:=tmpSQL;
         If GPT.MainFormCaption<>'' then
-          FForm.Caption:=FForm.Caption+' \'+Trim(SystemToInterface(GPT.MainFormCaption))+'\';
+          FForm.Caption:=FForm.Caption+' \'+Trim(GPT.MainFormCaption)+'\';
       end;
 
       If PosEx('Style=', ScrStr)=1 Then
@@ -4911,7 +4915,7 @@ begin
     ' INI_TYPE='+IntToStr(Ord(IniType));
   if All then
     SQLParams:=SQLParams+' and '+GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+
-      '='+GPT.UpperString+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+
+      '='+GPT.UpperString+GPT.StringTypeChar+InternalAppName+'_'+DialogName+GPT.StringTypeChar+
         GPT.UpperStringEnd;
 
   INIQuery.SQL.Text:=SQLParams;
@@ -5089,6 +5093,7 @@ function TDCLForm.ReadBaseINI(IniType: TINIType):TStringList;
 var
   FileParams: TStringList;
   INIQuery:TDCLQuery;
+  appName:String;
 begin
   Result:=TStringList.Create;
   If DialogName<>'' Then
@@ -5097,13 +5102,14 @@ begin
       FileParams:=TStringList.Create;
       INIQuery:=TDCLQuery.Create(FDCLLogOn.FDBLogOn);
       INIQuery.SQL.Text:='select '+IniParamValField+' from '+INITable+' where '+GetIniToRole(GPT.UserID)+
-        GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+DialogName+
+        GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+InternalAppName+'_'+DialogName+
           GPT.StringTypeChar+GPT.UpperStringEnd+' and INI_TYPE='+IntToStr(Ord(IniType));
       INIQuery.Open;
       If not INIQuery.IsEmpty then
       Begin
+        appName:='BaseUID:'+InternalAppName+FDCLLogOn.GetBaseUID+'/';
         FileParams.Text:=INIQuery.FieldByName(IniParamValField).AsString;
-        Result:=CopyStrings('['+DialogName+']', '[END '+DialogName+']', FileParams);
+        Result:=CopyStrings(appName+'['+DialogName+']', appName+'[END '+DialogName+']', FileParams);
       End;
       FreeAndNil(FileParams);
       FreeAndNil(INIQuery);
@@ -5137,6 +5143,7 @@ procedure TDCLForm.CloseDialog;
 begin
   If Assigned(FForm) then
     FForm.Close;
+  CloseAction:=fcaClose;
 end;
 
 procedure TDCLForm.ResumeDatasets;
@@ -5168,8 +5175,9 @@ end;
 
 procedure TDCLForm.ResizeDBForm(Sender: TObject);
 var
-  ToolBtnSize, i, j: Integer;
+  Left, ToolBtnSize, i, j: Integer;
 begin
+  Left:=0;
   If Assigned(FForm) then
     For j:=1 to Length(FGrids) do
     begin
@@ -5177,9 +5185,13 @@ begin
       If Assigned(FGrids[j-1].ToolButtonPanel) Then
         If (FGrids[j-1].ToolButtonPanel.Width>0)and(FGrids[j-1].ToolButtonsCount>0) Then
         begin
-          ToolBtnSize:=FGrids[j-1].ToolButtonPanel.Width div FGrids[j-1].ToolButtonsCount;
+          ToolBtnSize:=(FGrids[j-1].ToolButtonPanel.Width-FGrids[j-1].ToolButtonsCount) div FGrids[j-1].ToolButtonsCount;
           For i:=1 to FGrids[j-1].ToolButtonsCount do
+          begin
             FGrids[j-1].ToolButtonPanelButtons[i].Width:=ToolBtnSize;
+            FGrids[j-1].ToolButtonPanelButtons[i].Left:=Left;
+            Inc(Left, ToolBtnSize+1);
+          end;
         end;
     end;
 end;
@@ -5348,7 +5360,7 @@ begin
   Begin
     INIQuery:=TDCLQuery.Create(FDCLLogOn.FDBLogOn);
     INIQuery.SQL.Text:='select * from '+INITable+' where '+GetIniToRole(GPT.UserID)+
-      GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+
+      GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+InternalAppName+'_'+DialogName+GPT.StringTypeChar+
         GPT.UpperStringEnd+' and INI_TYPE='+IntToStr(Ord(IniType));
     INIQuery.Open;
 
@@ -5357,18 +5369,18 @@ begin
     Begin
       If GPT.UserID<>'' then
         SQLParams:='insert into '+INITable+'('+IniDialogNameField+', '+IniParamValField+', INI_TYPE, '+IniUserFieldName+') '+
-          'values('+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+', '+
+          'values('+GPT.StringTypeChar+InternalAppName+'_'+DialogName+GPT.StringTypeChar+', '+
           INIData+', '+IntToStr(Ord(IniType))+', '+GPT.UserID+')'
       Else
         SQLParams:='insert into '+INITable+'('+IniDialogNameField+', '+IniParamValField+', INI_TYPE) '+
-          'values('+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+', '+
+          'values('+GPT.StringTypeChar+InternalAppName+'_'+DialogName+GPT.StringTypeChar+', '+
           INIData+', '+IntToStr(Ord(IniType))+')';
     End
     Else
     Begin
       SQLParams:='update '+INITable+' set '+IniParamValField+'='+
         INIData+' where '+GetIniToRole(GPT.UserID)+
-        GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+DialogName+GPT.StringTypeChar+
+        GPT.UpperString+IniDialogNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+InternalAppName+'_'+DialogName+GPT.StringTypeChar+
         GPT.UpperStringEnd+'and INI_TYPE='+IntToStr(Ord(IniType));
     End;
     INIQuery.Close;
@@ -5758,7 +5770,7 @@ begin
   begin
     If Assigned(FDCLForm.CurrentQuery) then
     If GetRaightsByContext(InContext)>ulReadOnly Then
-      If ShowErrorMessage(10, SourceToInterface('Удалить запись?'))=1 Then
+      If ShowErrorMessage(10, GetDCLMessageString(msDeleteRecordQ))=1 Then
         FDCLForm.CurrentQuery.Delete;
     Executed:=True;
   end;
@@ -5800,7 +5812,7 @@ begin
   begin
     If Assigned(FDCLForm.CurrentPartQuery) then
     If GetRaightsByContext(InContext)>ulReadOnly Then
-      If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msDeleteRecordQ)))=1 Then
+      If ShowErrorMessage(10, GetDCLMessageString(msDeleteRecordQ))=1 Then
         FDCLForm.CurrentPartQuery.Delete;
     Executed:=True;
   end;
@@ -5862,7 +5874,7 @@ begin
       OpenDialog.DefaultExt:=SignedScriptExt;
       OpenDialog.Filter:='DCL script files|*'+SignedScriptExt;
       If OpenDialog.Execute Then
-        ExtractScriptFile(UTF8ToSys(OpenDialog.FileName));
+        ExtractScriptFile(OpenDialog.FileName);
       FreeAndNil(OpenDialog);
     end;
     Executed:=True;
@@ -5876,7 +5888,7 @@ begin
       OpenDialog.DefaultExt:=SignedScriptExt;
       OpenDialog.Filter:='DCL script files|*'+SignedScriptExt;
       If OpenDialog.Execute Then
-        RunSkriptFromFile(UTF8ToSys(OpenDialog.FileName));
+        RunSkriptFromFile(OpenDialog.FileName);
       FreeAndNil(OpenDialog);
     end;
     Executed:=True;
@@ -5890,7 +5902,7 @@ begin
       OpenDialog.DefaultExt:=TextScriptFileExt;
       OpenDialog.Filter:='DCL script text|*'+TextScriptFileExt;
       If OpenDialog.Execute Then
-        FDCLLogOn.SignScriptFile(UTF8ToSys(OpenDialog.FileName), GPT.DCLUserName);
+        FDCLLogOn.SignScriptFile(OpenDialog.FileName, GPT.DCLUserName);
       FreeAndNil(OpenDialog);
     end;
     Executed:=True;
@@ -5948,7 +5960,7 @@ begin
     begin
       FCommandDCL.Clear;
       FCommandDCL.Text:=Command;
-      /// DebugProc('Попытка исполнить команду: '+Command);
+      /// DebugProc('РџРѕРїС‹С‚РєР° РёСЃРїРѕР»РЅРёС‚СЊ РєРѕРјР°РЅРґСѓ: '+Command);
       /// If PosEx('script type=visual', FCommandDCL[0])<>0 Then Open(Nil, Nil, Nil, '', FCommandDCL);
     end
     Else
@@ -6005,7 +6017,7 @@ begin
               OpenDialog.DefaultExt:=SignedScriptExt;
               OpenDialog.Filter:='DCL script files|*'+SignedScriptExt;
               If OpenDialog.Execute Then
-                ExtractScriptFile(UTF8ToSys(OpenDialog.FileName));
+                ExtractScriptFile(OpenDialog.FileName);
               FreeAndNil(OpenDialog);
             end;
           end;
@@ -6015,7 +6027,7 @@ begin
             If FDCLLogOn.AccessLevel>=ulReadOnly Then
             begin
               tmp1:=FindParam('FileName=', ScrStr);
-              ExtractScriptFile(UTF8ToSys(tmp1));
+              ExtractScriptFile(tmp1);
             end;
           end;
 
@@ -6027,7 +6039,7 @@ begin
               OpenDialog.DefaultExt:=SignedScriptExt;
               OpenDialog.Filter:='DCL script files|*'+SignedScriptExt;
               If OpenDialog.Execute Then
-                RunSkriptFromFile(UTF8ToSys(OpenDialog.FileName));
+                RunSkriptFromFile(OpenDialog.FileName);
               FreeAndNil(OpenDialog);
             end;
           end;
@@ -6037,7 +6049,7 @@ begin
             If FDCLLogOn.AccessLevel>=ulReadOnly Then
             begin
               tmp1:=FindParam('FileName=', ScrStr);
-              RunSkriptFromFile(UTF8ToSys(tmp1));
+              RunSkriptFromFile(tmp1);
             end;
           end;
 
@@ -6049,7 +6061,7 @@ begin
               OpenDialog.DefaultExt:=TextScriptFileExt;
               OpenDialog.Filter:='DCL script text|*'+TextScriptFileExt;
               If OpenDialog.Execute Then
-                FDCLLogOn.SignScriptFile(UTF8ToSys(OpenDialog.FileName), GPT.DCLUserName);
+                FDCLLogOn.SignScriptFile(OpenDialog.FileName, GPT.DCLUserName);
               FreeAndNil(OpenDialog);
             end;
           end;
@@ -6059,7 +6071,7 @@ begin
             If FDCLLogOn.AccessLevel=ulDeveloper Then
             begin
               tmp1:=FindParam('FileName=', ScrStr);
-              FDCLLogOn.SignScriptFile(UTF8ToSys(tmp1), GPT.DCLUserName);
+              FDCLLogOn.SignScriptFile(tmp1, GPT.DCLUserName);
             end;
           end;
 
@@ -6071,7 +6083,7 @@ begin
               OpenDialog.DefaultExt:=SignedScriptExt;
               OpenDialog.Filter:='DCL script files|*'+SignedScriptExt;
               If OpenDialog.Execute Then
-                FDCLLogOn.ReSignScriptFile(UTF8ToSys(OpenDialog.FileName));
+                FDCLLogOn.ReSignScriptFile(OpenDialog.FileName);
               FreeAndNil(OpenDialog);
             end;
           end;
@@ -6081,7 +6093,7 @@ begin
             If FDCLLogOn.AccessLevel=ulDeveloper Then
             begin
               tmp1:=FindParam('FileName=', ScrStr);
-              FDCLLogOn.ReSignScriptFile(UTF8ToSys(tmp1));
+              FDCLLogOn.ReSignScriptFile(tmp1);
             end;
           end;
 
@@ -6326,8 +6338,7 @@ begin
               If tmpStr1='' Then
                 tmpStr1:=Path;
 
-              If Not {$IFDEF FPC}DirectoryExistsUTF8(tmpStr1){$ELSE}DirectoryExists
-                (tmpStr1){$ENDIF} Then
+              If Not DirectoryExists(tmpStr1) Then
                 SetCurrentDir(Path)
               Else
                 SetCurrentDir(tmpStr1);
@@ -6347,7 +6358,7 @@ begin
               end;
             End
             Else
-              ShowErrorMessage(0, SourceToInterface(GetDCLMessageString(msNotAllowExecuteApps)));
+              ShowErrorMessage(0, GetDCLMessageString(msNotAllowExecuteApps));
           end;
 
           If PosEx('Sleep=', ScrStr)=1 Then
@@ -6701,7 +6712,7 @@ begin
             If tmp2<>'' Then
               OpenDialog.DefaultExt:=tmp2;
             If OpenDialog.Execute Then
-              SetVariable(tmp1, UTF8ToSys(OpenDialog.FileName))
+              SetVariable(tmp1, OpenDialog.FileName)
             Else
               SetVariable(tmp1, '');
             FreeAndNil(OpenDialog);
@@ -6716,7 +6727,7 @@ begin
             If tmp2<>'' Then
               SaveDialog.DefaultExt:=tmp2;
             If SaveDialog.Execute Then
-              SetVariable(tmp1, UTF8ToSys(SaveDialog.FileName))
+              SetVariable(tmp1, SaveDialog.FileName)
             Else
               SetVariable(tmp1, '');
             FreeAndNil(SaveDialog);
@@ -7053,7 +7064,7 @@ begin
             If GetRaightsByContext(InContext)>ulReadOnly Then
               If Assigned(FDCLForm) Then
               If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
-                If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msDeleteRecordQ)))=1 Then
+                If ShowErrorMessage(10, GetDCLMessageString(msDeleteRecordQ))=1 Then
                   FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Delete;
           end;
 
@@ -7191,7 +7202,7 @@ begin
           begin
             If Assigned(FDCLForm) then
               If GetRaightsByContext(InContext)>ulReadOnly Then
-                If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msDeleteRecordQ)))=1 Then
+                If ShowErrorMessage(10, GetDCLMessageString(msDeleteRecordQ))=1 Then
                   FDCLForm.CurrentQuery.Delete;
           end;
 
@@ -7514,7 +7525,7 @@ begin
 
               If Not IsFullPAth(TmpStr) Then
                 TmpStr:=IncludeTrailingPathDelimiter(AppConfigDir)+TmpStr;
-              If {$IFDEF FPC}FileExistsUTF8(TmpStr){$ELSE}FileExists(TmpStr){$ENDIF} Then
+              If FileExists(TmpStr) Then
               begin
                 If Not Assigned(BinStore) Then
                   BinStore:=TBinStore.Create(FDCLLogOn, ftSQL, '', '', '',
@@ -8188,7 +8199,7 @@ begin
     Top:=8;
     Width:=150;
     Height:=13;
-    Caption:=SourceToInterface(GetDCLMessageString(msTheProduct)+' : DCL Run ('+DBEngineType+')');
+    Caption:=GetDCLMessageString(msTheProduct)+' : DCL Run ('+DBEngineType+')';
   end;
 
   AboutLabel:=TLabel.Create(AboutPanel);
@@ -8199,7 +8210,7 @@ begin
     Top:=45;
     Width:=44;
     Height:=13;
-    Caption:=SourceToInterface(GetDCLMessageString(msProducer)+':');
+    Caption:=GetDCLMessageString(msProducer)+':';
   end;
 
   AboutLabel:=TLabel.Create(AboutPanel);
@@ -8225,13 +8236,13 @@ begin
     Top:=25;
     Width:=62;
     Height:=13;
-    Caption:=SourceToInterface(GetDCLMessageString(msVersion)+' DCL : '+Version+', '+
+    Caption:=GetDCLMessageString(msVersion)+' DCL : '+Version+', '+
         GetDCLMessageString(msStatus)+' : '+ReliseStatues[ReleaseStatus]+'.'
 {$IFDEF IBX}+' IBX v.'{$IFNDEF FPC}+FloatToStr(IBX_Version){$ENDIF}{$ENDIF}
 {$IFDEF ZEOS}+' ZEOS v.'+FDBLogOn.Version{$ENDIF}
 {$IFDEF ADO}+' ADO.db v.'+FDBLogOn.Version{$ENDIF}
 {$IFDEF BDE}+' BDE v.'+GetBDEVersion{$ENDIF}
-{$IFDEF SQLdbFamily}+' SQLdb v.'+AboutForm.LCLVersion{$ENDIF});
+{$IFDEF SQLdbFamily}+' SQLdb v.'+AboutForm.LCLVersion{$ENDIF};
   end;
 
   AboutLabel:=TLabel.Create(AboutPanel);
@@ -8242,7 +8253,7 @@ begin
     Top:=80;
     Width:=62;
     Height:=13;
-    Caption:=SourceToInterface(GetDCLMessageString(msUser)+'/ '+GetDCLMessageString(msRole)+' : ')+
+    Caption:=GetDCLMessageString(msUser)+'/ '+GetDCLMessageString(msRole)+' : '+
       GPT.DCLLongUserName+' ('+IntToStr(Ord(FAccessLevel))+') / '+GPT.LongRoleName+' ('+
       IntToStr(RoleRaightsLevel)+')';
   end;
@@ -8270,7 +8281,7 @@ begin
     Top:=105;
     Width:=FormWidth-30;
     Height:=95;
-    Text:=SourceToInterface(GetDCLMessageString(msDataBase)+' : ')+DBString;
+    Text:=GetDCLMessageString(msDataBase)+' : '+DBString;
     Font.Color:=clWindowText;
     Font.Height:= - 12;
     // Font.Style:=[fsBold, fsItalic];
@@ -8288,8 +8299,8 @@ begin
     Top:=105+105;
     Width:=FormWidth-30;
     Height:=105;
-    Text:=SourceToInterface(GetDCLMessageString(msConfiguration)+' : ')+GetConfigInfo+
-      SourceToInterface(' /'+GetDCLMessageString(msVersion)+' : ')+GetConfigVersion;
+    Text:=GetDCLMessageString(msConfiguration)+' : '+GetConfigInfo+
+      ' /'+GetDCLMessageString(msVersion)+' : '+GetConfigVersion;
     Font.Color:=clWindowText;
     Font.Height:= - 12;
     // Font.Style:=[fsBold, fsItalic];
@@ -8303,10 +8314,10 @@ begin
     Left:=8;
     Top:=320;
     Width:=62;
-    Caption:=SourceToInterface(GetDCLMessageString(msInformationAbout)+' '+
-        GetDCLMessageString(msBuildOf)+' : '+GetDCLMessageString(msOS))+':'+TargetOS+'. CPU: '+
-      TargetCPU+'.'{$IFDEF FPC}+' fpc: '+fpcVersion+'. LCL version'+AboutForm.LCLVersion+'.'
-{$IFDEF UNIX}+' '+SourceToInterface(GetDCLMessageString(msLang))+':'+SysUtils.GetEnvironmentVariable
+    Caption:=GetDCLMessageString(msInformationAbout)+' '+
+        GetDCLMessageString(msBuildOf)+': '+GetDCLMessageString(msOS)+': '+TargetOS+'. CPU: '+
+      TargetCPU+'.'{$IFDEF FPC}+' fpc: '+fpcVersion+'. LCL version: '+AboutForm.LCLVersion+'.'
+{$IFDEF UNIX}+' '+SourceToInterface(GetDCLMessageString(msLang))+': '+SysUtils.GetEnvironmentVariable
       ('LANG')+'.'{$ENDIF}
 {$ENDIF};
   end;
@@ -8320,7 +8331,7 @@ begin
       Left:=8;
       Top:=345;
       Width:=62;
-      Caption:=SourceToInterface(GetDCLMessageString(msDebugMode)+' : '+GetOnOffMode(GPT.DebugOn));
+      Caption:=GetDCLMessageString(msDebugMode)+': '+GetOnOffMode(GPT.DebugOn);
     end;
   end;
 
@@ -8590,7 +8601,7 @@ begin
       begin
         DebugProc('  DBPath: '+GPT.DBPath);
         DebugProc('UNC paths not supported.');
-        ShowErrorMessage(0, SourceToInterface('UNC '+GetDCLMessageString(msPathsNotSupported)+'.'));
+        ShowErrorMessage(0, 'UNC '+GetDCLMessageString(msPathsNotSupported)+'.');
         Result:=255;
         Exit;
       end;
@@ -8621,7 +8632,7 @@ begin
         FDBLogOn.Params.Append('lc_ctype='+ReplaseCPtoWIN(DefaultSystemEncoding));
       End
       Else
-        FDBLogOn.Params.Append('lc_ctype='+UpperCase(GPT.ServerCodePage));
+        FDBLogOn.Params.Append('lc_ctype='+UpperCase(ReplaseCPtoWIN(GPT.ServerCodePage)));
 
       FDBLogOn.SQLDialect:=GPT.SQLDialect;
       try
@@ -8640,8 +8651,8 @@ begin
         begin
           DebugProc('  ... Fail');
           ConnectErrorCode:=255;
-          ShowErrorMessage(0, SourceToInterface(GetDCLMessageString(msConnectDBError)+' 0000 / '+
-                E.Message));
+          ShowErrorMessage(0, GetDCLMessageString(msConnectDBError)+' 0000 / '+
+                E.Message);
           Result:=255;
         end;
       end;
@@ -8809,7 +8820,7 @@ begin
       If GPT.ServerCodePage='' Then
         FDBLogOn.Charset:='utf8'
       Else
-        FDBLogOn.Charset:=GPT.ServerCodePage;
+        FDBLogOn.Charset:=ReplaseCPtoWIN(GPT.ServerCodePage);
 
       FDBLogOn.Dialect:=GPT.SQLDialect;
       IBTransaction.Database:=FDBLogOn;
@@ -8824,8 +8835,8 @@ begin
         begin
           DebugProc('  ... Fail');
           ConnectErrorCode:=255;
-          ShowErrorMessage(0, SourceToInterface(GetDCLMessageString(msConnectDBError)+' 0000 / '+
-                E.Message));
+          ShowErrorMessage(0, GetDCLMessageString(msConnectDBError)+' 0000 / '+
+                E.Message);
           Result:=255;
         end;
       end;
@@ -8896,7 +8907,7 @@ begin
       If GPT.ServerCodePage='' Then
         FDBLogOn.Charset:='utf8'
       Else
-        FDBLogOn.Charset:=GPT.ServerCodePage;
+        FDBLogOn.Charset:=ReplaseCPtoWIN(GPT.ServerCodePage);
 
       IBTransaction.Database:=FDBLogOn;
       try
@@ -9004,11 +9015,6 @@ begin
   KillerDog.Interval:=KillerTimerInterval;
   KillerDog.OnTimer:=KillerForms;
   KillerDog.Enabled:=True;
-end;
-
-function TDCLLogOn.CreateDCLQuery:TDCLQuery;
-begin
-  Result:=TDCLQuery.Create(Self.FDBLogOn);
 end;
 
 function TDCLLogOn.CreateForm(FormName: String; ParentForm, CallerForm: TDCLForm; Query: TDCLDialogQuery;
@@ -9519,7 +9525,7 @@ begin
   end;
 end;
 
-procedure TDCLLogOn.GetTableNames(List: TStrings);
+procedure TDCLLogOn.GetTableNames(var List: TStrings);
 begin
 {$IFDEF ADO}
   FDBLogOn.GetTableNames(List);
@@ -9744,7 +9750,7 @@ begin
     If FAccessLevel=ulDeny Then
 {$ENDIF}
     begin
-      ShowErrorMessage(1, SourceToInterface(GetDCLMessageString({$IFDEF DEVELOPERMODE}msDenyMessageDev{$ELSE}msDenyMessageUsr{$ENDIF})));
+      ShowErrorMessage(1, GetDCLMessageString({$IFDEF DEVELOPERMODE}msDenyMessageDev{$ELSE}msDenyMessageUsr{$ENDIF}));
       Halt;
     end;
 
@@ -10204,8 +10210,7 @@ begin
       For i:=1 to FDCLLogOn.FormsCount do
         If Assigned(FDCLLogOn.Forms[i-1]) Then
         begin
-          TB1:=(FormBar.FindComponent('TB'+IntToStr(FDCLLogOn.Forms[i-1].FForm.Tag))
-              as TFormPanelButton);
+          TB1:=(FormBar.FindComponent('TB'+IntToStr(FDCLLogOn.Forms[i-1].FForm.Handle)) as TFormPanelButton);
           If Assigned(TB1) Then
           begin
             If FDCLLogOn.Forms[i-1].FForm=Screen.ActiveForm Then
@@ -10247,14 +10252,14 @@ var
       MessageFormObject:=TMessageFormObject.Create(GPT.DCLLongUserName, Text)
     Else
       MessageFormObject:=TMessageFormObject.Create
-        (SourceToInterface('<'+GetDCLMessageString(msToAll)+'>'), Text);
+        ('<'+GetDCLMessageString(msToAll)+'>', Text);
   end;
 
 begin
-  // 4 - Выход по дате.
-  // 2,3 - Запуск приложения.
-  // 1 - Сообщение.
-  // 5 - Запуск скрипта.
+  // 4 - Р’С‹С…РѕРґ РїРѕ РґР°С‚Рµ.
+  // 2,3 - Р—Р°РїСѓСЃРє РїСЂРёР»РѕР¶РµРЅРёСЏ.
+  // 1 - РЎРѕРѕР±С‰РµРЅРёРµ.
+  // 5 - Р—Р°РїСѓСЃРє СЃРєСЂРёРїС‚Р°.
 {$IFNDEF NODCLMESSAGES}
   If Not GPT.UseMessages Then
     Exit;
@@ -10355,7 +10360,7 @@ begin
         begin
           If ExitFlag=0 Then
           begin
-            MessageToUser(SystemToInterface(Format(GetDCLMessageString(msTimeToExit), [ExitTime])));
+            MessageToUser(Format(GetDCLMessageString(msTimeToExit), [ExitTime]));
             ExitFlag:=1;
             TimeToExit:=UpTime+(ExitTime*1000);
           end;
@@ -10383,6 +10388,8 @@ end;
 procedure TDCLLogOn.WriteBaseUID;
 var
   ParamsQuery: TDCLQuery;
+  guid:TGUID;
+  sGuid:String;
 begin
   if not GPT.NoParamsTable then
   Begin
@@ -10394,12 +10401,17 @@ begin
     ParamsQuery.Open;
     If ParamsQuery.Fields[0].AsInteger=0 Then
     begin
-      ParamsQuery.Close;
-      ParamsQuery.SQL.Text:='insert into '+GPT.GPTTableName+'('+GPT.GPTNameField+', '+
-        GPT.GPTValueField+') values('+GPT.StringTypeChar+'BaseUID'+GPT.StringTypeChar+', '+
-        GPT.StringTypeChar+MD5.MD5DigestToStr(MD5.MD5String(IntToStr(UpTime)))+GPT.StringTypeChar+')';
-      ParamsQuery.ExecSQL;
-      ParamsQuery.SaveDB;
+      If CreateGUID(guid)=0 then
+      Begin
+        sGuid:=GUIDToString(guid);
+        sGuid:=sGuid.Replace('-', '').Replace('{', '').Replace('}', '');
+        ParamsQuery.Close;
+        ParamsQuery.SQL.Text:='insert into '+GPT.GPTTableName+'('+GPT.GPTNameField+', '+
+          GPT.GPTValueField+') values('+GPT.StringTypeChar+'BaseUID'+GPT.StringTypeChar+', '+
+          GPT.StringTypeChar+sGuid {MD5.MD5DigestToStr(MD5.MD5String(IntToStr(UpTime)))}+GPT.StringTypeChar+')';
+        ParamsQuery.ExecSQL;
+        ParamsQuery.SaveDB;
+      End;
     end;
     ParamsQuery.Close;
     FreeAndNil(ParamsQuery);
@@ -10482,7 +10494,7 @@ begin
 
   ItemMenu:=TMenuItem.Create(MainMenu);
   ItemMenu.Name:='ItemMeu_About';
-  ItemMenu.Caption:='О...';
+  ItemMenu.Caption:='Рћ...';
   ItemMenu.OnClick:=DCLMainLogOn.About;
 
   {$IFDEF MSWINDOWS}
@@ -10828,7 +10840,7 @@ begin
       MenuQuery.Open;
       tmpSQL:=TrimRight(MenuQuery.FieldByName(GPT.DCLNameField).AsString);
       FDCLLogOn.RePlaseVariables(tmpSQL);
-      tmpSQL:=tmpSQL+SystemToInterface(GPT.MainFormCaption);
+      tmpSQL:=tmpSQL+GPT.MainFormCaption;
       FForm.Caption:=tmpSQL;
 
       If NewMainForm Then
@@ -11005,9 +11017,9 @@ begin
           If (ProgrammCompVer[RecCount]<BaseCompVer[RecCount]) and (v1<SubNum) Then
           Begin
             If RecCount=1 Then
-              ShowErrorMessage(1, SourceToInterface(GetDCLMessageString(msVersionsGap)))
+              ShowErrorMessage(1, GetDCLMessageString(msVersionsGap))
             Else
-              ShowErrorMessage(1, SourceToInterface(GetDCLMessageString(msOldVersion)));
+              ShowErrorMessage(1, GetDCLMessageString(msOldVersion));
 
             break;
           End
@@ -11102,7 +11114,7 @@ begin
     If Not FieldExists(BrushColors[l].Key, FQuery) Then
     begin
       DebugProc('//!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-      DebugProc('В предложении Color=, указанно несуществующее поле : '+BrushColors[l].Key);
+      DebugProc('Р’ РїСЂРµРґР»РѕР¶РµРЅРёРё Color=, СѓРєР°Р·Р°РЅРЅРѕ РЅРµСЃСѓС‰РµСЃС‚РІСѓСЋС‰РµРµ РїРѕР»Рµ : '+BrushColors[l].Key);
       DebugProc(OPL);
       DebugProc('//!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
     end;
@@ -12118,7 +12130,7 @@ begin
       end
       Else
       begin
-        FField.Caption:=SourceToInterface(GetDCLMessageString(msNoField))+FieldName;
+        FField.Caption:=GetDCLMessageString(msNoField)+FieldName;
       end;
       LookupTables[l].DCLGrid.AddColumn(FField);
     end;
@@ -12158,7 +12170,7 @@ begin
   Pc:=FTablePartsPages.PageCount;
   FTablePartsTabs:=TTabSheet.Create(FTablePartsPages);
   If Caption='' Then
-    FTablePartsTabs.Caption:=SourceToInterface(GetDCLMessageString(msPage)+' ')+IntToStr(Pc+1)
+    FTablePartsTabs.Caption:=GetDCLMessageString(msPage)+' '+IntToStr(Pc+1)
   Else
     FTablePartsTabs.Caption:=InitCap(Caption);
 
@@ -12582,7 +12594,7 @@ begin
   If Calendars[CalendarIdx].ReOpen Then
   begin
     FQuery.Close;
-    EdDate:='Query='+FindRaightQuery('Query=');
+    EdDate:='Query='+FindRaightQuery();
     EdDate:=FindParam('Query=', EdDate);
     TranslateVal(EdDate);
     FQuery.SQL.Text:=EdDate;
@@ -12818,25 +12830,25 @@ begin
       begin
         Case TNavigateBtn((Navig.Controls[v1-1] as TNavButtons).Index) of
         nbFirst:
-        Hint:=SourceToInterface(GetDCLMessageString(msInBegin));
+        Hint:=GetDCLMessageString(msInBegin);
         nbPrior:
-        Hint:=SourceToInterface(GetDCLMessageString(msPrior));
+        Hint:=GetDCLMessageString(msPrior);
         nbNext:
-        Hint:=SourceToInterface(GetDCLMessageString(msNext));
+        Hint:=GetDCLMessageString(msNext);
         nbLast:
-        Hint:=SourceToInterface(GetDCLMessageString(msInEnd));
+        Hint:=GetDCLMessageString(msInEnd);
         nbPost:
-        Hint:=SourceToInterface(GetDCLMessageString(msPost));
+        Hint:=GetDCLMessageString(msPost);
         nbInsert:
-        Hint:=SourceToInterface(GetDCLMessageString(msInsert));
+        Hint:=GetDCLMessageString(msInsert);
         nbCancel:
-        Hint:=SourceToInterface(GetDCLMessageString(msCancel));
+        Hint:=GetDCLMessageString(msCancel);
         nbEdit:
-        Hint:=SourceToInterface(GetDCLMessageString(msEdit));
+        Hint:=GetDCLMessageString(msEdit);
         nbDelete:
-        Hint:=SourceToInterface(GetDCLMessageString(msDelete));
+        Hint:=GetDCLMessageString(msDelete);
         nbRefresh:
-        Hint:=SourceToInterface(GetDCLMessageString(msRefresh));
+        Hint:=GetDCLMessageString(msRefresh);
         end;
       end;
 end;
@@ -12866,7 +12878,7 @@ begin
         KeyMarks.KeyBookMarks[v3].Title:=FindParam('Title=', FileLine)
       Else
       begin
-        ShowErrorMessage(0, SourceToInterface(GetDCLMessageString(msOldBookmarkFormat)));
+        ShowErrorMessage(0, GetDCLMessageString(msOldBookmarkFormat));
         Exit;
       end;
     end;
@@ -12962,7 +12974,7 @@ begin
           end
           Else
           begin
-            FField.Caption:=SourceToInterface(GetDCLMessageString(msNoField))+FieldCaptScrStr;
+            FField.Caption:=GetDCLMessageString(msNoField)+FieldCaptScrStr;
             FField.Width:=v1;
           end;
 
@@ -13170,7 +13182,7 @@ begin
 
         If FindParam('ReadOnly=', FField.OPL)<>'' Then
         begin
-          // Убрать везде
+          // РЈР±СЂР°С‚СЊ РІРµР·РґРµ
           FField.ReadOnly:=StrToIntEx(FindParam('ReadOnly=', FField.OPL))=1;
         end;
 
@@ -13259,7 +13271,7 @@ begin
         dctMainGrid:
         begin
           If Not FieldExists(FField.FieldName, Query) Then
-            FField.Caption:=SourceToInterface(GetDCLMessageString(msNoField))+FField.FieldName;
+            FField.Caption:=GetDCLMessageString(msNoField)+FField.FieldName;
 
           AddColumn(FField);
           If PosEx('DropListBox=', FField.OPL)<>0 Then
@@ -13417,30 +13429,30 @@ begin
     Key:=FloatDelimiterTo;
   If (Key='/') or (Key='?') or (Key='<') then
     Key:=FloatDelimiterTo;
-  If (Key=SourceToInterface('б')) or (Key=SourceToInterface('Б')) or (Key=SourceToInterface('ю')) or (Key=SourceToInterface('Ю')) then
+  If (Key='Р±') or (Key='Р‘') or (Key='СЋ') or (Key='Р®') then
     Key:=FloatDelimiterTo;
 
   Case Key of
-  // разрешаем ввод цифр
+  // СЂР°Р·СЂРµС€Р°РµРј РІРІРѕРґ С†РёС„СЂ
   '0'..'9':Key:=Key;
-  // разрешаем ввод всего, что похоже на десятичный разделитель
+  // СЂР°Р·СЂРµС€Р°РµРј РІРІРѕРґ РІСЃРµРіРѕ, С‡С‚Рѕ РїРѕС…РѕР¶Рµ РЅР° РґРµСЃСЏС‚РёС‡РЅС‹Р№ СЂР°Р·РґРµР»РёС‚РµР»СЊ
   '.', ',':
   Begin
-    // запрещаем ввод более 1 десятичного разделителя
+    // Р·Р°РїСЂРµС‰Р°РµРј РІРІРѕРґ Р±РѕР»РµРµ 1 РґРµСЃСЏС‚РёС‡РЅРѕРіРѕ СЂР°Р·РґРµР»РёС‚РµР»СЏ
     If Pos(FloatDelimiterTo, Text)=0 then
       Key:=FloatDelimiterTo
     Else key:=#0;
   End;
   '-':
   Begin
-    // запрещаем ввод более 1 минуса
+    // Р·Р°РїСЂРµС‰Р°РµРј РІРІРѕРґ Р±РѕР»РµРµ 1 РјРёРЅСѓСЃР°
     If (Pos('-', Text)=0) then
       Key:='-'
     Else key:=#0;
   End;
-  // разрешаем использование клавиш BackSpace и Delete
+  // СЂР°Р·СЂРµС€Р°РµРј РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ РєР»Р°РІРёС€ BackSpace Рё Delete
   #8:Key:=Key;
-  // "гасим" все прочие клавиши
+  // "РіР°СЃРёРј" РІСЃРµ РїСЂРѕС‡РёРµ РєР»Р°РІРёС€Рё
   Else key:=#0;
   End;
 end;
@@ -13625,7 +13637,7 @@ begin
     try
       FQuery.Open;
     Except
-      ShowErrorMessage(-1111, 'SQL='+tmpSQL2+CR+SourceToInterface(GetDCLMessageString(msBadFindParams)));
+      ShowErrorMessage(-1111, 'SQL='+tmpSQL2+CR+GetDCLMessageString(msBadFindParams));
     end;
   end;
 end;
@@ -13642,7 +13654,7 @@ begin
       [loCaseInsensitive]);
 end;
 
-function TDCLGrid.FindRaightQuery(St: String): String;
+function TDCLGrid.FindRaightQuery(): String;
 var
   v1: Integer;
 begin
@@ -13674,7 +13686,7 @@ begin
         If FQuery.Active Then
           If FQuery.State in dsEditModes Then
             If ShowErrorMessage(Ord(mbtConfirmation),
-              SourceToInterface(GetDCLMessageString(msSaveEditingsQ)))=1 Then
+              GetDCLMessageString(msSaveEditingsQ))=1 Then
             begin
               try
                 FQuery.Post;
@@ -13712,7 +13724,7 @@ begin
   If Not PosBookCreated Then
   begin
     If Not Assigned(PopupGridMenu.FindComponent('PosToBookMark')) Then
-      AddPopupMenuItem(SourceToInterface(GetDCLMessageString(msGotoBookmark))+'...',
+      AddPopupMenuItem(GetDCLMessageString(msGotoBookmark)+'...',
         'PosToBookMark', nil, '', 0, '');
     PosBookCreated:=True;
   end;
@@ -13862,6 +13874,7 @@ var
   end;
 
 begin
+  Result:='';
   If Assigned(FindGrid) Then
   begin
     Enything:=False;
@@ -14465,8 +14478,6 @@ begin
   WhereStr:='';
   If FindSQLWhere(tmpSQL, 'where')<>0 then
     WhereStr:=' ';
-{  If PosEx(' where ', tmpSQL)<>0 Then
-    WhereStr:=' ';}
 
   If Length(DBFilters)>0 Then
     For FN:=0 to Length(DBFilters)-1 do
@@ -14725,22 +14736,22 @@ begin
   begin
     If Assigned(FDCLForm.ParentForm) Then
     begin
-      FDCLForm.ParentForm.SetDBStatus(SourceToInterface(GetDCLMessageString(msModified)));
+      FDCLForm.ParentForm.SetDBStatus(GetDCLMessageString(msModified));
       BaseChanged:=True;
     end;
 
-    FDCLForm.SetDBStatus(SourceToInterface(GetDCLMessageString(msModified)));
+    FDCLForm.SetDBStatus(GetDCLMessageString(msModified));
     BaseChanged:=True;
   end;
   dssSaved:
   begin
     If Assigned(FDCLForm.ParentForm) Then
     begin
-      FDCLForm.ParentForm.SetDBStatus(SourceToInterface(''));
+      FDCLForm.ParentForm.SetDBStatus('');
       BaseChanged:=False;
     end;
 
-    FDCLForm.SetDBStatus(SourceToInterface(''));
+    FDCLForm.SetDBStatus('');
     BaseChanged:=False;
   end;
   end;
@@ -14862,39 +14873,39 @@ end;
 
 procedure TDCLGrid.Show;
 var
-  i1: Integer;
+  i1, ToolButtWidth, ActiveToolButtonsCount: Integer;
   TollButton: TDialogSpeedButton;
 
   procedure SetPopupMenuItems(WithStructure: Boolean);
   begin
-    AddPopupMenuItem(SourceToInterface(GetDCLMessageString(msFind)), 'Find', PFind, 'Ctrl+F',
+    AddPopupMenuItem(GetDCLMessageString(msFind), 'Find', PFind, 'Ctrl+F',
       0, 'Find');
     If WithStructure Then
-      AddPopupMenuItem(SourceToInterface(GetDCLMessageString(msFindCurrCell)), 'FindCurrentCell', PSetFind, 'Alt+F',
+      AddPopupMenuItem(GetDCLMessageString(msFindCurrCell), 'FindCurrentCell', PSetFind, 'Alt+F',
         0, 'FindCurrCell');
-    AddPopupMenuItem(SourceToInterface(GetDCLMessageString(msClearAllFind)), 'ClearAllFind', PClearAllFind, 'Alt+C',
+    AddPopupMenuItem(GetDCLMessageString(msClearAllFind), 'ClearAllFind', PClearAllFind, 'Alt+C',
       0, 'ClearAllFind');
     AddPopupMenuItem('-', 'Separator4', nil, '', 0, '');
-    AddPopupMenuItem(SourceToInterface(GetDCLMessageString(msPrint)), 'Print', Print, 'Ctrl+P',
+    AddPopupMenuItem(GetDCLMessageString(msPrint), 'Print', Print, 'Ctrl+P',
       0, 'Print');
     If WithStructure Then
-      AddPopupMenuItem(SourceToInterface(GetDCLMessageString(msStructure)), 'Structure', Structure,
+      AddPopupMenuItem(GetDCLMessageString(msStructure), 'Structure', Structure,
         'Ctrl+S', 0, 'Structure');
     AddPopupMenuItem('-', 'Separator1', nil, '', 0, '');
-    AddPopupMenuItem(SourceToInterface(GetDCLMessageString(msCopy)), 'Copy', PCopy, 'Ctrl+C',
+    AddPopupMenuItem(GetDCLMessageString(msCopy), 'Copy', PCopy, 'Ctrl+C',
       0, 'Copy');
-    AddPopupMenuItem(SourceToInterface(GetDCLMessageString(msCut)), 'Cut', PCut, 'Ctrl+X',
+    AddPopupMenuItem(GetDCLMessageString(msCut), 'Cut', PCut, 'Ctrl+X',
       0, 'Cut');
-    AddPopupMenuItem(SourceToInterface(GetDCLMessageString(msPast)), 'Paste', PPaste, 'Ctrl+V',
+    AddPopupMenuItem(GetDCLMessageString(msPast), 'Paste', PPaste, 'Ctrl+V',
       0, 'Paste');
     AddPopupMenuItem('-', 'Separator2', nil, '', 0, '');
-    AddPopupMenuItem(SourceToInterface(GetDCLMessageString(msCancel)), 'Undo', PUndo, 'Ctrl+U',
+    AddPopupMenuItem(GetDCLMessageString(msCancel), 'Undo', PUndo, 'Ctrl+U',
       0, 'Undo');
 
     If (KeyMarks.KeyField<>'')and FieldExists(KeyMarks.KeyField, FQuery) Then
     begin
       AddPopupMenuItem('-', 'Separator3', nil, '', 0, '');
-      AddPopupMenuItem(SourceToInterface(InitCap(GetDCLMessageString(msBookmark))), 'GetBookMark',
+      AddPopupMenuItem(InitCap(GetDCLMessageString(msBookmark)), 'GetBookMark',
         SetBookMark, 'Ctrl+B', 0, 'BookMark');
     end;
   end;
@@ -14964,23 +14975,40 @@ begin
       FieldPanel.PopupMenu:=PopupGridMenu;
     end;
 
-    ToolButtonsCount:=0;
-    For i1:=1 to ToolCommandsCount do
+    if Assigned(ToolButtonPanel) then
     begin
-      If ((FDisplayMode in TDataGrid)and(i1=1))or(FQuery.Active and(i1 in [2, 3])) Then
+      ToolButtWidth:=0;
+      ToolButtonsCount:=0;
+      ActiveToolButtonsCount:=0;
+      For i1:=1 to ToolCommandsCount do
       begin
-        TollButton:=TSpeedButton.Create(ToolButtonPanel);
-        TollButton.Parent:=ToolButtonPanel;
-        TollButton.Align:=alLeft;
-        TollButton.Left:=50;
-        TollButton.Flat:=ToolButtonsFlat;
-        TollButton.Glyph:=DrawBMPButton(ToolButtonsCmd[i1]);
-        TollButton.OnClick:=ToolButtonsOnClick;
-        TollButton.Tag:=i1;
+        If ((FDisplayMode in TDataGrid)and(i1=1))or(FQuery.Active and(i1 in [2, 3])) Then
+          Inc(ActiveToolButtonsCount);
+      end;
 
-        inc(ToolButtonsCount);
-        ToolButtonPanelButtons[ToolButtonsCount]:=TollButton;
-        ToolCommands[ToolButtonsCount]:=ToolButtonsCmd[i1];
+      if ActiveToolButtonsCount>0 then
+      begin
+        ToolButtWidth:=ToolButtonPanel.Width div ActiveToolButtonsCount;
+        For i1:=1 to ToolCommandsCount do
+        begin
+          If ((FDisplayMode in TDataGrid)and(i1=1))or(FQuery.Active and(i1 in [2, 3])) Then
+          begin
+            TollButton:=TSpeedButton.Create(ToolButtonPanel);
+            TollButton.Parent:=ToolButtonPanel;
+            TollButton.Top:=2;
+            TollButton.Left:=(ToolButtWidth*(ToolButtonsCount))+1;
+            TollButton.Width:=ToolButtWidth;
+            TollButton.Align:=alLeft;
+            TollButton.Flat:=ToolButtonsFlat;
+            TollButton.Glyph:=DrawBMPButton(ToolButtonsCmd[i1]);
+            TollButton.OnClick:=ToolButtonsOnClick;
+            TollButton.Tag:=i1;
+
+            Inc(ToolButtonsCount);
+            ToolButtonPanelButtons[ToolButtonsCount]:=TollButton;
+            ToolCommands[ToolButtonsCount]:=ToolButtonsCmd[i1];
+          end;
+        end;
       end;
     end;
 
@@ -15233,12 +15261,12 @@ begin
   If (Not GPT.ExitCnf)and(Not DownLoadProcess) Then
     CanClose:=True;
   If (GPT.ExitCnf)and(Not DownLoadProcess) Then
-    If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msDoYouWontTerminateApplicationQ)))=1 Then
+    If ShowErrorMessage(10, GetDCLMessageString(msDoYouWontTerminateApplicationQ))=1 Then
       CanClose:=True;
 
   If DownLoadProcess Then
-    If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msDownloadInProgress)+'. '+
-          GetDCLMessageString(msDoYouWontTerminateApplicationQ)))=1 Then
+    If ShowErrorMessage(10, GetDCLMessageString(msDownloadInProgress)+'. '+
+          GetDCLMessageString(msDoYouWontTerminateApplicationQ))=1 Then
       CanClose:=True;
 end;
 
@@ -15252,11 +15280,11 @@ var
 begin
   PrintBox:=TStringList.Create;
   If DefaultSystemEncoding=EncodingUTF8 Then
-    PrintBox.Append(UTF8BOM+InterfaceToSystem(Caption))
+    PrintBox.Append(UTF8BOM+Caption)
   Else If DefaultSystemEncoding='utf16' Then
-    PrintBox.Append(UTF16LEBOM+InterfaceToSystem(Caption))
+    PrintBox.Append(UTF16LEBOM+Caption)
   Else
-    PrintBox.Append(InterfaceToSystem(Caption));
+    PrintBox.Append(Caption);
 
   PrintBox.Append('');
   S:='|';
@@ -15265,11 +15293,11 @@ begin
     For FieldsCounter:=0 to Query.FieldCount-1 do
     begin
       S1:='';
-      S2:=InterfaceToSystem(Query.Fields[FieldsCounter].FieldName);
+      S2:=TrimRight(Query.Fields[FieldsCounter].FieldName);
       If Length(S2)>Query.Fields[FieldsCounter].DataSize Then
         SetLength(S2, Query.Fields[FieldsCounter].DataSize+1);
       S:=S+S2;
-      For k:=Length(InterfaceToSystem(Query.Fields[FieldsCounter].FieldName)) to Query.Fields
+      For k:=Length(TrimRight(Query.Fields[FieldsCounter].FieldName)) to Query.Fields
         [FieldsCounter].DataSize do
         S1:=S1+' ';
       S:=S+S1+'|';
@@ -15288,11 +15316,11 @@ begin
       For FieldsCounter:=0 to Query.FieldCount-1 do
       begin
         S1:='';
-        S2:=InterfaceToSystem(Query.Fields[FieldsCounter].AsString);
+        S2:=TrimRight(Query.Fields[FieldsCounter].AsString);
         If Length(S2)>Query.Fields[FieldsCounter].DataSize Then
           SetLength(S2, Query.Fields[FieldsCounter].DataSize+1);
         S:=S+S2;
-        For k:=Length(InterfaceToSystem(Query.Fields[FieldsCounter].AsString)) to Query.Fields
+        For k:=Length(TrimRight(Query.Fields[FieldsCounter].AsString)) to Query.Fields
           [FieldsCounter].DataSize do
           S1:=S1+' ';
         S:=S+S1+'|';
@@ -15308,11 +15336,11 @@ begin
     For FieldsCounter:=0 to Grid.Columns.Count-1 do
     begin
       S1:='';
-      S2:=InterfaceToSystem(Grid.Columns[FieldsCounter].Title.Caption);
+      S2:=TrimRight(Grid.Columns[FieldsCounter].Title.Caption);
       If Length(S2)>(Grid.Columns[FieldsCounter].Width div 7) Then
         SetLength(S2, (Grid.Columns[FieldsCounter].Width div 7)+1);
       S:=S+S2;
-      For k:=Length(InterfaceToSystem(Grid.Columns[FieldsCounter].Title.Caption))
+      For k:=Length(TrimRight(Grid.Columns[FieldsCounter].Title.Caption))
         to (Grid.Columns[FieldsCounter].Width div 7) do
         S1:=S1+' ';
       S:=S+S1+'|';
@@ -15336,17 +15364,17 @@ begin
         try
           S2:=Grid.Columns[FieldsCounter].Field.AsString;
         Except
-          S2:=SourceToInterface(GetDCLMessageString(msNoField));
+          S2:=GetDCLMessageString(msNoField);
         end;
         If Length(S2)>(Grid.Columns[FieldsCounter].Width div 7) Then
           SetLength(S2, (Grid.Columns[FieldsCounter].Width div 7)+1);
         S:=S+S2;
-        For k:=Length(InterfaceToSystem(Grid.Columns[FieldsCounter].Field.AsString))
+        For k:=Length(TrimRight(Grid.Columns[FieldsCounter].Field.AsString))
           to (Grid.Columns[FieldsCounter].Width div 7) do
           S1:=S1+' ';
         S:=S+S1+'|';
       end;
-      PrintBox.Append(InterfaceToSystem(S));
+      PrintBox.Append(TrimRight(S));
       Query.Next;
     end;
     Query.EnableControls;
@@ -15734,7 +15762,7 @@ begin
         For v1:=0 to DCLQuery.FieldCount-1 do
         begin
           SQLStr:=TrimRight(DCLQuery.Fields[v1].AsString);
-          InsertTextByXY(Sheet, Cell, uStringParams.UTF8ToAnsi(SQLStr), RecRepNum+StartRow-1,
+          InsertTextByXY(Sheet, Cell, BaseToInterface(SQLStr), RecRepNum+StartRow-1,
             v1+1+StartCol-1);
           If EnableRowChColor Then
             If RecRepNum Mod 2=0 Then
@@ -16168,7 +16196,7 @@ var
       GrabValueForm.Position:=poScreenCenter;
       GrabValueForm.BorderStyle:=bsSingle;
       GrabValueForm.BorderIcons:=[biSystemMenu, biMinimize];
-      GrabValueForm.Caption:=SourceToInterface(GetDCLMessageString(msInputVulues));
+      GrabValueForm.Caption:=GetDCLMessageString(msInputVulues);
     end;
   end;
 
@@ -16876,8 +16904,8 @@ begin
   BinStor:=TDCLBinStore.Create(DCLLogOn);
   FDCLLogOn:=DCLLogOn;
   FDCLGrid:=DCLGrid;
-  OfficeDocumentFormat:=odtMSO;
-  OfficeTemplateFormat:=odtMSO;
+  OfficeDocumentFormat:=GPT.OfficeDocumentFormat;
+  OfficeTemplateFormat:=GPT.OfficeTemplateFormat;
 end;
 
 { TDCLBinStore }
@@ -17008,7 +17036,7 @@ begin
   InitGetAppConfigDir;
   DCLMainLogOn:=TDCLLogOn.Create(DBLogOn);
   DCLMainLogOn.RoleOK:=lsNotNeed;
-  LoadLangRes(LangID, Path);
+  LoadLangRes(LangName, Path);
 
   For v1:=1 to ParamCount do
     If ParamStr(v1)='/debug' Then
@@ -17085,7 +17113,7 @@ begin
 {$ENDIF}
     GetParamsStructure(Params);
 
-    LoadLangRes(LangID, Path);
+    LoadLangRes(LangName, Path);
 
 {$IFNDEF EMBEDDED}
     If ParamCount>0 Then
@@ -17174,7 +17202,7 @@ begin
         If GetLastError=ERROR_ALREADY_EXISTS Then
         begin
           CloseHandle(MemHnd);
-          ShowErrorMessage(1, SourceToInterface(GetDCLMessageString(msAppRunning)));
+          ShowErrorMessage(1, GetDCLMessageString(msAppRunning));
           Halt;
         end;
       end;
@@ -17223,7 +17251,7 @@ begin
   End
   Else
   begin
-    ShowErrorMessage(1, SourceToInterface(GetDCLMessageString(msConfigurationFileNotFound)+' . 0010'));
+    ShowErrorMessage(1, GetDCLMessageString(msConfigurationFileNotFound)+' . 0010');
     DebugProc('Bye, Configuration file not fund.');
     ConnectErrorCode:=100;
   end;
@@ -17242,7 +17270,7 @@ end;
 
 procedure TFieldGroup.Clear(Sender: TObject);
 begin
-  If ShowErrorMessage(10, SourceToInterface(GetDCLMessageString(msClearContentQ)))=1 Then
+  If ShowErrorMessage(10, GetDCLMessageString(msClearContentQ))=1 Then
   begin
     FData.Edit;
     FData.DataSet.FieldByName(FieldName).Clear;
@@ -17357,7 +17385,7 @@ begin
     LoadButton.Top:=GroupToolButtonTop;
     LoadButton.Width:=25;
     LoadButton.Height:=GroupToolButtonHeight;
-    LoadButton.Hint:=SourceToInterface(GetDCLMessageString(msLoad));
+    LoadButton.Hint:=GetDCLMessageString(msLoad);
     LoadButton.ShowHint:=True;
     LoadButton.OnClick:=Load;
     LoadButton.Glyph.Assign(DrawBMPButton('Load'));
@@ -17370,7 +17398,7 @@ begin
     ClearButton.Top:=GroupToolButtonTop;
     ClearButton.Width:=25;
     ClearButton.Height:=GroupToolButtonHeight;
-    ClearButton.Hint:=SourceToInterface(GetDCLMessageString(msClear));
+    ClearButton.Hint:=GetDCLMessageString(msClear);
     ClearButton.ShowHint:=True;
     ClearButton.OnClick:=Clear;
     ClearButton.Glyph.Assign(DrawBMPButton('Clear'));
@@ -17384,7 +17412,7 @@ begin
   SaveButton.Top:=GroupToolButtonTop;
   SaveButton.Width:=25;
   SaveButton.Height:=GroupToolButtonHeight;
-  SaveButton.Hint:=SourceToInterface(GetDCLMessageString(msSave));
+  SaveButton.Hint:=GetDCLMessageString(msSave);
   SaveButton.ShowHint:=True;
   SaveButton.OnClick:=Save;
   SaveButton.Glyph.Assign(DrawBMPButton('Save'));
@@ -17415,14 +17443,14 @@ begin
     gtMemo:
     begin
       OpenDialog.DefaultExt:='txt';
-      OpenDialog.Filter:=SourceToInterface(GetDCLMessageString(msText)+' (*.txt)|*.txt|'+
-          InitCap(GetDCLMessageString(msAll))+' (*.*)|*.*');
+      OpenDialog.Filter:=GetDCLMessageString(msText)+' (*.txt)|*.txt|'+
+          InitCap(GetDCLMessageString(msAll)+' (*.*)|*.*');
     end;
     gtRichText:
     begin
       OpenDialog.DefaultExt:='rtf';
-      OpenDialog.Filter:=SourceToInterface(GetDCLMessageString(msFormated)+
-          GetDCLMessageString(msText)+' (*.rtf)|*.rtf|'+InitCap(GetDCLMessageString(msAll))+
+      OpenDialog.Filter:=GetDCLMessageString(msFormated)+
+          GetDCLMessageString(msText)+' (*.rtf)|*.rtf|'+InitCap(GetDCLMessageString(msAll)+
           ' (*.*)|*.*');
     end;
     end;
@@ -17564,14 +17592,14 @@ begin
     gtMemo:
     begin
       SaveDialog.DefaultExt:='txt';
-      SaveDialog.Filter:=SourceToInterface(GetDCLMessageString(msText)+' (*.txt)|*.txt|'+
-          InitCap(GetDCLMessageString(msAll))+' (*.*)|*.*');
+      SaveDialog.Filter:=GetDCLMessageString(msText)+' (*.txt)|*.txt|'+
+          InitCap(GetDCLMessageString(msAll)+' (*.*)|*.*');
     end;
     gtRichText:
     begin
       SaveDialog.DefaultExt:='rtf';
-      SaveDialog.Filter:=SourceToInterface(GetDCLMessageString(msFormated)+
-          GetDCLMessageString(msText)+' (*.rtf)|*.rtf|'+InitCap(GetDCLMessageString(msAll))+
+      SaveDialog.Filter:=GetDCLMessageString(msFormated)+
+          GetDCLMessageString(msText)+' (*.rtf)|*.rtf|'+InitCap(GetDCLMessageString(msAll)+
           ' (*.*)|*.*');
     end;
     end;
@@ -18043,4 +18071,3 @@ Initialization
 {$ENDIF}
 
 end.
-

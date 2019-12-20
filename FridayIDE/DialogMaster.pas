@@ -288,9 +288,13 @@ begin
 end;
 
 procedure TFormDialogMaster.FormCreate(Sender: TObject);
+var
+  Tables:TStringList;
 begin
+  Tables:=TStringList.Create;
+  DCLMainLogOn.GetTableNames(TStrings(Tables));
   cbTables.Clear;
-  DCLMainLogOn.GetTableNames(cbTables.Items);
+  cbTables.Items.AddStrings(Tables);
   PageControl1.ActivePageIndex:=0;
 end;
 

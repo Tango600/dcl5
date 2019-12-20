@@ -50,6 +50,7 @@ type
     UserAdminField, {INITable,} RolesMenuTable, TimeStampFormat, DCLLongUserName, UserID, RoleID,
     DCLRoleName, NewDBPassword, DBPassword, LibPath, LaunchScrFile, LaunchForm: String;
     FormPosInDB:TIniStore;
+    OfficeDocumentFormat, OfficeTemplateFormat: TOfficeDocumentFormat;
   end;
 
 TLogonParams=record
@@ -57,7 +58,7 @@ TLogonParams=record
 end;
 
 TVariable=Record
-  Name: String[25];
+  Name:String;
   Value:String;
 End;
 

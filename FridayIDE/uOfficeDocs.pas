@@ -1,4 +1,4 @@
-unit uOfficeDocs;
+п»їunit uOfficeDocs;
 {$I DefineType.pas}
 
 interface
@@ -22,7 +22,7 @@ const
 
 
 type
-  TOfficeType=(otNone, otMSOffice, // тип используемого редактора
+  TOfficeType=(otNone, otMSOffice, // С‚РёРї РёСЃРїРѕР»СЊР·СѓРµРјРѕРіРѕ СЂРµРґР°РєС‚РѕСЂР°
     otOpOffice);
   TDSPrintMode=(pmNone, pmField, pmTableGrow, pmTableInsert);
 
@@ -191,20 +191,20 @@ var
 begin
   Result:=Null;
   FTemplateFileName:=FileName;
-  // запуск редактора
+  // Р·Р°РїСѓСЃРє СЂРµРґР°РєС‚РѕСЂР°
   try
     case FOfficeType of
     otMSOffice: // Microsoft Word
     begin
       If Assigned(FLogObject) then
-        FLogObject.WriteLog('Подключение к Microsoft Office...');
+        FLogObject.WriteLog('РџРѕРґРєР»СЋС‡РµРЅРёРµ Рє Microsoft Office...');
       if FMsWord=Unassigned then
         FMsWord:=RunWord(vVisible);
     end;
     otOpOffice: // OpenOffice
     begin
       If Assigned(FLogObject) then
-        FLogObject.WriteLog('Подключение к OpenOffice...');
+        FLogObject.WriteLog('РџРѕРґРєР»СЋС‡РµРЅРёРµ Рє OpenOffice...');
       if not Assigned(FOW) then
         FOW:=TOOWriter.Create;
     end;
@@ -213,7 +213,7 @@ begin
     on E: Exception do
     begin
       If Assigned(FLogObject) then
-        FLogObject.WriteLog('Подключение к офису прошло с ошибкой.');
+        FLogObject.WriteLog('РџРѕРґРєР»СЋС‡РµРЅРёРµ Рє РѕС„РёСЃСѓ РїСЂРѕС€Р»Рѕ СЃ РѕС€РёР±РєРѕР№.');
       case FOfficeType of
       otNone:
       ShowErrorMessage(-6010, E.Message);
@@ -225,7 +225,7 @@ begin
       Abort;
     end;
   end;
-  // попытка загрузки шаблона
+  // РїРѕРїС‹С‚РєР° Р·Р°РіСЂСѓР·РєРё С€Р°Р±Р»РѕРЅР°
   if (not VarIsNull(FMsWord))or Assigned(FOW) then
   begin
     try
@@ -233,29 +233,29 @@ begin
       otMSOffice: // Microsoft Word
       begin
         vDocumentVisible:=True;
-        // создание документа по шаблону
+        // СЃРѕР·РґР°РЅРёРµ РґРѕРєСѓРјРµРЅС‚Р° РїРѕ С€Р°Р±Р»РѕРЅСѓ
         Try
           FWordDocument:=FMsWord.Documents.Add(FTemplateFileName, EmptyParam, EmptyParam,
             vDocumentVisible);
           If Assigned(FLogObject) then
-            FLogObject.WriteLog('Шаблон загружен');
+            FLogObject.WriteLog('РЁР°Р±Р»РѕРЅ Р·Р°РіСЂСѓР¶РµРЅ');
         Except
           ShowErrorMessage(-5004, FileName);
           If Assigned(FLogObject) then
-            FLogObject.WriteLog('-5004 / Шаблон не загружен, нет такого шаблона');
+            FLogObject.WriteLog('-5004 / РЁР°Р±Р»РѕРЅ РЅРµ Р·Р°РіСЂСѓР¶РµРЅ, РЅРµС‚ С‚Р°РєРѕРіРѕ С€Р°Р±Р»РѕРЅР°.');
         End;
         // vWordDocument.Activate;
       end;
       otOpOffice: // OpenOffice
       begin
         FOW.Connect:=True;
-        // создаем документ по шаблону
+        // СЃРѕР·РґР°РµРј РґРѕРєСѓРјРµРЅС‚ РїРѕ С€Р°Р±Р»РѕРЅСѓ
         OOOM:=[];
         If not vVisible then
           OOOM:=[oomHidden];
         FOW.OpenDocument(FTemplateFileName, [oomAsTemplate]+OOOM, ommAlwaysNoWarn);
         If Assigned(FLogObject) then
-          FLogObject.WriteLog('Шаблон загружен');
+          FLogObject.WriteLog('РЁР°Р±Р»РѕРЅ Р·Р°РіСЂСѓР¶РµРЅ');
         FOW.Visible:=vVisible;
       end;
       end;
@@ -302,19 +302,19 @@ begin
     UData:=TUniDataModule.Create(FDataModule);
 
     If Assigned(FLogObject) then
-      FLogObject.WriteLog('Загрузка шаблона...');
+      FLogObject.WriteLog('Р—Р°РіСЂСѓР·РєР° С€Р°Р±Р»РѕРЅР°...');
     vFileName:=LoadTemplate(FileName, Visible);
     If not VarIsNull(vFileName) then
     begin
       If Assigned(FLogObject) then
-        FLogObject.WriteLog('...Загружен.');
+        FLogObject.WriteLog('...Р—Р°РіСЂСѓР¶РµРЅ.');
 
       For i:=0 to UData.Count-1 do
       Begin
         DSName:=UData.DataSets[i].Name;
         FindPrintMode;
         If Assigned(FLogObject) then
-          FLogObject.WriteLog('Набор данных : '+DSName);
+          FLogObject.WriteLog('РќР°Р±РѕСЂ РґР°РЅРЅС‹С… : '+DSName);
 
         PMFindIterateCount:=0;
         repeat
@@ -350,7 +350,7 @@ begin
                   Begin
                     FindAndReplace(Marker, TrimRight(DS.Fields[j].AsString));
                     If Assigned(FLogObject) then
-                      FLogObject.WriteLog('Маркер : '+Marker+', заменён на '+
+                      FLogObject.WriteLog('РњР°СЂРєРµСЂ : '+Marker+', Р·Р°РјРµРЅС‘РЅ РЅР° '+
                       TrimRight(DS.Fields[j].AsString));
                   End;
                 End;

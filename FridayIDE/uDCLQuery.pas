@@ -56,7 +56,7 @@ type
     {$ENDIF}
     FRefreshSQL:String;
     {$IFDEF TRANSACTIONDB}
-    WriteTransaction:TTransaction;
+    ShadowTransaction:TTransaction;
     {$ENDIF}
 {$ENDIF}
     FMainTable, FKeyField: string;
@@ -357,8 +357,11 @@ begin
   Database:=DatabaseObj;
 {$ENDIF}
 {$IFDEF TRANSACTIONDB}
+{$IFDEF UPDATESQLDB}
   Transaction:=CreateTR(trtRead);
-  WriteTransaction:=CreateTR(trtWrite);
+{$ELSE}
+  Transaction:=CreateTR(trtWrite);
+{$ENDIF}
 {$ENDIF}
   inherited AfterDelete:=AfterDeleteData;
   inherited AfterInsert:=AfterInsertData;
@@ -370,7 +373,13 @@ begin
 {$IFDEF CACHEON}
   ShadowQuery:=TDCLDialogQuery.Create(nil);
 {$IFDEF TRANSACTIONDB}
-  ShadowQuery.Transaction:=WriteTransaction;
+{$IFDEF UPDATESQLDB}
+  ShadowTransaction:=CreateTR(trtWrite);
+  ShadowQuery.Transaction:=ShadowTransaction;
+{$ELSE}
+  ShadowTransaction:=CreateTR(trtRead);
+  ShadowQuery.Transaction:=Transaction;
+{$ENDIF}
 {$ENDIF}
 {$IFDEF BDE}
   ShadowQuery.Database:=DatabaseObj;
@@ -389,7 +398,6 @@ begin
 {$IFDEF SQLdbFamily}
   ShadowQuery.Database:=DatabaseObj;
 {$ENDIF}
-//  ShadowQuery.Name:='ShadowQueryDCLQuery_'+IntToStr(UpTime);
 {$ENDIF}
 end;
 
@@ -420,16 +428,12 @@ Begin
       If Active Then
         Close;
 
-      {$IFDEF TRANSACTIONDB}
-      If not Assigned(WriteTransaction) then
-        WriteTransaction:=CreateTR(trtWrite);
-      {$ENDIF}
       {$IFDEF UPDATESQLDB}
       If not Assigned(FUpdateSQL) then
       Begin
         FUpdateSQL:=TUpdateSQLObj.Create(Self);
         {$IFDEF TRANSACTIONDB}
-        FUpdateSQL.UpdateTransaction:=WriteTransaction;
+        FUpdateSQL.UpdateTransaction:=ShadowTransaction;
         {$ENDIF}
       End;
       UpdateObject:=FUpdateSQL;
@@ -598,11 +602,11 @@ begin
 
   Cancel;
   Close;
-{$IFDEF TRANSACTIONDB}
-  If Assigned(WriteTransaction) then
-    FreeAndNil(WriteTransaction);
-{$ENDIF}
 {$IFDEF UPDATESQLDB}
+{$IFDEF TRANSACTIONDB}
+  If Assigned(ShadowTransaction) then
+    FreeAndNil(ShadowTransaction);
+{$ENDIF}
   FreeAndNil(FUpdateSQL);
 {$ENDIF}
 {$IFDEF CACHEON}
@@ -708,7 +712,6 @@ end;
 function TDCLQuery.CreateTR(RW:TTransactionType): TTransaction;
 begin
   Result:=TTransaction.Create(Self);
-  //Result.Name:='tmp_WTR_'+IntToStr(UpTime);
   {$IFDEF IBX}
   Result.DefaultDatabase:=Database;
   Result.DefaultAction:=TACommit;
@@ -737,7 +740,7 @@ begin
   Result:='';
   If GPT.IBAll then
   Begin
-{$IFDEF CACHEON}
+{$IFDEF CACHEON}{$IFDEF IBALL}
     If TableName<>'' then
     Begin
       ShadowQuery.SQL.Text:='select RDB$FIELD_NAME '+
@@ -776,7 +779,7 @@ begin
       If Result<>'' then
         Result:=Copy(Result, 1, Length(Result)-1);
     End;
-{$ENDIF}    
+{$ENDIF}{$ENDIF}
   End;
 end;
 
@@ -850,12 +853,15 @@ begin
     Connection.Commit;
 {$ENDIF}
 {$ENDIF}
+{$IFDEF UPDATESQLDB}
 {$IFDEF TRANSACTIONDB}
+  If Assigned(ShadowTransaction) then
 {$IFDEF IBX}
-  If WriteTransaction.InTransaction then
+  If ShadowTransaction.InTransaction then
 {$ENDIF}
-  If WriteTransaction.Active then
-    WriteTransaction.Commit;
+  If ShadowTransaction.Active then
+    ShadowTransaction.Commit;
+{$ENDIF}
 {$ENDIF}
 end;
 

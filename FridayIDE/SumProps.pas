@@ -47,7 +47,6 @@ const
   mln: array [1..3] of string=('миллион ', 'миллиона ', 'миллионов ');
   mrd: array [1..3] of string=('миллиapд ', 'миллиаpдa ', 'миллиapдoв ');
   trl: array [1..3] of string=('триллион ', 'триллионa ', 'триллионoв ');
-  cnt: array [1..3] of string=('тыс€ча ', 'тыс€чи ', 'тыс€ч ');
 
   cent: array [1..3] of string=('цент —Ўј', 'цента —Ўј', 'центов —Ўј');
   doll: array [1..3] of string=('доллар ', 'доллара ', 'долларов ');
