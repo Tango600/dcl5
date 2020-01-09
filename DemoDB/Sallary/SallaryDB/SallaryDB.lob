@@ -1,0 +1,898 @@
+Caption=Водители
+Query=select * from empl e left join mashins m on m.driver_id=e.emp_id left join deps d on (e.subdcode=d.dep_id) left join tarifs t on t.tarif_id=m.htarif where e.delflg is null order by Full_Name;
+UpdateQuery=UpdateTable=EMPL;KeyFields=EMP_ID;
+DBFilter=Label=Организация;List=DEP_NAME;Key=DEP_ID;FilterField=SUBDCODE;DBFilterQuery=select * from Deps order by Dep_Name;
+DBFilter=Label=Род деятельности;List=TYPE_NAME;Key=TYPE_ID;FilterField=EMPLTYPE;DBFilterQuery=select * from EMPL_TYPES;
+ContextFilter=Label=Ф.И.О. водителя;FilterField=FULL_NAME;FilterMode=Like;
+Live=1;
+ReadOnly=1;
+Navigator=1;Buttons=First,Prior,Next,Last,Refresh
+Style=2;
+CommandButton=Label=Добавить;CommandName=Call_Add_Empl;
+CommandButton=Label=Изменить;CommandName=Edit_Empl_Scr;
+CommandButton=Label=Удалить;CommandName=Del_Empl_Scr;
+CommandButton=Label=Перевод в др. орг.;Hint=Перевод в другую организацию;CommandName=Call_Dialog_ReplaseEmpl_Org;
+CommandButton=Label=Перевод на др. долж;Hint=Перевод на другую должность;CommandName=Call_Dialog_ReplaseEmpl_Type;
+[Fields]
+11
+Код
+EMP_ID
+Ф.И.О.
+FULL_NAME
+Оклад
+Salary
+Код автотрт.
+CAR_ID
+Закр. авто трспрт.
+m_name
+Гос. номер
+GOS_NOM
+Почасовая ставка
+tref_sum
+Классность
+Class
+Подразделение
+Dep_Name
+Код подразделения
+SUBDCODE
+Род деятельности
+EMPLTYPEReportExcel=Template=&TemplatesPath\Сводная.xls;SQL=select wl.work_date, wl.empl_t_name, wl.full_name, wl.m_name, wl.gos_nom, wl.o_name, wl.add_name, '=' || wl.tarif_rate, '=' || wl.CLASS_RATE, '=' || wl.CLASS_SUM, '=' || wl.hour_tarif_rate, '=' || wl.stendby_time, '=' || wl.tarif_sum, wl.calc_type from REPORT_WITH_PARAMS(-1,-1,-1,'&CBegWorkDate','&CEndWorkDate') wl where wl.Mashine_ID=:Mashine_ID order by wl.ORDER_F;AlternationRowBackColor=C1C6C5;Caption=Подразделения
+Query=select * from Deps d where d.Dep_ID<>-1 order by d.Dep_Name;
+UpdateQuery=UpdateTable=Deps;KeyFields=DEP_ID;
+Navigator=1;
+CommandButton=Action=Find;Label=Найти
+CommandButton=Action=Print;Label=Печать
+Style=2;
+[Fields]
+LoadFromTable=SQL=select t.RDB$Description, t.RDB$Field_Name from RDB$RELATION_FIELDS t where upper(t.RDB$Relation_name)=upper('deps')Caption=Надбавки
+Query=select * from AddOns_ref;
+UpdateQuery=UpdateTable=AddOns_ref;KeyFields=AD_ID;
+ContextFilter=Label=Надбавка;FilterField=ADD_NAME;FilterMode=Like
+Live=1;
+Navigator=1;Buttons=First,Prior,Next,Last,Refresh;
+CommandButton=Action=Find;Label=Найти
+CommandButton=Action=Print;Label=Печать
+Style=2;
+CommandButton=Label=Изменить;CommandName=AddOns_Edit;
+CommandButton=Label=Добавить;CommandName=AddOns_Append;
+CommandButton=Label=Удалить;;Action=DeleteConf;
+[Fields]
+8
+Код
+AD_ID
+Наименование
+ADD_NAME
+Сумма
+ADD_SUM
+% соотношение
+RATE
+На всё время
+ADD2ALL
+Прибавлять к ФРВ
+ADD2FRV
+Ведущая
+Master
+Подчинённая
+SlaveExecQuery=execute procedure Add_Empl('&Driver_Name', &Class, &DEP_CODE,'&Oklad',&Type_Code);Caption=Транспорт, механизмы
+//Calendar=Label=Актуальная дата;VariableName=AD;ReOpen=1;DefaultValue=&_DATE_;
+Query=select e.empltype, m.Driver_ID, m.car_id, m.M_name, m.gos_nom, e.full_name, m.HTarif, t.tref_sum, m.delflgM from mashins m left join empl e on (m.driver_id=e.emp_id) left join tarifs t on (t.tarif_id=m.htarif) order by m.M_name;
+//Query=select e.empltype, t.Driver_ID, t.car_id, t.M_name, t.gos_nom, e.full_name, t.HTarif, t.tref_sum, t.delflgm from tarifs_sel('&AD') t left join empl e on e.emp_id=t.driver_id order by t.M_name;
+DBFilter=Label=Род деятельности;List=TYPE_NAME;Key=TYPE_ID;FilterField=EMPLTYPE;DBFilterQuery=select * from EMPL_TYPES;
+ContextFilter=Label=Автотрансп. средство;FilterField=M_NAME;FilterMode=Like
+ContextFilter=Label=Гос номер;FilterField=GOS_NOM;FilterMode=Like
+ReadOnly=1;
+Navigator=1;Buttons=First,Prior,Next,Last,Refresh
+Style=2;
+CommandButton=Label=Удалить;CommandName=Del_Mashin_Scr;
+CommandButton=Label=Изменить;CommandName=Edit_Machin;
+CommandButton=Label=Добавить;CommandName=Add_Machin;
+CommandButton=Label=Снять машину;CommandName=Clear_Mashine;
+CommandButton=Label=Ставки к маш.;CommandName=Mashins2Tarifs_Run;FontStyle=,Italic;Hint=Актуальные ставки;
+[Fields]
+6
+Код
+CAR_ID
+Наименование
+M_NAME
+Гос номер
+GOS_NOM
+Ф.И.О. водителя
+FULL_NAME
+Тарифная ставка
+tref_sum
+Удалён
+delflgMDeclare=tmp_TR;
+SetValue=tmp_TR;ReturnQuery=select CAST(SUBSTRING(CAST('&TARIF_RATE' as varchar(50)) from 1 for 5) as numeric(9,2)) from dual;
+SetValue=TARIF_RATE=&tmp_TR;
+If Expression1=&_RoleID_; Expression2=&_RoleID_;Sign=<>;
+Declare=_RoleID_=0;
+EndIf
+ExecQuery=execute procedure Add_Work('&Work_Date', &DRIVER_ID, &MASHINE_ID, &TarifCode, '&TARIF_RATE', &OBJECT_ID, '&StandByTime', &_ROLEID_);
+Dispose=tmp_TR;
+CloseDialog;Events=CloseEvents=Dialog_Close;
+QueryLookup=select t.tarif_id, t.tarif_name, SUBSTRING(t.grup || '  ' || t.tarif_name || '                        ' from 1 for 20) || t.tref_sum Tarifa from TARIFS t order by TARIFGROUP, TARIF_NAME;
+Caption=Машины и механизмы
+Style=0;
+Navigator=0;
+CommandButton=Label=Принять;;Action=Post;FontStyle=Bold;_Default=1;
+[Fields]
+6
+Код\OutBox=Disable=1;Width=80;
+CAR_ID
+Наименование
+M_NAME
+Гос номер
+GOS_NOM
+Код водителя\GetValue=Dialog=Employers;AssociateWith=EMP_ID,Full_name;ModifyingEdit=Driver_Edit,Driver_Edit2;EditBox=ComponentName=Driver_Edit;Width=200;
+Driver_ID;Width=200;
+Водитель\OutBox=ComponentName=Driver_Edit2;
+FULL_NAME
+Тариф\Lookup=Key=TARIF_ID;List=TARIFA;Hint=Тариф
+HTARIFVersion;Declare=LastFilterValue;
+Calendar=Label=Дата начала;VariableName=CBegWorkDate;ReOpen=1;DefaultValue=&CBegWorkDate;
+Calendar=Label=Дата конца;VariableName=CEndWorkDate;ReOpen=1;
+Caption=Лист работ
+Query=select * from works_list wl join mashins m on (wl.mashine_id=m.car_id) join empl e on (wl.driver_id=e.emp_id) join addons_ref ad on (wl.tarif_id=ad.ad_id) join objects o on (wl.object_id=o.obj_id) join Tarifs t on (m.htarif=t.tarif_id) left join DCL_USERS r on (wl.empl_id=r.uid) where wl.Work_date between '&CBegWorkDate' and '&CEndWorkDate'  order by wl.work_date, e.full_name, wl.Mashine_ID, wl. Object_ID, wl.Main_Rec, wl.Main_Num;
+DBFilter=Label=Организация;List=DEP_NAME;Key=DEP_ID;FilterField=SUBDCODE;DBFilterQuery=select * from Deps order by Dep_Name;
+DBFilter=Label=Род деятельности;List=TYPE_NAME;Key=TYPE_ID;FilterField=EMPLTYPE;DBFilterQuery=select * from EMPL_TYPES;
+ContextFilter=Label=Водитель;FilterField=FULL_NAME;FilterMode=Like;VariableName=LastFilterValue;
+Navigator=1;Buttons=First,Prior,Next,Last,Post,Cancel,Refresh
+ReadOnly=1;
+OrderByFields=WL_ID,WORK_DATE,Full_name,O_NAme,Tarif_Rate,Add_Name,M_Name,STENDBY_TIME,LongRoleName;
+Style=2;
+CommandButton=Label=Удалить;CommandName=WL_Del;
+CommandButton=Label=Изменить;CommandName=WorkList_Edit_Scr;
+CommandButton=Label=Добавить;CommandName=WorkList_App_Scr;
+CommandButton=Label=Сводная;CommandName=Call_Cons;FontStyle=,Italic
+Color=<0=clTeal;BrushKey=MAIN_num;
+//Color=>1=clGreen;BrushKey=Depend_Add;
+CommandButton=Label=Экспорт;CommandName=ExportInto1C;
+[Fields]
+14
+Код
+WL_ID
+Дата
+WORK_DATE;Width=80
+Водитель
+Full_name;Width=200;
+Автотранспорт
+M_Name;Width=200;
+Гос. номер
+Gos_nom
+Объект
+O_Name;Width=200;
+ФРВ|Ставка
+Tarif_Rate
+Время
+STENDBY_TIME
+Почасовая ставка
+tref_sum
+Классность
+Class;Width=80
+Надбавка
+Add_Name
+Гл. зап.
+Main_Rec
+Код род. зап.
+Main_Num
+Сотрудник
+LongRoleNameCaption=Объекты
+Navigator=1;Buttons=Post,Cancel
+Events=CloseEvents=ReFres_Scr;
+Style=1;
+[Fields]
+2
+Код\OutBox=;Disabled=1;Width=80;
+OBJ_ID
+Наименование
+O_NAME;Width=180;Append;
+Dialog=Add_Object;Child=1;Dialog=Add_Object;Child=1;Dialog=AddMenuItem;Child=1;Caption=Водители (добавление)
+Navigator=0;
+Style=0;
+Events=CloseEvents=ReFres_Scr;
+CommandButton=Label=Сохранить;CommandName=Add_Empl_Scr;FontStyle=Bold;
+CommandButton=Label=Ещё;CommandName=Add_Empl_Scr2;
+[Fields]
+5
+Род деятельности\Lookup=Key=TYPE_ID;List=TYPE_NAME;VariableName=Type_Code;NoDataField=1;QueryLookup=select * from EMPL_TYPES order by def;
+FFFF
+Подразделение\Lookup=Key=Dep_ID;List=DEP_NAME;VariableName=Dep_Code;NoDataField=1;QueryLookup=select * from Deps order by Dep_Name;
+SUBDCODE
+Водитель ФИО\InputBox=ComponentName=Driver_Edit2;Width=225;VariableName=Driver_Name;
+FULL_NAME
+Классность\InputBox=;Width=80;VariableName=Class;_Value=0;
+Class
+Оклад\InputBox=;Width=80;VariableName=Oklad;_Value=0;
+SalaryCaption=Добавление элемента меню
+Navigator=0
+Style=0
+Modal=1
+FormHeight=200
+CommandButton=Label=Добавить;CommandName=AddExec;
+[Fields]
+2
+Роль\LookUp=List=LongRoleName;Key=RoleID;VariableName=ROLEIDV;NoDataField=1;QueryLookup=select * from DCL_ROLES order by LongRoleName;
+ROLEID
+Меню\LookUp=List=DCLName;Key=NumSeq;VariableName=MenuIDv;NoDataField=1;QueryLookup=select * from SCRIPTS t where t.ident between 0 and 60000 order by t.DCLName, t.NumSeq;
+MENUITEMIDDeclare=DeleteOrNot;
+Message=Удалить запись?;Flags=YesNo;VariableName=DeleteOrNot;
+If Expression1=&DeleteOrNot; Expression2=1; then
+ExecQuery=execute procedure DEL_Mashine(:CAR_ID);
+EndIf
+Dispose=DeleteOrNot;
+ReOpen;Declare=tmpAddMenuitem;
+SetValue=tmpAddMenuitem;ReturnQuery=select t.isappend from  ADD_MENU_ITEM_TO_ROLE(&ROLEIDV, &MenuIDv) t;
+if Expression1=&tmpAddMenuitem; Expression2=1; then
+Reopen;
+Else
+Message=Такой элемент уже существует;
+EndIf
+Dispose=tmpAddMenuitem;ModifyingQuery=execute procedure copy_role(&RoleIDFrom, &RoleIDTo);
+Dispose=RoleIDFrom, RoleIDTo
+ReOpen;Declare=FreeVDialog=3;
+Declare=TarifCode;
+Declare=StandByTime;
+SetValue=StandByTime=0;
+SetValue=TarifCode=-1;
+Caption=Добавление
+Events=CloseEvents=FreeVariables;
+Navigator=0;
+Style=0;
+CommandButton=Label=Сохранить;CommandName=WL_Append_Scr;FontStyle=Bold
+[Fields]
+2
+Фонд раб. врем.\InputBox=;Width=80;ComponentName=TARIF_RATE;VariableName=TARIF_RATE;
+timefond
+Почасовая ставка\InputBox=;Width=80;ComponentName=HourTarif;_Value=&HOURTarifRate;
+Tarif_RateCaption=Копирование роли
+Navigator=0
+Style=0
+Modal=1
+FormHeight=200
+CommandButton=Label=Копировать;CommandName=CopyExec;
+[Fields]
+2
+Копировать роль\LookUp=List=LongRoleName;Key=RoleID;VariableName=RoleIDFrom;NoDataField=1;QueryLookup=select * from dcl_Roles order by LongRoleName;
+ROLEID
+В роль\LookUp=List=LongRoleName;Key=RoleID;VariableName=RoleIDTo;NoDataField=1;QueryLookup=select * from dcl_Roles order by LongRoleName;
+MENUITEMIDDeclare=DRIVER_ID,Vod,Masina,MASHINE_ID,OBJECT_ID,Stavk,Obj,WL_ID,GosNomer;
+SetValue=WL_ID=:WL_ID;
+SetValue=DRIVER_ID=:DRIVER_ID;
+SetValue=Vod=:Full_Name;
+SetValue=Masina=:M_Name;
+SetValue=MASHINE_ID=:Car_ID;
+SetValue=OBJECT_ID=:Obj_ID;
+SetValue=Stavk=:Tref_Sum;
+SetValue=OBJ=:O_Name;
+SetValue=GosNomer=:Gos_nom;
+Dialog=WorkList_Add_Main_Dlg;Append;
+Dialog=Add_Mashin_Dlg;Child=1;Caption=Роли
+Navigator=1;Flat=1;
+Query=Select * from DCL_Roles
+Style=2
+CommandButton=Label=Удалить роль;CommandName=DelRole;
+CommandButton=Action=Print;Label=Печать
+[Fields]
+*Dialog=CopyRole;Child=1;Declare=YNv;
+Message=Удалить запись?;Flags=YesNo;VariableName=YNv;
+if Expression1=1; Expression2=&YNv; then
+ModifyingQuery=execute procedure DEL_ROLE_AND_MENU(:ROLEID);
+ReOpen;
+EndIf
+Dispose=YNv;ModifyingQuery=execute procedure DEL_ROLE_MENU(&RoleIDDel);
+Dispose=RoleIDDel;
+ReOpen;Declare=YNv;
+Message=Удалить запись?;Flags=YesNo;VariableName=YNv;
+if Expression1=1; Expression2=&YNv; then
+ModifyingQuery=delete from RolesMenu where RoleID=:RoleID and MenuItemID=:MenuItemID;
+ReOpen;
+EndIf
+Dispose=YNv;Dispose=Oklad,Driver_Name,Calss,Dep_Code,Oklad,Type_Code;
+Post;
+ReOpen;ExecQuery=update mashins m set m.driver_id=null where m.car_id=:CAR_ID;
+ReOpen;script type=command
+Declare=TemplatesPath,CBegWorkDate;
+ApplicationTitle=Расчёт зарплаты;
+SetValue=TemplatesPath;ReturnQuery=select gb.paramvalue from global_params gb where upper(gb.paramname)=upper('TemplatesPath');
+SetValue=CBegWorkDate;ReturnQuery=select p.result from first_day_of_month('now') p;Declare=YNv;
+Message=Удалить запись?;Flags=YesNo;VariableName=YNv;
+if Expression1=1; Expression2=&YNv; then
+ExecQuery=execute procedure Del_work(:WL_ID);
+ReOpen;
+EndIf
+Dispose=YNv;Caption=Параметры отчета
+Navigator=0;
+Style=0;
+Declare=FreeVDialog=5;
+Events=CloseEvents=FreeVariables;
+Modal=1;
+CommandButton=Label=Отчёт;CommandName=PrintConsolidateToExcel;
+CommandButton=Label=Отчёт Фин;CommandName=MashinsAndObjectsToExcel;
+CommandButton=Label=Водители;CommandName=Rep_Drivers;
+CommandButton=Label=Ведомость;CommandName=Vedomost_All;
+[Fields]
+4
+Организация\Lookup=Key=DEP_ID;List=DEP_NAME;;NoDataField=1;VariableName=Dep;QueryLookup=select * from Deps order by Dep_Name;
+DDDD
+Дата начала\DateBox=;_Value=&CBegWorkDate;Disabled=1;
+FFFF
+Дата конца\DateBox=;_Value=&CEndWorkDate;Disabled=1;
+FFFF2
+Род деятельности\Lookup=Key=TYPE_ID;List=TYPE_NAME;;NoDataField=1;VariableName=Em_Type;QueryLookup=select * from EMPL_TYPES order by TYPE_NAME;
+FFFFFAppend;
+Dialog=AddOns_Edit_Dlg;Child=1;Declare=YNv;
+Message=Удалить запись?;Flags=YesNo;VariableName=YNv;
+if Expression1=1; Expression2=&YNv; then
+ExecQuery=execute procedure del_empl(:EMP_ID);
+ReOpen;
+EndIf
+Dispose=YNv;Declare=IsCorrect;
+SetValue=IsCorrect;ReturnQuery=select Count(*) from UNCORRECTLY_TARIFS;
+If Expression1=&IsCorrect; Expression2=0; then Sign=<>;
+Message=Имеются некорректные тарифы! / &IsCorrect;
+EndIf
+Dispose=IsCorrect;ReportExcel=Template=&TemplatesPath\Ведомость.xls;SQL=select d.dep_name, wl.full_name, wl.stendby_time, wl.tarif_sum from REPORT_WITH_PARAMS(&Dep,-1,&Em_Type,'&CBegWorkDate', '&CEndWorkDate') wl, deps d where wl.dep_code=d.dep_id and wl.rec_type=12 order by wl.dep_code, wl.full_name;AlternationRowBackColor=CCCCCC;Caption=Перевод в другую организацию
+Navigator=0;
+Style=0;
+Modal=1;
+CommandButton=Label=Выполнить;CommandName=RePlaseToOrg_Scr;
+[Fields]
+1
+Организация\Lookup=Key=DEP_ID;List=DEP_NAME;NoDataField=1;VariableName=Dep1;QueryLookup=select * from Deps order by Dep_Name;
+DDDDDeclare=LastFilterValue;
+Caption=Начисление (сводная)
+Calendar=Label=Дата начала;VariableName=CBegWorkDate;ReOpen=1;DefaultValue=&CBegWorkDate;
+Calendar=Label=Дата конца;VariableName=CEndWorkDate;ReOpen=1;DefaultValue=&CEndWorkDate;
+Query=select * from worklist_consolidate('&CBegWorkDate','&CEndWorkDate');
+DBFilter=Label=Организация;List=DEP_NAME;Key=DEP_ID;FilterField=DEP_CODE;VariableName=OrgCode;DBFilterQuery=select * from Deps order by Dep_Name;
+DBFilter=Label=Род деятельности;List=TYPE_NAME;Key=TYPE_ID;FilterField=EMPL_TYPE;VariableName=Em_Type;DBFilterQuery=select * from EMPL_TYPES;
+ContextFilter=Label=Водитель;FilterField=FULL_NAME;FilterMode=Like;_Value=&LastFilterValue;VariableName=LastFilterValue;
+Navigator=1;Buttons=First,Prior,Next,Last,Refresh
+CommandButton=Action=Find;Label=Найти
+CommandButton=Action=Print;Label=Печать
+Style=2;
+ReadOnly=1;
+Declare=OperSum;
+Declare=FreeVDialog=4;
+Events=AfterOpenEvents=Consolidate_AfterOpen,CloseEvents=FreeVariables;
+SetValue=OperSum;ReturnQuery=select Sum(wl.tarif_sum) total from worklist_consolidate('&CBegWorkDate', '&CEndWorkDate') wl where wl.rec_type=12;
+AddStatus=Всего на сумму: &OperSum;Width=200;
+Color=9=clRed,1=clTeal;BrushKey=rec_type,rec_type;
+Color=11=clGreen;BrushKey=rec_type;
+CommandButton=Label=Структура;;Action=Structure;
+Color=12=clNavy;BrushKey=rec_type;
+CommandButton=Label=В Excel;CommandName=Call_RepParams_Dialog;FontStyle=Bold,Italic;
+CommandButton=Label=Расч лист;CommandName=Run_CalcList;FontStyle=Bold
+CommandButton=Label=Машина;CommandName=PrintConsolidateToExcel_Mash;FontStyle=,Italic
+[Fields]
+25
+№ строки
+order_f;Width=50;
+Код работы
+WL_ID
+Дата работы
+WORK_DATE
+Ставка %
+TARIF_RATE
+Часы
+stendby_time
+Главная
+MAIN_REC
+Дочерняя
+MAIN_NUM
+Код водителя
+EMP_ID
+Ф.И.О. фодителя
+FULL_NAME
+Код трн. средства
+MASHINE_ID
+Траспртн. средство
+M_NAME
+Гос номер
+GOS_NOM
+Почасовая ставка
+HOUR_TARIF_RATE
+Код объекта
+OBJ_ID
+Объект
+O_NAME
+Классность
+Class
+Классность %
+class_rate
+Классность сумма
+class_sum
+Надбавка
+ADD_NAME
+Сумма
+TARIF_SUM
+% надбавки (фиксир)
+AD_RATE
+Начисление
+CALC_TYPE
+Код рода деятельности
+EMPL_TYPE
+Род деятельности
+empl_t_name
+Тип записи
+Rec_TypeReportExcel=Template=&TemplatesPath\Сводная-Оъекты.xls;SQL=select wl.o_name, wl.m_name, wl.gos_nom, wl.full_name, '=' || sum(wl.tarif_sum) tarif_sum from REPORT_WITH_PARAMS(&Dep,-1,&Em_Type,'&CBegWorkDate','&CEndWorkDate') wl where wl.rec_type in (1, 2) group by wl.o_name, wl.m_name, wl.gos_nom, wl.full_name order by wl.o_name, wl.m_name, wl.gos_nom, wl.full_name;AlternationRowBackColor=C1C6C5;Caption=Надбавки
+Live=1;
+Navigator=1;Buttons=Post,Cancel;
+Style=0;
+Events=CloseEvents=ReFres_Scr;
+[Fields]
+5
+Наименование
+ADD_NAME
+Сумма
+ADD_SUM
+% соотношение
+RATE
+На всё время\As_Logic;ValueChecked=1;ValueUnChecked=0;
+ADD2ALL
+Прибавлять к ФРВ\As_Logic;ValueChecked=1;ValueUnChecked=0;
+ADD2FRV
+Ведущая\As_Logic;ValueChecked=1;ValueUnChecked=0;
+Master
+Подчинённая\As_Logic;ValueChecked=1;ValueUnChecked=0;
+SlaveCaption=Глобальные параметры
+Query=select * from Global_Params;
+UpdateQuery=UpdateTable=Global_Params;KeyFields=PARAM_ID;
+Style=2
+ReadOnly=1
+CommandButton=Label=Добавить;CommandName=RunAddGlbParam;
+CommandButton=Label=Изменить;CommandName=RunEditGlbParam;
+CommandButton=Label=Удалить;CommandName=DeleteConf;
+Status=Некоторые параметры применятся после перезагрузки
+[Fields]
+4
+Ид.
+PARAM_ID
+Наименование
+PARAMCAPTION
+Имя параметра
+PARAMNAME
+Значение
+PARAMVALUEDialog=AddGlbParamDlg;Child=1;Dialog=Consolidate;Caption=Дабавление параметра
+CommandButton=Label=Записать;CommandName=ExecAddGlbParam;
+Navigator=0
+Modal=1
+[Fields]
+3
+Наименование\InputBox=VariableName=tmpPC;_Value=;ComponentName=InpBox1;MaxLength=30;
+
+Имя параметра\InputBox=VariableName=tmpPN;_Value=;ComponentName=InpBox2;MaxLength=15;
+
+Значение\InputBox=VariableName=tmpPV;_Value=;ComponentName=InpBox3;MaxLength=54;
+0Dialog=EditGlbParam;Child=1Caption=Изменение параметра
+Navigator=1;Buttons=Post, Cancel
+Modal=1
+[Fields]
+3
+Наименование
+PARAMCAPTION
+Имя параметра
+PARAMNAME
+Значение
+PARAMVALUECaption=Меню ролей
+Navigator=1;Buttons=First,Prior,Next,Last;
+Query=select roleid, rolename, longrolename, MENUITEMID, dclname from RolesToMenu r2m order by roleid, MENUITEMID
+DBFilter=Label=Роль;List=LONGROLENAME;Key=ROLEID_R;FilterField=ROLESID;Width=150;DBFilterQuery=Select LONGROLENAME, ROLESID roleid_R from DCL_Roles Order by LONGROLENAME;
+Style=2
+ReadOnly=1
+Navigator=1;Flat=1;
+CommandButton=CommandName=Roles_AddRoleCallDialog;Label=Добавить;
+CommandButton=Label=Удалить;CommandName=Roles_DelRoleMenuItem;
+CommandButton=Label=Удалить роль;CommandName=Roles_DelRolesMenuItem_Call;
+CommandButton=Label=Копировать роль;CommandName=Roles_CopyRole_Call;
+CommandButton=Action=Print;Label=Печать
+CommandButton=Action=Find;Label=Найти
+CommandButton=Label=Недостающие;CommandName=Roles_Run_Test_RolesMenu;FontStyle=,Italic
+//LoadFromTable=SQL=select t.RDB$Description, t.RDB$Field_Name from RDB$RELATION_FIELDS t where upper(t.RDB$Relation_name)=upper('RolesToMenu')
+[Fields]
+6
+Роль
+ROLENAME
+Полное имя роли
+LONGROLENAME
+Пользователь
+DCL_USER_NAME
+Полное имя пользователя
+DCL_LONG_USER_NAME
+Ид. элемента меню
+MENUITEMID
+Имя элемента
+DCLNAMECaption=Удаление меню роли
+Navigator=0
+Style=0
+Modal=1
+FormHeight=200
+CommandButton=Label=Удалить;CommandName=DelRoleExec;
+[Fields]
+1
+Роль\LookUp=List=LongRoleName;Key=RoleID;VariableName=RoleIDDel;NoDataField=1;QueryLookup=select * from Roles order by LongRoleName;
+ROLEIDEdit;
+Dialog=Edit_Mashin_Dlg;Child=1;Dialog=AddOns_Edit_Dlg;Child=1;
+Dialog=DelRolesMenuItem;Child=1;select u.DCL_LONG_USER_NAME from DCL_USERS u where upper(u.DCL_USER_NAME)=upper('&_DCL_USER_NAME_')QueryLookup=select t.tarif_id, t.tarif_name, SUBSTRING(t.grup || '  ' || t.tarif_name || '                        ' from 1 for 20) || t.tref_sum Tarifa from TARIFS t order by TARIFGROUP, TARIF_NAME;
+Caption=Машины и механизмы
+Style=0;
+Navigator=0;
+Events=AfterPostEvents=ReFres_Scr,CloseEvents=Dialog_Close;
+CommandButton=Label=Принять;;Action=Post;FontStyle=Bold;
+CommandButton=Label=Ещё;;Action=Append;
+[Fields]
+5
+Наименование
+M_NAME
+Гос номер
+GOS_NOM;Width=100;
+Код водителя\GetValue=Dialog=Employers;AssociateWith=EMP_ID,Full_name;ModifyingEdit=Driver_Edit,Driver_Edit2;EditBox=ComponentName=Driver_Edit;Width=200;
+Driver_ID;Width=200;
+Водитель\OutBox=ComponentName=Driver_Edit2;
+FULL_NAME
+Тариф\Lookup=Key=TARIF_ID;List=TARIFA;Hint=Тариф
+HTARIFExecQuery=execute procedure Add_Empl('&Driver_Name', &Class, &DEP_CODE,'&Oklad',&Type_Code);
+Dispose=Oklad,Driver_Name,Calss,Dep_Code,Oklad,Type_Code;
+CloseDialog;If Expression1=&FreeVDialog; Expression2=1; then
+Dispose=Work_Date, DRIVER_ID, MASHINE_ID, OBJECT_ID, HOURTarifRate,GosNomer;
+EndIf
+If Expression1=&FreeVDialog; Expression2=2; then
+Dispose=StandByTime,TarifCode,TARIF_RATE;
+EndIf
+If Expression1=&FreeVDialog; Expression2=3; then
+Dispose=TARIF_RATE, HourTarif;
+EndIf
+If Expression1=&FreeVDialog; Expression2=4; then
+Dispose=OrgCode,OperSum;
+EndIf
+If Expression1=&FreeVDialog; Expression2=5; then
+Dispose=Dep;
+EndIf
+Dispose=WL_ID;Declare=EM_ID2=:EMP_ID;
+Dialog=RePlaseEmplOrg;Caption=Перевод на другую должность
+Navigator=0;
+Style=0;
+Modal=1;
+CommandButton=Label=Выполнить;CommandName=RePlaseToType_Scr;
+[Fields]
+1
+Род деятельности\Lookup=Key=TYPE_ID;List=TYPE_NAME;NoDataField=1;VariableName=Em_Type;QueryLookup=select * from EMPL_TYPES;
+FFFFFScript Type=Command
+Execute=CalcExport=Target=OTH;Filename=Into1C;Query=select * from Works_List;Table=Works_List;
+Export=Target=OTH;Filename=Into1C;Query=select * from Empl;Table=Empl;Mode=append;
+Export=Target=OTH;Filename=Into1C;Query=select * from ADDONS_REF;Table=ADDONS_REF;Mode=append;
+Export=Target=OTH;Filename=Into1C;Query=select * from DEPS;Table=DEPS;Mode=append;
+Export=Target=OTH;Filename=Into1C;Query=select * from MASHINS;Table=MASHINS;Mode=append;
+Export=Target=OTH;Filename=Into1C;Query=select * from OBJECTS;Table=OBJECTS;Mode=append;
+Export=Target=OTH;Filename=Into1C;Query=select * from TARIFS;Table=TARIFS;Mode=append;
+
+Export=Target=SQL;Filename=Into1C;Query=select * from Works_List;Table=Works_List;
+Export=Target=SQL;Filename=Into1C;Query=select * from Empl;Table=Empl;Mode=append;
+Export=Target=SQL;Filename=Into1C;Query=select * from ADDONS_REF;Table=ADDONS_REF;Mode=append;
+Export=Target=SQL;Filename=Into1C;Query=select * from DEPS;Table=DEPS;Mode=append;
+Export=Target=SQL;Filename=Into1C;Query=select * from MASHINS;Table=MASHINS;Mode=append;
+Export=Target=SQL;Filename=Into1C;Query=select * from OBJECTS;Table=OBJECTS;Mode=append;
+Export=Target=SQL;Filename=Into1C;Query=select * from TARIFS;Table=TARIFS;Mode=append;Caption=Активные пользователи
+Query=select * from ACTIVE_USERS;
+Modal=1;
+Navigator=1;Buttons=First,Prior,Next,Last,Delete,Refresh;Flat=1;
+CommandButton=Action=Find;Label=Найти
+CommandButton=Action=Print;Label=Печать
+Style=2;
+ReadOnly=0;
+CommandButton=Label=Удалить текущего;CommandName=del_currr_user;
+CommandButton=Label=Удалить всех;CommandName=clear_all_users;
+[Fields]
+*Declare=EM_ID2=:EMP_ID;
+Dialog=RePlaseEmplType;Dialog=Mashins2Tarifs;
+Dialog=ReportParams;SQLMon;Caption=Аудит
+Query=select * from IBE$LOG_TABLES t, IBE$LOG_KEYS k, ibe$log_fields f where t.id=k.log_tables_id and t.id=f.log_tables_id order by t.date_time;
+ContextFilter=Label=Фильтровать;FilterMode=Like;
+Last;
+Navigator=1;Buttons=First,Prior,Next,Last,Refresh;Flat=1;
+CommandButton=Action=Find;Label=Найти
+CommandButton=Action=Structure;Label=Структура
+CommandButton=Action=Print;Label=Печать
+Style=2;
+ReadOnly=1;
+Color=I=Green;BrushKey=OPERATION;
+Color=U=Olive;BrushKey=OPERATION;
+Color=D=Maroon;BrushKey=OPERATION;
+[Fields]
+10
+Код
+ID
+Таблица
+TABLE_NAME
+Операция
+OPERATION
+Время
+DATE_TIME
+Пользователь
+USER_NAME
+Ключев. поле
+KEY_FIELD
+Ключ
+KEY_VALUE
+Измен. поле
+FIELD_NAME
+Старое знач.
+OLD_VALUE
+Нов. Знач.
+NEW_VALUECaption=Некорректные тарифы
+Query=select * from uncorrectly_tarifs;
+ReadOnly=1;
+Navigator=1;Buttons=First,Prior,Next,Last,Refresh;Flat=1;
+Style=2;
+[Fields]
+8
+Код
+TARIF_ID
+Тарифная ставка
+TARIF_NAME
+Сумма
+TARIF_SUM
+Группа
+TARIFGROUP
+Дата начала
+TARIF_BEG
+Дата конца
+TARIF_END
+Тариф. группа
+GRUP
+Причина
+KONFLICTCaption=Транспрт. средства
+Calendar=Label=Актуальная дата;VariableName=AD;ReOpen=1;DefaultValue=&_DATE_;
+Query=select * from TARIFS_SEL('&AD') order by M_Name;
+ContextFilter=Label=Транспрт. средство;FilterField=M_NAME;FilterMode=Like;
+ContextFilter=Label=Гос. номер;FilterField=GOS_NOM;FilterMode=Like;Width=90;
+ReadOnly=1;
+Navigator=1;Buttons=First,Prior,Next,Last,Refresh;Flat=1;
+Style=2;
+[Fields]
+6
+Код
+CAR_ID
+Наименование
+M_NAME
+Гос номер
+GOS_NOM
+Тарифная ставка
+tref_sum
+Тариф
+TARIF_NAME
+Удалён
+delflgMExecQuery=execute procedure REPLASE_EMPLOYER_ORG(&EM_ID2, &Dep1);
+Dispose=EM_ID2, Dep1;
+CloseDialog;Declare=Oklad=0;
+Dialog=Add_Empl;Style=0;
+Caption=Тарифные ставки
+Events=CloseEvents=Test_Tarifs_Scr;
+Navigator=1;Buttons=Post,Cancel;
+[Fields]
+6
+Тариф
+TARIF_NAME
+Ставка
+TREF_SUM
+Дата начала\DateBox=
+TARIF_BEG
+Дата конца\DateBox=
+TARIF_END
+Группа\Lookup=Key=TYPE_ID;List=TYPE_NAME;QueryLookup=select * from empl_types;
+TARIFGROUP
+Тарифная группа
+grupReOpen;
+CloseDialog;[INIT REP]
+[END INIT]
+[GLOBALQUERY]
+select M_Name, Calc_Type, StendBy_Time, Hour_Tarif_Rate, Tarif_Sum, Tarif_Rate, O_Name, Class_Rate, Class_Sum SumClass_Sum from worklist_consolidate('&CBegWorkDate', '&CEndWorkDate') t where t.driver_id=:driver_id
+[END GLOBALQUERY]
+[PARAMS]
+:full_name
+ReturnValue=&Vfull_name
+[END PARAMS]
+[HEADLINE]
+  ФИО сотрудника:
+     :full_name(L40)
+
+|Траспртн. средство                          |Ставка    |Процент    |
+|Объект                                      |Классность|Класс сумма|
+|Начисление                                  |Часы      |Сумма      |
+---------------------------------------------------------------------
+[END HEADLINE]
+[BODY]
+|:M_Name(44)|:Hour_Tarif_Rate(10)|:Tarif_Rate(11)|
+|:O_Name(44)|:Class_Rate(10)|:SumClass_Sum(11)|
+|:Calc_Type(44)|:StendBy_Time(10)|:Tarif_Sum(11)|
+---------------------------------------------------------------------
+[END BODY]
+[FUTER]
+
+[END FUTER]
+[CLOSE REP]
+[END CLOSE]Script Type=Command
+//Declare=VWorkDate=:work_date
+Declare=Vfull_name=:full_name
+//Declare=Vm_name=:m_name
+Declare=Vo_name=:o_name
+Report=ReportName=CalcList;QueryMode=Isolate;ViewMode=1;FileName=CalcList.txt;Caption=Недостающие элементы
+Query=select * from rolesmenu_is_correct r order by r.role_id, r.dclname;
+Navigator=1;Buttons=First,Prior,Next,Last,Refresh;Flat=1;
+Style=2;
+ReadOnly=1
+[Fields]
+5
+№ скрипта
+NUMSEQ
+Эл. меню
+DCLNAME
+Поле Ид.
+IDENT
+Код роли
+ROLE_ID
+Роль
+ROLE_NAMEStyle=0;
+Caption=Тарифные ставки
+Events=CloseEvents=Test_Tarifs_Scr;
+Navigator=1;Buttons=Post,Cancel;
+[Fields]
+6
+Тариф
+TARIF_NAME
+Ставка
+TREF_SUM
+Дата начала\DateBox=SQL=select p.result from first_day_of_month(null) p;
+TARIF_BEG
+Дата конца\DateBox=SQL=select p.result from last_day_of_month(null) p;
+TARIF_END
+Группа\Lookup=Key=TYPE_ID;List=TYPE_NAME;QueryLookup=select * from empl_types;
+TARIFGROUP
+Тарифная группа
+grupReportExcel=Template=&TemplatesPath\Сводная.xls;SQL=select wl.work_date, wl.empl_t_name, wl.full_name, wl.m_name, wl.gos_nom, wl.o_name, wl.add_name, '=' || wl.tarif_rate, '=' || wl.CLASS_RATE, '=' || wl.CLASS_SUM, '=' || wl.hour_tarif_rate, '=' || wl.stendby_time, '=' || wl.tarif_sum, wl.calc_type from REPORT_WITH_PARAMS(&Dep,-1,&Em_Type,'&CBegWorkDate','&CEndWorkDate') wl order by wl.ORDER_F;AlternationRowBackColor=C1C6C5;
+Caption=Объекты
+Query=select * from Objects order by O_Name;
+ContextFilter=Label=Объект;FilterField=O_NAME;FilterMode=Like
+UpdateQuery=UpdateTable=Objects;KeyFields=OBJ_ID;
+ReadOnly=1;
+Navigator=1;Buttons=First,Prior,Next,Last,Refresh
+Style=2;
+CommandButton=Label=Добавить;CommandName=Add_Object_Scr;
+CommandButton=Label=Изменить;CommandName=Edit_Object_Scr;
+CommandButton=Label=Удалить;;Action=DeleteConf;
+[Fields]
+2
+Код
+OBJ_ID
+Объект
+O_NAMEAppend;
+Dialog=Append_Tarifs;Child=1;ExecQuery=execute procedure REPLASE_EMPLOYER_TYPE(&EM_ID2, &Em_Type);
+Dispose=EM_ID2, Em_Type;
+CloseDialog;Dialog=Uncorrectly_Tarifs;
+Dialog=Test_RolesMenu;
+Dialog=Edit_Tarifs;Child=1;
+Caption=Водители (изменение)
+Navigator=1;Buttons=Post,Cancel;
+Style=0;
+[Fields]
+5
+Род деятельности\Lookup=Key=TYPE_ID;List=TYPE_NAME;QueryLookup=select * from EMPL_TYPES;
+EMPLTYPE
+Ф.И.О.
+FULL_NAME
+Классность
+Class
+Оклад
+Salary
+Подразделение\Lookup=Key=Dep_ID;List=DEP_NAME;QueryLookup=select * from Deps order by Dep_Name;
+SUBDCODEDialog=Edit_Empl;Child=1;Declare=FreeVDialog=2;
+Declare=StandByTime;
+Caption=Изменение
+Navigator=0;
+Events=CloseEvents=FreeVariables;
+SetValue=StandByTime=0;
+Style=0;
+CommandButton=Label=Сохранить;CommandName=WL_Append_Scr;FontStyle=Bold
+[Fields]
+3
+Надбавка\Lookup=Key=AD_ID;List=ADD_NAME;VariableName=TarifCode;NoDataField=1;AssociateWith=Rate;ModifyingEdit=TarRate;QueryLookup=Select * from Addons_ref order by ADD_NAME;
+TARIF_ID
+Часы\InputBox=Width=80;VariableName=StandByTime;_Value=&StandByTime;
+DDDD
+Надбавка %\InputBox=Width=80;VariableName=TARIF_RATE;ComponentName=TarRate;
+FFFFEdit;
+//SetValue=WL_Dialog_Mode=1;
+Dialog=WorkList_Edit_Dlg;Child=1;Caption=Добавление
+Navigator=1;Buttons=Post,Cancel;
+Style=0;
+Events=PostAfterEvents=ReFres_Scr;
+[Fields]
+11
+Дата\DateBox=;Width=80;
+WORK_DATE
+Код водителя\GetValue=Dialog=Employers;AssociateWith=EMP_ID,Full_name;ModifyingEdit=Driver_Edit,Driver_Edit2;EditBox=ComponentName=Driver_Edit;Width=200;
+Driver_ID;Width=200;
+Водитель\OutBox=ComponentName=Driver_Edit2;Width=200;
+Full_name;Width=200;
+Код авотр. средства\GetValue=Dialog=Mashins;AssociateWith=CAR_ID,m_name;ModifyingEdit=Avto_Edit,Avto_Edit2;EditBox=ComponentName=Avto_Edit;Width=200;
+MASHINE_ID;Width=200;
+Автотранспорт\OutBox=ComponentName=Avto_Edit2;Width=200;
+M_Name;Width=200;
+Код объекта\GetValue=Dialog=Objects;AssociateWith=OBJ_ID,o_name;ModifyingEdit=Obj_Edit,Obj_Edit2;EditBox=ComponentName=Obj_Edit;Width=200;
+OBJECT_ID;Width=200;
+Объект\OutBox=ComponentName=Obj_Edit2;Width=200;
+O_Name;Width=200;
+Классность
+Class;Width=80
+Надбавка\Lookup=Key=AD_ID;List=ADD_NAME;QueryLookup=Select * from Addons_ref order by ADD_NAME;
+TARIF_ID
+Почасовая ставка/Фонд раб. врем./% ставка\EditBox=;Width=80;ComponentName=HourTarif;
+Tarif_Rate
+Время
+STENDBY_TIME;Width=80;SetValue=OperSum;ReturnQuery=select c.total from CALC_ITOG('&CBEGWORKDATE', '&CENDWORKDATE', &ORGCODE, &EM_TYPE, '&LastFilterValue%') c;
+If Expression1=&OperSum; Expression2=; then
+SetStatusText=0.0;Status=Last
+Else
+SetStatusText=Всего на сумму: &OperSum;Status=Last
+EndIfCancel;Declare=FreeVDialog=1;
+Caption=Изменение
+Navigator=0;
+Events=CloseEvents=FreeVariables;
+Style=0;
+CommandButton=Label=Далее;CommandName=WL_CallDialog;FontStyle=Bold
+[Fields]
+9
+Дата\DateBox=;Width=80;_Value=&_DATE_;VariableName=Work_Date;
+WORK_DATE
+Код водителя\GetValue=Dialog=Employers;AssociateWith=EMP_ID,Full_name,car_id,m_name,tref_sum,Gos_nom;ModifyingEdit=Driver_Edit,Driver_Edit2,Avto_Edit,Avto_Edit2,HourTarif,Avto_Edit3;InputBox=ComponentName=Driver_Edit;Width=80;VariableName=DRIVER_ID;_Value=&DRIVER_ID;
+emplid;Width=80;
+Водитель\OutBox=ComponentName=Driver_Edit2;Width=225;_Value=&Vod;
+Driver_name
+Код авотр. средства\GetValue=Dialog=Mashins;AssociateWith=CAR_ID,m_name,Gos_nom,tref_sum;ModifyingEdit=Avto_Edit,Avto_Edit2,Avto_Edit3,HourTarif;InputBox=ComponentName=Avto_Edit;Width=80;VariableName=MASHINE_ID;_Value=&MASHINE_ID;
+MASHINID;Width=80;
+Автотранспорт\OutBox=ComponentName=Avto_Edit2;Width=225;_Value=&Masina;
+Mashine
+Гос. номер\OutBox=ComponentName=Avto_Edit3;Width=225;_Value=&GosNomer;
+SSSSS
+Код объекта\GetValue=Dialog=Objects;AssociateWith=OBJ_ID,o_name;ModifyingEdit=Obj_Edit,Obj_Edit2;InputBox=ComponentName=Obj_Edit;Width=80;VariableName=OBJECT_ID;_Value=&OBJECT_ID;
+OBJECT_ID;Width=80;
+Объект\InputBox=ComponentName=Obj_Edit2;Width=225;_Value=&Obj;
+OBJECT
+Почасовая ставка\OutBox=;Width=80;ComponentName=HourTarif;VariableName=HOURTarifRate;_Value=&Stavk;
+Tarif_RateCaption=Тарифные вставки
+Query=select t.tarif_id, t.tarif_name, t.tref_sum, t.tarif_beg, t.tarif_end, t.tarifgroup, t.grup from tarifs t, empl_types et where t.tarifgroup=et.type_id order by t.tarifgroup, t.tref_sum, t.tarif_beg;
+UpdateQuery=UpdateTable=tarifs;KeyFields=tarif_id;
+Navigator=1;Buttons=First,Prior,Next,Last,Post,Insert,Cancel,Delete,Refresh;Flat=1;
+Style=2;
+ReadOnly=1;
+CommandButton=Label=Изменить;CommandName=Edit_Tarif_Scr;
+CommandButton=Label=Добавить;CommandName=Append_Tarif_Scr;
+CommandButton=Label=Удалить;CommandName=DeleteConf;
+CommandButton=Label=Найти;;Action=Find;
+CommandButton=Label=Не корр.;CommandName=Uncorrectly_Tar_Scr;FontStyle=,Italic
+[Fields]
+7
+Код
+tarif_id
+Тариф
+TARIF_NAME
+Ставка
+TREF_SUM
+Дата начала
+tarif_beg
+Дата конца
+tarif_end
+Группа\Lookup=Key=TYPE_ID;List=TYPE_NAME;QueryLookup=select * from empl_types;
+TARIFGROUP
+Тарифная группа
+grupIf Expression1=0; Expression2=SQL=select Count(*) Co from works_list wl, mashins m, empl e, addons_ref ad, objects o where wl.mashine_id=m.car_id and wl.driver_id=e.emp_id and wl.tarif_id=ad.ad_id and wl.object_id=o.obj_id and wl.work_date='&work_date' and wl.driver_id=&driver_id and wl.mashine_id=&mashine_id and wl.Object_ID=&Object_ID; then
+Dialog=WorkList_F_Add_Dlg;
+Else
+Dialog=WorkList_Add_Dlg;
+EndIfReportExcel=Template=&TemplatesPath\Отчет-Водители.xls;SQL=select d.dep_name, wl.full_name, sum(wl.tarif_sum) salary, Case wl.rec_type when 11 then 'Надбавка' when 12 then 'Общая' end from REPORT_WITH_PARAMS(&Dep,-1,&Em_Type,'&CBegWorkDate', '&CEndWorkDate') wl, deps d where wl.dep_code=d.dep_id and wl.rec_type in (11, 12) group by d.dep_name, wl.full_name, wl.rec_type order by 1,2 asc, 4 desc;AlternationRowBackColor=C1C6C5;CommandButton=Label=В Excel;CommandName=Dialog=ReportParams;
+CommandButton=Label=Водители;CommandName=Dialog=ReportParams;
+CommandButton=Label=Ведомость;CommandName=Dialog=ReportParams;
+Caption=Отчёты
+NoVisual;
+Navigator=0
+Modal=1;Dialog=ReportsBForm;

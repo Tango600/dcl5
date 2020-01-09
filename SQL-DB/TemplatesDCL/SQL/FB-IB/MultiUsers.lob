@@ -1,321 +1,0 @@
-SetField=SetFieldValue=PROGRAMM_PARAM=1;
-Post;UserAccessRaight=7;
-Caption=–оли;
-Query=select * from DCL_ROLES order by ROLE_ACCESSLEVEL, ROLENAME;
-Style=2;
-[Fields]
-5
-ID роли
-ROLESID
-Ќазвание
-ROLENAME
-ƒлинное название роли
-LONGROLENAME
-ѕоказывать роль
-SHOWINLIST
-ѕрава роли
-ROLE_ACCESSLEVELUserAccessRaight=3;
-Caption=’ранилище двоичных данных;
-Query=select * from DCL_TEMPLATES;
-UpdateQuery=UpdateTable=DCL_TEMPLATES;KeyFields=TEID;
-Navigator=1;
-Style=2;
-ReadOnly=1;
-CommandButton=Label=»зменить;CommandName=BinStore_Edit_Scr;Pict=Edit;
-CommandButton=Label=ƒобавить;CommandName=BinStore_Add_Scr;Pict=New;
-CommandButton=Label=—жать;CommandName=TemplateCompress;Pict=ZIP;
-CommandButton=Label=–асжать;CommandName=TemplateDeCompress;Pict=UnZIP;
-CommandButton=Label=—охранить;CommandName=TemplateExport;Pict=SaveBS;
-CommandButton=Label=«агрузить;CommandName=TemplateImport;Pict=LoadBS;
-[Fields]
-2
-»д.
-TEID
-»м€
-TEMPL_NAMEDialog=BinStore_Edit_Dlg;Child=1;
-Append;
-Dialog=BinStore_Edit_Dlg;Child=1;
-script type=command;
-OpenScript;Script Type=Command
-SignScript;Script Type=Command
-ReSignScript;Caption=’ранилище двоичных данных –едактирование;
-Style=0;
-Navigator=1;Buttons=Post,Cancel;
-DBImage=FieldName=TEMPL_DATA;
-[Fields]
-3
-»д.;ReadOnly=1;
-TEID
-»м€
-TEMPL_NAME
-ƒанные
-TEMPL_DATACaption=√лобальные параметры;
-Query=select * from DCL_GLOBAL_PARAMS where PROGRAMM_PARAM is not null order by PARAM_NAME;
-Events=AfterPostEvents=GlobalParams_AP;
-Live=1;
-Modal=1;
-Navigator=1;Buttons=First,Edit,Insert,Post,Last,Delete,Refresh;
-CommandButton=Action=Find;Label=Ќайти
-CommandButton=Action=Print;Label=ѕечать
-Style=2;
-CommandButton=Label=–едактировать;CommandName=Global_Params_Edit_Scr;
-[Fields]
-3
-Ќаименование параметра
-PARAM_CAPT
-ѕараметр
-PARAM_NAME
-«начение
-PARAM_VALUECompressData=SQL=select * from DCL_TEMPLATES where TEID=:TEID;DataField=TEMPL_DATA;DeCompressData=SQL=select * from DCL_TEMPLATES where TEID=:TEID;DataField=TEMPL_DATA;script type=command
-Declare=TemplPath;
-ApplicationTitle=Ўаблон приложени€ DCL5;Declare=FN;
-SaveFileDialog=FN;Ext=xls;
-GetFromDB=SQL=select * from DCL_TEMPLATES where TEID=:TEID;FileName=&FN;DataField=TEMPL_DATA;
-Dispose=FN;Declare=FN;
-OpenFileDialog=FN;
-PutInDB=SQL=select * from DCL_TEMPLATES where TEID=:TEID;FileName=&FN;DataField=TEMPL_DATA;
-Dispose=FN;Caption=ќрганизации;
-Query=select o.oid, o.org_name, o.ord, case o.mainorg when 1 then 'ќсновна€' end as MainOrg from organizations o where o.oid<>-1 order by o.mainorg, o.ord, o.org_name;
-Live=1;
-Navigator=1;Buttons=First,Prior,Next,Last,Post,Insert,Cancel,Refresh;
-Style=2;
-CommandButton=Label=ќсновной;CommandName=Orgs_Set_Main_Scr;;Hint=—делать основной
-[Fields]
-4
-ID;ReadOnly=1;
-OID
-Ќаименование;Width=250;
-ORG_NAME
-ѕор€док
-ORD
-ќсновна€;ReadOnly=1;
-MAINORGExecQuery=update organizations o set o.mainorg=null;
-ExecQuery=update organizations o set o.mainorg=1 where o.oid=:OID;
-ReOpen;lock;UserAccessRaight=7;
-Caption=ѕользователи;
-Navigator=1;
-Live=1
-Query=Select * from &_DCL_USERS_TABLE_ order by 2;
-Style=2
-CommandButton=Action=Print;Label=ѕечать
-CommandButton=Label=ќповещение;CommandName=Roles_Notify_Add_Scr;;Hint=—оздать оповещение.
-CommandButton=Label=ќповещени€;CommandName=Dialog=Notifycations;Hint=“аблица оповещенеий.
-CommandButton=Label=ѕросмотр;CommandName=User_Edit_Scr;
-TablePart=Title=–оли;SQL=select r.rolesid, r.rolename, r.longrolename, r.role_accesslevel from DCL_ROLES_TO_USERS ru, dcl_Roles r where ru.ru_roleid=r.rolesid and ru.ru_userid=:UID union select -1 rolesid, r.rolename, r.longrolename, r.role_accesslevel from dcl_roles r where r.rolesid=:DCL_ROLE;MasterDataField=UID;DependField=ru_userid;Columns=ROLESID/ID роли,ROLENAME/–оль,LONGROLENAME/ѕолн. назв,ROLE_ACCESSLEVEL/ѕрава роли;
-[Fields]
-5
-ID
-UID
-»м€ пользовател€
-DCL_USER_NAME
-ѕолное им€
-DCL_LONG_USER_NAME
-ѕоказывать
-SHOWINLIST
-ѕрава
-ACCESSLEVELUserAccessRaight=7;
-Caption=ћеню ролей;
-Navigator=1;Buttons=First,Prior,Next,Last;
-Live=0;
-Query=select roleid, rolename, longrolename, MENUITEMID, dclname from ROLESTOMENU r2m order by roleid, MENUITEMID
-DBFilter=Label=–оль;List=LONGROLENAME;Key=ROLEID_R;FilterField=ROLEID;Width=150;DBFilterQuery=Select LONGROLENAME, ROLESID roleid_R from DCL_Roles Order by LONGROLENAME;
-Style=2;
-ReadOnly=1;
-Navigator=1;
-CommandButton=CommandName=Roles_AddRoleCallDialog;Label=ƒобавить;
-CommandButton=Label=”далить;CommandName=Roles_DelRoleMenuItem;
-CommandButton=Label=”далить роль;CommandName=Roles_DelRolesMenuItem_Call;
-CommandButton=Label= опировать роль;CommandName=Roles_CopyRole_Call;
-CommandButton=Action=Print;Label=ѕечать
-CommandButton=Action=Find;Label=Ќайти
-CommandButton=Label=Ќедостающие;CommandName=Roles_Run_Test_RolesMenu;FontStyle=,Italic
-[Fields]
-*Caption=ƒобавление элемента меню;
-Navigator=0
-Style=0
-Modal=1
-FormHeight=200
-CommandButton=Label=ƒобавить;CommandName=Roles_AddMenuItemExec;
-[Fields]
-2
-–оль\LookUp=List=LongRoleName;Key=RolesID;VariableName=ROLEIDV;NoDataField=1;QueryLookup=select * from DCL_Roles order by LongRoleName;
-ROLESID
-ћеню\LookUp=List=DCLName;Key=NumSeq;VariableName=MenuIDv;NoDataField=1;QueryLookup=select * from DCL_SCRIPTS t where t.ident between 0 and 60000 order by t.DCLName, t.NumSeq;
-MENUITEMIDDeclare=tmpAddMenuitem;
-SetValue=tmpAddMenuitem;ReturnQuery=select t.isappend from ADD_MENU_ITEM_TO_ROLE(&ROLEIDV, &MenuIDv) t;
-if Expression1=&tmpAddMenuitem; Expression2=1; then
-Reopen;
-Else
-Message=“акой элемент уже существует;
-EndIf
-Dispose=tmpAddMenuitem;Dialog=Roles_AddMenuItem;Child=1;Caption= опирование роли;
-Navigator=0
-Style=0
-Modal=1
-FormHeight=200
-CommandButton=Label= опировать;CommandName=Roles_CopyRoleExec;
-[Fields]
-2
- опировать роль\LookUp=List=LongRoleName;Key=RolesID;VariableName=RoleIDFrom;NoDataField=1;QueryLookup=select * from DCL_Roles;
-ROLEID
-¬ роль\LookUp=List=LongRoleName;Key=RolesID;VariableName=RoleIDTo;NoDataField=1;QueryLookup=select * from DCL_Roles;
-MENUITEMIDModifyingQuery=execute procedure copy_role(&RoleIDFrom, &RoleIDTo);
-Dispose=RoleIDFrom, RoleIDTo
-ReOpen;Dialog=Roles_CopyRole;Child=1;Declare=YNv;
-Message=”далить запись?;Flags=YesNo;VariableName=YNv;
-if Expression1=1; Expression2=&YNv; then
-ModifyingQuery=execute procedure DEL_ROLE_AND_MENU(:ROLESID);
-ReOpen;
-EndIf
-Dispose=YNv;ModifyingQuery=execute procedure DEL_ROLE_MENU(&RoleIDDel);
-Dispose=RoleIDDel;
-ReOpen;Declare=YNv;
-Message=”далить запись?;Flags=YesNo;VariableName=YNv;
-if Expression1=1; Expression2=&YNv; then
-ModifyingQuery=delete from RolesMenu where RoleID=:RoleID and MenuItemID=:MenuItemID;
-ReOpen;
-EndIf
-Dispose=YNv;Caption=”даление меню роли;
-Navigator=0
-Style=0
-Modal=1
-FormHeight=200
-CommandButton=Label=”далить;CommandName=Roles_DelRoleExec;
-[Fields]
-1
-–оль\LookUp=List=LongRoleName;Key=RolesID;VariableName=RoleIDDel;NoDataField=1;QueryLookup=select * from DCL_Roles order by LongRoleName;
-ROLEIDDialog=Roles_DelRolesMenuItem;Child=1;Dialog=Roles_Test_RolesMenu;Caption=Ќедостающие элементы;
-Query=select * from rolesmenu_is_correct r order by r.role_id, r.dclname;
-Live=1;
-Navigator=1;Buttons=First,Prior,Next,Last,Refresh;
-CommandButton=Action=Find;Label=Ќайти
-CommandButton=Action=Structure;Label=—труктура
-CommandButton=Action=Print;Label=ѕечать
-Style=2;
-ReadOnly=1
-[Fields]
-5
-є скрипта
-NUMSEQ
-Ёл. меню
-DCLNAME
-ѕоле »д.
-IDENT
- од роли
-ROLE_ID
-–оль
-ROLE_NAMESQLMon;Script Type=Command
-If Expression1=-1; Expression2=&Organization; then
-SetValue=Organization;ReturnQuery=select first 1 o.oid from organizations o where o.ord is not null and o.oid<>-1 order by o.ord;
-Else
-SetFieldValue=org=&Organization;
-EndIfVersion;Caption=ѕользователь;
-Live=1;
-Style=0;
-TablePart=Title=–оли;SQL=select r.rolesid, r.rolename, r.longrolename, r.role_accesslevel from dcl_Roles r, DCL_ROLES_TO_USERS ru where ru.ru_roleid=r.rolesid and ru.ru_userid=:UID;MasterDataField=UID;DependField=ru_userid;Columns=ROLESID/ID роли,ROLENAME/–оль,LONGROLENAME/ѕолн. назв,ROLE_ACCESSLEVEL/ѕрава роли;
-[Fields]
-6
-»м€
-DCL_USER_NAME
-–оль\Lookup=QueryLookup=select * from DCL_ROLES;Key=ROLESID;List=LONGROLENAME;
-DCL_ROLE
-ѕолное им€
-DCL_LONG_USER_NAME
-ѕароль;HidePassword;
-DCL_USER_PASS
-ѕоказывать
-SHOWINLIST
-ѕрава\DropListBox=List=&_USERNAMEACCESSLEVELS_;SetIndexValue=1
-ACCESSLEVELDialog=User_Edit_Dlg;Child=1;ExecQuery=insert into DCL_NOTIFYCATIONS(USER_ID, NOTIFY_TIME, NOTIFY_ACTION, NOTIFY_TEXT, NOTIFY_STATE) values (&USER_ID, '&NOTIFY_TIME', &NOTIFY_ACTION, '&NOTIFY_TEXT', 1);
-CloseDialog;FormWidth=300;
-Caption=ƒобавление оповещени€;
-Navigator=0;
-Query=;
-CommandButton=Label=ƒобавить;CommandName=Notify_Add_Scr;FontStyle=Bold;
-[Fields]
-3
-ƒата и врем€ оповещени€ (ƒƒ.ћћ.√√√√ „„.ћћ.——)\InputBox=VariableName=NOTIFY_TIME;Width=110;_Value=&_DATETIME_;
-DER
-ƒействие\DropListBox=&_NOTIFYACTIONS_;VariableName=NOTIFY_ACTION;_Value=0;
-MER
-“екст оповещени€\InputBox=VariableName=NOTIFY_TEXT;Width=260;
-CWEDeclare=USER_ID=:UID;
-Dialog=Notify_Add;Caption=ќповещени€;
-Query=select * from DCL_NOTIFYCATIONS n order by NOTIFY_TIME, USER_ID, NOTIFY_STATE, NOTIFY_ACTION;
-OrderByFields=NOTIFY_ID,NOTIFY_TIME,NOTIFY_ACTION,NOTIFY_STATE,USER_ID;
-Live=1;
-Modal=1;
-Navigator=1;Buttons=First,Prior,Next,Last,Post,Insert,Edit,Delete,Cancel,Refresh;Flat=1;
-CommandButton=Action=Find;Label=Ќайти
-CommandButton=Action=Structure;Label=—труктура
-CommandButton=Action=Print;Label=ѕечать
-Style=2;
-[Fields]
-5
-ID
-NOTIFY_ID
-ƒата врем€
-NOTIFY_TIME
-ID пользовател€
-USER_ID
-—татус
-NOTIFY_STATE
-“екст оповещени€
-NOTIFY_TEXT
-
-
-Caption=√лобальные параметры редактирование;
-Live=1;
-Modal=1;
-Navigator=1;Buttons=Edit,Insert,Post;
-Style=0;
-[Fields]
-3
-Ќаименование параметра
-PARAM_CAPT
-ѕараметр
-PARAM_NAME
-«начение\As_Memo;Width=400;Height=200;
-PARAM_VALUEDialog=Global_Params_Edit_Dlg;Child=1;Caption=ѕодключени€;
-Query=select MON$ATTACHMENT_ID, iif(a.MON$STATE = 0, 'idle', iif(a.MON$STATE = 1, 'active', '')) state, MON$ATTACHMENT_NAME, MON$USER, MON$REMOTE_ADDRESS, MON$REMOTE_PROCESS, MON$TIMESTAMP  from MON$ATTACHMENTS a order by MON$TIMESTAMP;
-OrderByFields=MON$ATTACHMENT_ID,MON$ATTACHMENT_NAME,MON$USER,MON$REMOTE_ADDRESS,MON$REMOTE_PROCESS,MON$TIMESTAMP;
-Modal=1;
-Navigator=1;Buttons=First,Prior,Next,Last,Refresh;
-CommandButton=Action=Find;Label=Ќайти
-CommandButton=Action=Structure;Label=—труктура
-CommandButton=Action=Print;Label=ѕечать
-Style=2;
-ReadOnly=1;
-CommandButton=Label=«авершить;CommandName=Attachments_Terminate;
-[Fields]
-7
-ID
-MON$ATTACHMENT_ID
-—осто€ние
-STATE
-Ѕаза;Width=250;
-MON$ATTACHMENT_NAME
-јдрес клиента;Width=90;
-MON$REMOTE_ADDRESS
-»сполн€емый модуль;Width=250;
-MON$REMOTE_PROCESS
-Ќачало
-MON$TIMESTAMP
-ѕользователь;Width=100;
-MON$USERExecQuery=delete from MON$ATTACHMENTS where MON$ATTACHMENT_ID=:MON$ATTACHMENT_ID;
-ReFresh;Exit;PAGBЪЎ  aB	Q$Да0a  &<`¬Д+vђЎ Ѕ H0yeJХ+MОL т" јВд&ИQ*a≥С(РFЏТDв•R7,ШЊuбnћ'qgDЙcSК\ЩC©bEzуaд™дF%QМpБ{Ф№$]а,н
-З©WЄMЊƒuъ%о∞q†ВН%МЬ#M•tYzsГБ±Жq≤”+V)wЫ„uцьthѕЫЁa.EђУ»Т…
-џ4g„+QиhЧ≥}wnЁЈi£Л-КІ9Ђ'ЋфЂOЎШOsюztйѕЩcKюIЎqвd]jc+Іqг…Ч7эxрЬАyя>†•4≥LeRvњX~эыщч„_эLЊдњз%©,QТЄ	l–Ѕ!МP¬cYРЧI xOЧHƒH(0…ЛEмрВDK<Q≈/1ƒ+2…гКTюАbя√е/bД	P
-1CШ_xAеУJ§I≤Ъ%њi≤ЈPI£Ф:А8П"zd"ЧGЇxѕF∞x#DЙ≤ЦT6ЙДН!ТФЖЩ7≠ЙSЬ9GIДRжаЅФ;В”И[ј|ѓЦE™h≈!†D#9OQm }SRfві 4DЙRкиЅP!≠≤&Ы%С(Vб√ЗP1#6PI£Зџ*ХіЩ[?	Ф7heRхaЦEЃБ±»Т'R—# «HGЏh®%mNq*љµЩN√У6^%ОZ	dИ1О(a ∞†YCE ®AП/|∞Д@,YJщCТCшx§Р<П<ЉрбП-\ƒЛƒ@¬
-Р°Б ђЮПj@ЏЏЏћћћћћћ÷÷÷°ЗiҐq8§u=≠~BµЛU'"≥ЙQЂ|>°Жfїѓ†Оi=еее÷÷÷ћћћЌЌЌЯЕf†o4Ґs:Ђ|>≥ЛW!"≤ИN©z9†Еcййй———оооввв÷÷÷ЌЌЌЭГbЮm/°q5≠БCcG%ЛkBКe5z_>ЦМАЦЛАФКТЗ|ПЕyНГxy^>[.В^3bH&   PAGBЪЎ  aB	Q$Да0a  &<Xc∆М№т$ЗС(8М<—q$ …Ф(UґdyдЙ+c<>@@∆=И\сD≠Фіt§ДZйQ•£ДMW•”і>Ки§z•УіSBm»!eЕµ)Ъ§БKvlўN‘nћ!e %h6А(…h#ИТ)Ыі
-Эс&‘:¶l–)UЄФаƒЖ€eФ &j8И4…xГ»(Шъ¶лJjL©j°GЛcuµѕFЭ\ТЦ#…ФМФЭіЦкY:oHєx3 7ряЅ_ь.>™EMЬШ•sВiZП%W2тH"%nі4®™БEM©—вљАТц%‘і0вљwEМ(iR$Щ&£О"M∞lbж#О•r*ЩГ	HЫIc}√»УР6РЖ–є$–@K|Р-ь¬	+2Ґ°!†и£У `DД*ш!
->nЎ£ПKЉєЕТnh±!П>DАbч8бЛBЄР§ЦЭЖ–!Z–БМNК)ҐПOZ ЕП%∆	ДНu2ACKЖІПHй√*≈ЎdОјbIНВ8√ОTгДmј®бЫ7К gП Њ…#n А†Ъ'4 Л!–ЄN8Qд3Љ§ЛlюРЫ=®аOЩВS-ЃбГmт°П ]тГ D8AЙ|xƒ	;≤iƒОkб’W]{Є5Е%\АUWУ@%P–$S.ЅfiEy÷ФО0AYnz°ЙОi'a»)FШrКЩРh°џn'Pa-"—B
-A§ШBР)к’""иv {Z„|\Џy#}3                  A"'J->ПNvўНv„Пv„ПvўН=ПN)K.A"                        "J(Ъб¶ЧЎ£ЧЎҐЪб¶!G&                              /M/«н…¬д≈¬е≈«н»+H-                              *ZСZRВRSВSZСZ(               PAGBЪЎ  aB	Q$Да0a  &<XcFН9"ƒ”fМ)KИҐ£dHФ=J“ЙигШО3Њђw.їnѕfЩ“‘SS2\©z≠вфТ&ЌШ/_*џ’*W*MLG∆LzµжH™ИР^5√Е V±ZG~Г&Lз3`ѓ@Ё:Х©k«Чn3—µыЦоK≥hwЛ%*п»Д+ю†Rб«0в√Й/vМx,W≤ИЊRI8dR.YптЕ"WпUї|їинЦѓя1~юФщыЈ8+Ґyм yb‘'n¬-ІФmќзџчУJџ|ўг7L_?cыьЅFшRШfIБддF»Х≤9љґй÷нO1oГР}3§Ґeб≠wа•љxл^}Кd цёЬQГw…џ<бџX≠√зїV<}п_џkќ'шхз,–¬я.‘0GЏЯzЮ	∆
-≥”пD≥џ-$.б≈AVYl©…ґ™М#Hа%]Tб§«}ћ≈«°6БNR“т∞ЈрKи 
-†Q2*#џ+≠µЏjR0ђЃЇвЙ#"{©ЗdHh ®   ¶ЦИумеЮМ}¶ЦИ      [І ≤пщ≤пщ≤пщOХџЊць√ъэ∆ыю*~®   ¶ЦИ¬є≤ТБr¶ЦИ      \® sљџz¬Ё≈ёГ»яЖ аИЋбЙЋб*~®   ¶ЦИцслѓЯС¶ЦИ      \® ≤пщИ‘рЧёуOХџђлш≤пщµсъ*~®   ¶ЦИ«ї±s_N¶ЦИ      \® ≤пщ≤пщ≤пщ≤пщ≤пщ≤пщ≤пщ*~®   ¶ЦИышхѕЅґ¶ЦИ      \® \® \® \® \® [І…HЧЉ.ВЂ*~®xmc¶ЦИ¶ЦИ¶ЦИ¶ЦИf\T         
-		¶ЦИЇ™ЬЇ™ЬЇ™Ьє™ЬЄ©Ы¶ЦИ¬≤§мЁѕЅ±ҐЈІЩ¶ЦИ         xmc¶ЦИ¶ЦИ¶ЦИ¶ЦИ¶ЦИ¶ЦИя–¬мЁѕјѓ†ЈІЩ¶ЦИ                              WOG¶ЦИ¶ЦИ¶ЦИ¶ЦИ=72   PAGBЪЎ  aB	Q$Да0a  &<XcFН3
-0А∞ GС#Eh†`З"hМИј° Т33*–а 
-(;ЁртзПИ2~Ї∞јАBЙ45"† БО∞,нъљщЖЯ?)?ЯdХб_Г&Ъ $рјА
--3“ќЯТ{юЦћ£їќОqюrШуЈГЭ?p%∞iIУ >0∞щЫќЯo|чкЎжпC≤~~е±ћя	»жc:†…√ьeаµoЂz&•k@(№ЙLгhШ"'aЄЂо@m<Dеk0jЮHн" Є}Ї1щ≈n	ґxH•0•А INAD"?єрЕрeпЙ=>ШЁ±k^dрJЬ"Ј¬W;єҐЛ—@¬B 2Aa√[Њ–ъM∞µПd#тьЭщєƒЭ?!сьБ„OЕ≠u
-тh3 –A ` ¬ ∞bС`ЩЗ^т	@&Ў≈Я§бЛЇфЫб≤.УщFIGKа	†	R `БК^XАЬ8"Шx“АћВ[ьЙ ZЄ∆Я #Ѕ.Ўe	>QР{>x∆Я^с vƒиА24aEњ^~
-dЯЉђс«^BгPВZъє ХyД0g ас«Дgъ) ОЦ$XA£vИ X и∆H~кгІ(ксGbьБ к®І5~тЭ~pг 8Л©Р®АСaҐА“МЯ4 NҐ`Ўй~H£ x-МР	З- ад hИҐћ$ш  i Ян"Љцѕюѓю 8А      eЪђцюљююБыю8÷юЉю'–эµэ©уBжы@рю&ѕэq∆ +       %;y∞eЁюРюю}ююQхюƒю®юuхэjюю>иэnЈ                 +HМ√Qдюfюю°» 'C5јм]иьi•                        8[Ьѕ 4Q    /IVЛ             
