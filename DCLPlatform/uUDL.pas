@@ -2968,11 +2968,14 @@ begin
                 Grid:=Tables[g];
             end;
 
+            Grid:=nil;
             If PosEx('[TablePart]', S)=1 Then
             begin
               inc(T);
               If T> - 1 Then
-                Grid:=Tables[g].TableParts[T];
+                If Assigned(FGrids) then
+                  If TablesCount>g then
+                    Grid:=Tables[g].TableParts[T];
             end;
 
             If PosEx('SplitterPos=', S)=1 Then
@@ -18065,7 +18068,6 @@ Initialization
   InitDCL(nil);
 
 // Finalization
-
 // EndDCL;
 {$ENDIF}
 

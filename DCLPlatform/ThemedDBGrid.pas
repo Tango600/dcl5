@@ -324,7 +324,7 @@ var
   TextX, TextY: Integer;
 begin
   lCellRect := ARect;
-  if (ARow = 0) and (ACol - ColumnOffset(Options) >= 0) and (dgTitles in Options) and ThemeServices.ThemesEnabled then
+  if (ARow = 0) and (ACol - ColumnOffset(Options) >= 0) and (dgTitles in Options) then
   begin
     lCaptionRect := ARect;
     if not FPaintInfo.ColPressed or (FPaintInfo.ColPressedIdx <> ACol) then
@@ -361,11 +361,17 @@ begin
     else
       TextX := lCaptionRect.Left + 2;
     end;
+
+    {Canvas.Font.Color:=$00909090;
+    Canvas.TextRect(lCaptionRect, TextX+1, TextY+2, lStr);
+    Canvas.FrameRect(lCaptionRect);}
+
+    Canvas.Font.Color:=clBtnText;
     Canvas.TextRect(lCaptionRect, TextX, TextY, lStr);
     Canvas.Brush.Color:=clBtnShadow; //   clGray;
     Canvas.FrameRect(lCaptionRect);
   end
-  else if (ACol = 0) and (dgIndicator in Options) and (gdFixed in AState) and ThemeServices.ThemesEnabled then
+  else if (ACol = 0) and (dgIndicator in Options) and (gdFixed in AState) then
   begin
     MultiSelected := False;
     if (ARow >= TitleOffset(Options)) and DataLink.Active then

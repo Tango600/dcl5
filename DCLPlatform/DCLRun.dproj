@@ -138,7 +138,6 @@
         </DelphiCompile>
         <DCCReference Include="VCLFixPack.pas"/>
         <DCCReference Include="ThemedDBGrid.pas"/>
-        <DCCReference Include="units\IBHeader.pas"/>
         <DCCReference Include="units\DBCtrls.pas"/>
         <DCCReference Include="units\DBGrids.pas"/>
         <DCCReference Include="unitsXE\Vcl.DBCtrls.pas"/>

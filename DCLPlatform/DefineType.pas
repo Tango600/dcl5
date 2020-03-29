@@ -61,7 +61,7 @@
 //  {$DEFINE ZVComponents}
 {$ENDIF}
 
-{$IFDEF VER280}
+{$IFNDEF FPC}
 {$DEFINE NEWDELPHI}
 {$ENDIF}
 

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <ProjectOptions>
-    <Version Value="10"/>
+    <Version Value="11"/>
     <PathDelim Value="\"/>
     <General>
       <SessionStorage Value="InProjectDir"/>
@@ -24,7 +24,7 @@
       <UseVersionInfo Value="True"/>
       <AutoIncrementBuild Value="True"/>
       <MajorVersionNr Value="10"/>
-      <BuildNr Value="88"/>
+      <BuildNr Value="89"/>
       <Language Value="0419"/>
       <StringTable CompanyName="Unreal Software" ProductName="DCL5 plathform" ProductVersion="10.0.0.80"/>
     </VersionInfo>
@@ -119,9 +119,10 @@
       <Version Value="2"/>
     </PublishOptions>
     <RunParams>
-      <local>
-        <FormatVersion Value="1"/>
-      </local>
+      <FormatVersion Value="2"/>
+      <Modes Count="1">
+        <Mode0 Name="default"/>
+      </Modes>
     </RunParams>
     <RequiredPackages Count="1">
       <Item1>
@@ -164,9 +165,6 @@
         <IOChecks Value="True"/>
         <RangeChecks Value="True"/>
       </Checks>
-      <TargetProcessor Value="pentium3"/>
-      <TargetCPU Value="i386"/>
-      <TargetOS Value="win32"/>
     </CodeGeneration>
     <Linking>
       <Debugging>

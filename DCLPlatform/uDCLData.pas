@@ -9,7 +9,6 @@ uses
 {$ENDIF}
   StdCtrls, ComCtrls, Controls, Graphics, ExtCtrls, DB, Buttons, Classes,
 {$IFDEF NEWDELPHI}
-  //Vcl.
   DBCtrls,
 {$ELSE}
   DBCtrls,
@@ -58,7 +57,7 @@ TLogonParams=record
 end;
 
 TVariable=Record
-  Name:String;
+  Name: String[25];
   Value:String;
 End;
 
