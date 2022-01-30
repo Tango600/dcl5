@@ -542,7 +542,7 @@ Begin
       If UpdatesFieldsSet<>'' then
         System.Delete(UpdatesFieldsSet, Length(UpdatesFieldsSet)-4, 5);
 
-      FRefreshSQL:='select * from '+TableName+' where (('+KeyFieldsSet+') or ('+UpdatesFieldsSet+'))';
+      FRefreshSQL:='select * from '+TableName+' where '+KeyFieldsSet;
       FUpdateSQL.RefreshSQL.Text:=FRefreshSQL;
 {$ENDIF}
       // Query.FieldList.Update;

@@ -253,7 +253,7 @@ Type
 
   { TDCLGrid }
 
-  TDCLGrid=class(TObject)
+  TDCLGrid=class(TComponent)
   private
     FromForm: String;
     FGridPanel: TDCLMainPanel;
@@ -556,7 +556,7 @@ Type
 
   { TDCLForm }
 
-  TDCLForm=class(TObject)
+  TDCLForm=class(TComponent)
   private
     FName: String;
     FCloseAction: TDCLFormCloseAction;
@@ -894,7 +894,8 @@ Type
     procedure RePlaseVariables(var VarsSet: String);
     function TranslateRepParams(ParamName: String): String;
     function GetRepSQLArray(RepText: TStringList): TStrArray;
-    procedure PrintReport(AReport: String; SQLs: TStrArray; ATemplate, AFileName: String);
+    procedure PrintReport(AReport: String; SQLs: TStrArray; ATemplate, AFileName: String;
+      ReportType: TReportType);
   public
     constructor Create(DCLLogOn: TDCLLogOn);
     destructor Destroy; override;
@@ -1145,17 +1146,17 @@ begin
     TemplateFileName:=BinStor.GetTemplateFile(TemplateName, FileName, Ext);
     If BinStor.ErrorCode=0 Then
       If FileExists(TemplateFileName) Then
-        PrintReport(tmpDCL2.Text, GetRepSQLArray(tmpDCL), TemplateFileName, FileName);
+        PrintReport(tmpDCL2.Text, GetRepSQLArray(tmpDCL), TemplateFileName, FileName, rtWord);
   End;
   rtFast:Begin
     Ext:='fr3';
-    PrintReport(tmpDCL2.Text, GetRepSQLArray(tmpDCL), FileName, '');
+    PrintReport(tmpDCL2.Text, GetRepSQLArray(tmpDCL), '', FileName, rtFast);
   End;
   End;
 end;
 
 procedure TDCLMultiReport.PrintReport(AReport: String; SQLs: TStrArray;
-  ATemplate, AFileName: String);
+  ATemplate, AFileName: String; ReportType: TReportType);
 var
 {$IFNDEF NOFASTREPORTS}
   FastReport:TDCLFastReports;
@@ -1177,7 +1178,6 @@ var
   LogObj: TLogging;
   FFactor, vFRDataIndex: Word;
   dmData: TDataModule;
-  FReportOutputType: TReportType;
 
   function FindQuery(QName: String): TDCLDialogQuery;
   begin
@@ -1344,7 +1344,6 @@ begin
   vDataSourceIndex:=0;
   vGenStrSection:='';
   Errors:=False;
-  FReportOutputType:=rtWord;
   dmData:=TDataModule.Create(nil);
 
   try
@@ -1380,15 +1379,15 @@ begin
     end
     Else
     begin
-      TemplateExists:=FileExists(ATemplate);
-      Templates[1]:=ATemplate;
-      LogObj.WriteLog('Файл шаблона : '+ATemplate);
+      TemplateExists:=FileExists(AFileName);
+      Templates[1]:=AFileName;
+      LogObj.WriteLog('Файл шаблона : '+AFileName);
     end;
 
     TemplatesCounter:=1;
     If TemplateExists Then
     begin
-      Case FReportOutputType of
+      Case ReportType of
       rtWord:
       begin
         PrintWord:=TPrintDoc.Create(dmData, otOpOffice, LogObj);
@@ -1475,21 +1474,21 @@ begin
           Else
             NotReloadedFlags[vQueryIndex]:=qbNormal;
 
-          mQueries[vQueryIndex].Name:=Trim(vStrTmp1);
+          mQueries[vQueryIndex].Name:='ibx'+Trim(vStrTmp1);
 
           vStrTmp1:=SQLs[vQueryIndex-1];
           FDCLLogOn.TranslateVal(vStrTmp1);
           mQueries[vQueryIndex].SQL.Text:=vStrTmp1;
         end;
         dstDataSet:
-          mDataSources[vDataSourceIndex].Name:=Trim(vStrTmp1);
+          mDataSources[vDataSourceIndex].Name:='ds'+Trim(vStrTmp1);
 {$IFNDEF NOFASTREPORTS}
         dstFRX:
-          mFRDatasets[vFRDataIndex].Name:=trim(vStrTmp1);
+          mFRDatasets[vFRDataIndex].Name:='frx'+trim(vStrTmp1);
 {$ENDIF}
         end;
         //////////////////////////////////////////////////////////////////////////////////////////////////
-        inc(i);
+        i:=2;
         ParamName:='';
         If i<Length(vGenStrSection) Then
           While (Not (vGenStrSection[i] in ['(', ')', ' ', ';'])) do
@@ -1510,9 +1509,9 @@ begin
             If vStrTmp1<>'' Then
             begin
               If vType=dstIBQ Then
-                If dmData.FindComponent(vStrTmp1) is TDataSource Then
+                If dmData.FindComponent('ds'+vStrTmp1) is TDataSource Then
                   mQueries[vQueryIndex].DataSource:=dmData.FindComponent(vStrTmp1) as TDataSource;
-              If Not (dmData.FindComponent(vStrTmp1) is TDataSource) Then
+              If Not (dmData.FindComponent('ds'+vStrTmp1) is TDataSource) Then
                 sQueryToDataSources[vQueryIndex][ppn]:=vStrTmp1;
             end;
           end;
@@ -1523,14 +1522,14 @@ begin
           begin
             If Trim(ParamName)<>'' Then
             begin
-              If dmData.FindComponent(ParamName) is TDCLDialogQuery Then
+              If dmData.FindComponent('ibx'+ParamName) is TDCLDialogQuery Then
               begin
                 sQueryToDataSources[vQueryIndex][1]:=ParamName;
               end
               Else
                 For m:=0 to dmData.ComponentCount-1 do
                   If ((dmData.Components[m] is TDataSource)and
-                      (LowerCase(dmData.Components[m].Name)=Trim(ParamName))) Then
+                      (LowerCase(dmData.Components[m].Name)='ibx'+Trim(ParamName))) Then
                     mQueries[vQueryIndex].DataSource:=(dmData.Components[m]) as TDataSource;
             end;
           end;
@@ -1540,7 +1539,7 @@ begin
             begin
               For m:=0 to dmData.ComponentCount-1 do
                 If ((dmData.Components[m] is TDCLDialogQuery)and
-                    (LowerCase(dmData.Components[m].Name)=Trim(ParamName))) Then
+                    (LowerCase(dmData.Components[m].Name)='ds'+Trim(ParamName))) Then
                   mDataSources[vDataSourceIndex].DataSet:=(dmData.Components[m]) as TDCLDialogQuery;
             end
             Else
@@ -1553,9 +1552,11 @@ begin
               For m:=0 to dmData.ComponentCount-1 do
                 If ((dmData.Components[m] is TIBQuery)or
                     (dmData.Components[m] is TIBDataSet))and
-                  (LowerCase(dmData.Components[m].Name)=trim(ParamName)) then
+                  (LowerCase(dmData.Components[m].Name)='ibx'+trim(ParamName)) then
+                begin
                   mFRDatasets[vFRDataIndex].DataSet:=(dmData.Components[m])
                     as TIBCustomDataSet;
+                end;
           end;
 {$ENDIF}          
           end;
@@ -1580,7 +1581,7 @@ begin
 
         LogObj.WriteLog('');
 
-        Case FReportOutputType of
+        Case ReportType of
         rtWord:
         begin
           LogObj.WriteLog('Генерация отчёта...');
@@ -1650,7 +1651,7 @@ begin
             FastReport.LoadReportFromBinStore(ATemplate);
           FastReport.ShowReport;
         end;
-{$ENDIF}        
+{$ENDIF}
         end;
 
         LogObj.WriteLog('');
@@ -1699,7 +1700,7 @@ begin
         If Assigned(mDataSources[i]) then
         FreeAndNil(mDataSources[i]); }
 
-      Case FReportOutputType of
+      Case ReportType of
       rtWord:
       FreeAndNil(PrintWord);
       end;
@@ -2782,7 +2783,9 @@ begin
   For i:=Length(FGrids) downto 1 do
   begin
     For j:=Length(FGrids[i-1].FTableParts) downto 1 do
+    begin
       FreeAndNil(FGrids[i-1].FTableParts[j-1]);
+    end;
 
     FreeAndNil(FGrids[i-1]);
   end;
@@ -2811,7 +2814,7 @@ begin
   Pointer(FParentForm):=nil;
   Pointer(FCallerForm):=nil;
   FForm.Release;
-  inherited Destroy;
+  //inherited Destroy;
 end;
 
 procedure TDCLForm.CloseForm(Sender: TObject; var Action: TCloseAction);
@@ -11874,10 +11877,29 @@ begin
 
   NeedValue:=0;
   If PosEx('_Value=', Field.OPL)<>0 Then
+  Begin
     If FindParam('_Value=', Field.OPL)<>'' Then
       NeedValue:=1
     Else
       NeedValue:=3;
+  End
+  Else
+  Begin
+    If FindParam('_ValueIfNull=', Field.OPL)<>'' Then
+    Begin
+      If FQuery.Active Then
+        If FieldExists(Field.FieldName, FQuery) Then
+          if FQuery.FieldByName(Field.FieldName).IsNull then
+            NeedValue:=4;
+    End;
+    If FindParam('_ValueIfNotNull=', Field.OPL)<>'' Then
+    Begin
+      If FQuery.Active Then
+        If FieldExists(Field.FieldName, FQuery) Then
+          if not FQuery.FieldByName(Field.FieldName).IsNull then
+            NeedValue:=5;
+    End;
+  End;
   If FindParam('SQL=', Field.OPL)<>'' Then
     NeedValue:=2;
 
@@ -11917,6 +11939,16 @@ begin
   end;
   3:
   TempStr:='';
+  4:begin
+    TempStr:=FindParam('_ValueIfNull=', Field.OPL);
+    RePlaseParams(TempStr);
+    FDCLForm.RePlaseVariables(TempStr);
+  end;
+  5:begin
+    TempStr:=FindParam('_ValueIfNotNull=', Field.OPL);
+    RePlaseParams(TempStr);
+    FDCLForm.RePlaseVariables(TempStr);
+  end;
   end;
 
   If FindParam('VariableName=', Field.OPL)<>'' Then
@@ -12063,9 +12095,9 @@ begin
     begin
       If (Not (FQuery.State in dsEditModes))and FQuery.Active and(Not NoDataField) Then
         Query.Edit;
-      Lookups[l].Lookup.KeyValue:=TempStr;
       If (Not FForm.Showing) and (Not NoDataField) Then
         FForm.Show;
+      Lookups[l].Lookup.KeyValue:=TempStr;
       If Not NoDataField Then
         FData.DataSet.FieldByName(Field.FieldName).AsInteger:=StrToIntEx(TempStr);
       LookupOnClick(Lookups[l].Lookup);
@@ -12781,7 +12813,7 @@ constructor TDCLGrid.Create(var Form: TDCLForm; Parent: TWinControl; SurfType: T
 var
   v1: Integer;
 begin
-  inherited Create;
+  inherited Create(Form);
   PosBookCreated:=False;
   FromForm:=Form.FName;
   FOrientation:=oVertical;
@@ -13681,36 +13713,44 @@ begin
       //
     end;
 
-  If Assigned(FQuery) Then
-  begin
-    If BaseChanged Then
-      If FDCLForm.ExitNoSave=False Then
-        If FQuery.Active Then
-          If FQuery.State in dsEditModes Then
-            If ShowErrorMessage(Ord(mbtConfirmation),
-              GetDCLMessageString(msSaveEditingsQ))=1 Then
-            begin
-              try
-                FQuery.Post;
-              Except
-                //
+  try
+    If Assigned(FQuery) Then
+    begin
+      If BaseChanged Then
+        If FDCLForm.ExitNoSave=False Then
+          If FQuery.Active Then
+            If FQuery.State in dsEditModes Then
+              If ShowErrorMessage(Ord(mbtConfirmation),
+                GetDCLMessageString(msSaveEditingsQ))=1 Then
+              begin
+                try
+                  FQuery.Post;
+                Except
+                  //
+                end;
+              end
+              Else
+              begin
+                try
+                  FQuery.Cancel;
+                Except
+                  //
+                end;
               end;
-            end
-            Else
-            begin
-              try
-                FQuery.Cancel;
-              Except
-                //
-              end;
-            end;
-  end;
-  BaseChanged:=False;
-  FreeAndNil(FGridPanel);
-  FDCLLogOn.SQLMon.DelTrace(FQueryGlob);
-  If Assigned(FQueryGlob) then
-    FreeAndNil(FQueryGlob);
-//  FromForm:='_Closed_'+FromForm;
+    end;
+    BaseChanged:=False;
+    if Assigned(FGridPanel) then
+      FreeAndNil(FGridPanel);
+    if Assigned(FDCLLogOn) then
+      if Assigned(FDCLLogOn.SQLMon) then
+        if Assigned(FQueryGlob) then
+          FDCLLogOn.SQLMon.DelTrace(FQueryGlob);
+    If Assigned(FQueryGlob) then
+      FreeAndNil(FQueryGlob);
+  //  FromForm:='_Closed_'+FromForm;
+    Except
+      //
+    end;
 end;
 
 procedure TDCLGrid.RefreshBookMarkMenu;
