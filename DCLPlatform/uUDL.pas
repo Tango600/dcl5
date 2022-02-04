@@ -4075,6 +4075,9 @@ begin
 
           If PosEx('NotLike', TmpStr)<>0 Then
             FFilter.NotLike:=True;
+
+          If PosEx('Partial', TmpStr)<>0 Then
+            FFilter.Partial:=True;
         end;
 
         If PosEx('ComponentName=', ScrStr)<>0 Then
@@ -11568,6 +11571,7 @@ begin
   begin
     DBFilters[l].CaseC:=Filter.CaseC;
     DBFilters[l].NotLike:=Filter.NotLike;
+    DBFilters[l].Partial:=Filter.Partial;
 
     DBFilters[l].WaitForKey:=Filter.WaitForKey;
     DBFilters[l].Edit:=TEdit.Create(ToolPanel);
@@ -14415,7 +14419,7 @@ var
     Query1String: String;
   FN, FFactor: Word;
 
-  function ConstructQueryString(ExemplStr, FilterField: String; Upper, NotLike: Boolean;
+  function ConstructQueryString(ExemplStr, FilterField: String; Upper, NotLike, Partial: Boolean;
     Between: Byte; Exempl2: String): String;
   var
     Delimiter, Prefix, Postfix, UpperPrefix, UpperPostfix, WhereStr, CondStr: String;
@@ -14456,6 +14460,8 @@ var
       begin
         Prefix:=' like ';
         Postfix:='%';
+        if Partial then
+          ExemplStr:=ExemplStr+'%';
       end;
       end;
     end;
@@ -14550,7 +14556,8 @@ begin
                 Exempl2:=DBFilters[DBFilters[FN].Between].FilterString;
 
               WhereStr:=WhereStr+' '+ConstructQueryString(ExeplStr, QFilterField,
-                Not DBFilters[FN].CaseC, DBFilters[FN].NotLike, DBFilters[FN].Between, Exempl2);
+                Not DBFilters[FN].CaseC, DBFilters[FN].NotLike, DBFilters[FN].Partial,
+                DBFilters[FN].Between, Exempl2);
             end;
           end
           Else
