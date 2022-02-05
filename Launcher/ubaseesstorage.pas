@@ -31,21 +31,8 @@ type
 
  function NormalizeEncoding(const Encoding: string): string;
 
-
 var
   Path, DefaultSystemEncoding:String;
-
-const
-{$IFDEF DELPHI}
-  EncodingUTF8='utf8';
-  UTF8BOM=#$EF#$BB#$BF;
-  UTF16LEBOM=#$FF#$FE;
-  DefaultInterfaceEncoding='cp1251';
-{$ENDIF}
-{$IFDEF FPC}
-  DefaultInterfaceEncoding=EncodingUTF8;
-{$ENDIF}
-
 
 implementation
 
@@ -62,16 +49,6 @@ begin
   end;
   for i:=length(Result) downto 1 do
     if Result[i]='-' then System.Delete(Result,i,1);
-end;
-
-function ToInterface(S:String):String;
-begin
-  Result:=ConvertEncoding(S, DefaultSystemEncoding, DefaultInterfaceEncoding);
-end;
-
-function ToSystem(S:String):String;
-begin
-  Result:=ConvertEncoding(S, DefaultInterfaceEncoding, DefaultSystemEncoding);
 end;
 
 Function GetBaseParam(Index: Integer; var BaseParams:TBaseParams): String;
@@ -104,7 +81,7 @@ begin
   SetLength(BaseParams, Sections.Count);
   For SectionNum:=1 to Sections.Count do
   Begin
-    BaseParams[SectionNum-1].Title:=ToInterface(Sections[SectionNum-1]); //Ini.ReadString(Sections[SectionNum-1], 'Title', '');
+    BaseParams[SectionNum-1].Title:=Sections[SectionNum-1]; //Ini.ReadString(Sections[SectionNum-1], 'Title', '');
     BaseParams[SectionNum-1].IniPath:=Ini.ReadString(Sections[SectionNum-1], 'IniFile', '');
     BaseParams[SectionNum-1].Params:=Ini.ReadString(Sections[SectionNum-1], 'Params', '');
     BaseParams[SectionNum-1].UID:=Ini.ReadString(Sections[SectionNum-1], 'BaseUID', '');
@@ -118,7 +95,7 @@ var
 begin
   Ini:=TIniFile.Create(IniFileName);
 
-  Result.Title:=ToInterface(Ini.ReadString(SectionName, 'Title', ''));
+  Result.Title:=Ini.ReadString(SectionName, 'Title', '');
   Result.IniPath:=Ini.ReadString(SectionName, 'IniFile', '');
   Result.Params:=Ini.ReadString(SectionName, 'Params', '');
   Result.UID:=Ini.ReadString(SectionName, 'BaseUID', '');
@@ -132,10 +109,10 @@ var
 begin
   Ini:=TIniFile.Create(IniFileName);
 
-  Ini.WriteString(ToSystem(Params.Title), 'Title', ToSystem(Params.Title));
-  Ini.WriteString(ToSystem(Params.Title), 'IniFile', Params.IniPath);
-  Ini.WriteString(ToSystem(Params.Title), 'Params', Params.Params);
-  Ini.WriteString(ToSystem(Params.Title), 'BaseUID', Params.UID);
+  Ini.WriteString(Params.Title, 'Title', Params.Title);
+  Ini.WriteString(Params.Title, 'IniFile', Params.IniPath);
+  Ini.WriteString(Params.Title, 'Params', Params.Params);
+  Ini.WriteString(Params.Title, 'BaseUID', Params.UID);
 
   Ini.Free;
 end;
@@ -146,11 +123,11 @@ var
 begin
   Ini:=TIniFile.Create(IniFileName);
 
-  Ini.EraseSection(ToSystem(Params.Title));
-  Ini.WriteString(ToSystem(Params.Title), 'Title', ToSystem(Params.Title));
-  Ini.WriteString(ToSystem(Params.Title), 'IniFile', Params.IniPath);
-  Ini.WriteString(ToSystem(Params.Title), 'Params', Params.Params);
-  Ini.WriteString(ToSystem(Params.Title), 'BaseUID', Params.UID);
+  Ini.EraseSection(Params.Title);
+  Ini.WriteString(Params.Title, 'Title', Params.Title);
+  Ini.WriteString(Params.Title, 'IniFile', Params.IniPath);
+  Ini.WriteString(Params.Title, 'Params', Params.Params);
+  Ini.WriteString(Params.Title, 'BaseUID', Params.UID);
 
   Ini.Free;
 end;

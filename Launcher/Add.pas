@@ -13,7 +13,7 @@ uses
   LCLIntf, LCLType, LMessages,
 {$ENDIF}
   Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, Buttons, ExtCtrls, ComCtrls, uBaseesStorage;
+  Dialogs, StdCtrls, Buttons, ExtCtrls, ComCtrls, uBaseesStorage, Vcl.Mask;
 
 type
 

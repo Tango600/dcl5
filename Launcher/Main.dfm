@@ -1,55 +1,57 @@
 object Form1: TForm1
   Left = 498
-  Height = 332
   Top = 227
-  Width = 455
   BorderIcons = [biSystemMenu, biMinimize]
-  Caption = 'Запуск...'
+  Caption = 'DCL5 Launcher'
   ClientHeight = 332
   ClientWidth = 455
   Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
+  Font.Style = []
+  Position = poScreenCenter
   OnClose = FormClose
   OnCreate = FormCreate
-  Position = poScreenCenter
-  LCLVersion = '2.0.0.4'
+  PixelsPerInch = 96
+  TextHeight = 13
   object ListBox1: TListBox
     Left = 8
-    Height = 261
     Top = 8
     Width = 310
+    Height = 261
     Align = alCustom
-    Anchors = [akTop, akLeft, akRight, akBottom]
+    Anchors = [akLeft, akTop, akRight, akBottom]
+    Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -13
     Font.Name = 'MS Sans Serif'
-    ItemHeight = 0
-    OnClick = ListBox1Click
-    OnDblClick = ListBox1DblClick
+    Font.Style = []
     ParentFont = False
     TabOrder = 0
+    OnClick = ListBox1Click
+    OnDblClick = ListBox1DblClick
   end
   object Panel1: TPanel
     Left = 318
-    Height = 269
     Top = 0
     Width = 137
+    Height = 269
     Align = alRight
     BevelInner = bvLowered
-    ClientHeight = 269
-    ClientWidth = 137
     TabOrder = 1
     object btRunApp: TBitBtn
       Left = 18
-      Height = 25
       Top = 20
       Width = 105
-      Caption = 'Приложение'
+      Height = 25
+      Caption = #1047#1072#1087#1091#1089#1082
+      Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -12
       Font.Name = 'MS Sans Serif'
+      Font.Style = []
       Glyph.Data = {
         36050000424D3605000000000000360400002800000010000000100000000100
         0800000000000001000000000000000000000001000000000000FFFFFF00CBFE
@@ -92,21 +94,22 @@ object Form1: TForm1
         FBFFFFFBFD23F9F7FFFFFFFFF7FA10F9F7FCFBFBFBFBFCF7FFFFFFFFF7FA10F9
         F7F7F7F7F7F7F7F7FFFFFFFFF7FA10F71010FFFBFFFFFFFFFFFFFFFFF7FCFBFB
         FBFBFCF7FAFFFFFFFFFFFFFFF7F7F7F7F7F7F7F7FAFFFFFFFFFFFFFFF7F7F7F7
-        F7F7F7F7FAFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-      }
-      OnClick = btRunAppClick
+        F7F7F7F7FAFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}
       ParentFont = False
       TabOrder = 0
+      OnClick = btRunAppClick
     end
     object btRunConstructor: TBitBtn
       Left = 18
-      Height = 25
       Top = 60
       Width = 105
-      Caption = 'Конфигуратор'
+      Height = 25
+      Caption = #1050#1086#1085#1092#1080#1075#1091#1088#1072#1090#1086#1088
+      Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -12
       Font.Name = 'MS Sans Serif'
+      Font.Style = []
       Glyph.Data = {
         36030000424D3603000000000000360000002800000010000000100000000100
         18000000000000030000130B0000130B00000000000000000000FFFFFFFFFFFF
@@ -133,60 +136,56 @@ object Form1: TForm1
         8080808080808080808080808080808080808080FFFFFFFFFFFFFFFFFFFFFFFF
         FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
         FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-      }
-      OnClick = btRunConstructorClick
+        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}
       ParentFont = False
       TabOrder = 1
+      OnClick = btRunConstructorClick
     end
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Height = 23
     Top = 309
     Width = 455
-    Panels = <    
+    Height = 23
+    Panels = <
       item
         Width = 50
       end>
-    SimplePanel = False
   end
   object Panel3: TPanel
     Left = 0
-    Height = 40
     Top = 269
     Width = 455
+    Height = 40
     Align = alBottom
     BevelInner = bvLowered
-    ClientHeight = 40
-    ClientWidth = 455
     TabOrder = 3
     object btAdd: TButton
       Left = 15
-      Height = 25
       Top = 7
       Width = 75
-      Caption = 'Добавить'
-      OnClick = btAddClick
+      Height = 25
+      Caption = #1044#1086#1073#1072#1074#1080#1090#1100
       TabOrder = 0
+      OnClick = btAddClick
     end
     object btEdit: TButton
       Left = 100
-      Height = 25
       Top = 7
       Width = 75
-      Caption = 'Изменить'
-      OnClick = btEditClick
+      Height = 25
+      Caption = #1048#1079#1084#1077#1085#1080#1090#1100
       TabOrder = 1
+      OnClick = btEditClick
     end
     object btDelete: TButton
       Left = 185
-      Height = 25
       Top = 7
       Width = 75
-      Caption = 'Удалить'
-      OnClick = btDeleteClick
+      Height = 25
+      Caption = #1059#1076#1072#1083#1080#1090#1100
       TabOrder = 2
+      OnClick = btDeleteClick
     end
   end
 end
