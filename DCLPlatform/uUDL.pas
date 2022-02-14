@@ -15040,7 +15040,7 @@ begin
         ToolButtWidth:=ToolButtonPanel.Width div ActiveToolButtonsCount;
         For i1:=1 to ToolCommandsCount do
         begin
-          If ((FDisplayMode in TDataGrid)and(i1=1))or(FQuery.Active and(i1 in [2, 3])) Then
+          If FQuery.Active and (FDisplayMode in TDataGrid) Then
           begin
             TollButton:=TSpeedButton.Create(ToolButtonPanel);
             TollButton.Parent:=ToolButtonPanel;

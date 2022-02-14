@@ -29,7 +29,7 @@ DefaultLibraryLocation='fbclient.so';
 {$IFDEF ZEOS}
   DBEngineType='ZEOS (Universal)';
   DefaultIBPort=3050;
-  DefaultDBType='firebird-2.5';
+  DefaultDBType='firebird-3.0';
   DefaultDBTInterBaseType='interbase-6';
 {$ENDIF}
 {$IFDEF SQLdbIB}
@@ -38,7 +38,7 @@ DefaultLibraryLocation='fbclient.so';
 {$IFDEF SQLdb}
   DBEngineType='SQLdb (Universal)';
 {$ENDIF}
-  Ver='10.1.50.367';
+  Ver='10.1.50.368';
   VersionS='$VersionSignature$'+Ver+'$';
 
   CompotableVersion='9.1.129.309';
