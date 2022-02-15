@@ -11424,6 +11424,7 @@ begin
     FDCLLogOn.SetDBName(ShadowQuery);
     TempStr:=FindParam('SQL=', Field.OPL);
     FDCLLogOn.RePlaseVariables(TempStr);
+    RePlaseParams(TempStr);
     ShadowQuery.SQL.Text:=TempStr;
     ShadowQuery.Open;
     If FindParam('ReturnField=', Field.OPL)<>'' Then
@@ -11437,6 +11438,20 @@ begin
       TempStr:=DateToStr(Date);
     ShadowQuery.Close;
     FreeAndNil(ShadowQuery);
+
+    If FindParam('IfNull=', Field.OPL)='1' Then
+    Begin
+      If Query.Active Then
+      begin
+        If FieldExists(Field.FieldName, Query) Then
+        Begin
+          if not Query.FieldByName(Field.FieldName).IsNull then
+          Begin
+            TempStr:=TrimRight(Query.FieldByName(Field.FieldName).AsString);
+          End;
+        End;
+      end;
+    End;
   end;
   end;
 
@@ -14720,7 +14735,7 @@ begin
   If Length(DateBoxes)>0 Then
     For v1:=1 to Length(DateBoxes) do
     begin
-      If FieldExists(DateBoxes[v1-1].DateBoxToFields, FQuery) Then
+      If not DateBoxes[v1-1].NoDataField and FieldExists(DateBoxes[v1-1].DateBoxToFields, FQuery) Then
         DateBoxes[v1-1].DateBox.Date:=FQuery.FieldByName(DateBoxes[v1-1].DateBoxToFields)
           .AsDateTime;
     end;
