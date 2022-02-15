@@ -7797,6 +7797,7 @@ begin
     {$IFDEF TRANSACTIONDB}
     tmp_Transaction:=FDCLLogOn.NewTransaction(trtWrite);
     ADOCommand.Transaction:=tmp_Transaction;
+    ADOCommand.Transaction.StartTransaction;
     {$ENDIF}
 
     try
@@ -11453,6 +11454,11 @@ begin
   DateBoxes[DateBoxCount].DateBoxToVariables:=KeyField;
   If TempStr<>'' Then
     DateBoxes[DateBoxCount].DateBox.Date:=StrToDate(TempStr);
+
+  If FindParam('NoDataField=', Field.OPL)='1' Then
+  Begin
+    DateBoxes[DateBoxCount].NoDataField:=True;
+  End;
   OnChangeDateBox(DateBoxes[DateBoxCount].DateBox);
 
   Field.StepLeft:=DateBoxAddWidth;
@@ -14252,15 +14258,18 @@ begin
 
   If DateBoxes[DateBoxNamb].DateBoxType=0 Then
   begin
-    If Query.Active Then
-    begin
-      If FieldExists(DateBoxes[DateBoxNamb].DateBoxToFields, Query) Then
+    if not DateBoxes[DateBoxNamb].NoDataField then
+    Begin
+      If Query.Active Then
       begin
-        Query.Edit;
-        Query.FieldByName(DateBoxes[DateBoxNamb].DateBoxToFields).AsString:=
-          DateToStr(DateBoxes[DateBoxNamb].DateBox.Date);
+        If FieldExists(DateBoxes[DateBoxNamb].DateBoxToFields, Query) Then
+        begin
+          Query.Edit;
+          Query.FieldByName(DateBoxes[DateBoxNamb].DateBoxToFields).AsString:=
+            DateToStr(DateBoxes[DateBoxNamb].DateBox.Date);
+        end;
       end;
-    end;
+    End;
   end;
 end;
 

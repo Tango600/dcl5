@@ -156,6 +156,7 @@ TDateBox=record
   DateBox: DateTimePicker;
   ModifyDateBox, DateBoxType: Byte;
   DateBoxToFields, DateBoxToVariables: String;
+  NoDataField:Boolean;
 end;
 
 RCheckBox=record
