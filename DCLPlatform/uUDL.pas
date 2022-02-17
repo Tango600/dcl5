@@ -3092,7 +3092,7 @@ begin
   DialogsParams:=SaveFormPosUni;
   If (p1<p2)and(p1> - 1) Then
   begin
-    For i:=p1 to p2-p1+1 do
+    For i:=0 to p2-p1 do
       FileParams.Delete(p1);
   end;
   FileParams.AddStrings(DialogsParams);
