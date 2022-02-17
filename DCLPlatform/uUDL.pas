@@ -14489,7 +14489,9 @@ var
         Prefix:=' like ';
         Postfix:='%';
         if Partial then
-          ExemplStr:=ExemplStr+'%';
+        Begin
+          ExemplStr:='%'+ExemplStr;
+        End;
       end;
       end;
     end;
