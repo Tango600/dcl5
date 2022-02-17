@@ -2971,7 +2971,6 @@ begin
                 Grid:=Tables[g];
             end;
 
-            Grid:=nil;
             If PosEx('[TablePart]', S)=1 Then
             begin
               inc(T);
@@ -3059,9 +3058,11 @@ var
   FileParams, DialogsParams: TStringList;
   p1, p2, i, j: Integer;
   appName:String;
+  fndFlg:Boolean;
 begin
   p1:= - 1;
   p2:= - 1;
+  fndFlg:=False;
   FileParams:=TStringList.Create;
   If DialogName<>'' Then
     If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini') Then
@@ -3075,20 +3076,23 @@ begin
           p1:=i-1;
           For j:=p1 to FileParams.Count-1 do
           begin
-            If PosEx('[END '+DialogName+']', FileParams[j])=1 Then
+            If PosEx(appName+'[END '+DialogName+']', FileParams[j])=1 Then
             begin
               p2:=j;
+              fndFlg:=True;
               break;
             end;
           end;
         end;
+        if fndFlg then
+          break;
       end;
     end;
 
   DialogsParams:=SaveFormPosUni;
   If (p1<p2)and(p1> - 1) Then
   begin
-    For i:=p1 to p2-p1 do
+    For i:=p1 to p2-p1+1 do
       FileParams.Delete(p1);
   end;
   FileParams.AddStrings(DialogsParams);
@@ -3157,7 +3161,7 @@ begin
       end;
 
       Result.Append(appName+'[END '+DialogName+']');
-      Result.Append('');
+      //Result.Append('');
       {$IFDEF DCLDEBUG}
       Result.SaveToFile(DialogName+'.txt');
       {$ENDIF}
@@ -12341,12 +12345,12 @@ begin
   SumData.DataSet:=SumQuery;
   SumQuery.Open;
 
-  SummGrid:=TToolGrid.Create(FGridPanel);
+  SummGrid:=TNoScrollBarDBGrid.Create(FGridPanel);
   SummGrid.Align:=alBottom;
   SummGrid.Height:=SummGridHeight;
   SummGrid.Name:='SumGrid';
   SummGrid.Parent:=FGridPanel;
-  SummGrid.Options:=[dgIndicator, dgColLines, dgRowLines, dgCancelOnExit];
+  SummGrid.Options:=[dgColLines];
   SummGrid.DataSource:=SumData;
   SummGrid.ScrollBars:=ssNone;
 

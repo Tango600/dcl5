@@ -38,7 +38,7 @@ DefaultLibraryLocation='fbclient.so';
 {$IFDEF SQLdb}
   DBEngineType='SQLdb (Universal)';
 {$ENDIF}
-  Ver='10.1.50.370';
+  Ver='10.1.50.372';
   VersionS='$VersionSignature$'+Ver+'$';
 
   CompotableVersion='9.1.129.309';
@@ -137,7 +137,7 @@ DefaultLibraryLocation='fbclient.so';
 {$ELSE}
   AddSummGridHeight=0;
 {$ENDIF}
-  SummGridHeight=26+AddSummGridHeight;
+  SummGridHeight=27+AddSummGridHeight;
   SumPanelHeight=150;
 
   DefaultFormHeight=MaxAllFieldsHeight+ToolButtonPanelHeight+ButtonPanelHeight;
