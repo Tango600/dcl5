@@ -238,7 +238,7 @@ end;
 
 function GetFieldFromParam(Param: String; Query: TDCLDialogQuery): TField;
 const
-  StopSimbols='( ){}=/\<>|-%^!~[],.%:;&$#@*'#39;
+  StopSimbols='( ){}=/\<>|-%^!~[],.%:;&$`?#@*'#39#9;
 var
   FieldName: String;
   L, i: Word;

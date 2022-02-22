@@ -1760,6 +1760,7 @@ Begin
         Begin
           AppConfigDir:=Trim(FindParam('UserLocalProfile=', Params[i]));
           DCLMainLogOn.TranslateVal(AppConfigDir);
+          AppConfigDir:=IncludeTrailingPathDelimiter(AppConfigDir);
         End;
       End;
     End;
@@ -1804,6 +1805,14 @@ End;
 Function IsUNCPath(Path: String): Boolean;
 Begin
   Result:=Pos('\\', Path)=1;
+End;
+
+Function ExpandShortPath(Path: String): String;
+Begin
+  if Pos('.', Path)=1 then
+  Begin
+
+  End;
 End;
 
 Procedure InitGetAppConfigDir;
@@ -1988,7 +1997,7 @@ Begin
 {$IFDEF MSWINDOWS}
   If ScriptRunCreated Then
   Begin
-    FreeAndNil(ScriptRun);
+    //FreeAndNil(ScriptRun);
     ScriptRun:=Unassigned;
     ScriptRunCreated:=False;
   End;
@@ -2137,7 +2146,7 @@ begin
     Yes:=False;
     DialogsParams:=TStringList.Create;
     If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini') Then
-      DialogsParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini');
+      DialogsParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini', TEncoding.UTF8);
     If DialogsParams.Count<>0 Then
     Begin
       For i:=1 To DialogsParams.Count Do
@@ -2153,7 +2162,7 @@ begin
     Else
       DialogsParams.Append(GetFormPosString(FForm, DialogName));
 
-    DialogsParams.SaveToFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini');
+    DialogsParams.SaveToFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini', TEncoding.UTF8);
     FreeAndNil(DialogsParams);
   End;
 end;
@@ -2239,7 +2248,7 @@ Begin
       If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini') Then
       Begin
         DialogsParams:=TStringList.Create;
-        DialogsParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini');
+        DialogsParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini', TEncoding.UTF8);
         For ParamsCounter:=0 To DialogsParams.Count-1 Do
         Begin
           If PosEx(DialogName+'=', DialogsParams[ParamsCounter])=1 Then

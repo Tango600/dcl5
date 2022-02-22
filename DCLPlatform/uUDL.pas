@@ -2901,7 +2901,7 @@ begin
       If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini') Then
       begin
         FileParams:=TStringList.Create;
-        FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini');
+        FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini', TEncoding.UTF8);
         appName:='BaseUID:'+InternalAppName+FDCLLogOn.GetBaseUID+'/';
         DialogsParams:=CopyStrings(appName+'['+DialogName+']', appName+'[END '+DialogName+']', FileParams);
         LoadFormPosUni(DialogsParams);
@@ -3067,7 +3067,7 @@ begin
   If DialogName<>'' Then
     If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini') Then
     begin
-      FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini');
+      FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini', TEncoding.UTF8);
       appName:='BaseUID:'+InternalAppName+FDCLLogOn.GetBaseUID+'/';
       For i:=1 to FileParams.Count do
       begin
@@ -3096,7 +3096,7 @@ begin
       FileParams.Delete(p1);
   end;
   FileParams.AddStrings(DialogsParams);
-  FileParams.SaveToFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini');
+  FileParams.SaveToFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini', TEncoding.UTF8);
 end;
 
 procedure TDCLForm.SaveFormPosBase;
@@ -3197,7 +3197,7 @@ begin
     If DialogName<>'' Then
       If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'BookMark.ini') Then
       begin
-        FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'BookMark.ini');
+        FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'BookMark.ini', TEncoding.UTF8);
         For i:=1 to FileParams.Count do
         begin
           If PosEx('['+DialogName+']', FileParams[i-1])=1 Then
@@ -3221,7 +3221,7 @@ begin
         FileParams.Delete(p1);
     end;
     FileParams.AddStrings(DialogsParams);
-    FileParams.SaveToFile(IncludeTrailingPathDelimiter(AppConfigDir)+'BookMark.ini');
+    FileParams.SaveToFile(IncludeTrailingPathDelimiter(AppConfigDir)+'BookMark.ini', TEncoding.UTF8);
   end;
   FreeAndNil(DialogsParams);
 end;
@@ -3259,7 +3259,7 @@ begin
   If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'BookMark.ini') Then
   begin
     MenuList:=TStringList.Create;
-    MenuList.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'BookMark.ini');
+    MenuList.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'BookMark.ini', TEncoding.UTF8);
     DialogsParams:=CopyStrings('['+DialogName+']', '[END '+DialogName+']', MenuList);
     CreateBookMarkMenuUni(DialogsParams);
     MenuList.Free;
@@ -4968,7 +4968,7 @@ begin
     If DialogName<>'' Then
       If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini') Then
       begin
-        FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini');
+        FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini', TEncoding.UTF8);
         For i:=1 to FileParams.Count do
         begin
           If PosEx('['+DialogName+']', FileParams[i-1])=1 Then
@@ -4991,7 +4991,7 @@ begin
     For i:=p1 to p2-p1 do
       FileParams.Delete(p1);
   end;
-  FileParams.SaveToFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini');
+  FileParams.SaveToFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini', TEncoding.UTF8);
 end;
 
 procedure TDCLForm.DeleteStatus(StatusNum: Integer);
@@ -6693,7 +6693,9 @@ begin
               TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
               OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
                 FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-              Case GetPossibleOffice(dtSheet, ConvertOfficeType(TmpStr)) of
+              OfficeReport.OfficeTemplateFormat:=GetPossibleOffice(dtSheet, ConvertOfficeType(TmpStr));
+
+              Case OfficeReport.OfficeTemplateFormat of
               odtOO:
               OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything, EnythingElse);
               odtMSO:
@@ -9377,7 +9379,7 @@ begin
   If FileExists(FileName) Then
   begin
     Scr:=TStringList.Create;
-    Scr.LoadFromFile(FileName);
+    Scr.LoadFromFile(FileName, TEncoding.UTF8);
     tmpMem:=TMemoryStream.Create;
     Scr.SaveToStream(tmpMem);
     tmpMem.Position:=0;
@@ -12718,6 +12720,9 @@ begin
       FQuery.Post;
     FLocalBookmark:=FQuery.GetBookmark;
     FQuery.Close;
+    {$IFDEF TRANSACTIONDB}
+    FQuery.Transaction.Commit;
+    {$ENDIF}
   end;
 end;
 
@@ -15492,8 +15497,17 @@ begin
 
   LayotCount:=0;
   Layot:=TStringList.Create;
-  FileName:=BinStor.GetTemplateFile(FindParam('TemplateName=', ParamStr),
-    FindParam('FileName=', ParamStr), Ext);
+  if FindParam('TemplateName=', ParamStr)<>'' then
+  begin
+    FileName:=BinStor.GetTemplateFile(FindParam('TemplateName=', ParamStr),
+      FindParam('FileName=', ParamStr), Ext);
+  end
+  else
+  begin
+    FileName:=FindParam('FileName=', ParamStr);
+    if not IsFullPath(FileName) then
+      FileName:=Path+FileName;
+  end;
   If BinStor.ErrorCode=0 Then
     If FileExists(FileName) Then
     begin
@@ -15563,10 +15577,6 @@ begin
       end;
       DCLQuery.First;
 
-      BookmarksSupplier:=Document.getBookmarks;
-      If (Not BookmarkFromLayot)and(LayotCount=0) Then
-        LayotCount:=BookmarksSupplier.Count;
-
       DocNum:=1;
       While Not DCLQuery.Eof do
       begin
@@ -15582,6 +15592,10 @@ begin
           Exit;
         End;
         CursorPointer:=TextPointer.CreateTextCursor;
+
+        BookmarksSupplier:=Document.getBookmarks;
+        If (Not BookmarkFromLayot)and(LayotCount=0) Then
+          LayotCount:=BookmarksSupplier.Count;
 
         For BookmarckNum:=0 to LayotCount-1 do
         begin
@@ -15731,8 +15745,17 @@ begin
   Ext:='ods';
   end;
 
-  FileName:=BinStor.GetTemplateFile(FindParam('TemplateName=', ParamStr),
-    FindParam('FileName=', ParamStr), Ext);
+  if FindParam('TemplateName=', ParamStr)<>'' then
+  begin
+    FileName:=BinStor.GetTemplateFile(FindParam('TemplateName=', ParamStr),
+      FindParam('FileName=', ParamStr), Ext);
+  end
+  else
+  begin
+    FileName:=FindParam('FileName=', ParamStr);
+    if not IsFullPath(FileName) then
+      FileName:=AppConfigDir+FileName;
+  end;
   If BinStor.ErrorCode=0 Then
     If FileExists(FileName) Then
     begin
@@ -15917,8 +15940,17 @@ begin
 {$IFDEF MSWINDOWS}
   LayotCount:=0;
   Layot:=TStringList.Create;
-  FileName:=BinStor.GetTemplateFile(FindParam('TemplateName=', ParamStr),
-    FindParam('FileName=', ParamStr), 'doc');
+  if FindParam('TemplateName=', ParamStr)<>'' then
+  begin
+    FileName:=BinStor.GetTemplateFile(FindParam('TemplateName=', ParamStr),
+      FindParam('FileName=', ParamStr), 'doc');
+  end
+  else
+  begin
+    FileName:=FindParam('FileName=', ParamStr);
+    if not IsFullPath(FileName) then
+      FileName:=AppConfigDir+FileName;
+  end;
   If BinStor.ErrorCode=0 Then
     If FileExists(FileName) Then
     begin
@@ -16056,8 +16088,17 @@ var
   DCLQuery: TDCLDialogQuery;
 begin
 {$IFDEF MSWINDOWS}
-  FileName:=BinStor.GetTemplateFile(FindParam('TemplateName=', ParamStr),
-    FindParam('FileName=', ParamStr), 'xls');
+  if FindParam('TemplateName=', ParamStr)<>'' then
+  begin
+    FileName:=BinStor.GetTemplateFile(FindParam('TemplateName=', ParamStr),
+      FindParam('FileName=', ParamStr), 'xlsx');
+  end
+  else
+  begin
+    FileName:=FindParam('FileName=', ParamStr);
+    if not IsFullPath(FileName) then
+      FileName:=AppConfigDir+FileName;
+  end;
   If BinStor.ErrorCode=0 Then
     If FileExists(FileName) Then
     begin
@@ -17054,7 +17095,6 @@ begin
       FErrorCode:=4;
       TempFile:='';
     end;
-
   end;
   Result:=TempFile;
 end;

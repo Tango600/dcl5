@@ -820,7 +820,7 @@ begin
   If FileExists(FileName) then
   Begin
     LangResFile:=TStringList.Create;
-    LangResFile.LoadFromFile(FileName);
+    LangResFile.LoadFromFile(FileName, TEncoding.UTF8);
 
     For ii:=1 to LangResFile.Count do
     Begin
@@ -1034,7 +1034,7 @@ begin
   If FileExists(FileName) then
   Begin
     LangResFile:=TStringList.Create;
-    LangResFile.LoadFromFile(FileName);
+    LangResFile.LoadFromFile(FileName, TEncoding.UTF8);
 
     For i:=1 to LangResFile.Count do
     Begin
