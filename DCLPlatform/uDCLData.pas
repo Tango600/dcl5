@@ -19,7 +19,7 @@ type
   {$IFNDEF FPC}
   DateTimePicker=TDateTimePicker;
   TNavButtons=TNavButton;
-  TNavButtonsSet={$IFDEF NONEOLDCOMPONENTS}TNavButtonSet; {$ELSE}TButtonSet; {$ENDIF}
+  TNavButtonsSet={$IFDEF D7}TNavButtonSet; {$ELSE}TButtonSet; {$ENDIF}
   {$ENDIF}
   {$IFDEF FPC}
   DateTimePicker={$IFDEF ZVComponents}TZVDateTimePicker; {$ELSE}TDateEdit; {$ENDIF}

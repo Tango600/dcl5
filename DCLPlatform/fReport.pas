@@ -128,8 +128,8 @@ begin
 {$ENDIF}
 
   Rep:=TStringList.Create;
-  InDOSCodePage.Caption:=SourceToInterface(GetDCLMessageString(msCodePage)+' DOS');
-  ButtonPrint.Caption:=SourceToInterface(GetDCLMessageString(msPrint));
+  InDOSCodePage.Caption:=GetDCLMessageString(msCodePage)+' DOS';
+  ButtonPrint.Caption:=GetDCLMessageString(msPrint);
 
   ReportCP:=False;
   RaE:=False;

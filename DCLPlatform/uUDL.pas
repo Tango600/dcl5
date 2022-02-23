@@ -2531,8 +2531,8 @@ begin
   HashPassChk:=TCheckbox.Create(ChangePassForm);
   HashPassChk.Parent:=ChangePassForm;
   HashPassChk.Caption:=GetDCLMessageString(msHashPassword);
-  {HashPassChk.Hint:=SourceToInterface(GetDCLMessageString(msToHashing)+' '+
-      GetDCLMessageString(msPassword));}
+  {HashPassChk.Hint:=GetDCLMessageString(msToHashing)+' '+
+      GetDCLMessageString(msPassword);}
   HashPassChk.Top:=(BeginStepTop+EditTopStep*3)-FilterLabelTop;
   HashPassChk.Left:=BeginStepLeft;
   HashPassChk.Width:=200;
@@ -8323,7 +8323,7 @@ begin
     Caption:=GetDCLMessageString(msInformationAbout)+' '+
         GetDCLMessageString(msBuildOf)+': '+GetDCLMessageString(msOS)+': '+TargetOS+'. CPU: '+
       TargetCPU+'.'{$IFDEF FPC}+' fpc: '+fpcVersion+'. LCL version: '+AboutForm.LCLVersion+'.'
-{$IFDEF UNIX}+' '+SourceToInterface(GetDCLMessageString(msLang))+': '+SysUtils.GetEnvironmentVariable
+{$IFDEF UNIX}+' '+GetDCLMessageString(msLang)+': '+SysUtils.GetEnvironmentVariable
       ('LANG')+'.'{$ENDIF}
 {$ENDIF};
   end;
@@ -8606,7 +8606,7 @@ begin
     begin
       DebugProc('  DBPath: '+GPT.DBPath);
       DebugProc('UNC paths not supported.');
-      ShowErrorMessage(0, SourceToInterface('UNC '+GetDCLMessageString(msmsPathsNotSupportedPaths)+'.'));
+      ShowErrorMessage(0, 'UNC '+GetDCLMessageString(msmsPathsNotSupportedPaths)+'.');
       Result:=255;
       Exit;
     end;
@@ -8679,8 +8679,8 @@ begin
       begin
         DebugProc('  ... Fail');
         ConnectErrorCode:=255;
-        ShowErrorMessage(0, SourceToInterface(GetDCLMessageString(msConnectDBError)+' 0000 / '+
-              E.Message));
+        ShowErrorMessage(0, GetDCLMessageString(msConnectDBError)+' 0000 / '+
+              E.Message);
         Result:=255;
       end;
     end;
@@ -8842,8 +8842,8 @@ begin
         begin
           DebugProc('  ... Fail');
           ConnectErrorCode:=255;
-          ShowErrorMessage(0, SourceToInterface(GetDCLMessageString(msConnectDBError)+' 0000 / '+
-                E.Message));
+          ShowErrorMessage(0, GetDCLMessageString(msConnectDBError)+' 0000 / '+
+                E.Message);
           Result:=255;
         end;
       end;
