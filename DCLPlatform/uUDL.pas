@@ -7810,7 +7810,7 @@ begin
     {$IFDEF TRANSACTIONDB}
     tmp_Transaction:=FDCLLogOn.NewTransaction(trtWrite);
     ADOCommand.Transaction:=tmp_Transaction;
-    ADOCommand.Transaction.StartTransaction;
+    tmp_Transaction.StartTransaction;
     {$ENDIF}
 
     try
@@ -12727,8 +12727,10 @@ begin
       FQuery.Post;
     FLocalBookmark:=FQuery.GetBookmark;
     FQuery.Close;
+    {$IFnDEF FPC}
     {$IFDEF TRANSACTIONDB}
     FQuery.Transaction.Commit;
+    {$ENDIF}
     {$ENDIF}
   end;
 end;
