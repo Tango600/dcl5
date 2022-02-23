@@ -9,9 +9,6 @@ uses
 {$IFDEF ADO}
   WideStrings, ADODB, ADOConst, ADOInt,
 {$ENDIF}
-{$IFDEF BDE}
-  BDE, DBClient, DBTables, Bdeconst,
-{$ENDIF}
 {$IFDEF IBX}
 {$IFDEF NEWDELPHI}
   IBX.IBDatabase, IBX.IBTable, IBX.IBCustomDataSet, IBX.IBSQL, IBX.IBQuery,
@@ -327,7 +324,6 @@ begin
 {$IFDEF ZEOS}
   If not Connection.AutoCommit then
     Connection.Rollback;
-{$ELSE}
 {$ENDIF}
 end;
 
@@ -338,9 +334,6 @@ begin
 {$IFDEF ZEOS}
   FFieldsDefsDefined:=False;
   Connection:=DatabaseObj;
-{$ENDIF}
-{$IFDEF BDE}
-  Database:=DatabaseObj;
 {$ENDIF}
 {$IFDEF ADO}
   Connection:=DatabaseObj;
@@ -380,9 +373,6 @@ begin
   ShadowTransaction:=CreateTR(trtRead);
   ShadowQuery.Transaction:=Transaction;
 {$ENDIF}
-{$ENDIF}
-{$IFDEF BDE}
-  ShadowQuery.Database:=DatabaseObj;
 {$ENDIF}
 {$IFDEF ZEOS}
   ShadowQuery.Connection:=DatabaseObj;
@@ -440,10 +430,6 @@ Begin
       {$ELSE}
       FUpdateSQL:=Self;
       {$ENDIF}
-      {$IFDEF CACHEDDB}
-      {$IFDEF BDE}
-      CachedUpdates:=True;
-      {$ENDIF}{$ENDIF}
 
       ShadowQuery.SQL.Text:='select * from '+TableName+' where 1=0';
       ShadowQuery.Open;
@@ -843,9 +829,6 @@ begin
   If UpdatesPending then
     If CachedUpdates then
       ApplyUpdates;
-{$IFDEF BDE}
-  CommitUpdates;
-{$ENDIF}
 {$IFDEF ZEOS}
   If Active then
     CommitUpdates;
@@ -927,8 +910,8 @@ begin
       FUpdateSQL.InsertSQL.Clear;
     If FindNotAllowedOperation(dsoEdit) then
       FUpdateSQL.{$IFNDEF SQLdbFamily}ModifySQL{$ELSE}UpdateSQL{$ENDIF}.Clear;
-  {$ENDIF}
   End;
+{$ENDIF}
 end;
 
 procedure TDCLQuery.SetRequiredFields;

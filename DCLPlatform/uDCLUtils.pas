@@ -1476,14 +1476,6 @@ Begin
         If PosEx('ConnectionString=', Params[i])=1 Then
           GPT.ConnectionString:=Copy(Params[i], 18, Length(Params[i]));
 {$ENDIF}
-{$IFDEF BDE}
-        If PosEx('Alias=', Params[i])=1 Then
-          GPT.Alias:=FindParam('Alias=', Params[i]);
-        If PosEx('DriverName=', Params[i])=1 Then
-          GPT.Driver_Name:=FindParam('DriverName=', Params[i]);
-        If PosEx('DEFAULTDRIVER=', Params[i])=1 Then
-          GPT.DEFAULT_DRIVER:=FindParam('DEFAULTDRIVER=', Params[i]);
-{$ENDIF}
 {$IFDEF SERVERDB}
         If PosEx('UserName=', Params[i])=1 Then
           GPT.DBUserName:=FindParam('UserName=', Params[i]);
@@ -1619,15 +1611,6 @@ Begin
           End;
         End;
 
-{$IFDEF BDE}
-        If PosEx('NoParamsTable=', Params[i])=1 Then
-        Begin
-          If Trim(FindParam('NoParamsTable=', Params[i]))='1' Then
-            GPT.NoParamsTable:=True
-          Else
-            GPT.NoParamsTable:=False;
-        End;
-{$ENDIF}
         If PosEx('ShowFormPanel=', Params[i])=1 Then
         Begin
           If Trim(FindParam('ShowFormPanel=', Params[i]))='1' Then

@@ -4,11 +4,15 @@ unit uDCLConst;
 interface
 
 uses
-  uStringParams,
 {$IFDEF FPC}
   LConvEncoding,
 {$ENDIF}
-  DBCtrls;
+{$IFDEF NEWDELPHI}
+  Vcl.DBCtrls, Vcl.DBGrids,
+{$ELSE}
+  DBCtrls, DBGrids,
+{$ENDIF}
+  uStringParams;
 
 const
 {$IFDEF MSWINDOWS}
@@ -19,9 +23,6 @@ DefaultLibraryLocation='fbclient.so';
 {$ENDIF}
 {$IFDEF ADO}
   DBEngineType='ADODB (Universal)';
-{$ENDIF}
-{$IFDEF BDE}
-  DBEngineType='BDE (Universal)';
 {$ENDIF}
 {$IFDEF IBX}
   DBEngineType='IBX';

@@ -34,9 +34,6 @@ Uses
 {$IFDEF ADO}
   ActiveX, ADODB, ADOConst, ADOInt,
 {$ENDIF}
-{$IFDEF BDE}
-  BDE, DBClient, DBTables, Bdeconst,
-{$ENDIF}
 {$IFDEF IBX}
 {$IFDEF NEWDELPHI}
   IBX.IBDatabase, IBX.IBTable, IBX.IBCustomDataSet, IBX.IBHeader, IBX.IBSQL, IBX.IBQuery,
@@ -8167,15 +8164,6 @@ var
   OkButton: TButton;
   DBStringMemo: TMemo;
   DBString: String;
-{$IFDEF BDE}
-function GetBDEVersion:String;
-var
-  ThisVersion: SYSVersion;
-begin
-  DbiGetSysVersion(ThisVersion);
-  Result:=IntToStr(ThisVersion.iVersion);
-end;
-{$ENDIF}
 begin
   AboutForm:=TForm.Create(nil);
   With AboutForm do
@@ -8263,7 +8251,6 @@ begin
 {$IFDEF IBX}+' IBX v.'{$IFNDEF FPC}+FloatToStr(IBX_Version){$ENDIF}{$ENDIF}
 {$IFDEF ZEOS}+' ZEOS v.'+FDBLogOn.Version{$ENDIF}
 {$IFDEF ADO}+' ADO.db v.'+FDBLogOn.Version{$ENDIF}
-{$IFDEF BDE}+' BDE v.'+GetBDEVersion{$ENDIF}
 {$IFDEF SQLdbFamily}+' SQLdb v.'+AboutForm.LCLVersion{$ENDIF};
   end;
 
@@ -8282,9 +8269,6 @@ begin
 
 {$IFDEF SERVERDB}
   DBString:=GPT.ServerName+':'+GPT.DBPath;
-{$ENDIF}
-{$IFDEF BDE}
-  DBString:=GPT.Driver_Name+' '+GPT.Alias+' '+DBString;
 {$ENDIF}
 {$IFDEF ADO}
   DBString:=GPT.ConnectionString;
@@ -8484,8 +8468,8 @@ begin
       begin
         DebugProc('  ... Fail');
         ConnectErrorCode:=255;
-        ShowErrorMessage(0, SourceToInterface(GetDCLMessageString(msConnectDBError)+' 0000 / '+
-              E.Message));
+        ShowErrorMessage(0, GetDCLMessageString(msConnectDBError)+' 0000 / '+
+              E.Message);
         Result:=255;
       end;
     end;
@@ -8494,93 +8478,8 @@ begin
   begin
     ConnectErrorCode:=255;
     Result:=255;
-    ShowErrorMessage(0, SourceToInterface(GetDCLMessageString(msConnectionStringIncorrect)+
-          ' 0100'));
-  end;
-{$ENDIF}
-{$IFDEF BDE}
-  If Not IsFullPAth(GPT.DBPath) Then
-    GPT.DBPath:=ExtractFilePath(Application.ExeName)+GPT.DBPath;
-
-  If CompareString(GPT.DBType, DBTypeFirebird) then
-    GPT.IBAll:=True;
-
-  If IsUNCPath(GPT.DBPath) Then
-  begin
-    DebugProc('  DBPath: '+GPT.DBPath);
-    DebugProc('UNC paths not supported.');
-    ShowErrorMessage(0, SourceToInterface('UNC '+GetDCLMessageString(msPathsNotSupported)+'.'));
-    Result:=255;
-    Exit;
-  end;
-
-  If GPT.Driver_Name='' Then
-    FDBLogOn.DriverName:='STANDARD';
-
-  FDBLogOn.DatabaseName:='DCL_LogOn_$_Main';
-  If GPT.Alias<>'' Then
-    FDBLogOn.AliasName:=GPT.Alias;
-  DebugProc('  Connection Alias: '+GPT.Alias);
-  GPT.NewDBUserName:='';
-
-  If GPT.DBPath<>'' Then
-  begin
-    DebugProc('  DBPath: '+GPT.DBPath);
-    FDBLogOn.Params.Append('PATH='+GPT.DBPath);
-    If GPT.DEFAULT_DRIVER<>'' Then
-    begin
-      FDBLogOn.Params.Append('DEFAULT DRIVER='+GPT.DEFAULT_DRIVER);
-      DebugProc('  DEFAULT DRIVER='+GPT.DEFAULT_DRIVER);
-    end;
-    Session.AddPassword(GPT.DBPassword);
-    DebugProc('  Session.AddPassword(*********)');
-    FDBLogOn.LoginPrompt:=False;
-  end
-  Else
-  begin
-    If GPT.DBUserName<>'' Then
-    begin
-      FDBLogOn.Params.Append('USER NAME='+GPT.DBUserName);
-      DebugProc('  USER NAME='+GPT.DBUserName);
-    end;
-    If GPT.DBPassword<>'' Then
-      FDBLogOn.Params.Append('PASSWORD='+GPT.DBPassword);
-
-    If GPT.ServerName<>'' Then
-    begin
-      FDBLogOn.Params.Append('SERVER NAME='+GPT.ServerName);
-      DebugProc('  SERVER NAME='+GPT.ServerName);
-      FDBLogOn.LoginPrompt:=True;
-    end
-    Else
-      FDBLogOn.LoginPrompt:=False;
-
-    If GPT.DBPassword<>'' Then
-      FDBLogOn.LoginPrompt:=False
-    Else If GPT.Alias<>'' Then
-      FDBLogOn.LoginPrompt:=True;
-  end;
-  If GPT.Driver_Name<>'' Then
-  begin
-    FDBLogOn.DriverName:=GPT.Driver_Name;
-    DebugProc('  Connection.DriverName='+GPT.Driver_Name);
-  end;
-  FDBLogOn.KeepConnection:=True;
-  try
-    DebugProc('Connected...');
-    FDBLogOn.Open;
-    DebugProc('  ... OK');
-    Result:=0;
-    ConnectErrorCode:=0;
-  Except
-    On E: Exception do
-    begin
-      DebugProc('  ... Fail');
-      ConnectErrorCode:=255;
-      ShowErrorMessage(0, SourceToInterface(GetDCLMessageString(msConnectDBError)+' 0000 / '+
-            E.Message));
-      Result:=255;
-    end;
+    ShowErrorMessage(0, GetDCLMessageString(msConnectionStringIncorrect)+
+          ' 0100');
   end;
 {$ENDIF}
 {$IFDEF IBX}
@@ -8980,11 +8879,7 @@ begin
   GPT.DCLUserPass:='';
   GPT.EnterPass:='';
   GPT.LongRoleName:='';
-{$IFDEF BDE}
-  GPT.StringTypeChar:='"';
-{$ELSE}
   GPT.StringTypeChar:='''';
-{$ENDIF}
   GPT.SQLDialect:=3;
   GPT.DisableLogOnWithoutUser:=False;
 
@@ -9550,9 +9445,6 @@ end;
 procedure TDCLLogOn.GetTableNames(var List: TStrings);
 begin
 {$IFDEF ADO}
-  FDBLogOn.GetTableNames(List);
-{$ENDIF}
-{$IFDEF BDE}
   FDBLogOn.GetTableNames(List);
 {$ENDIF}
 {$IFDEF ZEOS}
@@ -10168,12 +10060,6 @@ procedure TDCLLogOn.SetDBName(var Query: TDCLDialogQuery);
 begin
 {$IFDEF ADO}
   Query.Connection:=FDBLogOn;
-{$ENDIF}
-{$IFDEF BDE}
-  If GPT.Alias<>'' Then
-    Query.DatabaseName:=GPT.Alias
-  Else
-    Query.DatabaseName:=FDBLogOn.DatabaseName; // 'DCL_LogOn_$_Main';
 {$ENDIF}
 {$IFDEF IBX}
   Query.Database:=FDBLogOn;

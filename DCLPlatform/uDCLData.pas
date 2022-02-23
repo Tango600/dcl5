@@ -15,7 +15,6 @@ uses
 {$ENDIF}
   uDCLConst, uDCLTypes;
 
-
 type
   {$IFNDEF FPC}
   DateTimePicker=TDateTimePicker;

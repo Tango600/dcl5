@@ -19,9 +19,6 @@ Uses
 {$IFDEF ADO}
   ADODB, ADOConst, ADOInt,
 {$ENDIF}
-{$IFDEF BDE}
-  BDE, DBClient, DBTables, Bdeconst,
-{$ENDIF}
 {$IFDEF IBX}
 {$IFDEF NEWDELPHI}
   IBX.IBDatabase, IBX.IBTable, IBX.IBCustomDataSet, IBX.IBSQL, IBX.IBQuery,
@@ -59,12 +56,6 @@ type
   TDBLogOn=TADOConnection;
   TCommandQuery=TADOCommand;
 {$ENDIF}
-{$IFDEF BDE}
-  TDCLDialogQuery=TQuery;
-  TReportQuery=TQuery;
-  TDBLogOn=TDatabase;
-  TUpdateObj=TUpdateSQL;
-{$ENDIF}
 {$IFDEF IBX}
   TDCLDialogQuery=TIBQuery;
   TReportQuery=TIBQuery;
@@ -101,7 +92,6 @@ type
   TEventsArray=array of String;
   TDialogSpeedButton=TSpeedButton;
   TFormPanelButton=TSpeedButton;
-
 
 implementation
 

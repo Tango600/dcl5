@@ -11,7 +11,6 @@ uses
   uDCLConst;
 
 type
-  //TLangID=LongWord;
   TLangName=String;
 
   TTranscodeDataType=(tdtUTF8, tdtDOS, tdtTranslit);
