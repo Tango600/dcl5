@@ -2,7 +2,8 @@
 {                                                       }
 {            Delphi Visual Component Library            }
 {                                                       }
-{ Copyright(c) 1995-2013 Embarcadero Technologies, Inc. }
+{ Copyright(c) 1995-2021 Embarcadero Technologies, Inc. }
+{              All rights reserved                      }
 {                                                       }
 {*******************************************************}
 
@@ -14,7 +15,8 @@ interface
 
 uses System.Variants, Winapi.Windows, System.SysUtils, Winapi.Messages,
   System.Classes, Vcl.Controls, Vcl.Forms, Vcl.StdCtrls, Vcl.Graphics,
-  Vcl.Grids, Vcl.DBCtrls, Data.DB, Vcl.Menus, Vcl.ImgList;
+  Vcl.Grids, Vcl.DBCtrls, Data.DB, Vcl.Menus, Vcl.ImgList,
+  Vcl.ImageCollection, Vcl.VirtualImageList;
 
 type
   TColumnValue = (cvColor, cvWidth, cvFont, cvAlignment, cvReadOnly, cvTitleColor,
@@ -47,6 +49,7 @@ type
     FFont: TFont;
     FColor: TColor;
     FAlignment: TAlignment;
+    FIsFontScaled: Boolean;
     procedure FontChanged(Sender: TObject);
     function GetAlignment: TAlignment;
     function GetColor: TColor;
@@ -62,6 +65,7 @@ type
     procedure SetCaption(const Value: string); virtual;
   protected
     procedure RefreshDefaultFont;
+    property IsFontScaled: Boolean read FIsFontScaled;
   public
     constructor Create(Column: TColumn);
     destructor Destroy; override;
@@ -105,6 +109,7 @@ type
     FVisible: Boolean;
     FExpanded: Boolean;
     FStored: Boolean;
+    FIsFontScaled: Boolean;
     procedure FontChanged(Sender: TObject);
     function  GetAlignment: TAlignment;
     function  GetColor: TColor;
@@ -150,6 +155,7 @@ type
     procedure SetIndex(Value: Integer); override;
     [Default(True)]
     property IsStored: Boolean read FStored write FStored default True;
+    property  IsFontScaled: Boolean read FIsFontScaled;
   public
     constructor Create(Collection: TCollection); override;
     destructor Destroy; override;
@@ -325,7 +331,7 @@ type
   TCustomDBGrid = class(TCustomGrid)
   private
     FNeedRestoreImeName: Boolean;
-    FIndicators: TImageList;
+    FIndicators: TVirtualImageList;
     FTitleFont: TFont;
     FReadOnly: Boolean;
     FOriginalImeName: TImeName;
@@ -335,6 +341,7 @@ type
     FLayoutFromDataset: Boolean;
     FOptions: TDBGridOptions;
     FTitleOffset, FIndicatorOffset: Byte;
+    FIndicatorWidth: Integer;
     FUpdateLock: Byte;
     FLayoutLock: Byte;
     FInColExit: Boolean;
@@ -357,6 +364,8 @@ type
     FOnCellClick: TDBGridClickEvent;
     FOnTitleClick:TDBGridClickEvent;
     FDragCol: TColumn;
+    FOldScrollBarVisible: Boolean;
+    class var FIndicatorImageCollection: TImageCollection;
     class constructor Create;
     class destructor Destroy;
     function AcquireFocus: Boolean;
@@ -397,9 +406,11 @@ type
     procedure WMIMEStartComp(var Message: TMessage); message WM_IME_STARTCOMPOSITION;
     procedure WMSetFocus(var Message: TWMSetFocus); message WM_SetFOCUS;
     procedure WMKillFocus(var Message: TMessage); message WM_KillFocus;
+    function CanEditModifyField(AField: TField): Boolean;
   protected
     FUpdateFields: Boolean;
     FAcquireFocus: Boolean;
+    procedure ChangeScale(M, D: Integer; isDpiChange: Boolean); override;
     function  RawToDataColumn(ACol: Integer): Integer;
     function  DataToRawColumn(ACol: Integer): Integer;
     function  AcquireLayoutLock: Boolean;
@@ -408,6 +419,8 @@ type
     procedure CalcSizingState(X, Y: Integer; var State: TGridState;
       var Index: Longint; var SizingPos, SizingOfs: Integer;
       var FixedInfo: TGridDrawInfo); override;
+    function CalcColWidth(const ATextLength: Integer; const ACaption: string;
+      AColumnObj: TObject): Integer; override;
     procedure CancelLayout;
     function  CanEditAcceptKey(Key: Char): Boolean; override;
     function  CanEditModify: Boolean; override;
@@ -416,6 +429,7 @@ type
     procedure ColumnMoved(FromIndex, ToIndex: Longint); override;
     function CalcTitleRect(Col: TColumn; ARow: Integer;
       var MasterCol: TColumn): TRect;
+    function CalcExpandedCellRect(const Coord: TGridCoord): TGridRect; override;
     function ColumnAtDepth(Col: TColumn; ADepth: Integer): TColumn;
     procedure ColEnter; dynamic;
     procedure ColExit; dynamic;
@@ -569,6 +583,7 @@ type
     property Touch;
     property Visible;
     property StyleElements;
+    property StyleName;
     property OnCellClick;
     property OnColEnter;
     property OnColExit;
@@ -617,6 +632,7 @@ const
   bmInsert = 'DBINSERT';
   bmMultiDot = 'DBMULTIDOT';
   bmMultiArrow = 'DBMULTIARROW';
+  DefIndicatorSize = 13;
 
   MaxMapSize = (MaxInt div 2) div SizeOf(Integer);  { 250 million }
 
@@ -693,7 +709,7 @@ begin
         with TCustomDBGrid(Grid), Columns[SelectedIndex].Field do
         begin
           MasterField := DataSet.FieldByName(KeyFields);
-          if MasterField.CanModify and FDataLink.Edit then
+          if CanEditModifyField(MasterField) then
             MasterField.Value := ListValue;
         end
       else
@@ -726,6 +742,7 @@ begin
         FDataList.Color := Color;
         FDataList.Font := Font;
         FDataList.StyleElements := TCustomDBGrid(Grid).StyleElements;
+        FDataList.StyleName := TCustomDBGrid(Grid).StyleName;
         FDataList.RowCount := Column.DropDownRows;
         FLookupSource.DataSet := LookupDataSet;
         FDataList.KeyField := LookupKeyFields;
@@ -791,7 +808,7 @@ var
   I: Integer;
 begin
   Result := True;
-  if DataSet <> nil then Result := DataSet.DefaultFields;
+  if DataSet <> nil then Result := lcAutomatic in DataSet.Fields.LifeCycles;
   if Result and SparseMap then
   for I := 0 to FFieldCount-1 do
     if FFieldMap[I] < 0 then
@@ -1101,11 +1118,13 @@ procedure TColumnTitle.RefreshDefaultFont;
 var
   Save: TNotifyEvent;
 begin
+  FIsFontScaled := False;
   if (cvTitleFont in FColumn.FAssignedValues) then Exit;
   Save := FFont.OnChange;
   FFont.OnChange := nil;
   try
     FFont.Assign(DefaultFont);
+    FIsFontScaled := True;
   finally
     FFont.OnChange := Save;
   end;
@@ -1306,47 +1325,15 @@ end;
 
 function TColumn.DefaultWidth: Integer;
 var
-  W: Integer;
-  RestoreCanvas: Boolean;
-  TempDc: HDC;
-  TM: TTextMetric;
+  Grid: TCustomDBGrid;
 begin
-  if GetGrid = nil then
-  begin
-    Result := 64;
-    Exit;
-  end;
-  with GetGrid do
-  begin
-    if Assigned(Field) then
-    begin
-      RestoreCanvas := not HandleAllocated;
-      if RestoreCanvas then
-        Canvas.Handle := GetDC(0);
-      try
-        Canvas.Font := Self.Font;
-        GetTextMetrics(Canvas.Handle, TM);
-        Result := Field.DisplayWidth * (Canvas.TextWidth('0') - TM.tmOverhang)
-          + TM.tmOverhang + 4;
-        if dgTitles in Options then
-        begin
-          Canvas.Font := Title.Font;
-          W := Canvas.TextWidth(Title.Caption) + 4;
-          if Result < W then
-            Result := W;
-        end;
-      finally
-        if RestoreCanvas then
-        begin
-          TempDc := Canvas.Handle;
-          Canvas.Handle := 0;
-          ReleaseDC(0, TempDc);
-        end;
-      end;
-    end
-    else
-      Result := DefaultColWidth;
-  end;
+  Grid := GetGrid;
+  if Grid = nil then
+    Result := 64
+  else if Assigned(Field) then
+    Result := Grid.TextWidthToColWidth(Field.DisplayWidth, '', Self)
+  else
+    Result := Grid.DefaultColWidth;
 end;
 
 procedure TColumn.FontChanged;
@@ -1385,7 +1372,7 @@ begin    { Returns Nil if FieldName can't be found in dataset }
   if (FField = nil) and (Length(FFieldName) > 0) and Assigned(Grid) and
     Assigned(Grid.DataLink.DataSet) then
   with Grid.Datalink.Dataset do
-    if Active or (not DefaultFields) then
+    if Active or (lcPersistent in Fields.LifeCycles) then
       SetField(FindField(FieldName));
   Result := FField;
 end;
@@ -1545,11 +1532,13 @@ procedure TColumn.RefreshDefaultFont;
 var
   Save: TNotifyEvent;
 begin
+  FIsFontScaled := False;
   if cvFont in FAssignedValues then Exit;
   Save := FFont.OnChange;
   FFont.OnChange := nil;
   try
     FFont.Assign(DefaultFont);
+    FIsFontScaled := True;
   finally
     FFont.OnChange := Save;
   end;
@@ -1610,6 +1599,7 @@ begin
     FField.RemoveFreeNotification(GetGrid);
   if Assigned(Value) and (csDestroying in Value.ComponentState) then
     Value := nil;    // don't acquire references to fields being destroyed
+  if FField = Value then Exit;
   FField := Value;
   if Assigned(Value) then
   begin
@@ -1784,8 +1774,8 @@ begin
       begin
         Canvas.Font := Self.Font;
         GetTextMetrics(Canvas.Handle, TM);
-        Field.DisplayWidth := (Value + (TM.tmAveCharWidth div 2) - TM.tmOverhang - 3)
-          div TM.tmAveCharWidth;
+        Field.DisplayWidth := (Value - TM.tmOverhang - 4) div
+          (Canvas.TextWidth('0') - TM.tmOverhang);
       end;
       if (not Grid.FLayoutFromDataset) or (cvWidth in FAssignedValues) then
         DoSetWidth := True;
@@ -1882,7 +1872,7 @@ procedure TDBGridColumns.LoadFromFile(const Filename: string);
 var
   S: TFileStream;
 begin
-  S := TFileStream.Create(Filename, fmOpenRead);
+  S := TFileStream.Create(Filename, fmOpenRead or fmShareDenyWrite);
   try
     LoadFromStream(S);
   finally
@@ -2262,18 +2252,18 @@ begin
       taRightJustify:
         Left := ARect.Right - ACanvas.TextWidth(Text) - 3;
     else { taCenter }
-      Left := ARect.Left + (ARect.Right - ARect.Left) shr 1
-        - (ACanvas.TextWidth(Text) shr 1);
+      Left := ARect.Left + (ARect.Right - ARect.Left) div 2
+        - (ACanvas.TextWidth(Text) div 2);
     end;
     ACanvas.TextRect(ARect, Left, ARect.Top + DY, Text);
   end
   else begin                  { Use FillRect and Drawtext for dithered colors }
     DrawBitmap.Canvas.Lock;
     try
-      with DrawBitmap, ARect do { Use offscreen bitmap to eliminate flicker and }
-      begin                     { brush origin tics in painting / scrolling.    }
-        Width := Max(Width, Right - Left);
-        Height := Max(Height, Bottom - Top);
+      with ARect do { Use offscreen bitmap to eliminate flicker and }
+      begin         { brush origin tics in painting / scrolling.    }
+        DrawBitmap.Width := Max(DrawBitmap.Width, Right - Left);
+        DrawBitmap.Height := Max(DrawBitmap.Height, Bottom - Top);
         R := Rect(DX, DY, Right - Left - 1, Bottom - Top - 1);
         B := Rect(0, 0, Right - Left, Bottom - Top);
       end;
@@ -2304,35 +2294,34 @@ begin
 end;
 
 class constructor TCustomDBGrid.Create;
+
+  procedure LoadItem(const AName: String);
+  begin
+    FIndicatorImageCollection.Add(AName, HInstance, AName, ['', '_20X']);
+  end;
+
 begin
   TCustomStyleEngine.RegisterStyleHook(TCustomDBGrid, TScrollingStyleHook);
+  FIndicatorImageCollection := TImageCollection.Create(nil);
+  LoadItem(bmArrow);
+  LoadItem(bmEdit);
+  LoadItem(bmInsert);
+  LoadItem(bmMultiDot);
+  LoadItem(bmMultiArrow);
 end;
 
 constructor TCustomDBGrid.Create(AOwner: TComponent);
-var
-  Bmp: TBitmap;
 begin
   inherited Create(AOwner);
   inherited DefaultDrawing := False;
   FAcquireFocus := True;
-  Bmp := TBitmap.Create;
-  try
-    Bmp.LoadFromResourceName(HInstance, bmArrow);
-    FIndicators := TImageList.CreateSize(Bmp.Width, Bmp.Height);
-    FIndicators.AddMasked(Bmp, clWhite);
-    Bmp.LoadFromResourceName(HInstance, bmEdit);
-    FIndicators.AddMasked(Bmp, clWhite);
-    Bmp.LoadFromResourceName(HInstance, bmInsert);
-    FIndicators.AddMasked(Bmp, clWhite);
-    Bmp.LoadFromResourceName(HInstance, bmMultiDot);
-    FIndicators.AddMasked(Bmp, clWhite);
-    Bmp.LoadFromResourceName(HInstance, bmMultiArrow);
-    FIndicators.AddMasked(Bmp, clWhite);
-  finally
-    Bmp.Free;
-  end;
+  FIndicators := TVirtualImageList.Create(Self);
+  FIndicators.SetSize(DefIndicatorSize, DefIndicatorSize);
+  FIndicators.AutoFill := True;
+  FIndicators.ImageCollection := FIndicatorImageCollection;
   FTitleOffset := 1;
   FIndicatorOffset := 1;
+  FIndicatorWidth := IndicatorWidth;
   FUpdateFields := True;
   FOptions := [dgEditing, dgTitles, dgIndicator, dgColumnResize,
     dgColLines, dgRowLines, dgTabs, dgConfirmDelete, dgCancelOnExit,
@@ -2365,6 +2354,7 @@ end;
 
 class destructor TCustomDBGrid.Destroy;
 begin
+  FreeAndNil(FIndicatorImageCollection);
   TCustomStyleEngine.UnRegisterStyleHook(TCustomDBGrid, TScrollingStyleHook);
 end;
 
@@ -2392,6 +2382,49 @@ begin
   begin
     SetFocus;
     Result := Focused or (InplaceEditor <> nil) and InplaceEditor.Focused;
+  end;
+end;
+
+procedure TCustomDBGrid.ChangeScale(M, D: Integer; isDpiChange: Boolean);
+var
+  I: Integer;
+  Save: TNotifyEvent;
+begin
+  if M <> D then
+  begin
+    FIndicatorWidth := MulDiv(FIndicatorWidth, M, D);
+    FIndicators.SetSize(MulDiv(FIndicators.Width, M, D), MulDiv(FIndicators.Height, M, D));
+  end;
+
+  inherited;
+
+  if M <> D then
+  begin
+    for I := 0 to FColumns.Count - 1 do
+    begin
+      if not ParentFont then
+      begin
+        if (Font <> FColumns[I].Font) and not FColumns[I].IsFontScaled then
+          FColumns[I].Font.Height := MulDiv(FColumns[I].Font.Height, M, D);
+        if (TitleFont <> FColumns[I].Title.Font) and not FColumns[I].Title.IsFontScaled then
+          FColumns[I].Title.Font.Height := MulDiv(FColumns[I].Title.Font.Height, M, D);
+      end;
+      if (csLoading in ComponentState) and (FColumns[I].Width <> DefaultColWidth) then
+        FColumns[I].FWidth := MulDiv(FColumns[I].FWidth, M, D);
+    end;
+
+    if not ParentFont and (FTitleFont <> Font) then
+    begin
+      Save := FTitleFont.OnChange;
+      try
+        FTitleFont.OnChange := nil;
+        FTitleFont.Height := MulDiv(FTitleFont.Height, M, D);
+      finally
+        FTitleFont.OnChange := Save;
+      end;
+    end;
+
+    InternalLayout;
   end;
 end;
 
@@ -2440,18 +2473,22 @@ begin
     Result := FDatalink.Active and Assigned(Field) and Field.IsValidChar(Key);
 end;
 
-function TCustomDBGrid.CanEditModify: Boolean;
+function TCustomDBGrid.CanEditModifyField(AField: TField): Boolean;
 begin
   Result := False;
-  if not ReadOnly and FDatalink.Active and not FDatalink.Readonly then
-  with Columns[SelectedIndex] do
-    if (not ReadOnly) and Assigned(Field) and Field.CanModify
-      and (not (Field.DataType in ftNonTextTypes) or Assigned(Field.OnSetText)) then
-    begin
-      FDatalink.Edit;
-      Result := FDatalink.Editing;
-      if Result then FDatalink.Modified;
-    end;
+  if not ReadOnly and FDatalink.Active and not FDatalink.Readonly and
+     (not Columns[SelectedIndex].ReadOnly) and Assigned(AField) and AField.CanModify and
+     (not (AField.DataType in ftNonTextTypes) or Assigned(AField.OnSetText)) then
+  begin
+    FDatalink.Edit;
+    Result := FDatalink.Editing;
+    if Result then FDatalink.Modified;
+  end;
+end;
+
+function TCustomDBGrid.CanEditModify: Boolean;
+begin
+  Result := CanEditModifyField(Columns[SelectedIndex].Field);
 end;
 
 function TCustomDBGrid.CanEditShow: Boolean;
@@ -2488,13 +2525,16 @@ var
   I: Integer;
 begin
   inherited ColWidthsChanged;
-  if (FDatalink.Active or (FColumns.State = csCustomized)) and
-    AcquireLayoutLock then
-  try
-    for I := FIndicatorOffset to ColCount - 1 do
-      FColumns[I - FIndicatorOffset].Width := ColWidths[I];
-  finally
-    EndLayout;
+  if not (csLoading in ComponentState) then
+  begin
+    if (FDatalink.Active or (FColumns.State = csCustomized)) and
+      AcquireLayoutLock then
+    try
+      for I := FIndicatorOffset to ColCount - 1 do
+        FColumns[I - FIndicatorOffset].Width := ColWidths[I];
+    finally
+      EndLayout;
+    end;
   end;
 end;
 
@@ -2612,7 +2652,7 @@ begin
     Alignment := Field.Alignment;
     Value := Field.DisplayText;
   end;
-  WriteText(Canvas, Rect, 2, 2, Value, Alignment,
+  WriteText(Canvas, Rect, 3, 2, Value, Alignment,
     UseRightToLeftAlignmentForField(Field, Alignment));
 end;
 
@@ -2624,7 +2664,7 @@ begin
   Value := '';
   if Assigned(Column.Field) then
     Value := Column.Field.DisplayText;
-  WriteText(Canvas, Rect, 2, 2, Value, Column.Alignment,
+  WriteText(Canvas, Rect, 3, 2, Value, Column.Alignment,
     UseRightToLeftAlignmentForField(Column.Field, Column.Alignment));
 end;
 
@@ -2719,6 +2759,44 @@ begin
   end;
 end;
 
+function TCustomDBGrid.CalcExpandedCellRect(const Coord: TGridCoord): TGridRect;
+var
+  MasterCol: TColumn;
+  ScreenRect: TRect;
+begin
+  if (FTitleOffset > 1) and (Coord.Y < FTitleOffset) then
+    if Coord.X < FIndicatorOffset then
+    begin
+      Result.Left := 0;
+      Result.Top := 0;
+      Result.Right := FIndicatorOffset - 1;
+      Result.Bottom := FTitleOffset - 1;
+    end
+    else
+    begin
+      ScreenRect := CalcTitleRect(Columns[RawToDataColumn(Coord.X)], Coord.Y, MasterCol);
+      Result.TopLeft := MouseCoord(ScreenRect.Left, ScreenRect.Top);
+      Result.BottomRight := MouseCoord(ScreenRect.Right, ScreenRect.Bottom);
+    end
+  else
+    Result := inherited CalcExpandedCellRect(Coord);
+end;
+
+function TCustomDBGrid.CalcColWidth(const ATextLength: Integer; const ACaption: string;
+  AColumnObj: TObject): Integer;
+var
+  W: Integer;
+begin
+  Result := inherited CalcColWidth(ATextLength, ACaption, AColumnObj);
+  if (AColumnObj <> nil) and (dgTitles in Options) then
+  begin
+    Canvas.Font := TColumn(AColumnObj).Title.Font;
+    W := Canvas.TextWidth(TColumn(AColumnObj).Title.Caption) + 4;
+    if Result < W then
+      Result := W;
+  end;
+end;
+
 procedure TCustomDBGrid.DrawCell(ACol, ARow: Longint; ARect: TRect; AState: TGridDrawState);
 var
   FrameOffs: Byte;
@@ -2779,7 +2857,7 @@ var
         RestoreDC(Canvas.Handle, I);
       end;
     end;
-    DrawCellBackground(TitleRect, FixedColor, AState, ACol, ARow - FTitleOffset);
+    DrawCellBackground(TitleRect, MasterCol.Title.Color, AState, ACol, ARow - FTitleOffset);
 
     LFrameOffs := FrameOffs;
     if (gdPressed in AState) then
@@ -2792,7 +2870,7 @@ var
        not (gdPressed in AState) then
     begin
       InflateRect(TitleRect, 1, 1);
-      if not TStyleManager.IsCustomStyleActive then
+      if not IsCustomStyleActive then
       begin
         DrawEdge(Canvas.Handle, TitleRect, BDR_RAISEDINNER, BF_BOTTOMRIGHT);
         DrawEdge(Canvas.Handle, TitleRect, BDR_RAISEDINNER, BF_TOPLEFT);
@@ -2811,8 +2889,8 @@ var
   IsCustomStyle: Boolean;
   Style: TCustomStyleServices;
 begin
-  Style := StyleServices;
-  IsCustomStyle := TStyleManager.IsCustomStyleActive;
+  Style := StyleServices(Self);
+  IsCustomStyle := IsCustomStyleActive;
   if csLoading in ComponentState then
   begin
     if IsCustomStyle and (seClient in StyleElements) then
@@ -2830,7 +2908,10 @@ begin
     [dgRowLines, dgColLines]) then
   begin
     InflateRect(ARect, -1, -1);
-    FrameOffs := 1;
+    if Style.Enabled then
+      FrameOffs := 1
+    else
+      FrameOffs := 2;
   end
   else
     FrameOffs := 2;
@@ -2865,18 +2946,18 @@ begin
                 else
                   Indicator := tgIndicatorMultiArrow;  // multiselected and current row
           end;
-        FIndicators.BkColor := FixedColor;
-        ALeft := ARect.Right - FIndicators.Width - FrameOffs;
+
+        ALeft := ARect.Left + (ARect.Width - FIndicators.Width - FrameOffs) div 2;
         if Canvas.CanvasOrientation = coRightToLeft then
           Inc(ALeft);
 
         if Style.Enabled and not Style.IsSystemStyle then
           Style.DrawElement(Canvas.Handle,
             Style.GetElementDetails(Indicator),
-            Rect(ARect.Left + 1, ARect.Top, ARect.Right, ARect.Bottom))
+            Rect(ARect.Left + 1, ARect.Top, ARect.Right, ARect.Bottom), nil, CurrentPPI)
         else
           FIndicators.Draw(Canvas, ALeft,
-            (ARect.Top + ARect.Bottom - FIndicators.Height) shr 1,
+            (ARect.Top + ARect.Bottom - FIndicators.Height) div 2,
             Integer(Indicator) - Integer(tgIndicatorArrow), True);
         if ARow = FDatalink.ActiveRecord then
           FSelRow := ARow + FTitleOffset;
@@ -3301,7 +3382,7 @@ begin
           if FBookmarks.Count > 0 then
             FBookmarks.Delete
           else
-            Delete;} // Tango
+            Delete;}  // Tango
       end
     end
     else
@@ -3620,6 +3701,7 @@ var
   Cell: TGridCoord;
   OldCol,OldRow: Integer;
   MasterCol: TColumn;
+  LCancelInsert: Boolean;
 begin
   if not AcquireFocus then Exit;
   if (ssDouble in Shift) and (Button = mbLeft) then
@@ -3659,7 +3741,7 @@ begin
     Exit;
   end;
 
-  if ((csDesigning in ComponentState) or (dgColumnResize in Options)) and
+  if ((csDesigning in ComponentState) or ([dgTitleClick, dgColumnResize] * Options <> [])) and
     (Cell.Y < FTitleOffset) then
   begin
     FDataLink.UpdateData;
@@ -3677,8 +3759,15 @@ begin
         OldCol := Col;
         OldRow := Row;
         if (Y >= FTitleOffset) and (Y - Row <> 0) then
-          FDatalink.MoveBy(Y - Row);
-        if X >= FIndicatorOffset then
+        begin
+          LCancelInsert := (Datalink.DataSet.State = dsInsert) and
+            not FDatalink.Dataset.Modified and not FDatalink.FModified;
+          if Row < Y then
+            FDatalink.MoveBy(Y - Row - Ord(LCancelInsert))
+          else
+            FDatalink.MoveBy(Y - Row + Ord(LCancelInsert and FDatalink.Dataset.Eof));
+        end;
+        if (X >= FIndicatorOffset) and not (dgRowSelect in Options) then
           MoveCol(X, 0);
         if (Button = mbLeft) and (dgMultiSelect in Options) and FDatalink.Active then
           with FBookmarks do
@@ -3789,7 +3878,7 @@ begin
   inherited Notification(AComponent, Operation);
   if (Operation = opRemove) then
   begin
-    if (AComponent is TPopupMenu) then  //Tango
+    if (AComponent is TPopupMenu) then  // Tango
     begin
       If Assigned(Columns) then
         If Columns.Count>0 then
@@ -3928,7 +4017,7 @@ begin
     ColWidths[I + FIndicatorOffset] := Width;
   end;
   if (dgIndicator in Options) then
-    ColWidths[0] := IndicatorWidth;
+    ColWidths[0] := FIndicatorWidth;
 end;
 
 procedure TCustomDBGrid.SetDataSource(Value: TDataSource);
@@ -4099,6 +4188,7 @@ var
   SIOld, SINew: TScrollInfo;
   ScrollBarVisible: Boolean;
 begin
+  ScrollBarVisible := False;
   if FDatalink.Active and HandleAllocated then
     with FDatalink.DataSet do
     begin
@@ -4129,11 +4219,16 @@ begin
         else SINew.nPos := 2;
       end;
       ShowScrollBar(Self.Handle, SB_VERT, ScrollBarVisible);
-      if ScrollBarVisible then
+      if ScrollBarVisible then begin
         SetScrollInfo(Self.Handle, SB_VERT, SINew, True);
-      if TStyleManager.IsCustomStyleActive then
-          SendMessage(Handle, WM_NCPAINT, 0, 0);
+      if (Win32MajorVersion >= 6) and (ScrollBarVisible <> FOldScrollBarVisible) then
+         SetWindowPos(Handle, 0, 0, 0, 0, 0, SWP_NOSIZE or SWP_NOMOVE or SWP_NOZORDER or
+           SWP_NOACTIVATE or SWP_NOOWNERZORDER or SWP_NOSENDCHANGING or SWP_FRAMECHANGED);
+      end;
+      if IsCustomStyleActive then
+        SendMessage(Handle, WM_NCPAINT, 0, 0);
     end;
+  FOldScrollBarVisible := ScrollBarVisible;
 end;
 
 function TCustomDBGrid.ValidFieldIndex(FieldIndex: Integer): Boolean;
@@ -4235,7 +4330,7 @@ end;
 procedure TCustomDBGrid.WMSize(var Message: TWMSize);
 begin
   inherited;
-  if UpdateLock = 0 then UpdateRowCount;
+  if (UpdateLock = 0) and (ScrollBars <> TScrollStyle.ssNone) then UpdateRowCount;
   InvalidateTitles;
 end;
 

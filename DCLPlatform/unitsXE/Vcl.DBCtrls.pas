@@ -2,7 +2,8 @@
 {                                                       }
 {            Delphi Visual Component Library            }
 {                                                       }
-{ Copyright(c) 1995-2013 Embarcadero Technologies, Inc. }
+{ Copyright(c) 1995-2021 Embarcadero Technologies, Inc. }
+{              All rights reserved                      }
 {                                                       }
 {*******************************************************}
 
@@ -13,9 +14,8 @@ unit Vcl.DBCtrls;
 interface
 
 uses System.Variants, Winapi.Windows, System.SysUtils, Winapi.Messages, Vcl.Controls, Vcl.Forms, System.Classes,
-     Vcl.Graphics, Vcl.Menus, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.Mask, Vcl.Buttons, Vcl.ComCtrls, Data.DB,
-     Winapi.RichEdit, System.Generics.Collections;
-
+     Vcl.Graphics, Vcl.Menus, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.Mask, Vcl.Buttons, Vcl.ComCtrls, 
+     Data.DB, Winapi.RichEdit, System.Generics.Collections, Vcl.ImageCollection, Vcl.VirtualImageList;
 type
 
 { TFieldDataLink }
@@ -84,7 +84,7 @@ type
 
 { TDBEdit }
 
-  TDBEdit = class(TCustomMaskEdit)
+  TDBEdit = class(TCustomLabeledEdit)
   private
     FDataLink: TFieldDataLink;
     FCanvas: TControlCanvas;
@@ -113,6 +113,7 @@ type
     procedure WMPaint(var Message: TWMPaint); message WM_PAINT;
     procedure CMGetDataLink(var Message: TMessage); message CM_GETDATALINK;
   protected
+    class function WithLabel: Boolean; override;
     procedure Change; override;
     function EditCanModify: Boolean; override;
     procedure KeyDown(var Key: Word; Shift: TShiftState); override;
@@ -169,6 +170,7 @@ type
     property Touch;
     property Visible;
     property StyleElements;
+    property StyleName;
     property OnChange;
     property OnClick;
     property OnContextPopup;
@@ -246,6 +248,7 @@ type
     property Touch;
     property Visible;
     property StyleElements;
+    property StyleName;
     property WordWrap;
     property OnClick;
     property OnContextPopup;
@@ -263,6 +266,29 @@ type
     property OnMouseUp;
     property OnStartDock;
     property OnStartDrag;
+  end;
+
+{ TDBLabeledEdit }
+
+  TDBBoundLabel = class(TBoundLabel)
+  private
+    function IsCaptionStored: Boolean;
+  published
+    property Caption stored IsCaptionStored;
+  end;
+
+  TDBLabeledEdit = class(TDBEdit)
+  private
+    procedure DataChange(Sender: TObject);
+  protected
+    class function WithLabel: Boolean; override;
+    class function GetLabelClass: TBoundLabelClass; override;
+  public
+    constructor Create(AOwner: TComponent); override;
+  published
+    property EditLabel;
+    property LabelPosition;
+    property LabelSpacing;
   end;
 
 { TDBCheckBox }
@@ -341,6 +367,7 @@ type
     property ValueUnchecked: string read FValueUncheck write SetValueUncheck stored IsValueUnchecked nodefault;
     property Visible;
     property StyleElements;
+    property StyleName;
     property WordWrap;
     property OnClick;
     property OnContextPopup;
@@ -452,6 +479,7 @@ type
     property Touch;
     property Visible;
     property StyleElements;
+    property StyleName;
     property OnChange;
     property OnClick;
     property OnContextPopup;
@@ -548,6 +576,7 @@ type
     property Touch;
     property Visible;
     property StyleElements;
+    property StyleName;
     property OnClick;
     property OnContextPopup;
     property OnDblClick;
@@ -625,11 +654,13 @@ type
     property Ctl3D;
     property DataField: string read GetDataField write SetDataField;
     property DataSource: TDataSource read GetDataSource write SetDataSource;
+    property DefaultHeaderFont;
     property DragCursor;
     property DragKind;
     property DragMode;
     property Enabled;
     property Font;
+    property HeaderFont;
     property Items write SetItems;
     [Default(True)]
     property ParentBackground default True;
@@ -641,6 +672,7 @@ type
     property PopupMenu;
     [Default(False)]
     property ReadOnly: Boolean read GetReadOnly write SetReadOnly default False;
+    property ShowFrame;
     property ShowHint;
     property TabOrder;
     property TabStop;
@@ -648,6 +680,7 @@ type
     property Values: TStrings read FValues write SetValues;
     property Visible;
     property StyleElements;
+    property StyleName;
     property OnChange: TNotifyEvent read FOnChange write FOnChange;
     property OnClick;
     property OnContextPopup;
@@ -696,6 +729,7 @@ type
     procedure WMLButtonDblClk(var Message: TWMLButtonDblClk); message WM_LBUTTONDBLCLK;
     procedure WMPaint(var Message: TWMPaint); message WM_PAINT;
     procedure CMGetDataLink(var Message: TMessage); message CM_GETDATALINK;
+    procedure SetLines;
   protected
     procedure Change; override;
     procedure KeyDown(var Key: Word; Shift: TShiftState); override;
@@ -733,6 +767,7 @@ type
     property DragCursor;
     property DragKind;
     property DragMode;
+    property EditMargins;
     property Enabled;
     property Font;
     property HideSelection;
@@ -754,6 +789,7 @@ type
     property Touch;
     property Visible;
     property StyleElements;
+    property StyleName;
     property WantReturns;
     property WantTabs;
     property WordWrap;
@@ -783,6 +819,9 @@ type
 
 { TDBImage }
 
+  TLoadPictureEvent = procedure (Sender: TObject; Picture: TPicture;
+    var Loaded: Boolean) of object;
+
   TDBImage = class(TCustomControl)
   private
     FDataLink: TFieldDataLink;
@@ -794,6 +833,9 @@ type
     FPictureLoaded: Boolean;
     FProportional: Boolean;
     FQuickDraw: Boolean;
+    FOnProgress: TProgressEvent;
+    FOnFindGraphicClass: TFindGraphicClassEvent;
+    FOnLoadPicture: TLoadPictureEvent;
     procedure DataChange(Sender: TObject);
     function GetDataField: string;
     function GetDataSource: TDataSource;
@@ -828,6 +870,11 @@ type
     procedure KeyPress(var Key: Char); override;
     procedure Notification(AComponent: TComponent; Operation: TOperation); override;
     procedure Paint; override;
+    procedure Progress(Sender: TObject; Stage: TProgressStage;
+      PercentDone: Byte; RedrawNow: Boolean; const R: TRect; const Msg: string); dynamic;
+    procedure FindGraphicClass(Sender: TObject;
+      const Context: TFindGraphicClassContext; var GraphicClass: TGraphicClass); dynamic;
+    function DoLoadPicture(AllowReset: Boolean; APicture: TPicture): Boolean; dynamic;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -886,16 +933,19 @@ type
     property OnEndDrag;
     property OnEnter;
     property OnExit;
+    property OnFindGraphicClass: TFindGraphicClassEvent read FOnFindGraphicClass write FOnFindGraphicClass;
     property OnGesture;
     property OnKeyDown;
     property OnKeyPress;
     property OnKeyUp;
+    property OnLoadPicture: TLoadPictureEvent read FOnLoadPicture write FOnLoadPicture;
     property OnMouseActivate;
     property OnMouseDown;
     property OnMouseEnter;
     property OnMouseLeave;
     property OnMouseMove;
     property OnMouseUp;
+    property OnProgress: TProgressEvent read FOnProgress write FOnProgress;
     property OnStartDock;
     property OnStartDrag;
   end;
@@ -938,6 +988,10 @@ type
     FFlat: Boolean;
     FMaxErrors: Integer;
     FKind: TDBNavigatorKind;
+    FButtonImages: TVirtualImageList;
+    class var FButtonsImageCollection: TImageCollection;
+    class constructor Create;
+    class destructor Destroy;
     procedure BtnMouseDown (Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure ClickHandler(Sender: TObject);
@@ -975,6 +1029,7 @@ type
       Operation: TOperation); override;
     procedure Paint; override;
     procedure SetButtonGlyph(Index: TNavigateBtn); virtual;
+    procedure ChangeScale(M, D: Integer; isDpiChange: Boolean); override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -1265,6 +1320,7 @@ type
     property Touch;
     property Visible;
     property StyleElements;
+    property StyleName;
     property OnClick;
     property OnContextPopup;
     property OnDblClick;
@@ -1335,6 +1391,7 @@ type
     procedure CMBiDiModeChanged(var Message: TMessage); message CM_BIDIMODECHANGED;
     procedure CMMouseEnter(var Message: TMessage); message CM_MOUSEENTER;
     procedure CMMouseLeave(var Message: TMessage); message CM_MOUSELEAVE;
+    procedure InternalCloseUp(Accept, ChangeFocus: Boolean);
   protected
     procedure CreateParams(var Params: TCreateParams); override;
     procedure Paint; override;
@@ -1349,6 +1406,7 @@ type
       X, Y: Integer); override;
     procedure UpdateListFields; override;
     procedure UpdateStyleElements; override;
+    procedure ChangeScale(M, D: Integer; isDpiChange: Boolean); override;
   public
     constructor Create(AOwner: TComponent); override;
     procedure CloseUp(Accept: Boolean); virtual;
@@ -1415,6 +1473,7 @@ type
     property Touch;
     property Visible;
     property StyleElements;
+    property StyleName;
     property OnClick;
     property OnCloseUp;
     property OnContextPopup;
@@ -1487,6 +1546,7 @@ type
     function UpdateAction(Action: TBasicAction): Boolean; override;
     function UseRightToLeftAlignment: Boolean; override;
     property Field: TField read GetField;
+    property Lines;
   published
     property Align;
     property Alignment;
@@ -1508,6 +1568,7 @@ type
     property DragCursor;
     property DragKind;
     property DragMode;
+    property EditMargins;
     property Enabled;
     property Font;
     property HideSelection;
@@ -1532,9 +1593,11 @@ type
     property Touch;
     property Visible;
     property StyleElements;
+    property StyleName;
     property WantReturns;
     property WantTabs;
     property WordWrap;
+    property Zoom;
     property OnChange;
     property OnClick;
     property OnContextPopup;
@@ -1595,6 +1658,8 @@ const
     False, False, False, False,  { ftLongWord, ftShortint, ftByte, ftExtended}
     False, False, False, True,   { ftConnection, ftParams, ftStream, ftTimeStampOffset}
     False, False);               { ftObject, ftSingle }
+
+  DefButtonImageSize = 15;
 
 function OkToChangeFieldAlignment(AField: TField; Alignment: TAlignment): Boolean;
 begin
@@ -1861,6 +1926,11 @@ begin
   inherited Destroy;
 end;
 
+class function TDBEdit.WithLabel: Boolean;
+begin
+  Result := False;
+end;
+
 procedure TDBEdit.Loaded;
 begin
   inherited Loaded;
@@ -1885,7 +1955,8 @@ procedure TDBEdit.KeyDown(var Key: Word; Shift: TShiftState);
 begin
   inherited KeyDown(Key, Shift);
   if (Key = VK_DELETE) or ((Key = VK_INSERT) and (ssShift in Shift)) then
-    FDataLink.Edit;
+    if not FDataLink.Edit then
+      Key := 0;
 end;
 
 procedure TDBEdit.KeyPress(var Key: Char);
@@ -1904,6 +1975,11 @@ begin
     #27:
       begin
         FDataLink.Reset;
+        SelectAll;
+        Key := #0;
+      end;
+    ^A:
+      begin
         SelectAll;
         Key := #0;
       end;
@@ -2022,7 +2098,7 @@ end;
 procedure TDBEdit.UpdateData(Sender: TObject);
 begin
   ValidateEdit;
-  if FDataLink.DataSource.State in [dsInsert, dsEdit] then //Tango
+  if FDataLink.DataSource.State in [dsInsert, dsEdit] then  // Tango
     FDataLink.Field.Text := Text;
 end;
 
@@ -2089,6 +2165,7 @@ var
   S: string;
   AAlignment: TAlignment;
   ExStyle: DWORD_PTR;
+  LStyle: TCustomStyleServices;
 begin
   AAlignment := FAlignment;
   if UseRightToLeftAlignment then ChangeBiDiModeAlignment(AAlignment);
@@ -2125,16 +2202,20 @@ begin
     with FCanvas do
     begin
       R := ClientRect;
+      LStyle := StyleServices(Self);
       if not (NewStyleControls and Ctl3D) and (BorderStyle = bsSingle) then
       begin
-        Brush.Color := StyleServices.GetSystemColor(clWindowFrame);
+        if LStyle.Enabled then
+          Brush.Color := LStyle.GetSystemColor(clWindowFrame)
+        else
+          Brush.Color := clWindowFrame;
         FrameRect(R);
         InflateRect(R, -1, -1);
       end;
-      if TStyleManager.IsCustomStyleActive then
+      if IsCustomStyleActive and (seClient in StyleElements) then
       begin
-        Brush.Color := StyleServices.GetStyleColor(StyleColor[Enabled]);
-        Font.Color := StyleServices.GetStyleFontColor(StyleFontColor[Enabled]);
+        Brush.Color := LStyle.GetStyleColor(StyleColor[Enabled]);
+        Font.Color := LStyle.GetStyleFontColor(StyleFontColor[Enabled]);
       end
       else
       begin
@@ -2329,6 +2410,46 @@ begin
     FDataLink.UpdateAction(Action);
 end;
 
+{ TDBBoundLabel }
+
+function TDBBoundLabel.IsCaptionStored: Boolean;
+begin
+  Result := FIsLabelModified;
+end;
+
+{ TDBLabeledEdit }
+
+constructor TDBLabeledEdit.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+  FDataLink.OnDataChange := DataChange;
+end;
+
+procedure TDBLabeledEdit.DataChange(Sender: TObject);
+begin
+  inherited DataChange(Sender);
+  if not EditLabel.IsLabelModified or (EditLabel.GetTextLen = 0) then
+  begin
+    if FDataLink.Field <> nil then
+      EditLabel.Caption := FDataLink.Field.DisplayLabel
+    else if csDesigning in ComponentState then
+      EditLabel.Caption := Name
+    else
+      EditLabel.Caption := '';
+    EditLabel.IsLabelModified := False;
+  end;
+end;
+
+class function TDBLabeledEdit.WithLabel: Boolean;
+begin
+  Result := True;
+end;
+
+class function TDBLabeledEdit.GetLabelClass: TBoundLabelClass;
+begin
+  Result := TDBBoundLabel;
+end;
+
 { TDBCheckBox }
 
 constructor TDBCheckBox.Create(AOwner: TComponent);
@@ -2391,8 +2512,16 @@ begin
 end;
 
 procedure TDBCheckBox.DataChange(Sender: TObject);
+var
+  PrevClicksDisabled: Boolean;
 begin
-  State := GetFieldState;
+  PrevClicksDisabled := ClicksDisabled;
+  ClicksDisabled := True;
+  try
+    State := GetFieldState;
+  finally
+    ClicksDisabled := PrevClicksDisabled;
+  end;
 end;
 
 procedure TDBCheckBox.UpdateData(Sender: TObject);
@@ -2509,10 +2638,18 @@ end;
 procedure TDBCheckBox.WndProc(var Message: TMessage);
 begin
   with Message do
+  begin
     if ((Msg = WM_CREATE) or (Msg = WM_WINDOWPOSCHANGED) or
       (Msg = CM_TEXTCHANGED) or (Msg = CM_FONTCHANGED)) and
       Assigned(FPaintControl) then
       FPaintControl.DestroyHandle;
+    if (Msg = BM_GETCHECK) and (csPaintCopy in ControlState) and
+       IsCustomStyleActive and (seClient in StyleElements) then
+    begin
+      Message.Result :=  Ord(GetFieldState);
+      Exit;
+    end;
+  end;
   inherited;
 end;
 
@@ -2716,13 +2853,22 @@ begin
   if Key in [VK_BACK, VK_DELETE, VK_UP, VK_DOWN, 32..255] then
   begin
     if not FDataLink.Edit and (Key in [VK_UP, VK_DOWN]) then
-      Key := 0;
+      Key := 0;  // Tango
   end;
 end;
 
 procedure TDBComboBox.KeyPress(var Key: Char);
+var
+  LPrevAutoComplete: Boolean;
 begin
-  inherited KeyPress(Key);
+  LPrevAutoComplete := AutoComplete;
+  AutoComplete := False;
+  try
+    inherited KeyPress(Key);
+  finally
+    AutoComplete := LPrevAutoComplete;
+  end;
+
   if (Key >= #32) and (FDataLink.Field <> nil) and
     not FDataLink.Field.IsValidChar(Key) then
   begin
@@ -2738,7 +2884,15 @@ begin
         FDataLink.Reset;
         SelectAll;
       end;
+    ^A:
+      begin
+        SelectAll;
+        Key := #0;
+      end;
   end;
+
+  if AutoComplete then
+    PerformAutoActions(Key);
 end;
 
 procedure TDBComboBox.EditingChange(Sender: TObject);
@@ -2753,6 +2907,74 @@ begin
 end;
 
 procedure TDBComboBox.WndProc(var Message: TMessage);
+
+  procedure DrawComboBox(DC: HDC; AText: String);
+  var
+    R, ItemR: TRect;
+    Details: TThemedElementDetails;
+    FCanvas: TCanvas;
+    TextColor: TColor;
+    PPI: Integer;
+    LStyle: TCustomStyleServices;
+  begin
+    R := Rect(0, 0, Width, Height);
+    LStyle := StyleServices(Self);
+    if Enabled then
+      Details := LStyle.GetElementDetails(tcBorderNormal)
+    else
+      Details := LStyle.GetElementDetails(tcBorderDisabled);
+    LStyle.DrawElement(DC, Details, R);
+    if not LStyle.GetElementColor(Details, ecTextColor, TextColor) then
+      TextColor := LStyle.GetSystemColor(clWindowText);
+    R := ClientRect;
+    InflateRect(R, -2, -2);
+    if BiDiMode <> bdRightToLeft then
+      R.Left := R.Right - GetSystemMetrics(SM_CXVSCROLL) + 1
+    else
+      R.Right := R.Left + GetSystemMetrics(SM_CXVSCROLL) - 1;
+    if Enabled then
+     Details := LStyle.GetElementDetails(tcDropDownButtonNormal)
+    else
+      Details := LStyle.GetElementDetails(tcDropDownButtonDisabled);
+
+    if CheckPerMonitorV2SupportForWindow(Handle) then
+      PPI := FCurrentPPI
+    else
+      PPI := 0;
+
+    LStyle.DrawElement(DC, Details, R, nil, PPI);
+    if AText <> '' then
+    begin
+      ItemR := ClientRect;
+      InflateRect(ItemR, -3, -3);
+      if BiDiMode <> bdRightToLeft then
+      begin
+        ItemR.Right := R.Left - 1;
+        if Style <> csDropDown then
+          Inc(ItemR.Left, 2);
+      end
+      else
+      begin
+        ItemR.Left := R.Right + 1;
+        if Style <> csDropDown then
+          Dec(ItemR.Right, 2);
+      end;
+      FCanvas := TCanvas.Create;
+      FCanvas.Handle := DC;
+      try
+        FCanvas.Font := Self.Font;
+        FCanvas.Font.Color := TextColor;
+        FCanvas.Brush.Style := bsClear;
+        FCanvas.TextOut(ItemR.Left, ItemR.Top, AText);
+      finally
+        FCanvas.Handle := 0;
+        FCanvas.Free;
+      end;
+    end;
+end;
+
+var
+  S: String;
 begin
   if not (csDesigning in ComponentState) then
     case Message.Msg of
@@ -2773,7 +2995,17 @@ begin
         if Assigned(FPaintControl) then
           FPaintControl.DestroyHandle;
     end;
-  inherited WndProc(Message);
+
+  if (Message.Msg = WM_PAINT) and (csPaintCopy in ControlState) and
+     IsCustomStyleActive and (seClient in StyleElements) then
+  begin
+    if FDataLink.Field <> nil then S := FDataLink.Field.Text else S := '';
+    if (Style <> csDropDown) and (Items.IndexOf(S) = -1) then
+      S := '';
+    DrawComboBox(TWMPaint(Message).DC, S);
+  end
+  else
+    inherited WndProc(Message);
 end;
 
 procedure TDBComboBox.ComboWndProc(var Message: TMessage; ComboWnd: HWnd;
@@ -3290,7 +3522,8 @@ begin
   if FMemoLoaded then
   begin
     if (Key = VK_DELETE) or ((Key = VK_INSERT) and (ssShift in Shift)) then
-      FDataLink.Edit;
+      if not FDataLink.Edit then
+        Key := 0;
   end;
 end;
 
@@ -3311,6 +3544,11 @@ begin
           Key := #0;
       #27:
         FDataLink.Reset;
+      ^A:
+        begin
+          SelectAll;
+          Key := #0;
+        end;
     end;
   end else
   begin
@@ -3363,18 +3601,28 @@ begin
   Result := FDataLink.Field;
 end;
 
+procedure TDBMemo.SetLines;
+begin
+  try
+    if not Assigned(FDataLink.Field.OnGetText) then
+      Lines.Text := FDataLink.Field.AsString
+    else if FFocused and FDataLink.CanModify then
+      Lines.Text := FDataLink.Field.Text
+    else
+      Lines.Text := FDataLink.Field.DisplayText;
+    FMemoLoaded := True;
+  except
+    { Memo too large }
+    on E:EInvalidOperation do
+      Lines.Text := Format('(%s)', [E.Message]);
+  end;
+end;
+
 procedure TDBMemo.LoadMemo;
 begin
   if not FMemoLoaded and Assigned(FDataLink.Field) and FDataLink.Field.IsBlob then
   begin
-    try
-      Lines.Text := FDataLink.Field.AsString;
-      FMemoLoaded := True;
-    except
-      { Memo too large }
-      on E:EInvalidOperation do
-        Lines.Text := Format('(%s)', [E.Message]);
-    end;
+    SetLines;
     EditingChange(Self);
   end;
 end;
@@ -3395,13 +3643,7 @@ begin
         EditingChange(Self);
       end;
     end else
-    begin
-      if FFocused and FDataLink.CanModify then
-        Text := FDataLink.Field.Text
-      else
-        Text := FDataLink.Field.DisplayText;
-      FMemoLoaded := True;
-    end
+      SetLines
   else
   begin
     if csDesigning in ComponentState then Text := Name else Text := '';
@@ -3426,7 +3668,8 @@ begin
   if FFocused <> Value then
   begin
     FFocused := Value;
-    if not Assigned(FDataLink.Field) or not FDataLink.Field.IsBlob then
+     if not Assigned(FDataLink.Field) or not FDataLink.Field.IsBlob or
+        Assigned(FDataLink.Field.OnGetText) then
       FDataLink.Reset;
   end;
 end;
@@ -3511,11 +3754,14 @@ begin
   begin
     if FDataLink.Field <> nil then
       if FDataLink.Field.IsBlob then
-      begin
         if FAutoDisplay then
-          S := AdjustLineBreaks(FDataLink.Field.AsString) else
-          S := Format('(%s)', [FDataLink.Field.DisplayLabel]);
-      end else
+          if Assigned(FDataLink.Field.OnGetText) then
+            S := AdjustLineBreaks(FDataLink.Field.DisplayText)
+          else
+            S := AdjustLineBreaks(FDataLink.Field.AsString)
+        else
+          S := Format('(%s)', [FDataLink.Field.DisplayLabel])
+      else
         S := FDataLink.Field.DisplayText;
     SendMessage(FPaintControl.Handle, WM_SETTEXT, 0, Winapi.Windows.LPARAM(PChar(S)));
     SendMessage(FPaintControl.Handle, WM_ERASEBKGND, Message.DC, 0);
@@ -3548,6 +3794,8 @@ begin
   ParentColor := False;
   FPicture := TPicture.Create;
   FPicture.OnChange := PictureChanged;
+  FPicture.OnProgress := Progress;
+  FPicture.OnFindGraphicClass := FindGraphicClass;
   FBorderStyle := bsSingle;
   FAutoDisplay := True;
   FCenter := True;
@@ -3660,9 +3908,7 @@ end;
 
 function TDBImage.GetPalette: HPALETTE;
 begin
-  Result := 0;
-  if FPicture.Graphic is TBitmap then
-    Result := TBitmap(FPicture.Graphic).Palette;
+  Result := FPicture.Graphic.Palette;
 end;
 
 procedure TDBImage.SetAutoDisplay(Value: Boolean);
@@ -3727,8 +3973,8 @@ begin
   with Canvas do
   begin
     Brush.Style := bsSolid;
-    if TStyleManager.IsCustomStyleActive then
-      Brush.Color := StyleServices.GetStyleColor(scWindow)
+    if IsCustomStyleActive then
+      Brush.Color := StyleServices(Self).GetStyleColor(scWindow)
     else
       Brush.Color := Color;
     if FPictureLoaded or (csPaintCopy in ControlState) then
@@ -3736,10 +3982,8 @@ begin
       DrawPict := TPicture.Create;
       Pal := 0;
       try
-        if (csPaintCopy in ControlState) and
-          Assigned(FDataLink.Field) and FDataLink.Field.IsBlob then
+        if (csPaintCopy in ControlState) and DoLoadPicture(False, DrawPict) then
         begin
-          DrawPict.Assign(FDataLink.Field);
           if DrawPict.Graphic is TBitmap then
             DrawPict.Bitmap.IgnorePalette := QuickDraw;
         end
@@ -3788,7 +4032,7 @@ begin
       not (csDesigning in ComponentState) and
       not (csPaintCopy in ControlState) then
     begin
-      Brush.Color := StyleServices.GetSystemColor(clWindowFrame);
+      Brush.Color := StyleServices(Self).GetSystemColor(clWindowFrame);
       FrameRect(ClientRect);
     end;
   end;
@@ -3801,6 +4045,18 @@ begin
   Invalidate;
 end;
 
+procedure TDBImage.Progress(Sender: TObject; Stage: TProgressStage;
+  PercentDone: Byte; RedrawNow: Boolean; const R: TRect; const Msg: string);
+begin
+  if Assigned(FOnProgress) then FOnProgress(Sender, Stage, PercentDone, RedrawNow, R, Msg);
+end;
+
+procedure TDBImage.FindGraphicClass(Sender: TObject;
+  const Context: TFindGraphicClassContext; var GraphicClass: TGraphicClass);
+begin
+  if Assigned(FOnFindGraphicClass) then FOnFindGraphicClass(Sender, Context, GraphicClass);
+end;
+
 procedure TDBImage.Notification(AComponent: TComponent;
   Operation: TOperation);
 begin
@@ -3809,11 +4065,23 @@ begin
     (AComponent = DataSource) then DataSource := nil;
 end;
 
+function TDBImage.DoLoadPicture(AllowReset: Boolean; APicture: TPicture): Boolean;
+begin
+  Result := False;
+  if Assigned(FDataLink.Field) or AllowReset then
+    if Assigned(FOnLoadPicture) then
+      FOnLoadPicture(Self, APicture, Result)
+    else if (FDataLink.Field = nil) or FDataLink.Field.IsBlob then
+    begin
+      APicture.Assign(FDataLink.Field);
+      Result := True;
+    end;
+end;
+
 procedure TDBImage.LoadPicture;
 begin
-  if not FPictureLoaded and (not Assigned(FDataLink.Field) or
-    FDataLink.Field.IsBlob) then
-    Picture.Assign(FDataLink.Field);
+  if not FPictureLoaded then
+    DoLoadPicture(True, Picture);
 end;
 
 procedure TDBImage.DataChange(Sender: TObject);
@@ -3825,9 +4093,7 @@ end;
 
 procedure TDBImage.UpdateData(Sender: TObject);
 begin
-  if Picture.Graphic is TBitmap then
-     FDataLink.Field.Assign(Picture.Graphic) else
-     FDataLink.Field.Clear;
+  FDataLink.Field.Assign(Picture.Graphic);
 end;
 
 procedure TDBImage.CopyToClipboard;
@@ -3846,9 +4112,22 @@ begin
 end;
 
 procedure TDBImage.PasteFromClipboard;
+var
+  I: Integer;
 begin
-  if Clipboard.HasFormat(CF_BITMAP) and FDataLink.Edit then
-    Picture.Bitmap.Assign(Clipboard);
+  if Clipboard.HasFormat(CF_BITMAP) then
+  begin
+    if FDataLink.Edit then
+      Picture.Bitmap.Assign(Clipboard);
+  end
+  else
+    for I := 0 to Clipboard.FormatCount - 1 do
+      if Picture.SupportsClipboardFormat(Clipboard.Formats[I]) then
+      begin
+        if FDataLink.Edit then
+          Picture.Assign(Clipboard);
+        Break;
+      end;
 end;
 
 procedure TDBImage.CreateParams(var Params: TCreateParams);
@@ -3967,6 +4246,7 @@ end;
 
 { TDBNavigator }
 
+
 var
   BtnTypeName: array[TNavigateBtn] of PChar = ('FIRST', 'PRIOR', 'NEXT',
     'LAST', 'INSERT', 'DELETE', 'EDIT', 'POST', 'CANCEL', 'REFRESH', 'APPLYUPDATES',
@@ -3974,6 +4254,21 @@ var
   BtnHintId: array[TNavigateBtn] of Pointer = (@SFirstRecord, @SPriorRecord,
     @SNextRecord, @SLastRecord, @SInsertRecord, @SDeleteRecord, @SEditRecord,
     @SPostEdit, @SCancelEdit, @SRefreshRecord, @SApplyUpdates, @SCancelUpdates);
+
+class constructor TDBNavigator.Create;
+
+  procedure InitButtonsImageCollection;
+  var
+    I: TNavigateBtn;
+  begin
+    FButtonsImageCollection := TImageCollection.Create(nil);
+    for I := Low(BtnTypeName) to High(BtnTypeName) do
+      FButtonsImageCollection.Add(BtnTypeName[I], HInstance,  'DBN_' + BtnTypeName[I], ['', '_20X']);
+  end;
+
+begin
+  InitButtonsImageCollection;
+end;
 
 constructor TDBNavigator.Create(AOwner: TComponent);
 begin
@@ -3985,6 +4280,10 @@ begin
     nbDelete, nbEdit, nbPost, nbCancel, nbRefresh];
   FHints := TStringList.Create;
   TStringList(FHints).OnChange := HintsChanged;
+  FButtonImages := TVirtualImageList.Create(Self);
+  FButtonImages.SetSize(DefButtonImageSize, DefButtonImageSize);
+  FButtonImages.AutoFill := True;
+  FButtonImages.ImageCollection := FButtonsImageCollection;
   InitButtons;
   InitHints;
   BevelOuter := bvNone;
@@ -4004,16 +4303,18 @@ procedure TDBNavigator.CreateWnd;
 var
   I: TNavigateBtn;
   UseGlyphs: Boolean;
+  LStyle: TCustomStyleServices;
 begin
   inherited;
-  UseGlyphs := not StyleServices.Enabled or StyleServices.IsSystemStyle;
+  LStyle := StyleServices(Self);
+  UseGlyphs := not LStyle.Enabled or LStyle.IsSystemStyle;
   for I := Low(Buttons) to High(Buttons) do
   begin
-    if UseGlyphs and (Buttons[I].Glyph.Empty) then
+    if UseGlyphs and (Buttons[I].ImageIndex = -1) then
       SetButtonGlyph(I)
     else if not UseGlyphs then
       // With custom styles, glyphs are painted in the Paint method
-      Buttons[I].Glyph.SetSize(0, 0);
+      Buttons[I].ImageIndex := -1;
   end;
 end;
 
@@ -4022,17 +4323,32 @@ begin
   FDefHints.Free;
   FDataLink.Free;
   FHints.Free;
+  FButtonImages.Free;
   FDataLink := nil;
   inherited Destroy;
 end;
 
-procedure TDBNavigator.Paint;
+class destructor TDBNavigator.Destroy;
 begin
-  if not Flat and StyleServices.Enabled and not StyleServices.IsSystemStyle  then
+  FreeAndNil(FButtonsImageCollection);
+end;
+
+procedure TDBNavigator.ChangeScale(M, D: Integer; isDpiChange: Boolean);
+begin
+  inherited;
+  FButtonImages.SetSize(MulDiv(FButtonImages.Width, M, D), MulDiv(FButtonImages.Height, M, D));
+end;
+
+procedure TDBNavigator.Paint;
+var
+  LStyle: TCustomStyleServices;
+begin
+  LStyle := StyleServices(Self);
+  if not Flat and LStyle.Enabled and not LStyle.IsSystemStyle  then
     with Canvas do
     begin
       Brush.Style := bsSolid;
-      Brush.Color := StyleServices.GetSystemColor(clBtnFace);
+      Brush.Color := LStyle.GetSystemColor(clBtnFace);
       FillRect(Rect(0, 0, Width, Height));
     end
   else
@@ -4052,6 +4368,8 @@ begin
   begin
     Btn := TNavButton.Create(Self);
     Btn.Flat := Flat;
+    Btn.Images := FButtonImages;
+    Btn.ImageIndex := Ord(I);
     Btn.Index := I;
     Btn.Visible := I in FVisibleButtons;
     Btn.Enabled := True;
@@ -4373,7 +4691,7 @@ begin
         nbEdit: Edit;
         nbCancel: Cancel;
         nbPost: Post;
-        //nbRefresh: Refresh;  // !!! Убранно стандартная реакция на nbRefresh  //Tango
+        //nbRefresh: Refresh;  // !!! Убранно стандартная реакция на nbRefresh  // Tango
         nbDelete:
           if not FConfirmDelete or
             (MessageDlg(SDeleteRecordQuestion, mtConfirmation,
@@ -4459,10 +4777,10 @@ begin
   Buttons[nbPrior].Enabled := UpEnable;
   Buttons[nbNext].Enabled := DnEnable;
   Buttons[nbLast].Enabled := DnEnable;
-  Buttons[nbDelete].Enabled := CanModify and
-    not (FDataLink.DataSet.BOF and FDataLink.DataSet.EOF);
-  Buttons[nbApplyUpdates].Enabled := CanModify and Self.CanApplyUpdates;
-  Buttons[nbCancelUpdates].Enabled := CanModify and Self.CanCancelUpdates;
+  Buttons[nbDelete].Enabled := CanModify and not (FDataLink.DataSet.BOF and FDataLink.DataSet.EOF);
+  Buttons[nbRefresh].Enabled := Enabled and (nbRefresh in VisibleButtons) and FDataLink.Active and FDataLink.DataSet.CanRefresh;
+  Buttons[nbApplyUpdates].Enabled := CanModify and (nbApplyUpdates in VisibleButtons) and Self.CanApplyUpdates;
+  Buttons[nbCancelUpdates].Enabled := CanModify and (nbCancelUpdates in VisibleButtons) and Self.CanCancelUpdates;
 end;
 
 procedure TDBNavigator.EditingChanged;
@@ -4474,9 +4792,9 @@ begin
   Buttons[nbEdit].Enabled := CanModify and not FDataLink.Editing;
   Buttons[nbPost].Enabled := CanModify and FDataLink.Editing;
   Buttons[nbCancel].Enabled := CanModify and FDataLink.Editing;
-  Buttons[nbRefresh].Enabled := True; // Tango
-  Buttons[nbApplyUpdates].Enabled := CanModify and Self.CanApplyUpdates;
-  Buttons[nbCancelUpdates].Enabled := CanModify and Self.CanCancelUpdates;
+  Buttons[nbRefresh].Enabled := True;  // Tango  // Enabled and (nbRefresh in VisibleButtons) and FDataLink.Active and FDataLink.DataSet.CanRefresh;
+  Buttons[nbApplyUpdates].Enabled := CanModify and (nbApplyUpdates in VisibleButtons) and Self.CanApplyUpdates;
+  Buttons[nbCancelUpdates].Enabled := CanModify and (nbCancelUpdates in VisibleButtons) and Self.CanCancelUpdates;
 end;
 
 procedure TDBNavigator.ActiveChanged;
@@ -4514,12 +4832,8 @@ begin
 end;
 
 procedure TDBNavigator.SetButtonGlyph(Index: TNavigateBtn);
-var
-  ResName: string;
 begin
-  FmtStr(ResName, 'dbn_%s', [BtnTypeName[Index]]);
-  Buttons[Index].Glyph.LoadFromResourceName(HInstance, ResName);
-  Buttons[Index].NumGlyphs := 2;
+  Buttons[Index].ImageIndex := Ord(Index);
 end;
 
 procedure TDBNavigator.Loaded;
@@ -4603,11 +4917,12 @@ const
 var
   R: TRect;
   LButton: TThemedDataNavButtons;
+  LStyle: TCustomStyleServices;
 begin
   inherited Paint;
-
+  LStyle := StyleServices(Self);
   // If a custom style is selected, paint the
-  if StyleServices.Enabled and not StyleServices.IsSystemStyle then
+  if LStyle.Enabled and not LStyle.IsSystemStyle then
   begin
     if not Enabled then
       LButton := DisabledButtons[Index]
@@ -4619,7 +4934,7 @@ begin
       LButton := NormalButtons[Index];
 
     R := Bounds(0, 0, Width, Height);
-    StyleServices.DrawElement(Canvas.Handle, StyleServices.GetElementDetails(LButton), R);
+    LStyle.DrawElement(Canvas.Handle, LStyle.GetElementDetails(LButton), R, nil, TDBNavigator(Parent).CurrentPPI);
   end;
 
   if (GetFocus = Parent.Handle) and
@@ -4879,7 +5194,7 @@ begin
     try
       DataSet.GetFieldList(FListFields, FListFieldName);
     except
-      DatabaseErrorFmt(SFieldNotFound, [Self.Name, FListFieldName]);
+      DatabaseErrorFmt(SFieldNotFound, [FListFieldName], Self);
     end;
     if FLookupMode then
     begin
@@ -5306,6 +5621,8 @@ var
   Selected: Boolean;
   Field: TField;
   AAlignment: TAlignment;
+  LStyle: TCustomStyleServices;
+  LIsCustomStyleActive: Boolean;
 begin
   Canvas.Font := Font;
   TextWidth := Canvas.TextWidth('0');
@@ -5315,13 +5632,15 @@ begin
     Canvas.Pen.Color := clBtnFace
   else
     Canvas.Pen.Color := clBtnShadow;
+  LStyle := StyleServices(Self);
+  LIsCustomStyleActive := IsCustomStyleActive;
   for I := 0 to FRowCount - 1 do
   begin
-    if TStyleManager.IsCustomStyleActive and (seClient in StyleElements) then
+    if LIsCustomStyleActive and (seClient in StyleElements) then
     begin
-      Canvas.Brush.Color := StyleServices.GetStyleColor(StyleColor[Enabled]);
+      Canvas.Brush.Color := LStyle.GetStyleColor(StyleColor[Enabled]);
       if seFont in StyleElements then
-        Canvas.Font.Color := StyleServices.GetStyleFontColor(StyleFontColor[Enabled])
+        Canvas.Font.Color := LStyle.GetStyleFontColor(StyleFontColor[Enabled])
       else
       begin
         if Enabled then
@@ -5345,8 +5664,8 @@ begin
       if not VarIsNull(FKeyValue) and
         VarEquals(FKeyField.Value, FKeyValue) then
       begin
-        Canvas.Font.Color := StyleServices.GetSystemColor(clHighlightText);
-        Canvas.Brush.Color := StyleServices.GetSystemColor(clHighlight);
+        Canvas.Font.Color := LStyle.GetSystemColor(clHighlightText);
+        Canvas.Brush.Color := LStyle.GetSystemColor(clHighlight);
         Selected := True;
       end;
       R.Right := 0;
@@ -5382,7 +5701,7 @@ begin
     R.Right := ClientWidth;
     if I >= FRecordCount then
       Canvas.FillRect(R);
-    if Selected and (HasFocus or FPopup) and not TStyleManager.IsCustomStyleActive then
+    if Selected and (HasFocus or FPopup) and not LIsCustomStyleActive then
       Canvas.DrawFocusRect(R);
   end;
   if FRecordCount <> 0 then ListLink.ActiveRecord := FRecordIndex;
@@ -5610,7 +5929,7 @@ end;
 procedure TPopupDataList.CreateWnd;
 begin
   inherited CreateWnd;
-  if TStyleManager.IsCustomStyleActive then
+  if IsCustomStyleActive then
   begin
     Winapi.Windows.SetParent(Handle, 0);
     CallWindowProc(DefWndProc, Handle, wm_SetFocus, 0, 0);
@@ -5622,7 +5941,7 @@ begin
   inherited CreateParams(Params);
   with Params do
   begin
-    if TStyleManager.IsCustomStyleActive then
+    if IsCustomStyleActive then
     begin
       Style := Style or WS_BORDER;
       ExStyle := WS_EX_TOOLWINDOW or WS_EX_TOPMOST;
@@ -5673,25 +5992,36 @@ begin
   Invalidate;
 end;
 
-procedure TCustomDBLookupComboBox.CloseUp(Accept: Boolean);
+procedure TCustomDBLookupComboBox.ChangeScale(M, D: Integer; isDpiChange: Boolean);
+begin
+  FButtonWidth := GetSystemMetrics(SM_CXVSCROLL);
+  inherited;
+end;
+
+procedure TCustomDBLookupComboBox.InternalCloseUp(Accept, ChangeFocus: Boolean);
 var
   ListValue: Variant;
 begin
   if FListVisible then
   begin
     if GetCapture <> 0 then SendMessage(GetCapture, WM_CANCELMODE, 0, 0);
-    SetFocus;
+    if ChangeFocus then SetFocus;
     ListValue := FDataList.KeyValue;
     SetWindowPos(FDataList.Handle, 0, 0, 0, 0, 0, SWP_NOZORDER or
       SWP_NOMOVE or SWP_NOSIZE or SWP_NOACTIVATE or SWP_HIDEWINDOW);
-   
+
     FListVisible := False;
     FDataList.ListSource := nil;
     Invalidate;
     SearchText := '';
-    if Accept and CanModify then SelectKeyValue(ListValue);
+    if Accept and ChangeFocus and CanModify then SelectKeyValue(ListValue);
     if Assigned(FOnCloseUp) then FOnCloseUp(Self);
   end;
+end;
+
+procedure TCustomDBLookupComboBox.CloseUp(Accept: Boolean);
+begin
+  InternalCloseUp(Accept, True);
 end;
 
 procedure TCustomDBLookupComboBox.CMBiDiModeChanged(var Message: TMessage);
@@ -5910,14 +6240,17 @@ var
   R: TRect;
   State : TThemedComboBox;
   Details: TThemedElementDetails;
+  PPI: Integer;
+  LStyle: TCustomStyleServices;
 begin
+  LStyle := StyleServices(Self);
   Selected := HasFocus and not FListVisible and not (csPaintCopy in ControlState);
   Canvas.Font := Font;
-  if TStyleManager.IsCustomStyleActive and (seClient in StyleElements) then
+  if IsCustomStyleActive and (seClient in StyleElements) then
   begin
-    Canvas.Brush.Color := StyleServices.GetStyleColor(StyleColor[Enabled]);
+    Canvas.Brush.Color := LStyle.GetStyleColor(StyleColor[Enabled]);
     if seFont in StyleElements then
-      Canvas.Font.Color := StyleServices.GetStyleFontColor(StyleFontColor[Enabled])
+      Canvas.Font.Color := LStyle.GetStyleFontColor(StyleFontColor[Enabled])
     else
     begin
       if Enabled then
@@ -5936,8 +6269,8 @@ begin
   end;
   if Selected then
   begin
-    Canvas.Font.Color := StyleServices.GetSystemColor(clHighlightText);
-    Canvas.Brush.Color := StyleServices.GetSystemColor(clHighlight);
+    Canvas.Font.Color := LStyle.GetSystemColor(clHighlightText);
+    Canvas.Brush.Color := LStyle.GetSystemColor(clHighlight);
   end;
   if (csPaintCopy in ControlState) and (FDataField <> nil) and
     (FDataField.Lookup) then
@@ -5968,7 +6301,7 @@ begin
   if SysLocale.MiddleEast then
     TControlCanvas(Canvas).UpdateTextFlags;
   Canvas.TextRect(R, X, 2, Text);
-  if Selected and not TStyleManager.IsCustomStyleActive then
+  if Selected and not IsCustomStyleActive then
     Canvas.DrawFocusRect(R);
   SetRect(R, W, 0, ClientWidth, ClientHeight);
   if (SysLocale.MiddleEast) and (BiDiMode = bdRightToLeft) then
@@ -5977,7 +6310,7 @@ begin
     R.Right:= FButtonWidth;
   end;
 
-  if StyleServices.Enabled then
+  if LStyle.Enabled then
   begin
     if not (ListActive and Enabled) then
       State := tcDropDownButtonDisabled
@@ -5989,8 +6322,14 @@ begin
           State := tcDropDownButtonHot
         else
           State := tcDropDownButtonNormal;
-    Details := StyleServices.GetElementDetails(State);
-    StyleServices.DrawElement(Canvas.Handle, Details, R);
+    Details := LStyle.GetElementDetails(State);
+
+    if CheckPerMonitorV2SupportForWindow(Handle) then
+      PPI := FCurrentPPI
+    else
+      PPI := 0;
+
+    LStyle.DrawElement(Canvas.Handle, Details, R, nil, PPI);
   end
   else
   begin
@@ -6073,15 +6412,18 @@ end;
 procedure TCustomDBLookupComboBox.WMSetFocus(var Message: TWMKillFocus);
 begin
   inherited;
-  if (TStyleManager.IsCustomStyleActive) and (seBorder in StyleElements) then
+  if (IsCustomStyleActive) and (seBorder in StyleElements) then
     SendMessage(Handle, WM_NCPAINT, 0, 0);
 end;
 
 procedure TCustomDBLookupComboBox.WMKillFocus(var Message: TWMKillFocus);
+var
+  FocusToSelf: Boolean;
 begin
   inherited;
-  CloseUp(False);
-  if (TStyleManager.IsCustomStyleActive) and (seBorder in StyleElements) then
+  FocusToSelf := (Message.FocusedWnd = Handle) or (Message.FocusedWnd = FDataList.Handle);
+  InternalCloseUp(not FocusToSelf, FocusToSelf);
+  if (IsCustomStyleActive) and (seBorder in StyleElements) then
     SendMessage(Handle, WM_NCPAINT, 0, 0);
 end;
 
@@ -6101,7 +6443,7 @@ procedure TCustomDBLookupComboBox.CMMouseEnter(var Message: TMessage);
 begin
   inherited;
   {Windows XP themes use hot track states, hence we have to update the drop down button.}
-  if StyleServices.Enabled and not (FMouseInControl) and not (csDesigning in ComponentState) then
+  if StyleServices(Self).Enabled and not (FMouseInControl) and not (csDesigning in ComponentState) then
   begin
     FMouseInControl := True;
     Invalidate;
@@ -6111,7 +6453,7 @@ end;
 procedure TCustomDBLookupComboBox.CMMouseLeave(var Message: TMessage);
 begin
   inherited;
-  if StyleServices.Enabled and FMouseInControl then
+  if StyleServices(Self).Enabled and FMouseInControl then
   begin
     FMouseInControl := False;
     Invalidate;

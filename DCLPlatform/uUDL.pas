@@ -1015,6 +1015,11 @@ Type
 {$ENDIF}
   procedure EndDCL;
 
+{$IFNDEF FPC}
+{$R unitsXE\dbgrids.res}
+{$R unitsXE\dbctrls.res}
+{$ENDIF}
+
 var
   DCLMainLogOn: TDCLLogOn;
   Logger: TLogging;
@@ -6649,7 +6654,9 @@ begin
               TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
               OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
                 FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-              Case GetPossibleOffice(dtSheet, ConvertOfficeType(TmpStr)) of
+              OfficeReport.OfficeTemplateFormat:=GetPossibleOffice(dtSheet, ConvertOfficeType(TmpStr));
+
+              Case OfficeReport.OfficeTemplateFormat of
               odtOO:
               OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything, EnythingElse);
               odtMSO:
@@ -6693,7 +6700,7 @@ begin
               TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
               OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
                 FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-              OfficeReport.OfficeTemplateFormat:=GetPossibleOffice(dtSheet, ConvertOfficeType(TmpStr));
+              OfficeReport.OfficeTemplateFormat:=GetPossibleOffice(dtText, ConvertOfficeType(TmpStr));
 
               Case OfficeReport.OfficeTemplateFormat of
               odtOO:
@@ -15754,7 +15761,7 @@ begin
   begin
     FileName:=FindParam('FileName=', ParamStr);
     if not IsFullPath(FileName) then
-      FileName:=AppConfigDir+FileName;
+      FileName:=Path+FileName;
   end;
   If BinStor.ErrorCode=0 Then
     If FileExists(FileName) Then
@@ -15949,7 +15956,7 @@ begin
   begin
     FileName:=FindParam('FileName=', ParamStr);
     if not IsFullPath(FileName) then
-      FileName:=AppConfigDir+FileName;
+      FileName:=Path+FileName;
   end;
   If BinStor.ErrorCode=0 Then
     If FileExists(FileName) Then
@@ -16097,7 +16104,7 @@ begin
   begin
     FileName:=FindParam('FileName=', ParamStr);
     if not IsFullPath(FileName) then
-      FileName:=AppConfigDir+FileName;
+      FileName:=Path+FileName;
   end;
   If BinStor.ErrorCode=0 Then
     If FileExists(FileName) Then
