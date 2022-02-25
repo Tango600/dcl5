@@ -4882,10 +4882,10 @@ begin
       If Not FForm.Showing Then
         If ModalOpen Then
         Begin
-          {LoadFormPos;
+          LoadFormPos;
           LoadBookmarkMenu;
           SettingsLoaded:=True;
-          FForm.ShowModal;}
+          FForm.ShowModal;
         End
         Else
         begin
@@ -5278,7 +5278,6 @@ end;
 procedure TDCLForm.GetChooseValue;
 var
   CurrentGrid: TDCLGrid;
-  KeyField: String;
 begin
   ResetChooseValue(FRetunValue);
   CurrentGrid:=Tables[ - 1];
@@ -5288,16 +5287,10 @@ begin
     If Assigned(FReturnValueParams) Then
     begin
       FRetunValue.Choosen:=True;
-      KeyField:=CurrentGrid.Query.KeyField;
       FRetunValue.ModifyField:=FReturnValueParams.ModifyField;
       FRetunValue.EditName:=FReturnValueParams.EditName;
 
-      If FReturnValueParams.KeyField<>'' Then
-        FRetunValue.Key:=CurrentGrid.Query.FieldByName(FReturnValueParams.KeyField).AsString
-      Else If KeyField<>'' Then
-        FRetunValue.Val:=CurrentGrid.Query.FieldByName(KeyField).AsString;
-
-      If FReturnValueParams.DataField<>'' Then
+      If (FReturnValueParams.DataField<>'') and CurrentGrid.Query.Active and FieldExists(FReturnValueParams.DataField, CurrentGrid.Query) Then
         FRetunValue.Val:=CurrentGrid.Query.FieldByName(FReturnValueParams.DataField).AsString;
     end;
   end;
@@ -5305,16 +5298,19 @@ end;
 
 procedure TDCLForm.Choose;
 begin
-  FForm.ShowModal;
+  ChooseAndClose(FReturningMode);
 end;
 
 function TDCLForm.ChooseAndClose(Action: TChooseMode): TReturnFormValue;
+var
+  tmpDCLForm: TDCLForm;
 begin
   GetChooseValue;
   FRetunValue.Choosen:=True;
   SetLength(FDCLLogOn.ReturnFormsValues, FFormNum+1);
   FDCLLogOn.ReturnFormsValues[FFormNum]:=FRetunValue;
   Result:=FRetunValue;
+
   Case Action of
   chmChooseAndClose:begin
     NotDestroyedDCLForm:=False;
@@ -5324,6 +5320,7 @@ begin
     NotDestroyedDCLForm:=False;
   end;
   End;
+  CloseDialog;
 end;
 
 procedure TDCLForm.ToolButtonClick(Sender: TObject);
@@ -7263,8 +7260,7 @@ begin
             begin
               v1:=StrToIntEx(FindParam('ChooseMode=', ScrStr));
               ChooseMode:=TChooseMode(v1);
-              ReturnValueParams:=TReturnValueParams.Create(FindParam('KeyField=', ScrStr),
-                FindParam('DataField=', ScrStr), FindParam('EditName=', ScrStr),
+              ReturnValueParams:=TReturnValueParams.Create(FindParam('DataField=', ScrStr), FindParam('EditName=', ScrStr),
                 FindParam('ModifyField=', ScrStr));
             end;
 
@@ -7291,47 +7287,48 @@ begin
               Else
                 FDCLForm:=FDCLLogOn.CreateForm(TmpStr, nil, FDCLForm, nil, nil, ModalOpen, ChooseMode,
                   ReturnValueParams);
-            End;
 
-            If Assigned(FDCLForm) Then
-              If FDCLForm.ReturnFormValue.Choosen Then
-              begin
-                RetVal:=FDCLForm.ReturnFormValue;
-                tmpDCLForm:=FDCLForm.GetParentForm;
-                If ChooseMode=chmChooseAndClose Then
-                  FDCLForm.CloseAction:=fcaClose;
-                FDCLForm:=tmpDCLForm;
-
-                If FieldExists(RetVal.ModifyField, FDCLForm.CurrentQuery) Then
+                If Assigned(FDCLForm) Then
                 begin
-                  If Not (FDCLForm.CurrentQuery.State in dsEditModes) Then
-                    FDCLForm.CurrentQuery.Edit;
-                  FDCLForm.CurrentQuery.FieldByName(RetVal.ModifyField).AsString:=RetVal.Key;
-                  If RetVal.DataField<>'' Then
-                    FDCLForm.CurrentQuery.FieldByName(RetVal.DataField).AsString:=RetVal.Val
-                end;
+                  If FDCLForm.ReturnFormValue.Choosen Then
+                  begin
+                    RetVal:=FDCLForm.ReturnFormValue;
+                    FDCLForm:=FDCLForm.FCallerForm;
 
-                If RetVal.EditName<>'' Then
-                  If Assigned(FDCLForm.Tables[FDCLForm.CurrentGridIndex]) Then
-                    If Length(FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits)>0 Then
+                    If FieldExists(RetVal.ModifyField, FDCLForm.CurrentQuery) Then
                     begin
-                      v1:=Length(FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits);
-                      For v2:=1 to v1 do
+                      If FDCLForm.CurrentQuery.Active and Not (FDCLForm.CurrentQuery.State in dsEditModes) Then
                       begin
-                        If CompareString(RetVal.EditName, FDCLForm.Tables[FDCLForm.CurrentGridIndex]
-                            .Edits[v2-1].Edit.Name) Then
-                        begin
-                          FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits[v2-1].Edit.Text:=
-                            RetVal.Val;
-
-                          break;
-                        end;
+                        FDCLForm.CurrentQuery.Edit;
+                        FDCLForm.CurrentQuery.FieldByName(RetVal.ModifyField).AsString:=RetVal.Val;
                       end;
                     end;
-              end;
 
-            If Assigned(ReturnValueParams) Then
-              FreeAndNil(ReturnValueParams);
+                    If RetVal.EditName<>'' Then
+                    begin
+                      If Assigned(FDCLForm.Tables[FDCLForm.CurrentGridIndex]) Then
+                        If Length(FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits)>0 Then
+                        begin
+                          v1:=Length(FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits);
+                          For v2:=1 to v1 do
+                          begin
+                            If CompareString(RetVal.EditName, FDCLForm.Tables[FDCLForm.CurrentGridIndex]
+                                .Edits[v2-1].Edit.Name) Then
+                            begin
+                              FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits[v2-1].Edit.Text:=
+                                RetVal.Val;
+
+                              break;
+                            end;
+                          end;
+                        end;
+                    end;
+
+                    If Assigned(ReturnValueParams) Then
+                      FreeAndNil(ReturnValueParams);
+                  end;
+                end;
+            End;
           end;
 
           If PosEx('CloseDialog;', ScrStr)=1 Then
@@ -8954,9 +8951,9 @@ begin
     ReturnValueMode, ReturnValueParams));
   i:=FForms.Count-1;
   CurrentForm:=i;
-  If Assigned(ReturnValueParams) then
+  {If Assigned(ReturnValueParams) then
     If ReturnValueMode<>chmNone then
-      Forms[i].Choose;
+      Forms[i].Choose;}
 
   If Assigned(Forms[i]) then
   If Forms[i].ExitCode=0 Then
@@ -11215,6 +11212,8 @@ begin
     ContextLists[l].ListField:=ContextLists[l].Field;
 
   ContextLists[l].DataField:=Field.FieldName;
+  ContextLists[l].Variable:=FindParam('VariableName=', Field.OPL);
+  ContextLists[l].NoData:=FindParam('NoDataField=', Field.OPL)='1';
 
   ShadowQuery:=TDCLDialogQuery.Create(nil);
   ShadowQuery.Name:='ContextList_'+IntToStr(UpTime);
@@ -11235,12 +11234,17 @@ begin
   ShadowQuery.Open;
   ShadowQuery.First;
 
+  lSQL:=ContextLists[l].Field;
+  if ContextLists[l].Field='' then
+  begin
+    lSQL:=ShadowQuery.Fields[0].FieldName;
+  end;
   ContextLists[l].ContextList.Items.Clear;
   While Not ShadowQuery.Eof do
   begin
-    If Trim(ShadowQuery.FieldByName(ContextLists[l].Field).AsString)<>'' Then
+    If Trim(ShadowQuery.FieldByName(lSQL).AsString)<>'' Then
       ContextLists[l].ContextList.Items.Append
-        (Trim(ShadowQuery.FieldByName(ContextLists[l].Field).AsString));
+        (Trim(ShadowQuery.FieldByName(lSQL).AsString));
     ShadowQuery.Next;
   end;
   ShadowQuery.Close;
@@ -11561,8 +11565,10 @@ var
   TmpStr, tmpStr1, tmpSQL1: String;
   DropList: TComboBox;
   v1, v2: Integer;
+  //NoDataField: Boolean;
 begin
-  If FDisplayMode in TDataGrid Then
+  //NoDataField:=FindParam('NoDataField=', Field.OPL)='1';
+  If FQuery.Active and (FDisplayMode in TDataGrid) Then
   begin
     TmpStr:=FindParam('List=', Field.OPL);
     TranslateVal(TmpStr);
@@ -12676,10 +12682,17 @@ begin
 
     If Not tmpQuery.IsEmpty Then
     begin
-      If (FQuery.State=dsBrowse) Then
-        FQuery.Edit;
-      FQuery.FieldByName(ContextLists[ComboNum].DataField).AsInteger:=
-        tmpQuery.FieldByName(ContextLists[ComboNum].KeyField).AsInteger;
+      if not ContextLists[ComboNum].NoData then
+      begin
+        If (FQuery.State=dsBrowse) Then
+          FQuery.Edit;
+        FQuery.FieldByName(ContextLists[ComboNum].DataField).AsInteger:=
+          tmpQuery.FieldByName(ContextLists[ComboNum].KeyField).AsInteger;
+      end;
+      if FDCLLogOn.Variables.Exists(ContextLists[ComboNum].Variable) then
+      begin
+        FDCLLogOn.Variables.Variables[ContextLists[ComboNum].Variable]:=tmpQuery.FieldByName(ContextLists[ComboNum].KeyField).AsString;
+      end;
     end;
     tmpQuery.Close;
     FreeAndNil(tmpQuery);
@@ -12690,6 +12703,7 @@ procedure TDCLGrid.ContextListKeyDown(Sender: TObject; var Key: Word; Shift: TSh
 var
   ComboNum: Integer;
   tmpQuery: TDCLDialogQuery;
+  tmpStr: String;
   Combo: TComboBox;
 begin
   ComboNum:=(Sender as TComponent).Tag;
@@ -12710,22 +12724,32 @@ begin
 
       Combo.Items.Clear;
 
+      tmpStr:=ContextLists[ComboNum].DataField;
+      if ContextLists[ComboNum].DataField<>'' then
+      begin
+        if not FieldExists(ContextLists[ComboNum].DataField, tmpQuery) then
+        begin
+          tmpStr:=tmpQuery.Fields[0].FieldName;
+        end;
+      end;
       If tmpQuery.RecordCount=1 Then
       begin
-        Combo.Text:=Trim(tmpQuery.FieldByName(ContextLists[ComboNum].Field).AsString);
-        If (FQuery.State=dsBrowse) Then
-          FQuery.Edit;
-        FQuery.FieldByName(ContextLists[ComboNum].DataField).AsInteger:=
-          tmpQuery.FieldByName(ContextLists[ComboNum].KeyField).AsInteger;
-      end
-      Else
-      begin
-        While Not tmpQuery.Eof do
+        if FieldExists(ContextLists[ComboNum].DataField, FQuery) then
         begin
-          If Trim(tmpQuery.FieldByName(ContextLists[ComboNum].Field).AsString)<>'' Then
-            Combo.Items.Append(Trim(tmpQuery.FieldByName(ContextLists[ComboNum].Field).AsString));
-          tmpQuery.Next;
+          Combo.Text:=Trim(tmpQuery.FieldByName(ContextLists[ComboNum].Field).AsString);
+          If (FQuery.Active and (FQuery.State=dsBrowse)) Then
+          begin
+            FQuery.Edit;
+            FQuery.FieldByName(ContextLists[ComboNum].DataField).AsInteger:=
+              tmpQuery.FieldByName(ContextLists[ComboNum].KeyField).AsInteger;
+          end;
         end;
+      end;
+      While Not tmpQuery.Eof do
+      begin
+        If Trim(tmpQuery.FieldByName(ContextLists[ComboNum].Field).AsString)<>'' Then
+          Combo.Items.Append(Trim(tmpQuery.FieldByName(ContextLists[ComboNum].Field).AsString));
+        tmpQuery.Next;
       end;
       tmpQuery.Close;
       FreeAndNil(tmpQuery);
@@ -13322,6 +13346,7 @@ begin
   v2:=(Sender as TCustomComboBox).ItemIndex;
   If FQuery.Active Then
   begin
+    if FieldExists(DropBoxes[v1].FieldName, FQuery) then
     If FQuery.FieldByName(DropBoxes[v1].FieldName).AsInteger<>v2 Then
     begin
       If Not (Query.State in dsEditModes) Then

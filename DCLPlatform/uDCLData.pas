@@ -4,12 +4,12 @@ unit uDCLData;
 interface
 
 uses
+  StdCtrls, ComCtrls, Controls, Graphics, ExtCtrls, DB, Buttons, Classes,
 {$IFDEF FPC}
   EditBtn,
 {$ENDIF}
-  StdCtrls, ComCtrls, Controls, Graphics, ExtCtrls, DB, Buttons, Classes,
 {$IFDEF NEWDELPHI}
-  DBCtrls,
+  Vcl.DBCtrls,
 {$ELSE}
   DBCtrls,
 {$ENDIF}
@@ -189,7 +189,8 @@ end;
 
 TContextList=record
   ContextList: TComboBox;
-  SQL, Table, Field, KeyField, DataField, ListField: String;
+  SQL, Table, Field, KeyField, DataField, ListField, Variable: String;
+  NoData: Boolean;
 end;
 
 TDropBox=record
@@ -212,7 +213,7 @@ TFontStyleRec=Record
 End;
 
 TReturnFormValue=Record
-  Key, Val, ModifyField, DataField, EditName:String;
+  Val, ModifyField, EditName:String;
   Choosen:Boolean;
 end;
 
@@ -224,9 +225,9 @@ End;
 
 TReturnValueParams=class
 public
-  KeyField, DataField, EditName, ModifyField:String;
+  DataField, EditName, ModifyField:String;
 
-  constructor Create(aKeyField, aDataField, aEditName, aModifyField:String);
+  constructor Create(aDataField, aEditName, aModifyField:String);
 end;
 
 TStrArray=Array of String;
@@ -335,7 +336,6 @@ end;
 procedure ResetChooseValue(var Val:TReturnFormValue);
 Begin
   Val.Val:='';
-  Val.Key:='';
   Val.ModifyField:='';
   Val.EditName:='';
   Val.Choosen:=False;
@@ -358,9 +358,8 @@ End;
 
 { TReturnValueParams }
 
-constructor TReturnValueParams.Create(aKeyField, aDataField, aEditName, aModifyField: String);
+constructor TReturnValueParams.Create(aDataField, aEditName, aModifyField: String);
 begin
-  KeyField:=aKeyField;
   DataField:=aDataField;
   EditName:=aEditName;
   ModifyField:=aModifyField;
