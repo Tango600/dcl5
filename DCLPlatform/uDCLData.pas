@@ -213,7 +213,8 @@ TFontStyleRec=Record
 End;
 
 TReturnFormValue=Record
-  Val, ModifyField, EditName:String;
+  Key, Val, KeyModifyField, ValueModifyField,
+    KeyEditName, ValueEditName, KeyVar, ValueVar:String;
   Choosen:Boolean;
 end;
 
@@ -225,9 +226,10 @@ End;
 
 TReturnValueParams=class
 public
-  DataField, EditName, ModifyField:String;
-
-  constructor Create(aDataField, aEditName, aModifyField:String);
+  KeyField, ValueField, KeyEditName, ValueEditName, KeyModifyField, ValueModifyField,
+    KeyVar, ValueVar:String;
+  constructor Create(aKeyField, aValueField, aKeyEditName, aValueEditName, aKeyModifyField, aValueModifyField,
+    aKeyVar, aValueVar:String);
 end;
 
 TStrArray=Array of String;
@@ -336,8 +338,7 @@ end;
 procedure ResetChooseValue(var Val:TReturnFormValue);
 Begin
   Val.Val:='';
-  Val.ModifyField:='';
-  Val.EditName:='';
+  Val.Key:='';
   Val.Choosen:=False;
 End;
 
@@ -358,11 +359,17 @@ End;
 
 { TReturnValueParams }
 
-constructor TReturnValueParams.Create(aDataField, aEditName, aModifyField: String);
+constructor TReturnValueParams.Create(aKeyField, aValueField, aKeyEditName, aValueEditName, aKeyModifyField, aValueModifyField,
+    aKeyVar, aValueVar: String);
 begin
-  DataField:=aDataField;
-  EditName:=aEditName;
-  ModifyField:=aModifyField;
+  KeyField:=aKeyField;
+  ValueField:=aValueField;
+  KeyEditName:=aKeyEditName;
+  ValueEditName:=aValueEditName;
+  KeyModifyField:=aKeyModifyField;
+  ValueModifyField:=aValueModifyField;
+  KeyVar:=aKeyVar;
+  ValueVar:=aValueVar;
 end;
 
 Initialization

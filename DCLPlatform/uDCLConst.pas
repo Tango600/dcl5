@@ -47,7 +47,13 @@ DefaultLibraryLocation='fbclient.so';
   JPEGCompressionQuality=85;
 
   EditWidth=230;
+  {$IFDEF FPC}
+  CalendarWidth=95;
+  DateBoxWidth=95;
+  {$ELSE}
+  CalendarWidth=85;
   DateBoxWidth=85;
+  {$ENDIF}
   DateTimeBoxWidth=110;
   DigitEditWidth=80;
   GetValueEditWidth=181;
@@ -63,7 +69,6 @@ DefaultLibraryLocation='fbclient.so';
   GraficHeight=160;
   GroupHeight=160;
   CheckWidth=100;
-  CalendarWidth=85;
   TablePartHeight=250;
   RollHeight=33;
   NavigatorHeight=25;
@@ -77,7 +82,7 @@ DefaultLibraryLocation='fbclient.so';
   ToolLeftInterval=15;
 
 {$IFDEF FPC}
-  CalendarLeft={$IFDEF ZVComponents}25{$ELSE}35{$ENDIF};
+  CalendarLeft={$IFDEF ZVComponents}25{$ELSE}15{$ENDIF};
   AddHeight=20;
   DateBoxAddWidth={$IFDEF ZVComponents}20{$ELSE}30{$ENDIF};
 {$ELSE}

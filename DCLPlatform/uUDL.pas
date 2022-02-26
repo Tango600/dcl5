@@ -1851,12 +1851,13 @@ var
   VarNum: Integer;
 begin
   Result:=False;
-  For VarNum:=0 to Length(FVariables)-1 do
-    If UpperCase(Trim(VariableName))=UpperCase(FVariables[VarNum].Name) Then
-    begin
-      Result:=True;
-      break;
-    end;
+  if VariableName<>'' then
+    For VarNum:=0 to Length(FVariables)-1 do
+      If UpperCase(Trim(VariableName))=UpperCase(FVariables[VarNum].Name) Then
+      begin
+        Result:=True;
+        break;
+      end;
 end;
 
 function TVariables.GetVariableByName(Const VariableName: String): String;
@@ -1873,19 +1874,22 @@ procedure TVariables.NewVariable(Const VariableName: String; Value: String='');
 var
   RetVarNum: Integer;
 begin
-  RetVarNum:=VariableNumByName(VariableName);
-  If RetVarNum= - 1 Then
+  if VariableName<>'' then
   begin
-    RetVarNum:=FindEmptyVariableSlot;
-    If RetVarNum<> - 1 Then
+    RetVarNum:=VariableNumByName(VariableName);
+    If RetVarNum= - 1 Then
     begin
-      FVariables[RetVarNum].Name:=Trim(VariableName);
+      RetVarNum:=FindEmptyVariableSlot;
+      If RetVarNum<> - 1 Then
+      begin
+        FVariables[RetVarNum].Name:=Trim(VariableName);
+        FVariables[RetVarNum].Value:=Value;
+      end;
+    end
+    Else
+    begin
       FVariables[RetVarNum].Value:=Value;
     end;
-  end
-  Else
-  begin
-    FVariables[RetVarNum].Value:=Value;
   end;
 end;
 
@@ -5287,11 +5291,20 @@ begin
     If Assigned(FReturnValueParams) Then
     begin
       FRetunValue.Choosen:=True;
-      FRetunValue.ModifyField:=FReturnValueParams.ModifyField;
-      FRetunValue.EditName:=FReturnValueParams.EditName;
+      FRetunValue.KeyModifyField:=FReturnValueParams.KeyModifyField;
+      FRetunValue.ValueModifyField:=FReturnValueParams.ValueModifyField;
 
-      If (FReturnValueParams.DataField<>'') and CurrentGrid.Query.Active and FieldExists(FReturnValueParams.DataField, CurrentGrid.Query) Then
-        FRetunValue.Val:=CurrentGrid.Query.FieldByName(FReturnValueParams.DataField).AsString;
+      FRetunValue.KeyEditName:=FReturnValueParams.KeyEditName;
+      FRetunValue.ValueEditName:=FReturnValueParams.ValueEditName;
+
+      FRetunValue.KeyVar:=FReturnValueParams.KeyVar;
+      FRetunValue.ValueVar:=FReturnValueParams.ValueVar;
+
+      If (FReturnValueParams.KeyField<>'') and CurrentGrid.Query.Active and FieldExists(FReturnValueParams.KeyField, CurrentGrid.Query) Then
+        FRetunValue.Key:=CurrentGrid.Query.FieldByName(FReturnValueParams.KeyField).AsString;
+
+      If (FReturnValueParams.ValueField<>'') and CurrentGrid.Query.Active and FieldExists(FReturnValueParams.ValueField, CurrentGrid.Query) Then
+        FRetunValue.Val:=CurrentGrid.Query.FieldByName(FReturnValueParams.ValueField).AsString;
     end;
   end;
 end;
@@ -5302,8 +5315,6 @@ begin
 end;
 
 function TDCLForm.ChooseAndClose(Action: TChooseMode): TReturnFormValue;
-var
-  tmpDCLForm: TDCLForm;
 begin
   GetChooseValue;
   FRetunValue.Choosen:=True;
@@ -7260,8 +7271,10 @@ begin
             begin
               v1:=StrToIntEx(FindParam('ChooseMode=', ScrStr));
               ChooseMode:=TChooseMode(v1);
-              ReturnValueParams:=TReturnValueParams.Create(FindParam('DataField=', ScrStr), FindParam('EditName=', ScrStr),
-                FindParam('ModifyField=', ScrStr));
+              ReturnValueParams:=TReturnValueParams.Create(FindParam('KeyField=', ScrStr),
+                FindParam('ValueField=', ScrStr), FindParam('KeyEditName=', ScrStr), FindParam('ValueEditName=', ScrStr),
+                FindParam('KeyModifyField=', ScrStr), FindParam('ValueModifyField=', ScrStr),
+                FindParam('KeyVariable=', ScrStr), FindParam('ValueVariable=', ScrStr));
             end;
 
             If FindParam('Child=', ScrStr)='1' Then
@@ -7295,16 +7308,27 @@ begin
                     RetVal:=FDCLForm.ReturnFormValue;
                     FDCLForm:=FDCLForm.FCallerForm;
 
-                    If FieldExists(RetVal.ModifyField, FDCLForm.CurrentQuery) Then
+                    If FieldExists(RetVal.KeyModifyField, FDCLForm.CurrentQuery) Then
                     begin
                       If FDCLForm.CurrentQuery.Active and Not (FDCLForm.CurrentQuery.State in dsEditModes) Then
                       begin
-                        FDCLForm.CurrentQuery.Edit;
-                        FDCLForm.CurrentQuery.FieldByName(RetVal.ModifyField).AsString:=RetVal.Val;
+                        if Not (FDCLForm.CurrentQuery.State in dsEditModes) then
+                          FDCLForm.CurrentQuery.Edit;
+                        FDCLForm.CurrentQuery.FieldByName(RetVal.KeyModifyField).AsString:=RetVal.Key;
                       end;
                     end;
 
-                    If RetVal.EditName<>'' Then
+                    If FieldExists(RetVal.ValueModifyField, FDCLForm.CurrentQuery) Then
+                    begin
+                      If FDCLForm.CurrentQuery.Active Then
+                      begin
+                        if Not (FDCLForm.CurrentQuery.State in dsEditModes) then
+                          FDCLForm.CurrentQuery.Edit;
+                        FDCLForm.CurrentQuery.FieldByName(RetVal.ValueModifyField).AsString:=RetVal.Val;
+                      end;
+                    end;
+
+                    If RetVal.KeyEditName<>'' Then
                     begin
                       If Assigned(FDCLForm.Tables[FDCLForm.CurrentGridIndex]) Then
                         If Length(FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits)>0 Then
@@ -7312,7 +7336,27 @@ begin
                           v1:=Length(FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits);
                           For v2:=1 to v1 do
                           begin
-                            If CompareString(RetVal.EditName, FDCLForm.Tables[FDCLForm.CurrentGridIndex]
+                            If CompareString(RetVal.KeyEditName, FDCLForm.Tables[FDCLForm.CurrentGridIndex]
+                                .Edits[v2-1].Edit.Name) Then
+                            begin
+                              FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits[v2-1].Edit.Text:=
+                                RetVal.Key;
+
+                              break;
+                            end;
+                          end;
+                        end;
+                    end;
+
+                    If RetVal.ValueEditName<>'' Then
+                    begin
+                      If Assigned(FDCLForm.Tables[FDCLForm.CurrentGridIndex]) Then
+                        If Length(FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits)>0 Then
+                        begin
+                          v1:=Length(FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits);
+                          For v2:=1 to v1 do
+                          begin
+                            If CompareString(RetVal.ValueEditName, FDCLForm.Tables[FDCLForm.CurrentGridIndex]
                                 .Edits[v2-1].Edit.Name) Then
                             begin
                               FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits[v2-1].Edit.Text:=
@@ -7322,6 +7366,20 @@ begin
                             end;
                           end;
                         end;
+                    end;
+
+                    if RetVal.KeyVar<>'' then
+                    begin
+                      if not FDCLLogOn.Variables.Exists(RetVal.KeyVar) then
+                        FDCLLogOn.Variables.NewVariable(RetVal.KeyVar);
+                      FDCLLogOn.Variables.SetVariableByName(RetVal.KeyVar, RetVal.Key);
+                    end;
+
+                    if RetVal.ValueVar<>'' then
+                    begin
+                      if not FDCLLogOn.Variables.Exists(RetVal.ValueVar) then
+                        FDCLLogOn.Variables.NewVariable(RetVal.ValueVar);
+                      FDCLLogOn.Variables.SetVariableByName(RetVal.ValueVar, RetVal.Val);
                     end;
 
                     If Assigned(ReturnValueParams) Then
