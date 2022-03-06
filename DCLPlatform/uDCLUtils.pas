@@ -2129,7 +2129,7 @@ begin
     Yes:=False;
     DialogsParams:=TStringList.Create;
     If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini') Then
-      DialogsParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini', TEncoding.UTF8);
+      DialogsParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini'{$IFNDEF FPC}, TEncoding.UTF8{$ENDIF});
     If DialogsParams.Count<>0 Then
     Begin
       For i:=1 To DialogsParams.Count Do
@@ -2145,7 +2145,7 @@ begin
     Else
       DialogsParams.Append(GetFormPosString(FForm, DialogName));
 
-    DialogsParams.SaveToFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini', TEncoding.UTF8);
+    DialogsParams.SaveToFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini'{$IFNDEF FPC}, TEncoding.UTF8{$ENDIF});
     FreeAndNil(DialogsParams);
   End;
 end;
@@ -2231,7 +2231,7 @@ Begin
       If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini') Then
       Begin
         DialogsParams:=TStringList.Create;
-        DialogsParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini', TEncoding.UTF8);
+        DialogsParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini'{$IFNDEF FPC}, TEncoding.UTF8{$ENDIF});
         For ParamsCounter:=0 To DialogsParams.Count-1 Do
         Begin
           If PosEx(DialogName+'=', DialogsParams[ParamsCounter])=1 Then

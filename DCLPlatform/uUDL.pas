@@ -2907,7 +2907,7 @@ begin
       If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini') Then
       begin
         FileParams:=TStringList.Create;
-        FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini', TEncoding.UTF8);
+        FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini'{$IFNDEF FPC}, TEncoding.UTF8{$ENDIF});
         appName:='BaseUID:'+InternalAppName+FDCLLogOn.GetBaseUID+'/';
         DialogsParams:=CopyStrings(appName+'['+DialogName+']', appName+'[END '+DialogName+']', FileParams);
         LoadFormPosUni(DialogsParams);
@@ -3073,7 +3073,7 @@ begin
   If DialogName<>'' Then
     If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini') Then
     begin
-      FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini', TEncoding.UTF8);
+      FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini'{$IFNDEF FPC}, TEncoding.UTF8{$ENDIF});
       appName:='BaseUID:'+InternalAppName+FDCLLogOn.GetBaseUID+'/';
       For i:=1 to FileParams.Count do
       begin
@@ -3102,7 +3102,7 @@ begin
       FileParams.Delete(p1);
   end;
   FileParams.AddStrings(DialogsParams);
-  FileParams.SaveToFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini', TEncoding.UTF8);
+  FileParams.SaveToFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini'{$IFNDEF FPC}, TEncoding.UTF8{$ENDIF});
 end;
 
 procedure TDCLForm.SaveFormPosBase;
@@ -3203,7 +3203,7 @@ begin
     If DialogName<>'' Then
       If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'BookMark.ini') Then
       begin
-        FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'BookMark.ini', TEncoding.UTF8);
+        FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'BookMark.ini'{$IFNDEF FPC}, TEncoding.UTF8{$ENDIF});
         For i:=1 to FileParams.Count do
         begin
           If PosEx('['+DialogName+']', FileParams[i-1])=1 Then
@@ -3227,7 +3227,7 @@ begin
         FileParams.Delete(p1);
     end;
     FileParams.AddStrings(DialogsParams);
-    FileParams.SaveToFile(IncludeTrailingPathDelimiter(AppConfigDir)+'BookMark.ini', TEncoding.UTF8);
+    FileParams.SaveToFile(IncludeTrailingPathDelimiter(AppConfigDir)+'BookMark.ini'{$IFNDEF FPC}, TEncoding.UTF8{$ENDIF});
   end;
   FreeAndNil(DialogsParams);
 end;
@@ -3265,7 +3265,7 @@ begin
   If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'BookMark.ini') Then
   begin
     MenuList:=TStringList.Create;
-    MenuList.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'BookMark.ini', TEncoding.UTF8);
+    MenuList.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'BookMark.ini'{$IFNDEF FPC}, TEncoding.UTF8{$ENDIF});
     DialogsParams:=CopyStrings('['+DialogName+']', '[END '+DialogName+']', MenuList);
     CreateBookMarkMenuUni(DialogsParams);
     MenuList.Free;
@@ -4974,7 +4974,7 @@ begin
     If DialogName<>'' Then
       If FileExists(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini') Then
       begin
-        FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini', TEncoding.UTF8);
+        FileParams.LoadFromFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini'{$IFNDEF FPC}, TEncoding.UTF8{$ENDIF});
         For i:=1 to FileParams.Count do
         begin
           If PosEx('['+DialogName+']', FileParams[i-1])=1 Then
@@ -4997,7 +4997,7 @@ begin
     For i:=p1 to p2-p1 do
       FileParams.Delete(p1);
   end;
-  FileParams.SaveToFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini', TEncoding.UTF8);
+  FileParams.SaveToFile(IncludeTrailingPathDelimiter(AppConfigDir)+'Dialogs.ini'{$IFNDEF FPC}, TEncoding.UTF8{$ENDIF});
 end;
 
 procedure TDCLForm.DeleteStatus(StatusNum: Integer);
@@ -9336,7 +9336,7 @@ begin
   If FileExists(FileName) Then
   begin
     Scr:=TStringList.Create;
-    Scr.LoadFromFile(FileName, TEncoding.UTF8);
+    Scr.LoadFromFile(FileName{$IFNDEF FPC}, TEncoding.UTF8{$ENDIF});
     tmpMem:=TMemoryStream.Create;
     Scr.SaveToStream(tmpMem);
     tmpMem.Position:=0;

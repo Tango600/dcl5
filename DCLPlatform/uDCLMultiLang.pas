@@ -819,7 +819,7 @@ begin
   If FileExists(FileName) then
   Begin
     LangResFile:=TStringList.Create;
-    LangResFile.LoadFromFile(FileName, TEncoding.UTF8);
+    LangResFile.LoadFromFile(FileName{$IFNDEF FPC}, TEncoding.UTF8{$ENDIF});
 
     For ii:=1 to LangResFile.Count do
     Begin
@@ -1033,7 +1033,7 @@ begin
   If FileExists(FileName) then
   Begin
     LangResFile:=TStringList.Create;
-    LangResFile.LoadFromFile(FileName, TEncoding.UTF8);
+    LangResFile.LoadFromFile(FileName{$IFNDEF FPC}, TEncoding.UTF8{$ENDIF});
 
     For i:=1 to LangResFile.Count do
     Begin
@@ -1172,7 +1172,7 @@ begin
 {$IFDEF UNIX}
   S:=SysUtils.GetEnvironmentVariable('LANG');
   Lang:=Copy(S, 1, Pos('_', S)-1);
-  Result:=GetLangNameISO639ByShort(Lang);
+  Result:=Lang;
 {$ENDIF}
 end;
 
