@@ -47,7 +47,7 @@ Uses
   ZDbcIntfs, // ZConnection, ZDataset, ZSqlUpdate,
 {$ENDIF}
 {$IFDEF SQLdbFamily}
-  sqldb,
+  SQLDB, SQLDBLib,
 {$ENDIF}
 {$IFDEF FPC}
   FileUtil, LazUTF8, LConvEncoding, {$IFDEF ZVComponents}ZVDateTimePicker, {$ENDIF}
@@ -85,6 +85,7 @@ Type
   TDCLLogOn=class(TObject)
   private
     FDBLogOn: TDBLogOn;
+    FSQLDBLibraryLoader: TSQLDBLibraryLoader;
 {$IFDEF TRANSACTIONDB}
     IBTransaction: TTransaction;
 {$ENDIF}
@@ -8763,6 +8764,14 @@ begin
   End
   Else
     IBTransaction:=FDBLogOn.Transaction;
+
+  If GPT.LibPath<>'' Then
+  begin
+    FSQLDBLibraryLoader:=TSQLDBLibraryLoader.Create(Application);
+    FSQLDBLibraryLoader.ConnectionType:='Firebird';
+    FSQLDBLibraryLoader.LibraryName:=GPT.LibPath;
+    FSQLDBLibraryLoader.Enabled:=True;
+  end;
 
   If Not FDBLogOn.Connected Then
   begin
