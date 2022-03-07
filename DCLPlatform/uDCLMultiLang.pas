@@ -5,6 +5,9 @@ interface
 
 uses
   SysUtils, Classes,
+{$IFDEF FPC}
+  LazUTF8,
+{$ENDIF}
 {$IFDEF MSWINDOWS}
   Windows, 
 {$ENDIF}
@@ -1150,13 +1153,24 @@ begin
     Result:='';
 end;
 
+function GetISO639LangCode(LangCode: String): String;
+var
+  tmpLang: String;
+begin
+  tmpLang:=LowerCase(LangCode);
+  if tmpLang='ru' then Result:='RUS';
+  if tmpLang='en' then Result:='ENG';
+  if tmpLang='pl' then Result:='POL';
+  if tmpLang='be' then Result:='BEL';
+end;
+
 function GetSystemLanguage: String;
 var
 {$IFDEF MSWINDOWS}
   OutputBuffer: PChar;
 {$ENDIF}
 {$IFDEF UNIX}
-  S, Lang:string;
+  S:string;
 {$ENDIF}
 begin
 {$IFDEF MSWINDOWS}
@@ -1170,9 +1184,9 @@ begin
   end;
 {$ENDIF}
 {$IFDEF UNIX}
-  S:=SysUtils.GetEnvironmentVariable('LANG');
-  Lang:=Copy(S, 1, Pos('_', S)-1);
-  Result:=Lang;
+  S:='';
+  lazutf8.LazGetShortLanguageID(S);
+  Result:=GetISO639LangCode(S);
 {$ENDIF}
 end;
 
