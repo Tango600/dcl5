@@ -83,7 +83,7 @@ DefaultLibraryLocation='libfbclient.so';
 
 {$IFDEF FPC}
   CalendarLeft={$IFDEF ZVComponents}25{$ELSE}15{$ENDIF};
-  AddHeight=20;
+  AddHeight=203;
   DateBoxAddWidth={$IFDEF ZVComponents}20{$ELSE}30{$ENDIF};
 {$ELSE}
   AddHeight=0;
