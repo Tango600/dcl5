@@ -52,7 +52,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Grids,
-  {$IFDEF NEWDELPHI}
+  {$IFnDEF FPC}
   Vcl.DBCtrls, Vcl.DBGrids,
   {$ELSE}
   DBCtrls, DBGrids,
@@ -68,7 +68,7 @@ type
     ColMoving: Boolean; // currently moving a column
   end;
 
-  TDBGrid = class({$IFDEF NEWDELPHI}Vcl.{$ENDIF}DBGrids.TDBGrid) // keep TDBGrid.ClassName = 'TDBGrid'
+  TDBGrid = class(Vcl.DBGrids.TDBGrid) // keep TDBGrid.ClassName = 'TDBGrid'
   private
     FPaintInfo: TPaintInfo;
     FCell: TGridCoord; // currently selected cell
@@ -610,7 +610,7 @@ end;
 
 procedure SetVirtualMethod(AClass: TClass; const VmtOffset: Integer; const Method: Pointer);
 var
-  WrittenBytes: {$IFDEF NEWDELPHI}NativeUInt{$ELSE}DWORD{$ENDIF};
+  WrittenBytes: NativeUInt;
   PatchAddress: PPointer;
 begin
   PatchAddress := Pointer(Integer(AClass) + VmtOffset);
@@ -627,10 +627,10 @@ var
 
 initialization
   OrgTDBGrid_NewInstance := GetVirtualMethod(TDBGrid, vmtNewInstance);
-  SetVirtualMethod({$IFDEF NEWDELPHI}Vcl.{$ENDIF}DBGrids.TDBGrid, vmtNewInstance, @TDBGrid_NewInstance);
+  SetVirtualMethod(Vcl.DBGrids.TDBGrid, vmtNewInstance, @TDBGrid_NewInstance);
 
 finalization
-  SetVirtualMethod({$IFDEF NEWDELPHI}Vcl.{$ENDIF}DBGrids.TDBGrid, vmtNewInstance, OrgTDBGrid_NewInstance);
+  SetVirtualMethod(Vcl.DBGrids.TDBGrid, vmtNewInstance, OrgTDBGrid_NewInstance);
 
 end.
 

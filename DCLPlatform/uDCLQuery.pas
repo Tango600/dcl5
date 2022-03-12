@@ -10,14 +10,8 @@ uses
   WideStrings, ADODB, ADOConst, ADOInt,
 {$ENDIF}
 {$IFDEF IBX}
-{$IFDEF NEWDELPHI}
   IBX.IBDatabase, IBX.IBTable, IBX.IBCustomDataSet, IBX.IBSQL, IBX.IBQuery,
-  IBX.IBVisualConst, IBX.IBXConst, 
-{$ELSE}
-  IBDatabase, IBTable, IBCustomDataSet, IBSQL, IBQuery,
-  IBVisualConst, IBXConst,
-{$ENDIF}
-  uIBUpdateSQLW,
+  IBX.IBVisualConst, IBX.IBXConst, uIBUpdateSQLW,
 {$ENDIF}
 {$IFDEF SQLdbFamily}
   BufDataset, sqldb,

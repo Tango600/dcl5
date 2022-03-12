@@ -29,10 +29,6 @@ type
 
     procedure LoadReportFromFile(FileName:String; InConsoleCodePage:Boolean);
 {$IFDEF MSWINDOWS}
-{$IFNDEF NEWDELPHI}
-
-    procedure CreateParams(var Params: TCreateParams); override;
-{$ENDIF}
     procedure WMSysCommand(var message: TWMSysCommand); message WM_SysCommand;
 {$ENDIF}
   public
@@ -78,16 +74,6 @@ Else
 inherited;
   End;
 end;
-
-{$IFNDEF NEWDELPHI}
-procedure TMainForm.CreateParams(var Params: TCreateParams);
-begin
-  inherited CreateParams(Params);
-
-  Params.ExStyle:=Params.ExStyle and not WS_EX_TOOLWINDOW or WS_EX_APPWINDOW;
-  Params.WndParent:={$IFDEF FPC}WidgetSet.AppHandle{$ELSE}Application.Handle{$ENDIF};
-end;
-{$ENDIF}
 {$ENDIF}
 
 procedure TMainForm.ButtonPrintClick(Sender: TObject);
@@ -95,6 +81,13 @@ begin
   If OpenDialog1.Execute then
     LoadReportFromFile(OpenDialog1.FileName, InDOSCodePage.Checked);
 end;
+
+{$IFnDEF FPC}
+function UTF8ToWinCP(S: String): String;
+begin
+  Result:=S;
+end;
+{$ENDIF}
 
 procedure TMainForm.FormCreate(Sender: TObject);
 var
@@ -107,24 +100,10 @@ begin
   Caption:='DCL Reports v.'+Version+' ('+DBEngineType+')';
   AppH:={$IFDEF FPC}WidgetSet.AppHandle{$ELSE}Application.Handle{$ENDIF};
 {$IFDEF MSWINDOWS}
-{$IFNDEF NEWDELPHI}
-  OldMainWin:=AppH;
-  ShowWindow(AppH, SW_HIDE);
-  SetWindowLong(AppH, GWL_EXSTYLE, GetWindowLong(AppH, GWL_EXSTYLE) and not WS_EX_APPWINDOW or WS_EX_TOOLWINDOW);
-  ShowWindow(AppH, SW_SHOW);
-{$ENDIF}
   AppendMenu(GetSystemMenu(Handle, False), MF_SEPARATOR, 0, '');
   AppendMenu(GetSystemMenu(Handle, False), MF_STRING, AboutMenuItem,
-    Pchar('DCL version : '+uDCLConst.Version));
-  AppendMenu(GetSystemMenu(Handle, False), MF_STRING, LockMenuItem, PChar(GetDCLMessageString(msLock)+'...'));
-{$ENDIF}
-{$IFNDEF NEWDELPHI}
-{$IFNDEF FPC}
-  GlassForm(Self);
-{$ENDIF}
-{$IFNDEF NEWDELPHI}
-  ShowWindow(OldMainWin, SW_HIDE);
-{$ENDIF}
+    Pchar(UTF8ToWinCP('DCL version : '+uDCLConst.Version)));
+  AppendMenu(GetSystemMenu(Handle, False), MF_STRING, LockMenuItem, PChar(UTF8ToWinCP(GetDCLMessageString(msLock)+'...')));
 {$ENDIF}
 
   Rep:=TStringList.Create;

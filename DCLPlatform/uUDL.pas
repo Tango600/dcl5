@@ -22,7 +22,7 @@ Uses
 {$ENDIF}
   Messages, Variants, Classes, Graphics, Controls, Forms, ExtCtrls, ToolWin,
   Grids, DB, StdCtrls, ComCtrls, Dialogs, Buttons, ExtDlgs, Menus,
-{$IFDEF NEWDELPHI}
+{$IFnDEF FPC}
   Vcl.DBCtrls, Vcl.DBGrids,
 {$ELSE}
   DBCtrls, DBGrids,
@@ -35,13 +35,8 @@ Uses
   ActiveX, ADODB, ADOConst, ADOInt,
 {$ENDIF}
 {$IFDEF IBX}
-{$IFDEF NEWDELPHI}
   IBX.IBDatabase, IBX.IBTable, IBX.IBCustomDataSet, IBX.IBHeader, IBX.IBSQL, IBX.IBQuery,
   IBX.IBVisualConst, IBX.IBXConst,
-{$ELSE}
-  IBDatabase, IBTable, IBCustomDataSet, IBHeader, IBSQL, IBQuery,
-  IBVisualConst, IBXConst,
-{$ENDIF}
 {$ENDIF}
 {$IFDEF ZEOS}
   ZDbcIntfs, // ZConnection, ZDataset, ZSqlUpdate,
@@ -85,7 +80,9 @@ Type
   TDCLLogOn=class(TObject)
   private
     FDBLogOn: TDBLogOn;
+{$IFDEF FPC}
     FSQLDBLibraryLoader: TSQLDBLibraryLoader;
+{$ENDIF}
 {$IFDEF TRANSACTIONDB}
     IBTransaction: TTransaction;
 {$ENDIF}
@@ -1014,8 +1011,8 @@ Type
   procedure EndDCL;
 
 {$IFNDEF FPC}
-{$R unitsXE\dbgrids.res}
-{$R unitsXE\dbctrls.res}
+{$R units\dbgrids.res}
+{$R units\dbctrls.res}
 {$ENDIF}
 
 var
@@ -10468,14 +10465,6 @@ begin
   ItemMenu.Name:='ItemMeu_About';
   ItemMenu.Caption:='О...';
   ItemMenu.OnClick:=DCLMainLogOn.About;
-
-  {$IFDEF MSWINDOWS}
-  SetMenuItemBitmaps(ItemMenu.Handle,
-    0,
-    MF_BYPOSITION,
-    Bmp1.Bitmap.Handle,
-    Bmp1.Bitmap.Handle);
-  {$ENDIF}
 
   MainMenu.Items.Add(ItemMenu);
 end;

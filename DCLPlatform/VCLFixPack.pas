@@ -286,7 +286,7 @@ uses
   {$IFEND}
   {$IFDEF VCLFIXPACK_DB_SUPPORT}
   DB, DBClient,
-  {$IFDEF NEWDELPHI}
+  {$IFnDEF FPC}
   Vcl.DBCtrls, Vcl.DBGrids,
   {$ELSE}
   DBCtrls, DBGrids,
@@ -355,11 +355,7 @@ end;
 
 procedure HookProc(Proc, Dest: Pointer; var BackupCode: TXRedirCode);
 var
-{$IFDEF NEWDELPHI}
   n: SIZE_T;
-{$ELSE}
-  n: DWORD;
-{$ENDIF}
   Code: TXRedirCode;
 begin
   Proc := GetActualAddr(Proc);
@@ -374,11 +370,7 @@ end;
 
 procedure UnhookProc(Proc: Pointer; var BackupCode: TXRedirCode);
 var
-{$IFDEF NEWDELPHI}
   n: SIZE_T;
-{$ELSE}
-  n: DWORD;
-{$ENDIF}
 begin
   if (BackupCode.Jump <> 0) and (Proc <> nil) then
   begin
@@ -396,11 +388,7 @@ type
 var
   I: Integer;
   Vmt: PVmt;
-{$IFDEF NEWDELPHI}
   n: SIZE_T;
-{$ELSE}
-  n: DWORD;
-{$ENDIF}
   P: Pointer;
 begin
   OldProc := GetActualAddr(OldProc);
@@ -558,11 +546,7 @@ var
   P: PAnsiChar;
   Len: Integer;
   Buf: Word;
-{$IFDEF NEWDELPHI}
   n: SIZE_T;
-{$ELSE}
-  n: DWORD;
-{$ENDIF}
 begin
   P := GetActualAddr(@TWinControl.UpdateControlState);
   Len := 0;

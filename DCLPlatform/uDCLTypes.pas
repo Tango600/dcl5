@@ -6,7 +6,7 @@ interface
 Uses
   Controls,
   StdCtrls, ComCtrls, Buttons,
-{$IFDEF NEWDELPHI}
+{$IFnDEF FPC}
   Vcl.DBCtrls, Vcl.DBGrids,
 {$ELSE}
   DBCtrls, DBGrids,
@@ -20,13 +20,8 @@ Uses
   ADODB, ADOConst, ADOInt,
 {$ENDIF}
 {$IFDEF IBX}
-{$IFDEF NEWDELPHI}
   IBX.IBDatabase, IBX.IBTable, IBX.IBCustomDataSet, IBX.IBSQL, IBX.IBQuery,
   IBX.IBVisualConst, IBX.IBXConst, IBX.IBUpdateSQL,
-{$ELSE}
-  IBDatabase, IBTable, IBCustomDataSet, IBSQL, IBQuery, IBUpdateSQL,
-  IBVisualConst, IBXConst,
-{$ENDIF}
   uIBUpdateSQLW,
 {$ENDIF}
 {$IFDEF ZEOS}

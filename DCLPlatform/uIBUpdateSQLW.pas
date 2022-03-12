@@ -4,20 +4,11 @@ unit uIBUpdateSQLW;
 interface
 
 uses
-  SysUtils, Classes, DB, //uDCLTypes,
+  SysUtils, Classes, DB,
   {$IFDEF IBX}
-  {$IFDEF NEWDELPHI}
-  IBX.IBCustomDataSet, IBX.IBQuery, IBX.IB, IBX.IBUpdateSQL,
-  {$ELSE}
-  IBCustomDataSet, IBQuery, IB, IBUpdateSQL,
+  IBX.IBCustomDataSet, IBX.IBQuery, IBX.IB, IBX.IBUpdateSQL, IBX.IBDatabase,
   {$ENDIF}
-  {$ENDIF}
-  Variants,
-  {$IFDEF NEWDELPHI}
-  IBX.IBDatabase;
-  {$ELSE}
-  IBDatabase;
-  {$ENDIF}
+  Variants;
 
 type
   TIBUpdateSQLW = class(TIBUpdateSQL)// UpdateObj)

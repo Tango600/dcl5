@@ -347,7 +347,7 @@ begin
     ExecInfo.lpParameters := Pointer(AParameters);
     ExecInfo.lpDirectory := Pointer(ADirectory);
     ExecInfo.nShow := AShowCmd;
-    ExecInfo.fMask := {$IFDEF NEWDELPHI}SEE_MASK_NOASYNC{$ELSE}SEE_MASK_FLAG_DDEWAIT{$ENDIF}
+    ExecInfo.fMask := {$IFnDEF FPC}SEE_MASK_NOASYNC{$ELSE}SEE_MASK_FLAG_DDEWAIT{$ENDIF}
                    or SEE_MASK_FLAG_NO_UI;
     {$IFDEF UNICODE}
     // Необязательно, см. http://www.transl-gunsmoker.ru/2015/01/what-does-SEEMASKUNICODE-flag-in-ShellExecuteEx-actually-do.html
@@ -593,7 +593,7 @@ Begin
     MS.Write(DCLbmp, Length(DCLbmp));
 
   If CompareString(BMPType, 'logo_small') Then
-    MS.Write(DCLbmp, Length(DCLbmp_Small));
+    MS.Write(DCLbmp_Small, Length(DCLbmp_Small));
 
   If MS.Size>0 Then
   Begin
@@ -601,7 +601,7 @@ Begin
     MS.Position:=0;
     MS.Read(Marker, 3);
 
-    If Marker=PAGSignature Then // PAG Signature
+    If Marker=PAGSignature Then  // 80, 65, 71
     Begin
       // Compressed BMP/
       BS:=TMemoryStream.Create;
@@ -617,7 +617,7 @@ Begin
     MS.Position:=BMPPos;
     Result.LoadFromStream(MS);
     Result.TransparentColor:=Result.Canvas.Pixels[0, 0];
-    Result.TransparentMode:=tmFixed; // tmAuto;
+    Result.TransparentMode:=tmFixed;
     Result.Transparent:=True;
   End
   Else
@@ -685,7 +685,7 @@ Begin
   tmpS:='';
   For iI:=L Downto 1 Do
     If Pos(St[iI], '.,')<>0 Then
-      St[iI]:={$IFDEF NEWDELPHI}FormatSettings.DecimalSeparator{$ELSE}{$IFDEF FPC}FormatSettings.{$ENDIF}DecimalSeparator{$ENDIF};
+      St[iI]:=FormatSettings.DecimalSeparator;
 
   St:=Calculate(St);
   L:=Length(St);

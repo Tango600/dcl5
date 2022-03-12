@@ -8,7 +8,7 @@ uses
 {$IFDEF FPC}
   EditBtn,
 {$ENDIF}
-{$IFDEF NEWDELPHI}
+{$IFnDEF FPC}
   Vcl.DBCtrls,
 {$ELSE}
   DBCtrls,
@@ -19,7 +19,7 @@ type
   {$IFNDEF FPC}
   DateTimePicker=TDateTimePicker;
   TNavButtons=TNavButton;
-  TNavButtonsSet={$IFDEF D7}TNavButtonSet; {$ELSE}TButtonSet; {$ENDIF}
+  TNavButtonsSet=TNavButtonSet;
   {$ENDIF}
   {$IFDEF FPC}
   DateTimePicker={$IFDEF ZVComponents}TZVDateTimePicker; {$ELSE}TDateEdit; {$ENDIF}

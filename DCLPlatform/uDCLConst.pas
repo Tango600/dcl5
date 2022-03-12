@@ -7,7 +7,7 @@ uses
 {$IFDEF FPC}
   LConvEncoding,
 {$ENDIF}
-{$IFDEF NEWDELPHI}
+{$IFnDEF FPC}
   Vcl.DBCtrls, Vcl.DBGrids,
 {$ELSE}
   DBCtrls, DBGrids,
@@ -83,7 +83,7 @@ DefaultLibraryLocation='libfbclient.so';
 
 {$IFDEF FPC}
   CalendarLeft={$IFDEF ZVComponents}25{$ELSE}15{$ENDIF};
-  {$IFDEF UNIX}
+  {$IFDEF FPC_OS_UNICODE}
   AddHeight=203;
   {$ELSE}
   AddHeight=20;
@@ -261,11 +261,7 @@ DefaultLibraryLocation='libfbclient.so';
   EncodingUTF8='utf8';
   UTF8BOM=#$EF#$BB#$BF;
   UTF16LEBOM=#$FF#$FE;
-  {$IFDEF NEWDELPHI}
   DefaultInterfaceEncoding='utf8';
-  {$ELSE}
-  DefaultInterfaceEncoding='win1251';
-  {$ENDIF}
 {$ENDIF}
 {$IFDEF FPC}
   DefaultInterfaceEncoding=EncodingUTF8;

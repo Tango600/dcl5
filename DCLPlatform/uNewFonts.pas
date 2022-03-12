@@ -37,7 +37,7 @@ begin
   FMonoFont := TFont.Create;
  
   FillChar(Metrics, SizeOf(Metrics), 0);
-  Metrics.cbSize := {$IFDEF NEWDELPHI}Metrics.SizeOf{$ELSE}SizeOf(Metrics){$ENDIF};
+  Metrics.cbSize:={$IFnDEF FPC}Metrics.SizeOf{$ELSE}SizeOf(Metrics){$ENDIF};
   if SystemParametersInfo(SPI_GETNONCLIENTMETRICS, Metrics.cbSize, @Metrics, 0) then
   begin
     FGUIFont.Handle := CreateFontIndirect(Metrics.lfMessageFont);
@@ -47,8 +47,8 @@ begin
     DefFontData.Pitch := FGUIFont.Pitch;
     DefFontData.Style := FGUIFont.Style;
     DefFontData.Charset := FGUIFont.Charset;
-    DefFontData.Name := {$IFDEF NEWDELPHI}UTF8EncodeToShortString(FGUIFont.Name){$ELSE}AnsiToUTF8(FGUIFont.Name){$ENDIF};
-{$IFDEF NEWDELPHI}
+    DefFontData.Name := {$IFnDEF FPC}UTF8EncodeToShortString(FGUIFont.Name){$ELSE}AnsiToUTF8(FGUIFont.Name){$ENDIF};
+{$IFnDEF FPC}
     DefFontData.Quality := FGUIFont.Quality; // Только для Delphi XE и выше
 {$ENDIF}
   end;
