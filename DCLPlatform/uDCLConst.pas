@@ -83,7 +83,7 @@ DefaultLibraryLocation='libfbclient.so';
 
 {$IFDEF FPC}
   CalendarLeft={$IFDEF ZVComponents}25{$ELSE}15{$ENDIF};
-  {$IFDEF FPC_OS_UNICODE}
+  {$IFDEF LINUX}
   AddHeight=203;
   {$ELSE}
   AddHeight=20;

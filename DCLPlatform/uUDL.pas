@@ -8206,8 +8206,8 @@ end;
 
 procedure TDCLLogOn.About(Sender: TObject);
 Const
-  FormWidth=520;
-  FormHeight=430;
+  FormWidth=435;
+  FormHeight=315;
   PanelLeft=8;
 var
   AboutForm: TForm;
@@ -8280,8 +8280,8 @@ begin
   AboutLabel.Parent:=AboutPanel;
   With AboutLabel do
   begin
-    Left:=80;
-    Top:=60;
+    Left:=80+90;
+    Top:=45;
     Width:=135;
     Height:=15;
     Caption:='Unreal Software (C) 2002-'+IntToStr(YearOf(Now));
@@ -8312,7 +8312,7 @@ begin
   With AboutLabel do
   begin
     Left:=80;
-    Top:=80;
+    Top:=65;
     Width:=62;
     Height:=13;
     Caption:=GetDCLMessageString(msUser)+'/ '+GetDCLMessageString(msRole)+' : '+
@@ -8335,15 +8335,15 @@ begin
   begin
     ReadOnly:=True;
     Color:=AboutPanel.Color;
-    BorderStyle:=bsNone;
+    //BorderStyle:=bsNone;
     Left:=8;
-    Top:=105;
-    Width:=FormWidth-30;
-    Height:=95;
+    Top:=95;
+    Width:=FormWidth-PanelLeft*4;
+    Height:=55;
     Text:=GetDCLMessageString(msDataBase)+' : '+DBString;
     Font.Color:=clWindowText;
     Font.Height:= - 12;
-    // Font.Style:=[fsBold, fsItalic];
+    //Font.Style:=[fsBold, fsItalic];
     ParentFont:=False;
   end;
 
@@ -8353,16 +8353,16 @@ begin
   begin
     ReadOnly:=True;
     Color:=AboutPanel.Color;
-    BorderStyle:=bsNone;
+    //BorderStyle:=bsNone;
     Left:=8;
-    Top:=105+105;
-    Width:=FormWidth-30;
-    Height:=105;
+    Top:=95+55+8;
+    Width:=FormWidth-PanelLeft*4;
+    Height:=70;
     Text:=GetDCLMessageString(msConfiguration)+' : '+GetConfigInfo+
       ' /'+GetDCLMessageString(msVersion)+' : '+GetConfigVersion;
     Font.Color:=clWindowText;
     Font.Height:= - 12;
-    // Font.Style:=[fsBold, fsItalic];
+    //Font.Style:=[fsBold, fsItalic];
     ParentFont:=False;
   end;
 
@@ -8371,7 +8371,7 @@ begin
   With AboutLabel do
   begin
     Left:=8;
-    Top:=320;
+    Top:=235;
     Width:=62;
     Caption:=GetDCLMessageString(msInformationAbout)+' '+
         GetDCLMessageString(msBuildOf)+': '+GetDCLMessageString(msOS)+': '+TargetOS+'. CPU: '+
@@ -10454,10 +10454,7 @@ end;
 procedure CreateAboutItem(var MainMenu: TMainMenu; Form: TForm);
 var
   ItemMenu: TMenuItem;
-  Bmp1:TPicture;
 begin
-  Bmp1:=TPicture.Create;
-  Bmp1.Assign(DrawBMPButton('logo'));
   If Not Assigned(MainMenu) Then
     MainMenu:=TMainMenu.Create(Form);
 
