@@ -57,10 +57,11 @@ uses
   uLZW in 'uLZW.pas',
   FileBuffer in 'FileBuffer.pas',
   uDCLQuery in 'uDCLQuery.pas',
+  {$IFNDEF FPC}
   {$IFDEF USEDELPHIThemes}
   Vcl.Themes,
   Vcl.Styles,
-  {$ENDIF}
+  {$ENDIF}{$ENDIF}
   uLogging in 'uLogging.pas';
 
 {$R DCLRun.res}
@@ -70,13 +71,15 @@ var
 
 begin
   {$IFDEF FPC}
-  ///RequireDerivedFormResource:=True;
+  RequireDerivedFormResource:=True;
   {$ENDIF}
   Application.Initialize;
+  {$IFDEF MSWINDOWS}
   Application.MainFormOnTaskbar:=True;
-  {$IFDEF USEDELPHIThemes}
-  TStyleManager.TrySetStyle('Smokey Quartz Kamri');
   {$ENDIF}
+  {$IFNDEF FPC}{$IFDEF USEDELPHIThemes}
+  TStyleManager.TrySetStyle('Smokey Quartz Kamri');
+  {$ENDIF}{$ENDIF}
   Application.CreateForm(TMainForm, MainForm);
   Application.Run;
 end.
