@@ -4,7 +4,7 @@
 { }
 { Copyright (c) 1999 Inprise Corporation }
 { }
-{ Русификация: 1998-2002 Polaris Software }
+{ Р СѓСЃРёС„РёРєР°С†РёСЏ: 1998-2002 Polaris Software }
 { http://polesoft.da.ru }
 { ******************************************************* }
 
@@ -13,23 +13,23 @@ unit ADOConst;
 interface
 
 resourcestring
-  SInvalidEnumValue='Неверное Enum значение';
-  SMissingConnection='Не указано Connection или ConnectionString';
-  SNoDetailFilter='Свойство Filter не может использоваться для detail таблиц';
+  SInvalidEnumValue='РќРµРІРµСЂРЅРѕРµ Enum Р·РЅР°С‡РµРЅРёРµ';
+  SMissingConnection='РќРµ СѓРєР°Р·Р°РЅРѕ Connection РёР»Рё ConnectionString';
+  SNoDetailFilter='РЎРІРѕР№СЃС‚РІРѕ Filter РЅРµ РјРѕР¶РµС‚ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊСЃСЏ РґР»СЏ detail С‚Р°Р±Р»РёС†';
   SBookmarksRequired=
-    'Набор данных (Dataset) не поддерживает закладки (bookmarks), которые требуются для элементов, работающих с данными нескольких записей';
-  SMissingCommandText='Не указано свойство %s';
-  SNoResultSet='CommandText не возвращает результат';
+    'РќР°Р±РѕСЂ РґР°РЅРЅС‹С… (Dataset) РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚ Р·Р°РєР»Р°РґРєРё (bookmarks), РєРѕС‚РѕСЂС‹Рµ С‚СЂРµР±СѓСЋС‚СЃСЏ РґР»СЏ СЌР»РµРјРµРЅС‚РѕРІ, СЂР°Р±РѕС‚Р°СЋС‰РёС… СЃ РґР°РЅРЅС‹РјРё РЅРµСЃРєРѕР»СЊРєРёС… Р·Р°РїРёСЃРµР№';
+  SMissingCommandText='РќРµ СѓРєР°Р·Р°РЅРѕ СЃРІРѕР№СЃС‚РІРѕ %s';
+  SNoResultSet='CommandText РЅРµ РІРѕР·РІСЂР°С‰Р°РµС‚ СЂРµР·СѓР»СЊС‚Р°С‚';
   SADOCreateError=
-    'Ошибка создания объекта.  Пожалуйста, проверьте, что Microsoft Data Access Components 2.1 (или выше) правильно установлены';
-  SEventsNotSupported='События не поддерживаются с TableDirect курсорами на серверной стороне';
-  SUsupportedFieldType='Неподдерживаемый тип поля (%s) в поле %s';
-  SNoMatchingADOType='Нет совпадающего типа данных ADO для %s';
-  SConnectionRequired='Соединяющий компонент требуется для асинх. ExecuteOptions';
-  SCantRequery='Не могу выполнить запрос после изменения соединения';
-  SNoFilterOptions='FilterOptions не поддерживается';
+    'РћС€РёР±РєР° СЃРѕР·РґР°РЅРёСЏ РѕР±СЉРµРєС‚Р°.  РџРѕР¶Р°Р»СѓР№СЃС‚Р°, РїСЂРѕРІРµСЂСЊС‚Рµ, С‡С‚Рѕ Microsoft Data Access Components 2.1 (РёР»Рё РІС‹С€Рµ) РїСЂР°РІРёР»СЊРЅРѕ СѓСЃС‚Р°РЅРѕРІР»РµРЅС‹';
+  SEventsNotSupported='РЎРѕР±С‹С‚РёСЏ РЅРµ РїРѕРґРґРµСЂР¶РёРІР°СЋС‚СЃСЏ СЃ TableDirect РєСѓСЂСЃРѕСЂР°РјРё РЅР° СЃРµСЂРІРµСЂРЅРѕР№ СЃС‚РѕСЂРѕРЅРµ';
+  SUsupportedFieldType='РќРµРїРѕРґРґРµСЂР¶РёРІР°РµРјС‹Р№ С‚РёРї РїРѕР»СЏ (%s) РІ РїРѕР»Рµ %s';
+  SNoMatchingADOType='РќРµС‚ СЃРѕРІРїР°РґР°СЋС‰РµРіРѕ С‚РёРїР° РґР°РЅРЅС‹С… ADO РґР»СЏ %s';
+  SConnectionRequired='РЎРѕРµРґРёРЅСЏСЋС‰РёР№ РєРѕРјРїРѕРЅРµРЅС‚ С‚СЂРµР±СѓРµС‚СЃСЏ РґР»СЏ Р°СЃРёРЅС…. ExecuteOptions';
+  SCantRequery='РќРµ РјРѕРіСѓ РІС‹РїРѕР»РЅРёС‚СЊ Р·Р°РїСЂРѕСЃ РїРѕСЃР»Рµ РёР·РјРµРЅРµРЅРёСЏ СЃРѕРµРґРёРЅРµРЅРёСЏ';
+  SNoFilterOptions='FilterOptions РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ';
 {$IFNDEF VER130}
-  SRecordsetNotOpen='Набор данных не открыт';
+  SRecordsetNotOpen='РќР°Р±РѕСЂ РґР°РЅРЅС‹С… РЅРµ РѕС‚РєСЂС‹С‚';
 {$IFNDEF VER140}
   sNameAttr='Name';
   sValueAttr='Value';
