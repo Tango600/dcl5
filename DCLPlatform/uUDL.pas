@@ -15851,6 +15851,8 @@ begin
       end;
       DCLQuery.Close;
 
+      FileName:=AddToFileName(FileName, '_Report');
+
       If ToPDF Then
         OOExportToFormat(Document, FileName, 'pdf');
 
@@ -16150,6 +16152,8 @@ begin
       end;
       DCLQuery.Close;
       Excel.Visible:=True;
+
+      FileName:=AddToFileName(FileName, '_Report');
 
       If Save Then
         ExcelSave(Excel, FileName);
