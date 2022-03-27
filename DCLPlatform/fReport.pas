@@ -11,7 +11,7 @@ uses
 {$ELSE}
   uGlass,
 {$ENDIF}
-  uDCLConst, uUDL, uDCLData, uStringParams, uDCLMultiLang, ExtCtrls;
+  uDCLConst, uUDL, uDCLData, uDCLMultiLang, ExtCtrls;
 
 type
   TMainForm = class(TForm)
@@ -95,11 +95,13 @@ var
   FileName:string;
   ReportCP:Boolean;
   Command:TDCLCommand;
+  {$IFDEF MSWINDOWS}
   AppH:THandle;
+  {$ENDIF}
 begin
   Caption:='DCL Reports v.'+Version+' ('+DBEngineType+')';
-  AppH:={$IFDEF FPC}WidgetSet.AppHandle{$ELSE}Application.Handle{$ENDIF};
 {$IFDEF MSWINDOWS}
+  AppH:={$IFDEF FPC}WidgetSet.AppHandle{$ELSE}Application.Handle{$ENDIF};
   AppendMenu(GetSystemMenu(Handle, False), MF_SEPARATOR, 0, '');
   AppendMenu(GetSystemMenu(Handle, False), MF_STRING, AboutMenuItem,
     Pchar(UTF8ToWinCP('DCL version : '+uDCLConst.Version)));
