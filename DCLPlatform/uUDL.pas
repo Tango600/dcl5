@@ -8208,7 +8208,7 @@ end;
 procedure TDCLLogOn.About(Sender: TObject);
 Const
   FormWidth=435;
-  FormHeight=315;
+  FormHeight=300;
   PanelLeft=8;
 var
   AboutForm: TForm;
@@ -8340,7 +8340,7 @@ begin
     Left:=8;
     Top:=95;
     Width:=FormWidth-PanelLeft*4;
-    Height:=55;
+    Height:=42;
     Text:=GetDCLMessageString(msDataBase)+' : '+DBString;
     Font.Color:=clWindowText;
     Font.Height:= - 12;
@@ -8356,7 +8356,7 @@ begin
     Color:=AboutPanel.Color;
     //BorderStyle:=bsNone;
     Left:=8;
-    Top:=95+55+8;
+    Top:=95+42+8;
     Width:=FormWidth-PanelLeft*4;
     Height:=70;
     Text:=GetDCLMessageString(msConfiguration)+' : '+GetConfigInfo+
@@ -8372,7 +8372,7 @@ begin
   With AboutLabel do
   begin
     Left:=8;
-    Top:=235;
+    Top:=222;
     Width:=62;
     Caption:=GetDCLMessageString(msInformationAbout)+' '+
         GetDCLMessageString(msBuildOf)+': '+GetDCLMessageString(msOS)+': '+TargetOS+'. CPU: '+
@@ -8389,7 +8389,7 @@ begin
     With AboutLabel do
     begin
       Left:=8;
-      Top:=345;
+      Top:=245;
       Width:=62;
       Caption:=GetDCLMessageString(msDebugMode)+': '+GetOnOffMode(GPT.DebugOn);
     end;
@@ -15082,6 +15082,7 @@ begin
     If ToolButtonsCount=0 Then
       FreeAndNil(ToolButtonPanel);
   end;
+  ///SetReadOnly(FReadOnly);
 
   FShowed:=True;
 end;
