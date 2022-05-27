@@ -3863,7 +3863,8 @@ begin
               If UserLevelLocal<>ulReadOnly Then
                 NavigVisiButtonsVar[8]:=[nbPost];
             If PosEx('cancel', tmpSQL)<>0 Then
-              NavigVisiButtonsVar[9]:=[nbCancel];
+              If UserLevelLocal<>ulReadOnly Then
+                NavigVisiButtonsVar[9]:=[nbCancel];
             If PosEx('refresh', tmpSQL)<>0 Then
               NavigVisiButtonsVar[10]:=[nbRefresh];
             FGrids[GridIndex].Navig.VisibleButtons:=NavigVisiButtonsVar[1]+NavigVisiButtonsVar[2]+
@@ -7278,7 +7279,7 @@ begin
             If FindParam('Child=', ScrStr)='1' Then
             Begin
               If Assigned(FDCLForm) then
-                FDCLForm:=FDCLLogOn.CreateForm(TmpStr, FDCLForm, nil, FDCLForm.CurrentQuery, nil,
+                FDCLForm:=FDCLLogOn.CreateForm(TmpStr, FDCLForm, FDCLForm, nil, FDCLForm.GetDataSource,
                   ModalOpen, ChooseMode, ReturnValueParams);
             End
             Else
@@ -7296,7 +7297,7 @@ begin
                 End;
               end
               Else
-                FDCLForm:=FDCLLogOn.CreateForm(TmpStr, nil, FDCLForm, nil, nil, ModalOpen, ChooseMode,
+                FDCLForm:=FDCLLogOn.CreateForm(TmpStr, nil, FDCLForm, FDCLForm.CurrentQuery, nil, ModalOpen, ChooseMode,
                   ReturnValueParams);
 
                 If Assigned(FDCLForm) Then
@@ -12838,13 +12839,11 @@ begin
   RowTextColor:=clBlack;
   PreviousColumnIndex:=-1;
 
+  FData.DataSet:=Query;
   If Not Assigned(Query) Then
   begin
     SetNewQuery(Data);
-    FData.DataSet:=FQuery;
-  end
-  Else
-    FData.DataSet:=Query;
+  end;
 
   If Assigned(Data) Then
     FQuery.DataSource:=Data;
@@ -14890,7 +14889,18 @@ begin
   Else
   begin
     If Assigned(Navig) Then
-      Navig.VisibleButtons:=Navig.VisibleButtons+NavigatorEditButtons;
+    begin
+      if nbInsert in Navig.VisibleButtons then
+        Navig.VisibleButtons:=Navig.VisibleButtons-[nbInsert];
+      if nbDelete in Navig.VisibleButtons then
+        Navig.VisibleButtons:=Navig.VisibleButtons-[nbDelete];
+      if nbPost in Navig.VisibleButtons then
+        Navig.VisibleButtons:=Navig.VisibleButtons-[nbPost];
+      if nbCancel in Navig.VisibleButtons then
+        Navig.VisibleButtons:=Navig.VisibleButtons-[nbCancel];
+      if nbEdit in Navig.VisibleButtons then
+        Navig.VisibleButtons:=Navig.VisibleButtons-[nbEdit];
+    end;
     If Assigned(FGrid) Then
       If not (dgEditing in FGrid.Options) then
         FGrid.Options:=FGrid.Options+[dgEditing];
@@ -15072,7 +15082,6 @@ begin
     If ToolButtonsCount=0 Then
       FreeAndNil(ToolButtonPanel);
   end;
-  SetReadOnly(FReadOnly);
 
   FShowed:=True;
 end;

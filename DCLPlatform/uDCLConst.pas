@@ -268,7 +268,6 @@ DefaultLibraryLocation='libfbclient.so';
 {$ENDIF}
   InternalAppName='DCLPlatform_'+InternalAppNameSuffix;
 
-
   PAGSignatureSize=3;
   PAGSignature=$474150;
   ParamPrefix=':';
@@ -308,8 +307,6 @@ DefaultLibraryLocation='libfbclient.so';
 
   NavigatorEditButtons=[nbEdit, nbDelete, nbInsert, nbPost, nbCancel];
   NavigatorNavigateButtons=[nbFirst, nbLast, nbRefresh];
-
-  EditButtonsSet=[nbFirst, nbLast, nbEdit, nbDelete, nbInsert, nbPost, nbCancel, nbRefresh];
 
   DefaultNavigButtonsSet='First,Last,Edit,Delete,Insert,Post,Cancel,Refresh';
 
