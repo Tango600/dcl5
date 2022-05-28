@@ -2822,10 +2822,16 @@ begin
 end;
 
 procedure TDCLForm.CloseForm(Sender: TObject; var Action: TCloseAction);
+var
+  I:Integer;
 begin
+  for I:=1 to Length(EventsClose) do
+  begin
+    ExecCommand(EventsClose[I-1]);
+  end;
   FDCLLogOn.KillerDog.Enabled:=True;
   If not NoCloseable then
-    If {GetActive and} Not NotDestroyedDCLForm Then
+    If Not NotDestroyedDCLForm Then
       CloseAction:=fcaClose;
 end;
 
