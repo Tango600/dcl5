@@ -485,14 +485,27 @@ Begin
 
       UpdatesFieldsSet:='';
       For v1:=1 To Length(UpdateFields) Do
-        UpdatesFieldsSet:=UpdatesFieldsSet+UpdateFields[v1-1]+',';
+        If UpdateKind=ukKeys then
+        begin
+          If not AnsiMatchStr(UpdateFields[v1-1], KeyFields) then
+            UpdatesFieldsSet:=UpdatesFieldsSet+UpdateFields[v1-1]+',';
+        End
+        Else
+          UpdatesFieldsSet:=UpdatesFieldsSet+UpdateFields[v1-1]+',';
 
       If UpdatesFieldsSet<>'' then
         System.Delete(UpdatesFieldsSet, Length(UpdatesFieldsSet), 1);
 
       KeyFieldsSet:='';
       For v1:=1 To Length(UpdateFields) Do
-        KeyFieldsSet:=KeyFieldsSet+':'+UpdateFields[v1-1]+',';
+      If UpdateKind=ukKeys then
+        begin
+          If not AnsiMatchStr(UpdateFields[v1-1], KeyFields) then
+            KeyFieldsSet:=KeyFieldsSet+':'+UpdateFields[v1-1]+',';
+        End
+        Else
+          KeyFieldsSet:=KeyFieldsSet+':'+UpdateFields[v1-1]+',';
+
       If KeyFieldsSet<>'' then
         System.Delete(KeyFieldsSet, Length(KeyFieldsSet), 1);
 
@@ -502,7 +515,8 @@ Begin
 
       KeyFieldsSet:='';
       For v1:=1 To Length(KeyFields) Do
-        KeyFieldsSet:=KeyFieldsSet+KeyFields[v1-1]+'=:OLD_'+KeyFields[v1-1]+' and ';
+          KeyFieldsSet:=KeyFieldsSet+KeyFields[v1-1]+'=:OLD_'+KeyFields[v1-1]+' and ';
+
       If KeyFieldsSet<>'' then
         System.Delete(KeyFieldsSet, Length(KeyFieldsSet)-4, 4);
 
@@ -515,12 +529,6 @@ Begin
         KeyFieldsSet:=KeyFieldsSet+KeyFields[v1-1]+'=:'+KeyFields[v1-1]+' and ';
       If KeyFieldsSet<>'' then
         System.Delete(KeyFieldsSet, Length(KeyFieldsSet)-4, 5);
-
-      UpdatesFieldsSet:='';
-      For v1:=1 To Length(KeyFields) Do
-        UpdatesFieldsSet:=UpdatesFieldsSet+':'+KeyFields[v1-1]+' is null and ';
-      If UpdatesFieldsSet<>'' then
-        System.Delete(UpdatesFieldsSet, Length(UpdatesFieldsSet)-4, 5);
 
       FRefreshSQL:='select * from '+TableName+' where '+KeyFieldsSet;
       FUpdateSQL.RefreshSQL.Text:=FRefreshSQL;
