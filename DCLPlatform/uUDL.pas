@@ -15241,6 +15241,7 @@ begin
   CommandButton[FButtonsCount-1].Tag:=FButtonsCount-1;
   CommandButton[FButtonsCount-1].Caption:=ButtonParams.Caption;
   CommandButton[FButtonsCount-1].Hint:=ButtonParams.Hint;
+  CommandButton[FButtonsCount-1].ShowHint:=ButtonParams.Hint<>'';
   CommandButton[FButtonsCount-1].OnClick:=ExecCommand;
   CommandButton[FButtonsCount-1].Top:=ButtonParams.Top;
   CommandButton[FButtonsCount-1].Left:=ButtonParams.Left;
