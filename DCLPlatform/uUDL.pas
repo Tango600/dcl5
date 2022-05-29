@@ -2663,8 +2663,6 @@ begin
   FGrids[GridIndex].TabType:=ptMainPage;
   GridPanel:=FGrids[GridIndex].FGridPanel;
 
-  // FItnQuery:=FGrids[GridIndex].Query;
-
   FGrids[GridIndex].ToolButtonsCount:=0;
   FGrids[GridIndex].ToolButtonPanel:=TToolBarPanel.Create(FGrids[GridIndex].FGridPanel);
   FGrids[GridIndex].ToolButtonPanel.Parent:=FGrids[GridIndex].FGridPanel;
@@ -7317,9 +7315,12 @@ begin
                     begin
                       If FDCLForm.CurrentQuery.Active and Not (FDCLForm.CurrentQuery.State in dsEditModes) Then
                       begin
-                        if Not (FDCLForm.CurrentQuery.State in dsEditModes) then
-                          FDCLForm.CurrentQuery.Edit;
-                        FDCLForm.CurrentQuery.FieldByName(RetVal.KeyModifyField).AsString:=RetVal.Key;
+                        if FDCLForm.CurrentQuery.CanModify then
+                        begin
+                          if Not (FDCLForm.CurrentQuery.State in dsEditModes) then
+                            FDCLForm.CurrentQuery.Edit;
+                          FDCLForm.CurrentQuery.FieldByName(RetVal.KeyModifyField).AsString:=RetVal.Key;
+                        end;
                       end;
                     end;
 
@@ -7327,9 +7328,12 @@ begin
                     begin
                       If FDCLForm.CurrentQuery.Active Then
                       begin
-                        if Not (FDCLForm.CurrentQuery.State in dsEditModes) then
-                          FDCLForm.CurrentQuery.Edit;
-                        FDCLForm.CurrentQuery.FieldByName(RetVal.ValueModifyField).AsString:=RetVal.Val;
+                        If FDCLForm.CurrentQuery.CanModify Then
+                        begin
+                          if Not (FDCLForm.CurrentQuery.State in dsEditModes) then
+                            FDCLForm.CurrentQuery.Edit;
+                          FDCLForm.CurrentQuery.FieldByName(RetVal.ValueModifyField).AsString:=RetVal.Val;
+                        end;
                       end;
                     end;
 
@@ -12081,7 +12085,7 @@ begin
         end;
         FreeAndNil(ShadowQuery);
       end;
-    If TempStr<>'' Then
+    If (TempStr<>'') and Query.CanModify Then
     begin
       If (Not (FQuery.State in dsEditModes))and FQuery.Active and(Not NoDataField) Then
         Query.Edit;
@@ -12742,7 +12746,7 @@ begin
 
     If Not tmpQuery.IsEmpty Then
     begin
-      if not ContextLists[ComboNum].NoData then
+      if not ContextLists[ComboNum].NoData and FQuery.CanModify then
       begin
         If (FQuery.State=dsBrowse) Then
           FQuery.Edit;
@@ -12797,7 +12801,7 @@ begin
         if FieldExists(ContextLists[ComboNum].DataField, FQuery) then
         begin
           Combo.Text:=Trim(tmpQuery.FieldByName(ContextLists[ComboNum].Field).AsString);
-          If (FQuery.Active and (FQuery.State=dsBrowse)) Then
+          If (FQuery.Active and FQuery.CanModify and (FQuery.State=dsBrowse)) Then
           begin
             FQuery.Edit;
             FQuery.FieldByName(ContextLists[ComboNum].DataField).AsInteger:=
@@ -13405,7 +13409,7 @@ begin
   If FQuery.Active Then
   begin
     if FieldExists(DropBoxes[v1].FieldName, FQuery) then
-    If FQuery.FieldByName(DropBoxes[v1].FieldName).AsInteger<>v2 Then
+    If (FQuery.FieldByName(DropBoxes[v1].FieldName).AsInteger<>v2) and FQuery.CanModify Then
     begin
       If Not (Query.State in dsEditModes) Then
         FQuery.Edit;
@@ -14266,9 +14270,12 @@ begin
       begin
         If FieldExists(DateBoxes[DateBoxNamb].DateBoxToFields, Query) Then
         begin
-          Query.Edit;
-          Query.FieldByName(DateBoxes[DateBoxNamb].DateBoxToFields).AsString:=
-            DateToStr(DateBoxes[DateBoxNamb].DateBox.Date);
+          if Query.CanModify then
+          begin
+            Query.Edit;
+            Query.FieldByName(DateBoxes[DateBoxNamb].DateBoxToFields).AsString:=
+              DateToStr(DateBoxes[DateBoxNamb].DateBox.Date);
+          end;
         end;
       end;
     End;
@@ -14647,12 +14654,15 @@ begin
   v1:=(Sender as TComponent).Tag;
   If Query.Active and FieldExists(RollBars[v1].Field, Query) Then
   begin
-    If Query.FieldByName(RollBars[v1].Field).AsString<>IntToStr((Sender as TTrackBar).Position) Then
+    if Query.CanModify then
     begin
-      If Not (Query.State in dsEditModes) Then
-        Query.Edit;
+      If Query.FieldByName(RollBars[v1].Field).AsString<>IntToStr((Sender as TTrackBar).Position) Then
+      begin
+        If Not (Query.State in dsEditModes) Then
+          Query.Edit;
 
-      Query.FieldByName(RollBars[v1].Field).AsString:=IntToStr((Sender as TTrackBar).Position);
+        Query.FieldByName(RollBars[v1].Field).AsString:=IntToStr((Sender as TTrackBar).Position);
+      end;
     end;
   end;
 
