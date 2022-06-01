@@ -14897,14 +14897,6 @@ begin
   If Value Then
   begin
     If Assigned(Navig) Then
-      Navig.VisibleButtons:=Navig.VisibleButtons-NavigatorEditButtons;
-    If Assigned(FGrid) Then
-      If dgEditing in FGrid.Options then
-        FGrid.Options:=FGrid.Options-[dgEditing];
-  end
-  Else
-  begin
-    If Assigned(Navig) Then
     begin
       if nbInsert in Navig.VisibleButtons then
         Navig.VisibleButtons:=Navig.VisibleButtons-[nbInsert];
@@ -14917,6 +14909,12 @@ begin
       if nbEdit in Navig.VisibleButtons then
         Navig.VisibleButtons:=Navig.VisibleButtons-[nbEdit];
     end;
+    If Assigned(FGrid) Then
+      If dgEditing in FGrid.Options then
+        FGrid.Options:=FGrid.Options-[dgEditing];
+  end
+  Else
+  begin
     If Assigned(FGrid) Then
       If not (dgEditing in FGrid.Options) then
         FGrid.Options:=FGrid.Options+[dgEditing];
@@ -15009,9 +15007,17 @@ begin
     If FindNotAllowedOperation(dsoDelete) Then
       Navig.VisibleButtons:=Navig.VisibleButtons-[nbDelete];
     If FindNotAllowedOperation(dsoInsert) Then
+    begin
       Navig.VisibleButtons:=Navig.VisibleButtons-[nbInsert];
+      Navig.VisibleButtons:=Navig.VisibleButtons-[nbPost];
+      Navig.VisibleButtons:=Navig.VisibleButtons-[nbCancel];
+    end;
     If FindNotAllowedOperation(dsoEdit) Then
+    begin
       Navig.VisibleButtons:=Navig.VisibleButtons-[nbEdit];
+      Navig.VisibleButtons:=Navig.VisibleButtons-[nbPost];
+      Navig.VisibleButtons:=Navig.VisibleButtons-[nbCancel];
+    end;
   end;
 
   If Not FShowed Then
