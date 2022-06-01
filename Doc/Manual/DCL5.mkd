@@ -2126,6 +2126,7 @@ select \* from orders where CustNo=:CustNo
 
 ИмяПоля1/Подпись Поля 1, ИмяПоля2/Подпись Поля 2, ИмяПоля3/Подпись Поля 3.
 
+![](LookupTable.png)
  
 
 Диалоги выбора
