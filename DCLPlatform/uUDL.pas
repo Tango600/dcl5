@@ -12105,7 +12105,7 @@ procedure TDCLGrid.AddLookupTable(var Field: RField);
 var
   l, FFactor: Word;
   TempStr, TmpStr, FieldName: String;
-  v1, v2: Integer;
+  v1, v2, v3: Integer;
   FField: RField;
 begin
   l:=Length(LookupTables);
@@ -12147,14 +12147,23 @@ begin
     v1:=ParamsCount(TempStr);
     For v2:=1 to v1 do
     begin
+      v3:=0;
       TmpStr:=SortParams(TempStr, v2);
       FieldName:=Copy(TmpStr, 1, Pos('/', TmpStr)-1);
+      if Pos('=', FieldName)<>0 then
+      begin
+        v3:=StrToIntEx(Copy(FieldName, Pos('=', FieldName)+1, Length(FieldName)));
+        FieldName:=Copy(FieldName, 1, Pos('=', FieldName)-1);
+      end;
+
       ResetFieldParams(FField);
       If FieldExists(FieldName, LookupTables[l].DCLGrid.Query) Then
       begin
         FField.FType:=LookupTables[l].DCLGrid.Query.FieldByName(FieldName).DataType;
         FField.FieldName:=FieldName;
         FField.Caption:=Copy(TmpStr, Pos('/', TmpStr)+1, Length(TmpStr)-1);
+        if v3>10 then
+          FField.Width:=v3;
       end
       Else
       begin
@@ -12164,7 +12173,7 @@ begin
     end;
   end;
 
-  IncXYPos(EditTopStep, LookupTables[l].LookupPanel.Width, Field);
+  IncXYPos(LookupTables[l].LookupPanel.Height+EditTopStep, LookupTables[l].LookupPanel.Width, Field);
 end;
 
 procedure TDCLGrid.AddMediaFieldGroup(Parent: TWinControl; Align: TAlign; GroupType: TGroupType;
@@ -13187,6 +13196,11 @@ begin
         If PosEx('As_Graphic;', FOPL[ScrStrNum+FieldNo+FieldNo])<>0 Then
         begin
           FField.FType:=ftGraphic;
+        end;
+
+        If PosEx('As_Date;', FOPL[ScrStrNum+FieldNo+FieldNo])<>0 Then
+        begin
+          FField.FType:=ftDate;
         end;
 
         If PosEx('As_Memo;', FOPL[ScrStrNum+FieldNo+FieldNo])<>0 Then
@@ -15049,6 +15063,15 @@ begin
       SetPopupMenuItems(True);
 
       FGrid.PopupMenu:=PopupGridMenu;
+
+      if FDisplayMode=dctLookupGrid then
+      begin
+        If Assigned(Navig) Then
+        begin
+          Navig.VisibleButtons:=Navig.VisibleButtons-[nbPrior];
+          Navig.VisibleButtons:=Navig.VisibleButtons-[nbNext];
+        end;
+      end;
     end;
 
     If FDisplayMode in TDataFields Then
