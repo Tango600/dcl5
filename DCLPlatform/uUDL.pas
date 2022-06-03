@@ -553,6 +553,7 @@ Type
 
   TDCLForm=class(TComponent)
   private
+    SingleMod: Boolean;
     FName: String;
     FCloseAction: TDCLFormCloseAction;
     FParentForm, FCallerForm: TDCLForm;
@@ -693,6 +694,7 @@ Type
     property FormNum: Integer read FFormNum;
     property ReturnFormValue: TReturnFormValue read FRetunValue;
     property CloseAction: TDCLFormCloseAction read FCloseAction write FCloseAction;
+    property IsSingle: Boolean read SingleMod write SingleMod;
   end;
 
   { TDCLCommand }
@@ -3505,7 +3507,17 @@ begin
   FormWidth:=DefaultFormWidth;
   ExitNoSave:=False;
   SetLength(FGrids, 0);
-  // CachedUpdates:=False;
+
+  For v1:=1 to FDCLLogOn.FormsCount do
+  begin
+    If Assigned(FDCLLogOn.Forms[v1-1]) Then
+      If FDCLLogOn.Forms[v1-1].IsSingle and (FDCLLogOn.Forms[v1-1].DialogName=DialogName) Then
+      begin
+        Exit;
+        break;
+      end;
+  end;
+
   For v1:=1 to FDCLLogOn.FormsCount do
   begin
     If Assigned(FDCLLogOn.Forms[v1-1]) Then
@@ -3622,7 +3634,7 @@ begin
 
       If PosEx('Single;', ScrStr)=1 Then
       begin
-
+        IsSingle:=True;
       end;
 
       If PosEx('Orientation=', ScrStr)=1 Then
@@ -9017,7 +9029,19 @@ function TDCLLogOn.CreateForm(FormName: String; ParentForm, CallerForm: TDCLForm
 var
   i: Integer;
   Scr: TStringList;
+  FormPoint:Pointer;
 begin
+  For i:=1 to FForms.Count do
+  begin
+    If Assigned(Forms[i-1]) then
+    if Forms[i-1].IsSingle and (Forms[i-1].DialogName=FormName) then
+    begin
+      Forms[i-1].Form.BringToFront;
+      Result:=nil;
+      Exit;
+    end;
+  end;
+
   If not Assigned(Script) then
     Scr:=LoadScrText(FormName)
   Else
@@ -9027,13 +9051,13 @@ begin
   End;
 
   i:=FForms.Count;
-  FForms.Add(TDCLForm.Create(FormName, Self, ParentForm, CallerForm, i, Scr, Query, Data, ModalMode,
-    ReturnValueMode, ReturnValueParams));
+  FormPoint:=TDCLForm.Create(FormName, Self, ParentForm, CallerForm, i, Scr, Query, Data, ModalMode,
+    ReturnValueMode, ReturnValueParams);
+
+  if Assigned(FormPoint) then
+    FForms.Add(FormPoint);
   i:=FForms.Count-1;
   CurrentForm:=i;
-  {If Assigned(ReturnValueParams) then
-    If ReturnValueMode<>chmNone then
-      Forms[i].Choose;}
 
   If Assigned(Forms[i]) then
   If Forms[i].ExitCode=0 Then
