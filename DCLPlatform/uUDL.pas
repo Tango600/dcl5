@@ -3620,6 +3620,11 @@ begin
         FDialogName:=DialogName;
       end;
 
+      If PosEx('Single;', ScrStr)=1 Then
+      begin
+
+      end;
+
       If PosEx('Orientation=', ScrStr)=1 Then
       begin
         TranslateVal(ScrStr, True);
@@ -3815,9 +3820,9 @@ begin
         FGrids[GridIndex].TranslateVal(TmpStr);
 
         If StrToIntEx(TmpStr)=1 Then
-          FGrids[GridIndex].ReadOnly:=True
+          FGrids[GridIndex].SetReadOnly(True)
         Else
-          FGrids[GridIndex].ReadOnly:=False;
+          FGrids[GridIndex].SetReadOnly(False);
       end;
 
       If PosEx('NoCloseable=', ScrStr)=1 Then
@@ -12085,15 +12090,17 @@ begin
         end;
         FreeAndNil(ShadowQuery);
       end;
-    If (TempStr<>'') and Query.CanModify Then
+    If (TempStr<>'') Then
     begin
-      If (Not (FQuery.State in dsEditModes))and FQuery.Active and(Not NoDataField) Then
-        Query.Edit;
       If (Not FForm.Showing) and (Not NoDataField) Then
         FForm.Show;
       Lookups[l].Lookup.KeyValue:=TempStr;
-      If Not NoDataField Then
+      If (Not NoDataField) and Query.CanModify Then
+      begin
+        If (Not (FQuery.State in dsEditModes))and FQuery.Active and(Not NoDataField) Then
+          Query.Edit;
         FData.DataSet.FieldByName(Field.FieldName).AsInteger:=StrToIntEx(TempStr);
+      end;
       LookupOnClick(Lookups[l].Lookup);
     end;
   end;
@@ -14926,6 +14933,10 @@ begin
     If Assigned(FGrid) Then
       If dgEditing in FGrid.Options then
         FGrid.Options:=FGrid.Options-[dgEditing];
+
+    {AddNotAllowedOperation(dsoDelete);
+    AddNotAllowedOperation(dsoInsert);
+    AddNotAllowedOperation(dsoEdit);}
   end
   Else
   begin
@@ -15127,7 +15138,7 @@ begin
     If ToolButtonsCount=0 Then
       FreeAndNil(ToolButtonPanel);
   end;
-  ///SetReadOnly(FReadOnly);
+  SetReadOnly(FReadOnly);
 
   FShowed:=True;
 end;
