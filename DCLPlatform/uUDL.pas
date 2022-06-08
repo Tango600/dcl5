@@ -5440,6 +5440,9 @@ var
   tmp1, tmp2, VarName, ReturnField, SQLText, KeyField: String;
   i, sv_v2, v2, v0: Integer;
   DCLQuery: TDCLDialogQuery;
+  {$IFDEF TRANSACTIONDB}
+  tmp_Transaction:TTransaction;
+  {$ENDIF}
 begin
   ReturnField:='';
   tmp2:=FindParam('SetValue=', S);
@@ -5504,6 +5507,13 @@ begin
       DCLQuery:=TDCLDialogQuery.Create(nil);
       DCLQuery.Name:='SetVal_Ret'+IntToStr(UpTime);
       FDCLLogOn.SetDBName(DCLQuery);
+
+      {$IFDEF TRANSACTIONDB}
+      tmp_Transaction:=FDCLLogOn.NewTransaction(trtWrite);
+      DCLQuery.Transaction:=tmp_Transaction;
+      tmp_Transaction.StartTransaction;
+      {$ENDIF}
+
       DCLQuery.SQL.Text:=SQLText;
       Screen.Cursor:=crSQLWait;
       try
@@ -5531,9 +5541,14 @@ begin
 
       tmp2:=TrimRight(DCLQuery.FieldByName(ReturnField).AsString);
       TranslateValContext(tmp2);
+      DCLQuery.Close;
 
       FDCLLogOn.Variables.Variables[tmp1]:=tmp2;
-      DCLQuery.Close;
+
+      {$IFDEF TRANSACTIONDB}
+      tmp_Transaction.Commit;
+      FreeAndNil(tmp_Transaction);
+      {$ENDIF}
       FreeAndNil(DCLQuery);
     end;
   end;
@@ -11840,6 +11855,7 @@ var
   NeedValue: Byte;
   ShadowQuery: TDCLDialogQuery;
   EditsCount: Word;
+  NoDataField: Boolean;
 begin
   EditsCount:=Length(Edits);
   SetLength(Edits, EditsCount+1);
@@ -11856,6 +11872,12 @@ begin
     Edits[EditsCount].Edit.ShowHint:=True;
     Edits[EditsCount].Edit.Hint:=Field.Hint;
   end;
+
+  If FindParam('NoDataField=', Field.OPL)='1' Then
+  Begin
+    NoDataField:=True;
+    Edits[EditsCount].NoDataField:=True;
+  End;
 
   Edits[EditsCount].Edit.PasswordChar:=Field.PasswordChar;
   Edits[EditsCount].EditsPasswordChar:=Field.PasswordChar;
@@ -11904,25 +11926,42 @@ begin
     If FindParam('_Value=', Field.OPL)<>'' Then
       NeedValue:=1
     Else
-      NeedValue:=3;
-  End
-  Else
-  Begin
-    If FindParam('_ValueIfNull=', Field.OPL)<>'' Then
     Begin
-      If FQuery.Active Then
+      NeedValue:=3;
+    End;
+  End;
+
+  If FindParam('_ValueIfEmpty=', Field.OPL)<>'' Then
+  Begin
+    TempStr:=FindParam('_Value=', Field.OPL);
+    RePlaseParams(TempStr);
+    FDCLForm.RePlaseVariables(TempStr);
+
+    if TempStr='' then
+    begin
+      NeedValue:=6;
+    end;
+  End;
+
+  if not NoDataField then
+  begin
+    If FQuery.Active Then
+    Begin
+      If FindParam('_ValueIfNull=', Field.OPL)<>'' Then
+      Begin
         If FieldExists(Field.FieldName, FQuery) Then
           if FQuery.FieldByName(Field.FieldName).IsNull then
             NeedValue:=4;
-    End;
-    If FindParam('_ValueIfNotNull=', Field.OPL)<>'' Then
-    Begin
-      If FQuery.Active Then
+      End;
+      If FindParam('_ValueIfNotNull=', Field.OPL)<>'' Then
+      Begin
         If FieldExists(Field.FieldName, FQuery) Then
           if not FQuery.FieldByName(Field.FieldName).IsNull then
             NeedValue:=5;
+      End;
     End;
-  End;
+  end;
+
   If FindParam('SQL=', Field.OPL)<>'' Then
     NeedValue:=2;
 
@@ -11935,6 +11974,12 @@ begin
   1:
   begin
     TempStr:=FindParam('_Value=', Field.OPL);
+    RePlaseParams(TempStr);
+    FDCLForm.RePlaseVariables(TempStr);
+  end;
+  6:
+  begin
+    TempStr:=FindParam('_ValueIfEmpty=', Field.OPL);
     RePlaseParams(TempStr);
     FDCLForm.RePlaseVariables(TempStr);
   end;
@@ -12807,7 +12852,6 @@ procedure TDCLGrid.ContextListKeyDown(Sender: TObject; var Key: Word; Shift: TSh
 var
   ComboNum: Integer;
   tmpQuery: TDCLDialogQuery;
-  tmpStr: String;
   Combo: TComboBox;
 begin
   ComboNum:=(Sender as TComponent).Tag;
@@ -12828,14 +12872,6 @@ begin
 
       Combo.Items.Clear;
 
-      tmpStr:=ContextLists[ComboNum].DataField;
-      if ContextLists[ComboNum].DataField<>'' then
-      begin
-        if not FieldExists(ContextLists[ComboNum].DataField, tmpQuery) then
-        begin
-          tmpStr:=tmpQuery.Fields[0].FieldName;
-        end;
-      end;
       If tmpQuery.RecordCount=1 Then
       begin
         if FieldExists(ContextLists[ComboNum].DataField, FQuery) then
@@ -14746,7 +14782,7 @@ begin
   If Length(Edits)>0 Then
     For v1:=1 to Length(Edits) do
     begin
-      If Edits[v1-1].EditsType in [fbtOutBox, fbtEditBox] Then
+      If (Edits[v1-1].EditsType in [fbtOutBox, fbtEditBox]) and not Edits[v1-1].NoDataField Then
       begin
         If FieldExists(Edits[v1-1].EditsToFields, FQuery) Then
           Edits[v1-1].Edit.Text:=TrimRight(FQuery.FieldByName(Edits[v1-1].EditsToFields).AsString);

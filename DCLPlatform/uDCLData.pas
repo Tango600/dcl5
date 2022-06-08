@@ -148,7 +148,7 @@ TDCLEdits=record
   EditsToGetResultFields:RDependFind;
   PostModes, ModifyEdit: Byte;
   EditToVariables:String;
-  EditsToFloat:Boolean;
+  EditsToFloat, NoDataField:Boolean;
 end;
 
 TDateBox=record
