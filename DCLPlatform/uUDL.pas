@@ -11204,6 +11204,7 @@ begin
     Field.Variable:='CheckBox_'+Field.FieldName;
   end;
 
+  CheckBoxes[l].NoDataField:=Field.NoDataField;
   CheckBoxes[l].CheckBoxToVars:=Field.Variable;
   CheckBoxes[l].CheckBox.Checked:=False;
   If PosEx('_OnCheck;', Field.OPL)<>0 Then
@@ -11229,7 +11230,7 @@ end;
 
 procedure TDCLGrid.AddCheckBox(var Field: RField);
 begin
-  If FQuery.Active and FieldExists(Field.FieldName, Query) Then
+  If (not Field.NoDataField) and FQuery.Active and FieldExists(Field.FieldName, Query) Then
     AddDBCheckBox(Field)
   Else
     AddSimplyCheckBox(Field);
@@ -11274,13 +11275,15 @@ begin
   ContextFieldButtons[l].Button.ShowHint:=True;
   ContextFieldButtons[l].Button.OnClick:=ContextFieldButtonsClick;
 
-  Field.StepLeft:=GetValueButtonGeom;
+  Field.StepLeft:=Field.Left+Field.Width+5+GetValueButtonGeom;
 
   TempStr:=FindParam('CommandName=', Field.OPL);
   If TempStr<>'' Then
   begin
     ContextFieldButtons[l].Command:=TempStr;
   end;
+
+  IncXYPos(0, Field.Width+5+GetValueButtonGeom, Field);
 end;
 
 procedure TDCLGrid.AddContextList(var Field: RField);
@@ -11321,7 +11324,7 @@ begin
 
   ContextLists[l].DataField:=Field.FieldName;
   ContextLists[l].Variable:=FindParam('VariableName=', Field.OPL);
-  ContextLists[l].NoData:=FindParam('NoDataField=', Field.OPL)='1';
+  ContextLists[l].NoData:=Field.NoDataField;
 
   ShadowQuery:=TDCLDialogQuery.Create(nil);
   ShadowQuery.Name:='ContextList_'+IntToStr(UpTime);
@@ -11379,6 +11382,8 @@ begin
     DateBoxes[DateBoxCount].DateBox.Name:='DateBox_'+Field.FieldName
   Else
     DateBoxes[DateBoxCount].DateBox.Name:=FindParam('ComponentName=', Field.OPL);
+
+  DateBoxes[DateBoxCount].NoDataField:=Field.NoDataField;
 
   If Field.Hint<>'' Then
   begin
@@ -11673,9 +11678,7 @@ var
   TmpStr, tmpStr1, tmpSQL1: String;
   DropList: TComboBox;
   v1, v2: Integer;
-  //NoDataField: Boolean;
 begin
-  //NoDataField:=FindParam('NoDataField=', Field.OPL)='1';
   If FQuery.Active and (FDisplayMode in TDataGrid) Then
   begin
     TmpStr:=FindParam('List=', Field.OPL);
@@ -11855,7 +11858,6 @@ var
   NeedValue: Byte;
   ShadowQuery: TDCLDialogQuery;
   EditsCount: Word;
-  NoDataField: Boolean;
 begin
   EditsCount:=Length(Edits);
   SetLength(Edits, EditsCount+1);
@@ -11873,11 +11875,7 @@ begin
     Edits[EditsCount].Edit.Hint:=Field.Hint;
   end;
 
-  If FindParam('NoDataField=', Field.OPL)='1' Then
-  Begin
-    NoDataField:=True;
-    Edits[EditsCount].NoDataField:=True;
-  End;
+  Edits[EditsCount].NoDataField:=Field.NoDataField;
 
   Edits[EditsCount].Edit.PasswordChar:=Field.PasswordChar;
   Edits[EditsCount].EditsPasswordChar:=Field.PasswordChar;
@@ -11885,6 +11883,7 @@ begin
   Edits[EditsCount].Edit.CharCase:=Field.CharCase;
 
   Edits[EditsCount].Edit.Tag:=EditsCount;
+  Edits[EditsCount].Edit.ReadOnly:=Field.ReadOnly;
   Edits[EditsCount].EditsToFields:=Field.FieldName;
   Edits[EditsCount].Edit.Parent:=FieldPanel;
   Edits[EditsCount].Edit.OnClick:=EditClick;
@@ -11943,7 +11942,7 @@ begin
     end;
   End;
 
-  if not NoDataField then
+  if not Field.NoDataField then
   begin
     If FQuery.Active Then
     Begin
@@ -12085,12 +12084,14 @@ begin
   Lookups[l].Lookup.Name:='LookUpField_'+IntToStr(l);
   Lookups[l].Lookup.Tag:=l;
 
+  Lookups[l].NoDataField:=Field.NoDataField;
+
   Lookups[l].Lookup.ShowHint:=True;
   Lookups[l].Lookup.Hint:=Field.Hint;
 
   If FQuery.Active Then
   begin
-    If FindParam('NoDataField=', Field.OPL)<>'1' Then
+    If not Field.NoDataField Then
     begin
       If FieldExists(Field.FieldName, FQuery) Then
       begin
@@ -13312,9 +13313,13 @@ begin
 
         If FindParam('ReadOnly=', FField.OPL)<>'' Then
         begin
-          // Убрать везде
           FField.ReadOnly:=StrToIntEx(FindParam('ReadOnly=', FField.OPL))=1;
         end;
+
+        If FindParam('NoDataField=', FField.OPL)='1' Then
+        Begin
+          FField.NoDataField:=True;
+        End;
 
         Case DisplayMode of
         dctFields, dctFieldsStep:
@@ -13359,7 +13364,7 @@ begin
             AddDateBox(FField);
           end;
 
-          If PosEx('DBCheckBox=', FieldCaptScrStr)<>0 Then
+          If (not FField.NoDataField) and (PosEx('DBCheckBox=', FieldCaptScrStr)<>0) Then
           begin
             AddDBCheckBox(FField);
           end
@@ -13396,7 +13401,6 @@ begin
           begin
             AddLookupTable(FField);
           end;
-
         end;
         dctMainGrid:
         begin
@@ -14313,8 +14317,13 @@ begin
   v1:=Data.Tag;
   Look:=Lookups[v1].Lookup;
   If Assigned(Look) Then
-    FDCLLogOn.Variables.Variables[Lookups[v1].LookupToVars]:=
-      TrimRight(Lookups[v1].LookupQuery.FieldByName(Look.KeyField).AsString);
+  Begin
+    if not Lookups[v1].NoDataField then
+    begin
+      FDCLLogOn.Variables.Variables[Lookups[v1].LookupToVars]:=
+        TrimRight(Lookups[v1].LookupQuery.FieldByName(Look.KeyField).AsString);
+    end;
+  End;
 end;
 
 procedure TDCLGrid.LookupOnClick(Sender: TObject);
@@ -14802,7 +14811,7 @@ begin
   If Length(CheckBoxes)>0 Then
     For v1:=1 to Length(CheckBoxes) do
     begin
-      If FieldExists(CheckBoxes[v1-1].CheckBoxToFields, FQuery) Then
+      If (not CheckBoxes[v1-1].NoDataField) and FieldExists(CheckBoxes[v1-1].CheckBoxToFields, FQuery) Then
       begin
         TmpStr:=TrimRight(FQuery.FieldByName(CheckBoxes[v1-1].CheckBoxToFields).AsString);
         If (TmpStr='0')or(TmpStr='') Then
@@ -14815,7 +14824,7 @@ begin
   If Length(DateBoxes)>0 Then
     For v1:=1 to Length(DateBoxes) do
     begin
-      If not DateBoxes[v1-1].NoDataField and FieldExists(DateBoxes[v1-1].DateBoxToFields, FQuery) Then
+      If (not DateBoxes[v1-1].NoDataField) and FieldExists(DateBoxes[v1-1].DateBoxToFields, FQuery) Then
         DateBoxes[v1-1].DateBox.Date:=FQuery.FieldByName(DateBoxes[v1-1].DateBoxToFields)
           .AsDateTime;
     end;

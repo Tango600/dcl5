@@ -8,7 +8,7 @@ uses
 {$ENDIF}
   SysUtils, Classes, Forms, Graphics, Controls, ExtCtrls,
   StdCtrls, DateUtils,
-  uDCLConst, uDCLData, uStringParams, uDCLMultiLang;
+  uDCLConst, uDCLData, uDCLMultiLang;
 
 type
   TMessageFormObject=Class(TObject)

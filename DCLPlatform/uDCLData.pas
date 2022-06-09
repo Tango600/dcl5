@@ -161,6 +161,7 @@ end;
 RCheckBox=record
   CheckBox: TCheckBox;
   CheckBoxToVars, CheckBoxToFields: string;
+  NoDataField:Boolean;
 end;
 
 RLookups=record
@@ -169,6 +170,7 @@ RLookups=record
   LookupToVars:String;
   LookupData:TDataSource;
   // GetValues:RGetValueRec;
+  NoDataField:Boolean;
   ModifyEdits:String;
 end;
 

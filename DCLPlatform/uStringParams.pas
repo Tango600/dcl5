@@ -103,7 +103,7 @@ Function FindParam(const KeyWord, StrParam: String): String;
 var
   Start, EndStr, lp, StartPos: Integer;
   vStrParam: String;
-  Find:Boolean;
+  Find, StorkeShodow:Boolean;
 begin
   Result:='';
   StartPos:=1;
@@ -118,13 +118,21 @@ begin
       If Start<>0 then
       If Pos(vStrParam[Start-2+StartPos], StopSimbols)<>0 then
       Begin
+        StorkeShodow:=False;
         lp:=Length(vStrParam);
         EndStr:=Start+StartPos-1+Length(KeyWord);
-        While vStrParam[EndStr]<>DefaultParamsSeparator do
+        While (vStrParam[EndStr]<>DefaultParamsSeparator) or StorkeShodow do
         begin
           if EndStr-1=lp then
             break;
           Result:=Result+vStrParam[EndStr];
+
+          if StorkeShodow and (vStrParam[EndStr]='''') then
+            StorkeShodow:=False
+          else
+            if not StorkeShodow and (vStrParam[EndStr]='''') then
+              StorkeShodow:=True;
+
           Inc(EndStr);
         end;
         Find:=True;
