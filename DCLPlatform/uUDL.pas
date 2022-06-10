@@ -14318,11 +14318,8 @@ begin
   Look:=Lookups[v1].Lookup;
   If Assigned(Look) Then
   Begin
-    if not Lookups[v1].NoDataField then
-    begin
-      FDCLLogOn.Variables.Variables[Lookups[v1].LookupToVars]:=
-        TrimRight(Lookups[v1].LookupQuery.FieldByName(Look.KeyField).AsString);
-    end;
+    FDCLLogOn.Variables.Variables[Lookups[v1].LookupToVars]:=
+      TrimRight(Lookups[v1].LookupQuery.FieldByName(Look.KeyField).AsString);
   End;
 end;
 
