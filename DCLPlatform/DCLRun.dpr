@@ -77,6 +77,7 @@ begin
   {$IFDEF MSWINDOWS}
   Application.MainFormOnTaskbar:=True;
   {$ENDIF}
+  Application.UpdateFormatSettings:=False;
   {$IFNDEF FPC}{$IFDEF USEDELPHIThemes}
   TStyleManager.TrySetStyle('Smokey Quartz Kamri');
   {$ENDIF}{$ENDIF}

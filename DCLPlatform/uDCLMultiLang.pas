@@ -40,7 +40,7 @@ type
     msResetFieldsSettings, msResetFieldsSettingsQ, msDeleteAllBookmarks, msDeleteAllBookmarksQ, msSaveFieldsSettings,
     msNotAllowOpenForm, msDeleteRecordQ, msNotAllowExecuteApps, msPathsNotSupported, msSaveEditings, msSaveEditingsQ,
     msDoYouWontTerminateApplicationQ, msConfigurationFileNotFound, msClearContentQ, msNotifycation, msForUser,
-    msLoading, msTimeToExit, msDSStateSet);
+    msLoading, msTimeToExit, msDSStateSet, msCloseDialogQuery);
 
 
 procedure LoadLangRes(Lang:TLangName; Path:String);
@@ -90,7 +90,7 @@ const
     'msResetFieldsSettings', 'msResetFieldsSettingsQ', 'msDeleteAllBookmarks', 'msDeleteAllBookmarksQ', 'msSaveFieldsSettings',
     'msNotAllowOpenForm', 'msDeleteRecordQ', 'msNotAllowExecuteApps', 'msPathsNotSupported', 'msSaveEditings', 'msSaveEditingsQ',
     'msDoYouWontTerminateApplicationQ', 'msConfigurationFileNotFound', 'msClearContentQ', 'msNotifycation', 'msForUser',
-    'msLoading', 'msTimeToExit', 'msDSStateSet');
+    'msLoading', 'msTimeToExit', 'msDSStateSet', 'msCloseDialogQuery');
 
 type
   TCharToUTF8Table=array [0..255] of String;
@@ -396,6 +396,8 @@ begin
     Result:='В';
     msClose:
     Result:='Закрыть';
+    msCloseDialogQuery:
+    Result:='Закрыть?';
     msOpen:
     Result:='Открыть';
     msEdit:

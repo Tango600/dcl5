@@ -711,12 +711,13 @@ begin
   Result.Params.Clear;
   Case RW of
   trtWrite:Begin
-    Result.Params.Append('nowait');
+    Result.Params.Append('write');
   End;
   trtRead:Begin
     Result.Params.Append('read');
   End;
   End;
+  Result.Params.Append('nowait');
   Result.Params.Append('read_committed');
   If GPT.IBAll then
     Result.Params.Append('rec_version');

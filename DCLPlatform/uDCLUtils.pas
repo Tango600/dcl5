@@ -121,6 +121,8 @@ function GetScriptVersion(Data:TMemoryStream):String;
 
 function GetTimeFormat(mSec: Cardinal): String;
 
+function IsDigits(Value: String): Boolean;
+
 implementation
 
 uses
@@ -2571,6 +2573,23 @@ begin
   Begin
     Result:='cp'+Copy(CodePageName, 4, Length(CodePageName));
   End;
+end;
+
+function IsDigits(Value: String): Boolean;
+var
+  i: Integer;
+begin
+  Result:=False;
+
+  if Length(Value)>0 then
+  begin
+  for I:=1 to Length(Value) do
+    if not ((Value[i] in ['0'..'9']) or (Value[I] in ['-', '+'])) then
+    begin
+      exit;
+    end;
+  end;
+  Result:=True;
 end;
 
 end.

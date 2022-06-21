@@ -68,6 +68,7 @@ RField=record
   IsFieldWidth, IsFieldHeight, CurrentEdit, ReadOnly, NoDataField: Boolean;
   Top, Left, Width, Height, StepLeft: Word;
   DataFieldType:TDataFieldTypeType;
+  FieldTypeFormat:TFieldFormat;
 end;
 
 RCalendar=record
@@ -148,7 +149,7 @@ TDCLEdits=record
   EditsToGetResultFields:RDependFind;
   PostModes, ModifyEdit: Byte;
   EditToVariables:String;
-  EditsToFloat, NoDataField:Boolean;
+  DCLField:RField;
 end;
 
 TDateBox=record

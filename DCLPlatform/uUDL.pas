@@ -554,14 +554,15 @@ Type
   TDCLForm=class(TComponent)
   private
     SingleMod: Boolean;
-    FName: String;
+    FName, CloseQueryText: String;
     FCloseAction: TDCLFormCloseAction;
     FParentForm, FCallerForm: TDCLForm;
     UserLevelLocal: TUserLevelsType;
     FOPL: TStringList;
     FFormNum, FormHeight, FormWidth: Integer;
     TB: TFormPanelButton;
-    FNewPage, NoVisual, NoStdKeys, FieldsSettingsReseted, SettingsLoaded, NoCloseable: Boolean;
+    FNewPage, NoVisual, NoStdKeys, FieldsSettingsReseted, SettingsLoaded,
+    NoCloseable, CloseQuery, FormCanClose: Boolean;
     FForm: TDBForm;
     FDCLLogOn: TDCLLogOn;
     FGrids: Array of TDCLGrid;
@@ -2830,7 +2831,7 @@ begin
     ExecCommand(EventsClose[I-1]);
   end;
   FDCLLogOn.KillerDog.Enabled:=True;
-  If not NoCloseable then
+  If FormCanClose then
     If Not NotDestroyedDCLForm Then
       CloseAction:=fcaClose;
 end;
@@ -3038,14 +3039,31 @@ begin
 end;
 
 procedure TDCLForm.OnCloseQuery(Sender: TObject; var CanClose: Boolean);
+var
+  S:String;
+  DlgRes:Integer;
 begin
-  CanClose:=not NoCloseable;
   If NoCloseable then
-  {$IFDEF MSWINDOWS}
-    Beep(500, 500);
-  {$ELSE}
-    Beep;
-  {$ENDIF}
+  Begin
+    CanClose:=not NoCloseable;
+    FormCanClose:=CanClose;
+    {$IFDEF MSWINDOWS}
+      Beep(500, 500);
+    {$ELSE}
+      Beep;
+    {$ENDIF}
+    Exit;
+  End;
+
+  If CloseQuery then
+  Begin
+    S:=CloseQueryText;
+    if S='' then
+      S:=GetDCLMessageString(msClose);
+    DlgRes:=ShowErrorMessage(10, S);
+    CanClose:=DlgRes=1;
+    FormCanClose:=CanClose;
+  End;
 end;
 
 procedure TDCLForm.SaveFormPos;
@@ -3477,6 +3495,7 @@ var
 
 begin
   NoCloseable:=False;
+  FormCanClose:=True;
   FCloseAction:=fcaNone;
   FieldsOPL:=nil;
   ExitCode:=0;
@@ -3841,6 +3860,12 @@ begin
       begin
         TmpStr:=FindParam('NoCloseable=', ScrStr);
         NoCloseable:=Trim(TmpStr)='1';
+      end;
+
+      If PosEx('CloseQuery=', ScrStr)=1 Then
+      begin
+        CloseQueryText:=FindParam('CloseQuery=', ScrStr);
+        CloseQuery:=True;
       end;
 
       If PosEx('Navigator=', ScrStr)=1 Then
@@ -5181,7 +5206,8 @@ procedure TDCLForm.CloseDialog;
 begin
   If Assigned(FForm) then
     FForm.Close;
-  CloseAction:=fcaClose;
+  if FormCanClose then
+    CloseAction:=fcaClose;
 end;
 
 procedure TDCLForm.ResumeDatasets;
@@ -5724,7 +5750,6 @@ begin
     begin
       FDCLForm.NotDestroyedDCLForm:=False;
       FDCLForm.CloseDialog;
-      FDCLForm.CloseAction:=fcaClose;
     end;
     Executed:=True;
   end;
@@ -11417,6 +11442,19 @@ begin
   If FindParam('SQL=', Field.OPL)<>'' Then
     NeedValue:=2;
 
+  if not Field.NoDataField then
+  begin
+    If FQuery.Active Then
+    Begin
+      If FindParam('_ValueIfNull=', Field.OPL)<>'' Then
+      Begin
+        If FieldExists(Field.FieldName, FQuery) Then
+          if FQuery.FieldByName(Field.FieldName).IsNull then
+            NeedValue:=4;
+      End;
+    End;
+  end;
+
   TempStr:='';
   Case NeedValue of
   0:
@@ -11454,20 +11492,9 @@ begin
       TempStr:=DateToStr(Date);
     ShadowQuery.Close;
     FreeAndNil(ShadowQuery);
-
-    If FindParam('IfNull=', Field.OPL)='1' Then
-    Begin
-      If Query.Active Then
-      begin
-        If FieldExists(Field.FieldName, Query) Then
-        Begin
-          if not Query.FieldByName(Field.FieldName).IsNull then
-          Begin
-            TempStr:=TrimRight(Query.FieldByName(Field.FieldName).AsString);
-          End;
-        End;
-      end;
-    End;
+  end;
+  4:begin
+    TempStr:=FindParam('_ValueIfNull', Field.OPL);
   end;
   end;
 
@@ -11875,8 +11902,6 @@ begin
     Edits[EditsCount].Edit.Hint:=Field.Hint;
   end;
 
-  Edits[EditsCount].NoDataField:=Field.NoDataField;
-
   Edits[EditsCount].Edit.PasswordChar:=Field.PasswordChar;
   Edits[EditsCount].EditsPasswordChar:=Field.PasswordChar;
 
@@ -11895,12 +11920,24 @@ begin
 
   If FieldBoxType<>fbtOutBox Then
   begin
-    Edits[EditsCount].EditsToFloat:=False;
+    RePlaseParams(TempStr);
+    FDCLForm.RePlaseVariables(TempStr);
     TempStr:=FindParam('Format=', Field.OPL);
-    If LowerCase(TempStr)='float' Then
+    if TempStr<>'' then
     begin
-      Edits[EditsCount].EditsToFloat:=True;
       Edits[EditsCount].Edit.OnKeyPress:=EditOnFloatData;
+      If LowerCase(TempStr)='float' Then
+      begin
+        Field.FieldTypeFormat:=fftFloat;
+      end;
+      if LowerCase(TempStr)='digit' then
+      begin
+        Field.FieldTypeFormat:=fftDigit;
+      end;
+      if LowerCase(TempStr)='trim' then
+      begin
+        Field.FieldTypeFormat:=fftTrim;
+      end;
     end;
   end
   Else
@@ -11936,7 +11973,7 @@ begin
     RePlaseParams(TempStr);
     FDCLForm.RePlaseVariables(TempStr);
 
-    if TempStr='' then
+    if TempStr<>'' then
     begin
       NeedValue:=6;
     end;
@@ -11967,6 +12004,7 @@ begin
   TempStr:='';
   Case NeedValue of
   0:
+  if not Field.NoDataField then
   If FQuery.Active Then
     If FieldExists(Field.FieldName, FQuery) Then
       TempStr:=TrimRight(FQuery.FieldByName(Field.FieldName).AsString);
@@ -12029,6 +12067,8 @@ begin
   FDCLForm.LocalVariables.Variables[KeyField]:=TempStr;
   Edits[EditsCount].Edit.Text:=TempStr;
   Field.Height:=Edits[EditsCount].Edit.Height;
+
+  Edits[EditsCount].DCLField:=Field;
 
   IncXYPos(EditTopStep, Edits[EditsCount].Edit.Width, Field);
 end;
@@ -12636,6 +12676,7 @@ begin
       end;
   end;
   FDCLLogOn.NotifyForms(fnaRefresh);
+  ReFreshQuery
 end;
 
 procedure TDCLGrid.AfterRefresh(Data: TDataSet);
@@ -13529,14 +13570,14 @@ procedure TDCLGrid.EditOnEdit(Sender: TObject);
 var
   EdNamb: Word;
   l, k: Byte;
-  ch: Boolean;
+  ch, inFormat: Boolean;
   EdText: String;
 begin
   EdNamb:=(Sender as TEdit).Tag;
   Edits[EdNamb].ModifyEdit:=1;
   EdText:=(Sender as TEdit).Text;
 
-  If Edits[EdNamb].EditsToFloat Then
+  {If Edits[EdNamb].EditsToFloat Then
   begin
     ch:=False;
     l:=Length(EdText);
@@ -13548,48 +13589,79 @@ begin
       end;
     If ch Then
       (Sender as TEdit).Text:=EdText;
+  end;}
+
+  inFormat:=True;
+  case Edits[EdNamb].DCLField.FieldTypeFormat of
+    fftDigit:begin
+      if not IsDigits(EdText) then
+      begin
+        inFormat:=False;
+        Edits[EdNamb].ModifyEdit:=0;
+      end;
+    end;
+    fftTrim:Begin
+      EdText:=Trim(EdText);
+      (Sender as TEdit).Text:=EdText;
+    End;
   end;
 
+  if inFormat then
   // Update variables
-  FDCLForm.LocalVariables.Variables[Edits[EdNamb].EditToVariables]:=EdText;
+    FDCLForm.LocalVariables.Variables[Edits[EdNamb].EditToVariables]:=EdText;
 end;
 
 procedure TDCLGrid.EditOnFloatData(Sender: TObject; var Key: Char);
 var
   Text:String;
+  inFormat: Boolean;
+  EdNamb: Word;
 begin
   Text:=(Sender as TEdit).Text;
+  EdNamb:=(Sender as TEdit).Tag;
 
-  If Key=FloatDelimiterFrom Then
-    Key:=FloatDelimiterTo;
-  If (Key='/') or (Key='?') or (Key='<') then
-    Key:=FloatDelimiterTo;
-  If (Key='б') or (Key='Б') or (Key='ю') or (Key='Ю') then
-    Key:=FloatDelimiterTo;
+  case Edits[EdNamb].DCLField.FieldTypeFormat of
+  fftFloat:
+  begin
+    If Key=FloatDelimiterFrom Then
+      Key:=FloatDelimiterTo;
+    If (Key='/') or (Key='?') or (Key='<') then
+      Key:=FloatDelimiterTo;
+    If (Key='б') or (Key='Б') or (Key='ю') or (Key='Ю') then
+      Key:=FloatDelimiterTo;
 
-  Case Key of
-  // разрешаем ввод цифр
-  '0'..'9':Key:=Key;
-  // разрешаем ввод всего, что похоже на десятичный разделитель
-  '.', ',':
-  Begin
-    // запрещаем ввод более 1 десятичного разделителя
-    If Pos(FloatDelimiterTo, Text)=0 then
-      Key:=FloatDelimiterTo
+    Case Key of
+    // разрешаем ввод цифр
+    '0'..'9':Key:=Key;
+    // разрешаем ввод всего, что похоже на десятичный разделитель
+    '.', ',':
+    Begin
+      // запрещаем ввод более 1 десятичного разделителя
+      If Pos(FloatDelimiterTo, Text)=0 then
+        Key:=FloatDelimiterTo
+      Else key:=#0;
+    End;
+    '-':
+    Begin
+      // запрещаем ввод более 1 минуса
+      If (Pos('-', Text)=0) then
+        Key:='-'
+      Else key:=#0;
+    End;
+    // разрешаем использование клавиш BackSpace и Delete
+    #8:Key:=Key;
+    // "гасим" все прочие клавиши
     Else key:=#0;
-  End;
-  '-':
-  Begin
-    // запрещаем ввод более 1 минуса
-    If (Pos('-', Text)=0) then
-      Key:='-'
-    Else key:=#0;
-  End;
-  // разрешаем использование клавиш BackSpace и Delete
-  #8:Key:=Key;
-  // "гасим" все прочие клавиши
-  Else key:=#0;
-  End;
+    End;
+  end;
+  fftDigit:begin
+    if not IsDigits(Key) then
+    begin
+      inFormat:=False;
+      key:=#0;
+    end;
+  end;
+  end;
 end;
 
 procedure TDCLGrid.ExcludeNotAllowedOperation(Operation: TNotAllowedOperations);
@@ -14788,7 +14860,7 @@ begin
   If Length(Edits)>0 Then
     For v1:=1 to Length(Edits) do
     begin
-      If (Edits[v1-1].EditsType in [fbtOutBox, fbtEditBox]) and not Edits[v1-1].NoDataField Then
+      If (Edits[v1-1].EditsType in [fbtOutBox, fbtEditBox]) and not Edits[v1-1].DCLField.NoDataField Then
       begin
         If FieldExists(Edits[v1-1].EditsToFields, FQuery) Then
           Edits[v1-1].Edit.Text:=TrimRight(FQuery.FieldByName(Edits[v1-1].EditsToFields).AsString);
