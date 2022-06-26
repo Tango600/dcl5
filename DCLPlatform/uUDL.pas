@@ -12262,6 +12262,8 @@ begin
   LookupTables[l].DCLGrid.DependField:=FindParam('DependField=', Field.OPL);
   LookupTables[l].DCLGrid.NoDataField:=Field.NoDataField;
 
+  LookupTables[l].DCLGrid.MasterValueVariableName:=FindParam('VariableName=', Field.OPL);
+
   if not Field.NoDataField then
   If FQuery.Active then
     If LookupTables[l].DCLGrid.MasterDataField='' then
