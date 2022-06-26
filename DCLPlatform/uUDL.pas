@@ -412,7 +412,8 @@ Type
 
     property FQuery: TDCLQuery read GetQuery write SetQuery;
   public
-    QueryName, DependField, MasterDataField: String;
+    QueryName, DependField, MasterDataField, MasterValueVariableName: String;
+    NoDataField: Boolean;
     TabType: TPageType;
     CurrentTabIndex, Tag: Integer;
     DataFields: Array of TDCLDataFields;
@@ -4521,6 +4522,13 @@ begin
             begin
               FGrids[GridIndex].TableParts[TabIndex].MasterDataField:=
                 FindParam('MasterDataField=', ScrStr);
+            end;
+
+            FGrids[GridIndex].TableParts[TabIndex].NoDataField:=FindParam('NoDataField=', ScrStr)='1';
+            If FindParam('VariableName=', ScrStr)<>'' Then
+            begin
+              FGrids[GridIndex].TableParts[TabIndex].MasterValueVariableName:=
+                FindParam('VariableName=', ScrStr);
             end;
 
             If FindParam('Navigator=', ScrStr)='0' Then
@@ -10082,12 +10090,13 @@ begin
   Result.Params.Clear;
   Case RW of
   trtWrite:Begin
-    Result.Params.Append('nowait');
+    Result.Params.Append('write');
   End;
   trtRead:Begin
     Result.Params.Append('read');
   End;
   End;
+  Result.Params.Append('nowait');
   Result.Params.Append('read_committed');
   If GPT.IBAll then
     Result.Params.Append('rec_version');
@@ -12251,8 +12260,13 @@ begin
   LookupTables[l].DCLGrid.SetSQL(TempStr);
   LookupTables[l].DCLGrid.ReadOnly:=Field.ReadOnly;
   LookupTables[l].DCLGrid.DependField:=FindParam('DependField=', Field.OPL);
+  LookupTables[l].DCLGrid.NoDataField:=Field.NoDataField;
+
+  if not Field.NoDataField then
   If FQuery.Active then
-    LookupTables[l].DCLGrid.MasterDataField:=Field.FieldName;
+    If LookupTables[l].DCLGrid.MasterDataField='' then
+      if FieldExists(LookupTables[l].DCLGrid.MasterDataField, FQuery) then
+        LookupTables[l].DCLGrid.MasterDataField:=Field.FieldName;
 
   LookupTables[l].DCLGrid.Open;
   LookupTables[l].DCLGrid.Show;
@@ -12571,17 +12585,30 @@ end;
 procedure TDCLGrid.AfterInsert(Data: TDataSet);
 var
   v1, v2: Integer;
+  vv:String;
 begin
   If FUserLevelLocal<ulWrite Then
     Data.Cancel
   Else
   begin
     If DependField<>'' Then
-      If MasterDataField<>'' Then
+    Begin
+      if not NoDataField then
       begin
-        Data.FieldByName(DependField).AsString:=FDCLForm.CurrentQuery.FieldByName
-          (MasterDataField).AsString;
+        If MasterDataField<>'' Then
+        begin
+          Data.FieldByName(DependField).AsString:=FDCLForm.CurrentQuery.FieldByName
+            (MasterDataField).AsString;
+        end;
+      end
+      else
+      begin
+        if MasterValueVariableName<>'' then
+        begin
+          Data.FieldByName(DependField).AsString:=FDCLLogOn.Variables.GetVariableByName(MasterValueVariableName);
+        end;
       end;
+    End;
 
     ExecEvents(EventsInsert);
 
