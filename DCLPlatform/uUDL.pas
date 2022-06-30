@@ -12113,7 +12113,6 @@ begin
     FDCLLogOn.SetDBName(Lookups[l].LookupQuery);
     TranslateVal(TempStr);
     Lookups[l].LookupQuery.SQL.Text:=TempStr;
-    Lookups[l].LookupQuery.AfterScroll:=LookupDBScroll;
     try
       Lookups[l].LookupQuery.Open;
       Lookups[l].LookupQuery.Last;
@@ -12179,6 +12178,8 @@ begin
   Lookups[l].Lookup.KeyField:=FindParam('Key=', Field.OPL);
   Lookups[l].Lookup.ListField:=FindParam('List=', Field.OPL);
 
+  Lookups[l].LookupQuery.AfterScroll:=LookupDBScroll;
+
 {$IFDEF FPC}
   Lookups[l].Lookup.OnSelect:=LookupOnClick;
 {$ELSE}
@@ -12189,7 +12190,9 @@ begin
     Lookups[l].ModifyEdits:=SortParams(TempStr, 1);
 
   TempStr:=FindParam('KeyValue=', Field.OPL);
-  Lookups[l].LookupQuery.First;
+
+  If (NoDataField) Then
+    Lookups[l].LookupQuery.First;
   If TempStr<>'' Then
   begin
     TranslateVal(TempStr);
@@ -12220,9 +12223,9 @@ begin
           Query.Edit;
         FData.DataSet.FieldByName(Field.FieldName).AsInteger:=StrToIntEx(TempStr);
       end;
-      LookupOnClick(Lookups[l].Lookup);
     end;
   end;
+  LookupOnClick(Lookups[l].Lookup);
 
   IncXYPos(EditTopStep, Lookups[l].Lookup.Width, Field);
 end;
@@ -14426,16 +14429,26 @@ end;
 
 procedure TDCLGrid.LookupOnClick(Sender: TObject);
 var
-  ListField, tmpSQL1: String;
+  KeyFiled, ListField, tmpSQL1: String;
   v4: Integer;
 begin
   v4:=(Sender as TDBLookupComboBox).Tag;
-  ListField:=(Sender as TDBLookupComboBox).ListField;
 
   If Lookups[v4].ModifyEdits<>'' Then
   begin
+    ListField:=(Sender as TDBLookupComboBox).ListField;
+
     tmpSQL1:=TrimRight(Lookups[v4].LookupQuery.FieldByName(ListField).AsString);
     (FieldPanel.FindComponent(Lookups[v4].ModifyEdits) as TEdit).Text:=tmpSQL1;
+  end;
+
+  if not Lookups[v4].NoDataField then
+  if Lookups[v4].LookupToVars<>'' then
+  begin
+    KeyFiled:=(Sender as TDBLookupComboBox).KeyField;
+
+    FDCLLogOn.Variables.Variables[Lookups[v4].LookupToVars]:=
+      TrimRight(Lookups[v4].LookupQuery.FieldByName(KeyFiled).AsString);
   end;
 end;
 
