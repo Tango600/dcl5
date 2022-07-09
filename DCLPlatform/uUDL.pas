@@ -214,7 +214,8 @@ Type
     constructor Create(var DCLLogOn: TDCLLogOn; DCLForm: TDCLForm);
     destructor Destroy; override;
 
-    procedure NewVariable(Const VariableName: String; Value: String='');
+    procedure NewVariable(Const VariableName: String; Value: String);
+    procedure NewVariableWithTest(Const VariableName: String);
     procedure FreeVariable(Const VariableName: String);
     function Exists(Const VariableName: String): Boolean;
     procedure RePlaseVariables(var VariablesSet: String; Query: TDCLDialogQuery);
@@ -1872,7 +1873,7 @@ begin
     Result:=FVariables[vv1].Value;
 end;
 
-procedure TVariables.NewVariable(Const VariableName: String; Value: String='');
+procedure TVariables.NewVariable(Const VariableName: String; Value: String);
 var
   RetVarNum: Integer;
 begin
@@ -1891,6 +1892,25 @@ begin
     Else
     begin
       FVariables[RetVarNum].Value:=Value;
+    end;
+  end;
+end;
+
+procedure TVariables.NewVariableWithTest(Const VariableName: String);
+var
+  RetVarNum: Integer;
+begin
+  if VariableName<>'' then
+  begin
+    RetVarNum:=VariableNumByName(VariableName);
+    If RetVarNum= - 1 Then
+    begin
+      RetVarNum:=FindEmptyVariableSlot;
+      If RetVarNum<> - 1 Then
+      begin
+        FVariables[RetVarNum].Name:=Trim(VariableName);
+        FVariables[RetVarNum].Value:='';
+      end;
     end;
   end;
 end;
@@ -4063,7 +4083,7 @@ begin
           If FindParam('VariableName=', ScrStr)<>'' Then
           begin
             FFilter.VarName:=FindParam('VariableName=', ScrStr);
-            FDCLLogOn.Variables.NewVariable(FFilter.VarName);
+            FDCLLogOn.Variables.NewVariableWithTest(FFilter.VarName);
           end;
 
           tmpSQL:=FindParam('KeyValue=', ScrStr);
@@ -4109,7 +4129,7 @@ begin
         If FindParam('VariableName=', ScrStr)<>'' Then
         begin
           FFilter.VarName:=FindParam('VariableName=', ScrStr);
-          FDCLLogOn.Variables.NewVariable(FFilter.VarName);
+          FDCLLogOn.Variables.NewVariableWithTest(FFilter.VarName);
         end;
 
         If FindParam('MaxLength=', ScrStr)<>'' Then
@@ -5571,13 +5591,12 @@ begin
       If sv_v2<=0 Then
         sv_v2:=Length(tmp2);
       tmp1:=Copy(LowerCase(tmp2), 1, sv_v2);
-      FDCLLogOn.Variables.NewVariable(tmp1);
 
       tmp2:=TrimRight(DCLQuery.FieldByName(ReturnField).AsString);
       TranslateValContext(tmp2);
       DCLQuery.Close;
 
-      FDCLLogOn.Variables.Variables[tmp1]:=tmp2;
+      FDCLLogOn.Variables.NewVariable(tmp1, tmp2);
 
       {$IFDEF TRANSACTIONDB}
       tmp_Transaction.Commit;
@@ -6978,7 +6997,7 @@ begin
             If tmpStr3<>'' Then
             begin
               tmpStr2:=FindParam('VariableName=', ScrStr);
-              FDCLLogOn.Variables.NewVariable(tmpStr2);
+              FDCLLogOn.Variables.NewVariableWithTest(tmpStr2);
 
               If LowerCase(tmpStr3)='yesno' Then
               begin
@@ -7444,15 +7463,13 @@ begin
 
                     if RetVal.KeyVar<>'' then
                     begin
-                      if not FDCLLogOn.Variables.Exists(RetVal.KeyVar) then
-                        FDCLLogOn.Variables.NewVariable(RetVal.KeyVar);
+                      FDCLLogOn.Variables.NewVariableWithTest(RetVal.KeyVar);
                       FDCLLogOn.Variables.SetVariableByName(RetVal.KeyVar, RetVal.Key);
                     end;
 
                     if RetVal.ValueVar<>'' then
                     begin
-                      if not FDCLLogOn.Variables.Exists(RetVal.ValueVar) then
-                        FDCLLogOn.Variables.NewVariable(RetVal.ValueVar);
+                      FDCLLogOn.Variables.NewVariableWithTest(RetVal.ValueVar);
                       FDCLLogOn.Variables.SetVariableByName(RetVal.ValueVar, RetVal.Val);
                     end;
 
@@ -7753,9 +7770,7 @@ begin
             If Not Assigned(BinStore) Then
               BinStore:=TBinStore.Create(FDCLLogOn, ftSQL, '', '', '',
                 FindParam('DataField=', ScrStr));
-            If Not FDCLLogOn.Variables.Exists(tmpStr1) Then
-              FDCLLogOn.Variables.NewVariable(tmpStr1);
-            FDCLLogOn.Variables.Variables[tmpStr1]:=BinStore.MD5(FindParam('SQL=', ScrStr));
+            FDCLLogOn.Variables.NewVariable(tmpStr1, BinStore.MD5(FindParam('SQL=', ScrStr)));
           end;
 
           If PosEx('SQLmon_Clear;', ScrStr)=1 Then
@@ -11211,6 +11226,8 @@ end;
 procedure TDCLGrid.AddSimplyCheckBox(var Field: RField);
 var
   l: Integer;
+  value1:String;
+  state:Boolean;
 begin
   Field.CurrentEdit:=True;
   l:=Length(CheckBoxes);
@@ -11230,17 +11247,28 @@ begin
     CheckBoxes[l].CheckBox.Hint:=Field.Hint;
   end;
 
+  state:=False;
   If Field.Variable<>'' Then
-    FDCLLogOn.Variables.NewVariable(Field.Variable)
+  begin
+    FDCLLogOn.Variables.NewVariableWithTest(Field.Variable);
+  end
   Else
   begin
-    FDCLLogOn.Variables.NewVariable('CheckBox_'+Field.FieldName);
+    FDCLLogOn.Variables.NewVariableWithTest('CheckBox_'+Field.FieldName);
     Field.Variable:='CheckBox_'+Field.FieldName;
+  end;
+
+  value1:=FindParam('_Value=', Field.OPL);
+  if value1<>'' then
+  begin
+    TranslateVal(value1);
+    state:=value1='1';
   end;
 
   CheckBoxes[l].NoDataField:=Field.NoDataField;
   CheckBoxes[l].CheckBoxToVars:=Field.Variable;
-  CheckBoxes[l].CheckBox.Checked:=False;
+  CheckBoxes[l].CheckBox.Checked:=state;
+
   If PosEx('_OnCheck;', Field.OPL)<>0 Then
     CheckBoxes[l].CheckBox.Checked:=True;
   If PosEx('_OffCheck;', Field.OPL)<>0 Then
@@ -11786,7 +11814,7 @@ begin
     begin
       tmpStr1:=FindParam('VariableName=', Field.OPL);
       DropBoxes[l].Variable:=tmpStr1;
-      FDCLLogOn.Variables.NewVariable(tmpStr1);
+      FDCLLogOn.Variables.NewVariableWithTest(tmpStr1);
     end;
 
     tmpSQL1:=FindParam('SQL=', Field.OPL);
@@ -12070,7 +12098,7 @@ begin
   Else
     KeyField:=NamePrefix+Field.FieldName;
 
-  FDCLForm.LocalVariables.NewVariable(KeyField);
+  FDCLForm.LocalVariables.NewVariableWithTest(KeyField);
 
   Edits[EditsCount].EditToVariables:=KeyField;
   FDCLForm.LocalVariables.Variables[KeyField]:=TempStr;
@@ -12171,20 +12199,13 @@ begin
   TempStr:=FindParam('VariableName=', Field.OPL);
   If TempStr<>'' Then
   begin
-    FDCLLogOn.Variables.NewVariable(TempStr);
+    FDCLLogOn.Variables.NewVariableWithTest(TempStr);
     Lookups[l].LookupToVars:=TempStr;
   end;
 
   Lookups[l].Lookup.KeyField:=FindParam('Key=', Field.OPL);
   Lookups[l].Lookup.ListField:=FindParam('List=', Field.OPL);
 
-  Lookups[l].LookupQuery.AfterScroll:=LookupDBScroll;
-
-{$IFDEF FPC}
-  Lookups[l].Lookup.OnSelect:=LookupOnClick;
-{$ELSE}
-  Lookups[l].Lookup.OnClick:=LookupOnClick;
-{$ENDIF}
   TempStr:=FindParam('ModifyingEdit=', Field.OPL);
   If TempStr<>'' Then
     Lookups[l].ModifyEdits:=SortParams(TempStr, 1);
@@ -12214,7 +12235,7 @@ begin
       end;
     If (TempStr<>'') Then
     begin
-      If (Not FForm.Showing) and (Not NoDataField) Then
+      //If (Not FForm.Showing) and (Not NoDataField) Then
         FForm.Show;
       Lookups[l].Lookup.KeyValue:=TempStr;
       If (Not NoDataField) and Query.CanModify Then
@@ -12226,6 +12247,14 @@ begin
     end;
   end;
   LookupOnClick(Lookups[l].Lookup);
+
+  Lookups[l].LookupQuery.AfterScroll:=LookupDBScroll;
+
+{$IFDEF FPC}
+  Lookups[l].Lookup.OnSelect:=LookupOnClick;
+{$ELSE}
+  Lookups[l].Lookup.OnClick:=LookupOnClick;
+{$ENDIF}
 
   IncXYPos(EditTopStep, Lookups[l].Lookup.Width, Field);
 end;
@@ -12410,7 +12439,7 @@ begin
       RollBars[l].Variable:=TempStr;
     end
     Else
-      FDCLLogOn.Variables.NewVariable(TempStr);
+      FDCLLogOn.Variables.NewVariableWithTest(TempStr);
   end;
 
   If FieldExists(Field.FieldName, Query) Then
@@ -14422,8 +14451,11 @@ begin
   Look:=Lookups[v1].Lookup;
   If Assigned(Look) Then
   Begin
-    FDCLLogOn.Variables.Variables[Lookups[v1].LookupToVars]:=
-      TrimRight(Lookups[v1].LookupQuery.FieldByName(Look.KeyField).AsString);
+    if not Lookups[v1].NoDataField then
+    begin
+      FDCLLogOn.Variables.Variables[Lookups[v1].LookupToVars]:=
+        TrimRight(Lookups[v1].LookupQuery.FieldByName(Look.KeyField).AsString);
+    end;
   End;
 end;
 
@@ -16604,7 +16636,7 @@ begin
     begin
       If PosEx('DeclareVariable=', InitSkrypts[LocalVar1])<>0 Then
       begin
-        FDCLLogOn.Variables.NewVariable(FindParam('DeclareVariable=', InitSkrypts[LocalVar1]));
+        FDCLLogOn.Variables.NewVariableWithTest(FindParam('DeclareVariable=', InitSkrypts[LocalVar1]));
       end;
 
       If PosEx('GrabValueList=', InitSkrypts[LocalVar1])<>0 Then
@@ -16622,7 +16654,7 @@ begin
           GrabLabel.Caption:=FindParam('GrabValueList=', InitSkrypts[LocalVar1]);
 
         tmpSQL:=FindParam('GrabValueList=', InitSkrypts[LocalVar1]);
-        FDCLLogOn.Variables.NewVariable(tmpSQL);
+        FDCLLogOn.Variables.NewVariableWithTest(tmpSQL);
         GrabValueList:=TComboBox.Create(GrabValueForm);
         GrabValueList.Parent:=GrabValueForm;
         GrabValueList.Name:='GrabValList_'+IntToStr(LocalVar1);
