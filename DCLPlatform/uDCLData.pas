@@ -170,7 +170,6 @@ RLookups=record
   LookupQuery:TDCLDialogQuery;
   LookupToVars:String;
   LookupData:TDataSource;
-  // GetValues:RGetValueRec;
   NoDataField:Boolean;
   ModifyEdits:String;
 end;

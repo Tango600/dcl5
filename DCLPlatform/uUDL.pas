@@ -14474,7 +14474,6 @@ begin
     (FieldPanel.FindComponent(Lookups[v4].ModifyEdits) as TEdit).Text:=tmpSQL1;
   end;
 
-  if not Lookups[v4].NoDataField then
   if Lookups[v4].LookupToVars<>'' then
   begin
     KeyFiled:=(Sender as TDBLookupComboBox).KeyField;
