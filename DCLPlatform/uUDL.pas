@@ -12159,6 +12159,9 @@ begin
   Lookups[l].Lookup.Parent:=FieldPanel;
   Lookups[l].Lookup.Name:='LookUpField_'+IntToStr(l);
   Lookups[l].Lookup.Tag:=l;
+  {$IFnDEF FPC}
+  Lookups[l].Lookup.DropDownRows:=12;
+  {$ENDIF}
 
   Lookups[l].NoDataField:=Field.NoDataField;
 
@@ -12194,6 +12197,7 @@ begin
     Lookups[l].Lookup.Width:=Field.Width
   Else
     Lookups[l].Lookup.Width:=EditWidth;
+
   Field.Height:=Lookups[l].Lookup.Height;
 
   TempStr:=FindParam('VariableName=', Field.OPL);
