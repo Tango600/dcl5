@@ -14,3 +14,4 @@ bin/*
 /DCLPlatform/*.dbg
 /DCLPlatform/backup/
 /DCLPlatform/*.~*
+/DCLPlatform/DCLRun.lpi
