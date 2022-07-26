@@ -161,3 +161,4 @@ msClearContentQ:='Очистить содержимое?';
 msNotifycation:='Notifycation';
 msForUser:='Для пользователя';
 msLoading:='Loading';
+msNotFilter:='Not';

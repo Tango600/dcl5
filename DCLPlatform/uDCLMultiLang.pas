@@ -40,7 +40,7 @@ type
     msResetFieldsSettings, msResetFieldsSettingsQ, msDeleteAllBookmarks, msDeleteAllBookmarksQ, msSaveFieldsSettings,
     msNotAllowOpenForm, msDeleteRecordQ, msNotAllowExecuteApps, msPathsNotSupported, msSaveEditings, msSaveEditingsQ,
     msDoYouWontTerminateApplicationQ, msConfigurationFileNotFound, msClearContentQ, msNotifycation, msForUser,
-    msLoading, msTimeToExit, msDSStateSet, msCloseDialogQuery);
+    msLoading, msTimeToExit, msDSStateSet, msCloseDialogQuery, msNotFilter);
 
 
 procedure LoadLangRes(Lang:TLangName; Path:String);
@@ -90,7 +90,7 @@ const
     'msResetFieldsSettings', 'msResetFieldsSettingsQ', 'msDeleteAllBookmarks', 'msDeleteAllBookmarksQ', 'msSaveFieldsSettings',
     'msNotAllowOpenForm', 'msDeleteRecordQ', 'msNotAllowExecuteApps', 'msPathsNotSupported', 'msSaveEditings', 'msSaveEditingsQ',
     'msDoYouWontTerminateApplicationQ', 'msConfigurationFileNotFound', 'msClearContentQ', 'msNotifycation', 'msForUser',
-    'msLoading', 'msTimeToExit', 'msDSStateSet', 'msCloseDialogQuery');
+    'msLoading', 'msTimeToExit', 'msDSStateSet', 'msCloseDialogQuery', 'msNotFilter');
 
 type
   TCharToUTF8Table=array [0..255] of String;
@@ -730,6 +730,8 @@ begin
     Result:='Выход из системы через %d секунд.';
     msDSStateSet:
     Result:='Не активен,Просмотр,Редактирование,Вставка,Установка ключа,Вычисляемые поля,Фильтрация,Новое значение,Старое значение,Текущее значение,Блочное чтение,Внутренне вычисление,Открытие';
+    msNotFilter:
+    Result:='Отрицание';
     end;
   End;
 end;

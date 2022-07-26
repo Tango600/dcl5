@@ -397,6 +397,7 @@ Type
     procedure ExecFilter(Sender: TObject);
     procedure OnContextFilter(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure CalendarOnChange(Sender: TObject);
+    procedure OnNotCheckClick(Sender: TObject);
 
     function GetTablePart(Index: Integer): TDCLGrid;
     procedure SetTablePart(Index: Integer; Value: TDCLGrid);
@@ -11662,6 +11663,16 @@ begin
     DBFilters[l].Lookup.Width:=Filter.Width;
     DBFilters[l].Lookup.ListField:=Filter.ListField+';'+Filter.KeyField;
 
+    DBFilters[l].NotCheck:=TCheckBox.Create(ToolPanel);
+    DBFilters[l].NotCheck.Parent:=ToolPanel;
+    DBFilters[l].NotCheck.Tag:=l;
+    DBFilters[l].NotCheck.Top:=FilterTop+EditHeight+LabelTopInterval;
+    DBFilters[l].NotCheck.Left:=BeginStepLeft+ToolPanelElementLeft;
+    DBFilters[l].NotCheck.Name:='NotCheck_'+IntToStr(l);
+    DBFilters[l].NotCheck.Width:=Filter.Width;
+    DBFilters[l].NotCheck.Caption:=GetDCLMessageString(msNotFilter);
+    DBFilters[l].NotCheck.OnClick:=OnNotCheckClick;
+
 {$IFDEF FPC}
     DBFilters[l].Lookup.OnSelect:=ExecFilter;
 {$ELSE}
@@ -11692,6 +11703,17 @@ begin
     DBFilters[l].Edit.OnKeyUp:=OnContextFilter;
 
     DBFilters[l].Field:=Filter.Field;
+
+    DBFilters[l].NotCheck:=TCheckBox.Create(ToolPanel);
+    DBFilters[l].NotCheck.Parent:=ToolPanel;
+    DBFilters[l].NotCheck.Tag:=l;
+    DBFilters[l].NotCheck.Top:=FilterTop+EditHeight+LabelTopInterval;
+    DBFilters[l].NotCheck.Left:=BeginStepLeft+ToolPanelElementLeft;
+    DBFilters[l].NotCheck.Name:='NotCheck_'+IntToStr(l);
+    DBFilters[l].NotCheck.Width:=Filter.Width;
+    DBFilters[l].NotCheck.Caption:=GetDCLMessageString(msNotFilter);
+
+    DBFilters[l].NotCheck.OnClick:=OnNotCheckClick;
   end;
 
   Case Filter.FilterType of
@@ -14555,6 +14577,16 @@ begin
   SetDataStatus(dssChanged);
 end;
 
+procedure TDCLGrid.OnNotCheckClick(Sender: TObject);
+var
+  i:Integer;
+begin
+  i:=(Sender as TComponent).Tag;
+  DBFilters[i].NotFilter:=(Sender as TCheckBox).Checked;
+
+  OpenQuery(QueryBuilder(0, 0));
+end;
+
 procedure TDCLGrid.Open;
 begin
   If Length(FQuery.SQL.Text)>11 Then
@@ -14673,7 +14705,7 @@ var
     Query1String: String;
   FN, FFactor: Word;
 
-  function ConstructQueryString(ExemplStr, FilterField: String; Upper, NotLike, Partial: Boolean;
+  function ConstructQueryString(ExemplStr, FilterField: String; Upper, NotLike, Partial, NotWhere: Boolean;
     Between: Byte; Exempl2: String): String;
   var
     Delimiter, Prefix, Postfix, UpperPrefix, UpperPostfix, WhereStr, CondStr: String;
@@ -14702,6 +14734,11 @@ var
       begin
         UpperPrefix:=GPT.UpperString;
         UpperPostfix:=GPT.UpperStringEnd;
+        If NotWhere then
+        begin
+          Prefix:='!=';
+        end;
+
         BetweenFormat;
       end;
       end;
@@ -14713,6 +14750,10 @@ var
       ftString, ftFixedChar, ftWideString:
       begin
         Prefix:=' like ';
+        If NotWhere then
+        begin
+          Prefix:=' not like ';
+        end;
         Postfix:='%';
         if Partial then
         Begin
@@ -14812,7 +14853,7 @@ begin
                 Exempl2:=DBFilters[DBFilters[FN].Between].FilterString;
 
               WhereStr:=WhereStr+' '+ConstructQueryString(ExeplStr, QFilterField,
-                Not DBFilters[FN].CaseC, DBFilters[FN].NotLike, DBFilters[FN].Partial,
+                Not DBFilters[FN].CaseC, DBFilters[FN].NotLike, DBFilters[FN].Partial, DBFilters[FN].NotFilter,
                 DBFilters[FN].Between, Exempl2);
             end;
           end

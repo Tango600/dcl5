@@ -129,7 +129,7 @@ end;
 
 TDBFilter=record
   FilterNum, Between, WaitForKey: Integer;
-  Partial, NotLike, CaseC: Boolean;
+  Partial, NotLike, CaseC, NotFilter: Boolean;
   FilterName, FilterString, Field, KeyField, ListField: String;
   Lookup:TDBLookupComboBox;
   Edit:TEdit;
@@ -139,6 +139,7 @@ TDBFilter=record
   FilterKey, VarName, Caption, SQL, KeyValue: String;
   FilterChengFlag:Integer;
   Width, MaxLength: Word;
+  NotCheck: TCheckBox;
 end;
 
 TDCLEdits=record
