@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LocalizeTranslator", "LocalizeTranslator\LocalizeTranslator.csproj", "{52F94B3E-95D5-4837-924B-F4FCC216EB6B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{52F94B3E-95D5-4837-924B-F4FCC216EB6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52F94B3E-95D5-4837-924B-F4FCC216EB6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52F94B3E-95D5-4837-924B-F4FCC216EB6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52F94B3E-95D5-4837-924B-F4FCC216EB6B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
