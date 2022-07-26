@@ -164,15 +164,15 @@ begin
     not fUpdateTransaction.InTransaction then
       fUpdateTransaction.StartTransaction;
     try
-    Prepare;
-    ExecSQL;
-    if RowsAffected <> 1 then
-      IBError(ibxeUpdateFailed, [nil]);
+      Prepare;
+      ExecSQL;
+      if not RowsAffected=0 then
+        if RowsAffected <> 1 then
+          IBError(ibxeUpdateFailed, [nil]);
     finally
-    // добавлено
       if Assigned(fUpdateTransaction) then
       begin
-    // в любом сдучае лучше Commit
+        // в любом сдучае лучше Commit
         fUpdateTransaction.Commit;
       end;
     end;
