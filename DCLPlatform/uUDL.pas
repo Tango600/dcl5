@@ -319,7 +319,7 @@ Type
 
     function AddTablePart(Parent: TWinControl; Data: TDataSource; Style:TDataControlType): Integer;
     function GetSummQuery: String;
-    function QueryBuilder(GetQueryMode, QueryMode: Byte): String;
+    function QueryBuilder(QueryMode: Byte): String;
     function GetFingQuery: String;
     function FindRaightQuery(): String;
     procedure ChangeTabPage(Sender: TObject);
@@ -4518,8 +4518,9 @@ begin
                 FGrids[GridIndex].TableParts[TabIndex].FOrientation:=oVertical;
             end;
 
-            FGrids[GridIndex].TableParts[TabIndex].FQuery.SetUpdateSQL
-              (FindParam('UpdateTable=', ScrStr), FindParam('KeyFields=', ScrStr));
+            if (FindParam('UpdateTable=', ScrStr)<>'') and (FindParam('KeyFields=', ScrStr)<>'') then
+              FGrids[GridIndex].TableParts[TabIndex].FQuery.SetUpdateSQL
+                (FindParam('UpdateTable=', ScrStr), FindParam('KeyFields=', ScrStr));
 
             FGrids[GridIndex].TableParts[TabIndex].SQL:=tmpSQL;
             If FGrids[GridIndex].FQuery.Active Then
@@ -12847,7 +12848,7 @@ begin
       ShowErrorMessage( - 1100, 'SQL='+EdDate);
     end;
 
-    OpenQuery(QueryBuilder(0, 0));
+    OpenQuery(QueryBuilder(0));
   end;
 end;
 
@@ -13795,7 +13796,7 @@ begin
 
     FDCLLogOn.Variables.Variables[DBFilters[FilterIdx].VarName]:=TrimRight(ExeplStr);
 
-    OpenQuery(QueryBuilder(0, 0));
+    OpenQuery(QueryBuilder(0));
   end;
 end;
 
@@ -13915,7 +13916,7 @@ begin
     FindGrid.Hide;
     FGrid.Align:=alClient;
 
-    tmpSQL2:=QueryBuilder(1, 0);
+    tmpSQL2:=QueryBuilder(0);
 
     FindProcess:=False;
     If Assigned(FindFields) Then
@@ -14562,11 +14563,11 @@ begin
   If DBFilters[FilterIdx].WaitForKey<>0 Then
   begin
     If Key=DBFilters[FilterIdx].WaitForKey Then
-      OpenQuery(QueryBuilder(0, 0));
+      OpenQuery(QueryBuilder(0));
   end
   Else
   begin
-    OpenQuery(QueryBuilder(0, 0));
+    OpenQuery(QueryBuilder(0));
   end;
 end;
 
@@ -14584,7 +14585,7 @@ begin
   i:=(Sender as TComponent).Tag;
   DBFilters[i].NotFilter:=(Sender as TCheckBox).Checked;
 
-  OpenQuery(QueryBuilder(0, 0));
+  OpenQuery(QueryBuilder(0));
 end;
 
 procedure TDCLGrid.Open;
@@ -14699,7 +14700,7 @@ begin
 {$ENDIF}
 end;
 
-function TDCLGrid.QueryBuilder(GetQueryMode, QueryMode: Byte): String;
+function TDCLGrid.QueryBuilder(QueryMode: Byte): String;
 var
   QFilterField, WhereStr, ExeplStr, Exempl2, OrderBy, GroupBy, tmpSQL, tmpSQL1,
     Query1String: String;
@@ -14772,18 +14773,9 @@ var
   end;
 
 begin
-  Case GetQueryMode of
-  0:
-  begin
-    tmpSQL:=GetSQLFromStore(qtFind);
-    If tmpSQL='' Then
-      tmpSQL:=GetSQLFromStore(qtMain);
-  end;
-  1:
-  begin
+  tmpSQL:=GetSQLFromStore(qtFind);
+  If tmpSQL='' Then
     tmpSQL:=GetSQLFromStore(qtMain);
-  end;
-  end;
 
   Case QueryMode of
   0:

@@ -409,7 +409,7 @@ Begin
     Begin
       FUpdateSQLDefined:=True;
       FKeyField:=KeyField;
-      If Active Then
+      If ToOpen and Active Then
         Close;
 
       {$IFDEF UPDATESQLDB}
@@ -534,31 +534,19 @@ Begin
       FUpdateSQL.RefreshSQL.Text:=FRefreshSQL;
 {$ENDIF}
       // Query.FieldList.Update;
+      If ToOpen then
       If not Active Then
         If SQL.Text<>'' Then
           inherited Open;
 
+{$IFDEF FREQUIREDDB}
       If Active then
         For v1:=1 to FieldCount do
           Fields[v1-1].Required:=False;
+{$ENDIF}
     End;
 {$ENDIF}
   end;
-{$IFDEF FREQUIREDDB}
-    If ToOpen then
-      If not Active then
-        If SQL.Text<>'' then
-        Begin
-          inherited Open;
-
-          For v1:=1 to FieldCount do
-            Fields[v1-1].Required:=False;
-        End;
-{$ENDIF}
-  If ToOpen then
-    If not Active Then
-      If SQL.Text<>'' Then
-        inherited Open;
 End;
 
 Function TDCLQuery.FindNotAllowedOperation(Value: TNotAllowedOperations): Boolean;
@@ -646,37 +634,79 @@ end;
 
 function TDCLQuery.GetMainQueryTable: string;
 var
-  S, tmp1, Tables: String;
-  v1, pos1: Integer;
-  tmpSQL: TStringList;
+  S, tmp1, Tables, from: String;
+  braket, l, p, pos1, p2: Integer;
+  preFind, find:Boolean;
 begin
   Result:='';
+  from:='from ';
   S:=SQL.Text;
-  tmpSQL:=TStringList.Create;
-  tmpSQL.Clear;
-  for v1:=1 to ParamsCount(S, ', ', '"') do
-  Begin
-    tmp1:=LowerCase(SortParams(S, v1, ', ', '"'));
-    If Trim(tmp1)<>'' then
-      tmpSQL.Append(tmp1);
-  End;
-
-  pos1:=-1;
-  for v1:=1 to tmpSQL.Count do
-  Begin
-    If tmpSQL[v1-1]='from' then
+  l:=Length(S);
+  Tables:='';
+  p:=1;
+  braket:=0;
+  preFind:=False;
+  find:=False;
+  pos1:=1;
+  while p<l do
+  begin
+    if (S[p]='(') and not preFind then
     begin
-      pos1:=v1;
-      Break;
+      Inc(braket);
     end;
-  End;
 
-  If pos1>0 then
-  Begin
-    Tables:=tmpSQL[pos1];
-    if Pos('(', Tables)=Pos(')', Tables) then
-      Result:=Tables;
-  End;
+    if preFind then
+    begin
+      if S[p]=from[pos1] then
+      begin
+        Inc(pos1);
+      end
+      else
+      begin
+        pos1:=1;
+        preFind:=False;
+      end;
+
+      if pos1-1=Length(from) then
+      begin
+        find:=True;
+        break;
+      end;
+    end
+    else
+    if (braket=0) and (LowerCase(S[p])=from[pos1]) then
+    begin
+      preFind:=True;
+      Inc(pos1);
+    end;
+
+    if (S[p]=')') and not preFind then
+    begin
+      Dec(braket);
+    end;
+    Inc(p);
+  end;
+
+  If find then
+  begin
+    if p>1 then
+    begin
+      while S[p]=' ' do
+      begin
+        Inc(p);
+      end;
+      p2:=p;
+
+      while S[p2]<>' ' do
+      begin
+        Inc(p2);
+      end;
+
+      Tables:=Copy(S, p, p2-p);
+    end;
+  end;
+
+  Result:=Tables;
 end;
 
 Function TDCLQuery.GetNotAllowedOperations: TOperationsTypes;
@@ -774,7 +804,7 @@ end;
 
 procedure TDCLQuery.Open;
 begin
-  Close;
+  ///Close;
   If not FUpdateSQLDefined then
   Begin
     FMainTable:=GetMainQueryTable;
@@ -902,7 +932,7 @@ begin
     FMainTable:=GetMainQueryTable;
     FKeyField:=GetPrimaryKeyField(FMainTable);
   End;
-  SetUpdateSQL(FKeyField, FMainTable);
+  SetUpdateSQL(FMainTable, FKeyField);
 //  FillDatasetUpdateSQL(FKeyField, FMainTable, True);
 
   If Assigned(FUpdateSQL) then
@@ -930,8 +960,7 @@ end;
 
 procedure TDCLQuery.SetUpdateSQL(TableName, KeyField: String);
 begin
-  If not FUpdateSQLDefined then
-    FillDatasetUpdateSQL(KeyField, TableName, False);
+  FillDatasetUpdateSQL(KeyField, TableName, False);
 end;
 
 end.
