@@ -61,6 +61,8 @@ function GetUserDocumentsDir: String;
 Function IsUNCPath(Path: String): Boolean;
 Function IsFullPath(Path: String): Boolean;
 Function NoFileExt(const FileName:String):Boolean;
+Function FakeFileExt(Const FileName, Ext: String): String;
+Function AddToFileName(Const FileName, AddStr: String): String;
 
 Function DrawBMPButton(Const BMPType: String): TBitmap;
 function GetIcon: TIcon;
@@ -86,8 +88,6 @@ function FindSQLWhere(SQL, FindToken:String; Opened:Boolean=True):Integer;
 
 Procedure ExecuteStatement(Code: String);
 Function GetOnOffMode(Mode: Boolean): String;
-Function FakeFileExt(Const FileName, Ext: String): String;
-Function AddToFileName(Const FileName, AddStr: String): String;
 Function ExtractSection(Var SectionStr: String): String;
 function GetGraficFileType(FileName: string): TGraficFileType;
 function GetExtByType(FileType:TGraficFileType):String;
@@ -1466,8 +1466,8 @@ Procedure GetParamsStructure(Params:TStringList);
 Var
   i: Word;
 Begin
-  GPT.OfficeTemplateFormat:=odtMSO;
-  GPT.OfficeDocumentFormat:=odtMSO;
+  GPT.OfficeFormat:=ofMSO;
+  GPT.OfficeDocumentFormat:=odfMSO2007;
 
   If Params.Count>0 Then
     For i:=0 To Params.Count-1 Do
@@ -1733,12 +1733,12 @@ Begin
 
         If PosEx('OfficeTemplateFormat=', Params[i])=1 Then
         Begin
-          GPT.OfficeTemplateFormat:=ConvertOfficeType(Trim(FindParam('OfficeTemplateFormat=', Params[i])));
+          GPT.OfficeFormat:=ConvertOfficeType(Trim(FindParam('OfficeTemplateFormat=', Params[i])));
         End;
 
         If PosEx('OfficeDocumentFormat=', Params[i])=1 Then
         Begin
-          GPT.OfficeDocumentFormat:=ConvertOfficeType(Trim(FindParam('OfficeDocumentFormat=', Params[i])));
+          GPT.OfficeDocumentFormat:=GetDocumentType(Trim(FindParam('OfficeDocumentFormat=', Params[i])));
         End;
 
         If PosEx('UserLocalProfile=', Params[i])=1 Then

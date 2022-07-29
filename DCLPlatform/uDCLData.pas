@@ -48,7 +48,8 @@ type
     UserAdminField, {INITable,} RolesMenuTable, TimeStampFormat, DCLLongUserName, UserID, RoleID,
     DCLRoleName, NewDBPassword, DBPassword, LibPath, LaunchScrFile, LaunchForm: String;
     FormPosInDB:TIniStore;
-    OfficeDocumentFormat, OfficeTemplateFormat: TOfficeDocumentFormat;
+    OfficeDocumentFormat: TOfficeDocumentFormat;
+    OfficeFormat: TOfficeFormat;
   end;
 
 TLogonParams=record

@@ -39,7 +39,7 @@ DefaultLibraryLocation='libfbclient.so';
 {$IFDEF SQLdb}
   DBEngineType='SQLdb (Universal)';
 {$ENDIF}
-  Ver='10.2.7.4';
+  Ver='10.2.7.5';
   VersionS='$VersionSignature$'+Ver+'$';
 
   CompotableVersion='9.1.129.309';
@@ -350,7 +350,8 @@ Type
   TNotifyActionsType=(naDone, naScriptRun, naMessage, naExecAndWait, naExec, naExitToTime);
   TQueryType=(qtMain, qtFind, qtDefault);
   TFilterType=(ftNone, ftDBFilter, ftContextFilter);
-  TOfficeDocumentFormat=(odtNone, odtMSO, odtOO, odtPossible);
+  TOfficeFormat=(ofNone, ofMSO, ofOO, ofPossible);
+  TOfficeDocumentFormat=(odfNone, odfMSO97, odfMSO2007, odfOO, odfPossible);
   TDocumentType=(dtNone, dtSheet, dtText);
   TReportViewMode=(rvmOneRecord, rvmAllDS, rvmGrid, rvmMultitRecordReport, rvmBookmarcks);
   TFieldBoxType=(fbtOutBox, fbtInputBox, fbtEditBox);

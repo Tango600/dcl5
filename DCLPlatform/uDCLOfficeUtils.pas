@@ -30,9 +30,11 @@ Function GetTextByXY(var Sheet, Cell: Variant; Const row, col: Integer):String;
 Function FileNameToURL(FileName: String): Variant;
 Function MakePropertyValue(ServiceManager, PropertyName, PropertyValue: Variant): Variant;
 {$ENDIF}
-function GetPossibleOffice(DocType: TDocumentType; OfficeType: TOfficeDocumentFormat=odtPossible)
-  : TOfficeDocumentFormat;
-Function ConvertOfficeType(OfficeType: String): TOfficeDocumentFormat;
+function GetPossibleOffice(DocType: TDocumentType; OfficeType: TOfficeFormat=ofPossible)
+  : TOfficeFormat;
+Function ConvertOfficeType(OfficeType: String): TOfficeFormat;
+Function ConvertDocumentType(OfficeType: String): TOfficeDocumentFormat;
+Function GetDocumentType(FileName: String): TOfficeDocumentFormat;
 
 implementation
 
@@ -53,42 +55,67 @@ begin
 end;
 {$ENDIF}
 
-Function ConvertOfficeType(OfficeType: String): TOfficeDocumentFormat;
+Function ConvertOfficeType(OfficeType: String): TOfficeFormat;
 Begin
   If LowerCase(OfficeType)='oo' then
-    Result:=odtOO
+    Result:=ofOO
   Else If LowerCase(OfficeType)='mso' then
-    Result:=odtMSO
+    Result:=ofMSO
   Else
-    Result:=odtPossible;
+    Result:=ofPossible;
+End;
+
+Function ConvertDocumentType(OfficeType: String): TOfficeDocumentFormat;
+Begin
+  If LowerCase(OfficeType)='oo' then
+    Result:=odfOO
+  Else If LowerCase(OfficeType)='mso' then
+    Result:=odfMSO2007
+  Else
+    Result:=odfPossible;
+End;
+
+Function GetDocumentType(FileName: String): TOfficeDocumentFormat;
+Var
+  Ext: String;
+Begin
+  Ext:=ExtractFileExt(FileName);
+  if (LowerCase(Ext)='.xlsx') or (LowerCase(Ext)='.xlsx') then
+     Result:=odfMSO2007
+  else
+  if (LowerCase(Ext)='.xlt') or (LowerCase(Ext)='.xlt') then
+     Result:=odfMSO97
+  else
+    If (LowerCase(Ext)='.ods') or (LowerCase(Ext)='.ots') then
+     Result:=odfOO;
 End;
 
 {$IFDEF MSWINDOWS}
-function GetPossibleOffice(DocType: TDocumentType; OfficeType: TOfficeDocumentFormat=odtPossible)
-  : TOfficeDocumentFormat;
+function GetPossibleOffice(DocType: TDocumentType; OfficeType: TOfficeFormat=ofPossible)
+  : TOfficeFormat;
 begin
   Case DocType of
   dtSheet:
-  If OfficeType=odtPossible then
+  If OfficeType=ofPossible then
   Begin
     If IsExcelInstall then
-      Result:=odtMSO
+      Result:=ofMSO
     else if IsOOInstall then
-      Result:=odtOO
+      Result:=ofOO
     Else
-      Result:=odtNone;
+      Result:=ofNone;
   End
   Else
     Result:=OfficeType;
   dtText:
-  If OfficeType=odtPossible then
+  If OfficeType=ofPossible then
   Begin
     If IsWordInstall then
-      Result:=odtMSO
+      Result:=ofMSO
     else if IsOOInstall then
-      Result:=odtOO
+      Result:=ofOO
     Else
-      Result:=odtNone;
+      Result:=ofNone;
   End
   Else
     Result:=OfficeType;

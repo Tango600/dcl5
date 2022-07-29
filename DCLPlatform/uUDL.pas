@@ -888,7 +888,8 @@ Type
   private
     BinStor: TDCLBinStore;
     FDCLLogOn: TDCLLogOn;
-    OfficeDocumentFormat, OfficeTemplateFormat: TOfficeDocumentFormat;
+    OfficeDocumentFormat: TOfficeDocumentFormat;
+    OfficeFormat: TOfficeFormat;
     sQueryToDataSources: Array [0..QCount, 0..QCount] of String;
     RepParams: TStringList;
 
@@ -921,7 +922,8 @@ Type
 {$ENDIF}
     WordVer: Byte;
   public
-    OfficeDocumentFormat, OfficeTemplateFormat: TOfficeDocumentFormat;
+    OfficeDocumentFormat: TOfficeDocumentFormat;
+    OfficeFormat: TOfficeFormat;
 
     constructor Create(DCLLogOn: TDCLLogOn; DCLGrid: TDCLGrid);
     destructor Destroy; override;
@@ -1070,7 +1072,7 @@ begin
   BinStor:=TDCLBinStore.Create(DCLLogOn);
   FDCLLogOn:=DCLLogOn;
   OfficeDocumentFormat:=GPT.OfficeDocumentFormat;
-  OfficeTemplateFormat:=GPT.OfficeTemplateFormat;
+  OfficeFormat:=GPT.OfficeFormat;
 {$ENDIF}
 end;
 
@@ -1143,10 +1145,10 @@ begin
 
   Case ReportType of
   rtWord:Begin
-    Case OfficeTemplateFormat of
-    odtMSO:
+    Case OfficeFormat of
+    ofMSO:
     Ext:='doc';
-    odtOO, odtPossible:
+    ofOO, ofPossible:
     Ext:='odt';
     end;
     TemplateFileName:=BinStor.GetTemplateFile(TemplateName, FileName, Ext);
@@ -6748,14 +6750,14 @@ begin
               TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
               OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
                 FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-              OfficeReport.OfficeTemplateFormat:=GetPossibleOffice(dtSheet, ConvertOfficeType(TmpStr));
+              OfficeReport.OfficeFormat:=GetPossibleOffice(dtSheet, ConvertOfficeType(TmpStr));
 
-              Case OfficeReport.OfficeTemplateFormat of
-              odtOO:
+              Case OfficeReport.OfficeFormat of
+              ofOO:
               OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything, EnythingElse);
-              odtMSO:
+              ofMSO:
               OfficeReport.ReportExcel(ScrStr, Enything, EnythingElse);
-              odtNone:
+              ofNone:
               ShowErrorMessage( - 6200, '');
               end;
             end;
@@ -6794,14 +6796,14 @@ begin
               TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
               OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
                 FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-              OfficeReport.OfficeTemplateFormat:=GetPossibleOffice(dtText, ConvertOfficeType(TmpStr));
+              OfficeReport.OfficeFormat:=GetPossibleOffice(dtText, ConvertOfficeType(TmpStr));
 
-              Case OfficeReport.OfficeTemplateFormat of
-              odtOO:
+              Case OfficeReport.OfficeFormat of
+              ofOO:
               OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything, EnythingElse);
-              odtMSO:
+              ofMSO:
               OfficeReport.ReportWord(ScrStr, Enything, EnythingElse);
-              odtNone:
+              ofNone:
               ShowErrorMessage( - 6200, '');
               end;
             end;
@@ -15768,7 +15770,7 @@ var
   TextPointer, CursorPointer, BookmarksSupplier, InsLength, BookMark: Variant;
   BookmarckNum, LayotCount, FontSize: Word;
   DocNum: Cardinal;
-  SQLStr, FileName, Ext, InsStr, BookMarkName, LayotStr, LayotItem: String;
+  SQLStr, FileName, OutFileName, Ext, InsStr, BookMarkName, LayotStr, LayotItem: String;
   Layot: TStringList;
   DCLQuery: TDCLDialogQuery;
 
@@ -15776,10 +15778,10 @@ var
   FontStyleRec: TFontStyleRec;
 begin
 {$IFDEF MSWINDOWS}
-  Case OfficeTemplateFormat of
-  odtMSO:
+  Case OfficeFormat of
+  ofMSO:
   Ext:='doc';
-  odtOO, odtPossible:
+  ofOO, ofPossible:
   Ext:='odt';
   end;
 
@@ -15788,14 +15790,13 @@ begin
   if FindParam('TemplateName=', ParamStr)<>'' then
   begin
     FileName:=BinStor.GetTemplateFile(FindParam('TemplateName=', ParamStr),
-      FindParam('FileName=', ParamStr), Ext);
-  end
-  else
-  begin
-    FileName:=FindParam('FileName=', ParamStr);
-    if not IsFullPath(FileName) then
-      FileName:=Path+FileName;
+      FindParam('Template=', ParamStr), Ext);
   end;
+
+  OutFileName:=FindParam('FileName=', ParamStr);
+  if not IsFullPath(OutFileName) then
+    OutFileName:=Path+OutFileName;
+
   If BinStor.ErrorCode=0 Then
     If FileExists(FileName) Then
     begin
@@ -15822,10 +15823,10 @@ begin
 
         Desktop:=OO.CreateInstance('com.sun.star.frame.Desktop');
         VariantArray:=VarArrayCreate([0, 0], varVariant);
-        Case OfficeTemplateFormat of
-        odtMSO:
+        Case OfficeFormat of
+        ofMSO:
         VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'MS Word 97');
-        odtOO, odtPossible:
+        ofOO, ofPossible:
         VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'writer8');
         end;
       Except
@@ -15959,28 +15960,33 @@ begin
         end;
 
         If ToPDF Then
-          OOExportToFormat(Document, AddToFileName(FileName, '_'+IntToStr(DocNum)), 'pdf');
+          OOExportToFormat(Document, AddToFileName(OutFileName, '_'+IntToStr(DocNum)), 'pdf');
 
         If ToHTML Then
-          OOExportToFormat(Document, AddToFileName(FileName, '_'+IntToStr(DocNum)), 'html');
+          OOExportToFormat(Document, AddToFileName(OutFileName, '_'+IntToStr(DocNum)), 'html');
 
         OOSetVisible(Document, True);
         If Save Then
         begin
           Case OfficeDocumentFormat of
-          odtMSO:
+          odfMSO97:
           begin
             FileName:=FakeFileExt(FileName, 'doc');
             VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'MS Word 97');
           end;
-          odtOO, odtPossible:
+          odfMSO2007:
+          begin
+            FileName:=FakeFileExt(FileName, 'docx');
+            VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'MS Word 2007');
+          end;
+          odfOO, odfPossible:
           begin
             FileName:=FakeFileExt(FileName, 'odt');
             VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'writer8');
           end;
           end;
 
-          Document.StoreAsURL(FileNameToURL(AddToFileName(FileName, '_'+IntToStr(DocNum))),
+          Document.StoreAsURL(FileNameToURL(AddToFileName(OutFileName, '_'+IntToStr(DocNum))),
             VariantArray);
         end;
 
@@ -15997,10 +16003,10 @@ begin
         //OO:=Unassigned;
 
         If ToPDF Then
-          Exec(FakeFileExt(AddToFileName(FileName, '_'+IntToStr(DocNum)), 'pdf'), '');
+          Exec(FakeFileExt(AddToFileName(OutFileName, '_'+IntToStr(DocNum)), 'pdf'), '');
 
         If ToHTML Then
-          Exec(FakeFileExt(AddToFileName(FileName, '_'+IntToStr(DocNum)), 'html'), '');
+          Exec(FakeFileExt(AddToFileName(OutFileName, '_'+IntToStr(DocNum)), 'html'), '');
 
         inc(DocNum);
         DCLQuery.Next;
@@ -16018,7 +16024,7 @@ end;
 
 procedure TDCLOfficeReport.ReportOpenOfficeCalc(ParamStr: String; Save, Close: Boolean);
 var
-  SQLStr, FileName, ColorStr, Ext: String;
+  SQLStr, FileName, OutFileName, ColorStr, Ext, TemplateExt: String;
   ToPDF, ToHTML, EnableRowChColor, EnableColChColor: Boolean;
   v1: Byte;
   RecRepNum: Cardinal;
@@ -16026,36 +16032,57 @@ var
   DCLQuery: TDCLDialogQuery;
 begin
 {$IFDEF MSWINDOWS}
-  Case OfficeTemplateFormat of
-  odtMSO:
-  Ext:='xls';
-  odtOO, odtPossible:
   Ext:='ods';
-  end;
+  TemplateExt:='ots';
 
   if FindParam('TemplateName=', ParamStr)<>'' then
   begin
     FileName:=BinStor.GetTemplateFile(FindParam('TemplateName=', ParamStr),
-      FindParam('FileName=', ParamStr), Ext);
+      FindParam('Template=', ParamStr), Ext);
+  end;
+
+  FileName:=FindParam('Template=', ParamStr);
+  If not IsFullPath(FileName) then
+    FileName:=Path+FileName;
+  If NoFileExt(FileName) then
+  begin
+    OfficeDocumentFormat:=odfOO;
+    if FileExists(FileName+'.'+TemplateExt) then
+    begin
+      OfficeDocumentFormat:=odfOO;
+      FileName:=FileName+'.'+TemplateExt;
+    end
+    else
+    begin
+      if FileExists(FileName+'.'+Ext) then
+      begin
+        OfficeDocumentFormat:=odfOO;
+        FileName:=FileName+'.'+Ext;
+      end;
+    end;
   end
   else
   begin
-    FileName:=FindParam('FileName=', ParamStr);
-    if not IsFullPath(FileName) then
-      FileName:=Path+FileName;
+    OfficeDocumentFormat:=GetDocumentType(FileName);
   end;
+
+  OutFileName:=FindParam('FileName=', ParamStr);
+  if not IsFullPath(OutFileName) then
+    OutFileName:=Path+OutFileName;
+
   If BinStor.ErrorCode=0 Then
     If FileExists(FileName) Then
     begin
       try
-        //If VarIsEmpty(OO) Then
         OO:=CreateOleObject('com.sun.star.ServiceManager');
         Desktop:=OO.CreateInstance('com.sun.star.frame.Desktop');
         VariantArray:=VarArrayCreate([0, 0], varVariant);
-        Case OfficeTemplateFormat of
-        odtMSO:
+        Case OfficeDocumentFormat of
+        odfMSO2007:
+        VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'MS Excel 2007');
+        odfMSO97:
         VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'MS Excel 97');
-        odtOO, odtPossible:
+        odfOO, odfPossible:
         VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'calc8');
         end;
       Except
@@ -16169,23 +16196,26 @@ begin
       FileName:=AddToFileName(FileName, '_Report');
 
       If ToPDF Then
-        OOExportToFormat(Document, FileName, 'pdf');
+        OOExportToFormat(Document, OutFileName, 'pdf');
 
       If ToHTML Then
-        OOExportToFormat(Document, FileName, 'html');
+        OOExportToFormat(Document, OutFileName, 'html');
 
+      FileName:=FakeFileExt(OutFileName, Ext);
       OOSetVisible(Document, True);
       If Save Then
       begin
         Case OfficeDocumentFormat of
-        odtMSO:
+        odfMSO97:
         begin
-          FileName:=FakeFileExt(FileName, 'xls');
           VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'MS Excel 97');
         end;
-        odtOO, odtPossible:
+        odfMSO2007:
         begin
-          FileName:=FakeFileExt(FileName, 'ods');
+          VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'MS Excel 2007');
+        end;
+        odfOO, odfPossible:
+        begin
           VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'calc8');
         end;
         end;
@@ -16371,24 +16401,59 @@ end;
 
 procedure TDCLOfficeReport.ReportExcel(ParamStr: String; Save, Close: Boolean);
 var
-  SQLStr, FileName, ColorStr: String;
+  SQLStr, FileName, OutFileName, ColorStr, Ext, TemplateExt: String;
   EnableRowChColor, EnableColChColor: Boolean;
   RecRepNum, v1: Word;
   RowRColor, RowBColor, RowGColor, ColRColor, ColBColor, ColGColor: Integer;
   DCLQuery: TDCLDialogQuery;
 begin
 {$IFDEF MSWINDOWS}
+  Ext:='xls';
+  TemplateExt:='xlt';
+
   if FindParam('TemplateName=', ParamStr)<>'' then
   begin
     FileName:=BinStor.GetTemplateFile(FindParam('TemplateName=', ParamStr),
-      FindParam('FileName=', ParamStr), 'xlsx');
-  end
-  else
-  begin
-    FileName:=FindParam('FileName=', ParamStr);
-    if not IsFullPath(FileName) then
-      FileName:=Path+FileName;
+      FindParam('Template=', ParamStr), 'xlsx');
   end;
+
+  FileName:=FindParam('Template=', ParamStr);
+  If not IsFullPath(FileName) then
+    FileName:=Path+FileName;
+  If NoFileExt(FileName) then
+  begin
+    if FileExists(FileName+'.'+TemplateExt) then
+    begin
+      FileName:=FileName+'.'+TemplateExt;
+    end
+    else
+    begin
+      if FileExists(FileName+'.'+TemplateExt+'x') then
+      begin
+        TemplateExt:=TemplateExt+'x';
+        FileName:=FileName+'.'+TemplateExt;
+      end
+      else
+      begin
+        if FileExists(FileName+'.'+Ext) then
+        begin
+          FileName:=FileName+'.'+Ext;
+        end
+        else
+        begin
+          if FileExists(FileName+'.'+TemplateExt+'x') then
+          begin
+            FileName:=FileName+'.'+TemplateExt;
+          end;
+        end;
+      end;
+    end;
+  end;
+
+  OutFileName:=FindParam('FileName=', ParamStr);
+  if not IsFullPath(OutFileName) then
+    OutFileName:=Path+OutFileName;
+
   If BinStor.ErrorCode=0 Then
     If FileExists(FileName) Then
     begin
@@ -16468,7 +16533,7 @@ begin
       DCLQuery.Close;
       Excel.Visible:=True;
 
-      FileName:=AddToFileName(FileName, '_Report');
+      FileName:=AddToFileName(OutFileName, '_Report');
 
       If Save Then
         ExcelSave(Excel, FileName);
@@ -17317,7 +17382,7 @@ begin
   FDCLLogOn:=DCLLogOn;
   FDCLGrid:=DCLGrid;
   OfficeDocumentFormat:=GPT.OfficeDocumentFormat;
-  OfficeTemplateFormat:=GPT.OfficeTemplateFormat;
+  OfficeFormat:=GPT.OfficeFormat;
 end;
 
 { TDCLBinStore }
