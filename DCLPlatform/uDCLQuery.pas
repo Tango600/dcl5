@@ -634,7 +634,7 @@ end;
 
 function TDCLQuery.GetMainQueryTable: string;
 var
-  S, tmp1, Tables, from: String;
+  S, tmp1, Tables, from, stopSymbols: String;
   braket, l, p, pos1, p2: Integer;
   preFind, find:Boolean;
 begin
@@ -697,9 +697,16 @@ begin
       end;
       p2:=p;
 
-      while S[p2]<>' ' do
+      stopSymbols:=' /\=-+~!@#$%^&*()[]|?,.'#10#13#39;
+      while (Pos(S[p2], stopSymbols)=0) do
       begin
         Inc(p2);
+
+        if p2=l then
+        begin
+          Inc(p2);
+          break;
+        end;
       end;
 
       Tables:=Copy(S, p, p2-p);
