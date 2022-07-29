@@ -691,13 +691,13 @@ begin
   begin
     if p>1 then
     begin
-      while S[p]=' ' do
+      stopSymbols:=' /\=-+~`"<>!@#$%^&*()[]|?,.'#10#13#39;
+      while (Pos(S[p], stopSymbols)<>0) do
       begin
         Inc(p);
       end;
       p2:=p;
 
-      stopSymbols:=' /\=-+~`"<>!@#$%^&*()[]|?,.'#10#13#39;
       while (Pos(S[p2], stopSymbols)=0) do
       begin
         Inc(p2);
