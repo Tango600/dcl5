@@ -697,7 +697,7 @@ begin
       end;
       p2:=p;
 
-      stopSymbols:=' /\=-+~!@#$%^&*()[]|?,.'#10#13#39;
+      stopSymbols:=' /\=-+~`"<>!@#$%^&*()[]|?,.'#10#13#39;
       while (Pos(S[p2], stopSymbols)=0) do
       begin
         Inc(p2);
