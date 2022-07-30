@@ -544,6 +544,13 @@ Begin
         For v1:=1 to FieldCount do
           Fields[v1-1].Required:=False;
 {$ENDIF}
+    End
+    Else
+    Begin
+      If ToOpen then
+      If not Active Then
+        If SQL.Text<>'' Then
+          inherited Open;
     End;
 {$ENDIF}
   end;
