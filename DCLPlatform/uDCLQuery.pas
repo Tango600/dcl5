@@ -409,7 +409,7 @@ Begin
     Begin
       FUpdateSQLDefined:=True;
       FKeyField:=KeyField;
-      If ToOpen and Active Then
+      If {$IFnDEF SQLdbFamily}ToOpen and{$ENDIF} Active Then
         Close;
 
       {$IFDEF UPDATESQLDB}
@@ -417,7 +417,11 @@ Begin
       Begin
         FUpdateSQL:=TUpdateSQLObj.Create(Self);
         {$IFDEF TRANSACTIONDB}
+        {$IFDEF IBX}
         FUpdateSQL.UpdateTransaction:=ShadowTransaction;
+        {$ENDIF}
+        {$IFDEF SQLdbFamily}
+        {$ENDIF}
         {$ENDIF}
       End;
       UpdateObject:=FUpdateSQL;
@@ -534,7 +538,9 @@ Begin
       FUpdateSQL.RefreshSQL.Text:=FRefreshSQL;
 {$ENDIF}
       // Query.FieldList.Update;
+      {$IFnDEF SQLdbFamily}
       If ToOpen then
+      {$ENDIF}
       If not Active Then
         If SQL.Text<>'' Then
           inherited Open;
@@ -657,39 +663,46 @@ begin
   pos1:=1;
   while p<l do
   begin
-    if (S[p]='(') and not preFind then
+    if (S[p]='(') then
     begin
       Inc(braket);
+      pos1:=1;
+      preFind:=False;
     end;
 
-    if preFind then
+    if (braket=0) then
     begin
-      if S[p]=from[pos1] then
+      if preFind then
       begin
-        Inc(pos1);
+        if S[p]=from[pos1] then
+        begin
+          Inc(pos1);
+
+          if pos1-1=Length(from) then
+          begin
+            find:=True;
+            break;
+          end;
+        end
+        else
+        begin
+          pos1:=1;
+          preFind:=False;
+        end;
       end
       else
+      if (braket=0) and (LowerCase(S[p])=from[pos1]) then
       begin
-        pos1:=1;
-        preFind:=False;
+        preFind:=True;
+        Inc(pos1);
       end;
-
-      if pos1-1=Length(from) then
-      begin
-        find:=True;
-        break;
-      end;
-    end
-    else
-    if (braket=0) and (LowerCase(S[p])=from[pos1]) then
-    begin
-      preFind:=True;
-      Inc(pos1);
     end;
 
-    if (S[p]=')') and not preFind then
+    if (S[p]=')') then
     begin
       Dec(braket);
+      pos1:=1;
+      preFind:=False;
     end;
     Inc(p);
   end;
@@ -698,7 +711,7 @@ begin
   begin
     if p>1 then
     begin
-      stopSymbols:=' /\=-+~`"<>!@#$%^&*()[]|?,.'#10#13#39;
+      stopSymbols:=' /\=-+~`"<>!@#%^&*()[]|?,.'#10#13#39;
       while (Pos(S[p], stopSymbols)<>0) do
       begin
         Inc(p);

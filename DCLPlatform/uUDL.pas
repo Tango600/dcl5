@@ -10464,13 +10464,14 @@ end;
 
 procedure TDCLLogOn.WriteBaseUID;
 var
-  ParamsQuery: TDCLQuery;
+  ParamsQuery: TReportQuery;
   guid:TGUID;
   sGuid:String;
 begin
   if not GPT.NoParamsTable then
   Begin
-    ParamsQuery:=TDCLQuery.Create(Self.FDBLogOn);
+    ParamsQuery:=TReportQuery.Create(Self.FDBLogOn);
+    SetDBName(ParamsQuery);
     ParamsQuery.Name:='UID_'+IntToStr(UpTime);
       ParamsQuery.SQL.Text:='select count(*) from '+GPT.GPTTableName+' where '+GPT.UpperString+
         GPT.GPTNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+'BaseUID'+
@@ -10487,7 +10488,6 @@ begin
           GPT.GPTValueField+') values('+GPT.StringTypeChar+'BaseUID'+GPT.StringTypeChar+', '+
           GPT.StringTypeChar+sGuid {MD5.MD5DigestToStr(MD5.MD5String(IntToStr(UpTime)))}+GPT.StringTypeChar+')';
         ParamsQuery.ExecSQL;
-        ParamsQuery.SaveDB;
       End;
     end;
     ParamsQuery.Close;
@@ -15795,7 +15795,7 @@ begin
 
   OutFileName:=FindParam('FileName=', ParamStr);
   if not IsFullPath(OutFileName) then
-    OutFileName:=Path+OutFileName;
+    OutFileName:=AppConfigDir+OutFileName;
 
   If BinStor.ErrorCode=0 Then
     If FileExists(FileName) Then
@@ -16043,7 +16043,7 @@ begin
 
   FileName:=FindParam('Template=', ParamStr);
   If not IsFullPath(FileName) then
-    FileName:=Path+FileName;
+    FileName:=AppConfigDir+FileName;
   If NoFileExt(FileName) then
   begin
     OfficeDocumentFormat:=odfOO;
@@ -16068,7 +16068,7 @@ begin
 
   OutFileName:=FindParam('FileName=', ParamStr);
   if not IsFullPath(OutFileName) then
-    OutFileName:=Path+OutFileName;
+    OutFileName:=AppConfigDir+OutFileName;
 
   If BinStor.ErrorCode=0 Then
     If FileExists(FileName) Then
@@ -16269,7 +16269,7 @@ begin
   begin
     FileName:=FindParam('FileName=', ParamStr);
     if not IsFullPath(FileName) then
-      FileName:=Path+FileName;
+      FileName:=AppConfigDir+FileName;
   end;
   If BinStor.ErrorCode=0 Then
     If FileExists(FileName) Then
@@ -16375,7 +16375,6 @@ begin
             MsWord.ActiveDocument.SaveAs(StV, EmptyParam, EmptyParam, EmptyParam, EmptyParam,
               EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam,
               EmptyParam, EmptyParam, EmptyParam, EmptyParam); // Word XP
-
         end;
 
         If Close then
@@ -16419,7 +16418,7 @@ begin
 
   FileName:=FindParam('Template=', ParamStr);
   If not IsFullPath(FileName) then
-    FileName:=Path+FileName;
+    FileName:=AppConfigDir+FileName;
   If NoFileExt(FileName) then
   begin
     if FileExists(FileName+'.'+TemplateExt) then
@@ -16452,7 +16451,7 @@ begin
 
   OutFileName:=FindParam('FileName=', ParamStr);
   if not IsFullPath(OutFileName) then
-    OutFileName:=Path+OutFileName;
+    OutFileName:=AppConfigDir+OutFileName;
 
   If BinStor.ErrorCode=0 Then
     If FileExists(FileName) Then
