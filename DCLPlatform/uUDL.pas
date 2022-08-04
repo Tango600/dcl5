@@ -14874,7 +14874,6 @@ end;
 procedure TDCLGrid.ReFreshQuery;
 var
   tpc: Byte;
-  bookmark: TBookmarkPos;
 begin
   If FQuery.Active Then
   Begin
