@@ -6,7 +6,7 @@ interface
 uses
   SysUtils, Forms, ExtCtrls, StrUtils,
 {$IFDEF MSWINDOWS}
-  Windows, ShellApi, nb30, WinSock, Variants, ShlObj,
+  Windows, ShellApi, Variants, ShlObj,
   ActiveX, ComObj,
 {$ENDIF}
 {$IFDEF UNIX}

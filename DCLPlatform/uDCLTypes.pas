@@ -71,6 +71,7 @@ type
   TReportQuery=TSQLQuery;
   TCommandQuery=TSQLQuery;
   TTransaction=TSQLTransaction;
+  TUpdateObj=TSQLQuery;
 {$IFDEF SQLdbIB}
   TDBLogOn=TIBConnection;
 {$ENDIF}

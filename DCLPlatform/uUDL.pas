@@ -12765,8 +12765,8 @@ begin
             FDCLLogOn.Forms[v1-1].Tables[v2-1].AfterPost(FQuery);
       end;
   end;
+  ReFreshQuery;
   FDCLLogOn.NotifyForms(fnaRefresh);
-  ReFreshQuery
 end;
 
 procedure TDCLGrid.AfterRefresh(Data: TDataSet);
@@ -12898,13 +12898,7 @@ begin
   begin
     If FQuery.State in dsEditModes Then
       FQuery.Post;
-    FLocalBookmark:=FQuery.GetBookmark;
     FQuery.Close;
-    {$IFnDEF FPC}
-    {$IFDEF TRANSACTIONDB}
-    FQuery.Transaction.Commit;
-    {$ENDIF}
-    {$ENDIF}
   end;
 end;
 
@@ -14599,17 +14593,6 @@ begin
     ShowErrorMessage( - 1100, 'SQL='+FQuery.SQL.Text);
     Exit;
   End;
-
-{$IFNDEF FPC}
-  If Assigned(FLocalBookmark) Then
-    try
-      If FQuery.Active then
-      If FQuery.RecordCount<>0 then
-        FQuery.GoToBookmark(FLocalBookmark);
-    finally
-      FQuery.FreeBookmark(FLocalBookmark);
-    end;
-{$ENDIF}
 end;
 
 procedure TDCLGrid.OpenQuery(QText: String);
@@ -14891,21 +14874,33 @@ end;
 procedure TDCLGrid.ReFreshQuery;
 var
   tpc: Byte;
+  bookmark: TBookmarkPos;
 begin
-  If FQuery.State in dsEditModes Then
-    FQuery.Post;
   If FQuery.Active Then
+  Begin
+    FLocalBookmark:=FQuery.GetBookmark;
+    If FQuery.State in dsEditModes Then
+      FQuery.Post;
+
     FQuery.SaveDB;
-  If FQuery.Active Then
-  begin
     For tpc:=1 to Length(FTableParts) do
     begin
       FTableParts[tpc-1].Close;
     end;
     Close;
-  end;
+  End;
 
   Open;
+
+  If Assigned(FLocalBookmark) Then
+    try
+      If FQuery.Active then
+      If FQuery.RecordCount<>0 then
+        FQuery.GoToBookmark(FLocalBookmark);
+    finally
+      FQuery.FreeBookmark(FLocalBookmark);
+    end;
+
   For tpc:=1 to Length(FTableParts) do
   begin
     FTableParts[tpc-1].Open;
@@ -15274,8 +15269,8 @@ begin
     AddNotAllowedOperation(dsoEdit);
   end;
 
-  If Assigned(FQuery) Then
-    FQuery.NotAllowOperations:=NotAllowedOperations;
+  {If Assigned(FQuery) Then
+    FQuery.NotAllowOperations:=NotAllowedOperations;}
 
   If Assigned(Navig) Then
   begin
@@ -18357,7 +18352,7 @@ begin
     end;
     DCLQuery.Close;
     {$IFDEF CACHEDDB}
-    DCLQuery.CachedUpdates:=True;
+    DCLQuery.CancelUpdates;
     {$ENDIF}
     DCLQuery.SQL.Text:=tmpSQL;
     try

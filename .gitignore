@@ -16,3 +16,4 @@ bin/*
 /DCLPlatform/*.~*
 /DCLPlatform/DCLRun.lpi
 /DCLPlatform/SQLMon.txt
+/DCLPlatform/Dialogs.ini
