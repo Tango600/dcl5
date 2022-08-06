@@ -1728,9 +1728,9 @@ Begin
           GPT.TimeFormat:=Trim(FindParam('TimeSeparator=', Params[i]));
         End;
 
-        If PosEx('OfficeFormat=', Params[i])=1 Then
+        If PosEx('OfficeType=', Params[i])=1 Then
         Begin
-          GPT.OfficeFormat:=ConvertOfficeType(Trim(FindParam('OfficeFormat=', Params[i])));
+          GPT.OfficeFormat:=ConvertOfficeType(Trim(FindParam('OfficeType=', Params[i])));
         End;
 
         If PosEx('OfficeDocumentFormat=', Params[i])=1 Then
