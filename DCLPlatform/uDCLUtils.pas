@@ -1466,9 +1466,6 @@ Procedure GetParamsStructure(Params:TStringList);
 Var
   i: Word;
 Begin
-  GPT.OfficeFormat:=ofMSO;
-  GPT.OfficeDocumentFormat:=odfMSO2007;
-
   If Params.Count>0 Then
     For i:=0 To Params.Count-1 Do
     Begin
@@ -1731,9 +1728,9 @@ Begin
           GPT.TimeFormat:=Trim(FindParam('TimeSeparator=', Params[i]));
         End;
 
-        If PosEx('OfficeTemplateFormat=', Params[i])=1 Then
+        If PosEx('OfficeFormat=', Params[i])=1 Then
         Begin
-          GPT.OfficeFormat:=ConvertOfficeType(Trim(FindParam('OfficeTemplateFormat=', Params[i])));
+          GPT.OfficeFormat:=ConvertOfficeType(Trim(FindParam('OfficeFormat=', Params[i])));
         End;
 
         If PosEx('OfficeDocumentFormat=', Params[i])=1 Then

@@ -6750,7 +6750,7 @@ begin
               TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
               OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
                 FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-              OfficeReport.OfficeFormat:=GetPossibleOffice(dtSheet, ConvertOfficeType(TmpStr));
+              OfficeReport.OfficeFormat:=GetPossibleOffice(dtSheet, ConvertOfficeType(TmpStr), GPT.OfficeFormat);
 
               Case OfficeReport.OfficeFormat of
               ofOO:
@@ -6796,7 +6796,7 @@ begin
               TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
               OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
                 FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-              OfficeReport.OfficeFormat:=GetPossibleOffice(dtText, ConvertOfficeType(TmpStr));
+              OfficeReport.OfficeFormat:=GetPossibleOffice(dtText, ConvertOfficeType(TmpStr), GPT.OfficeFormat);
 
               Case OfficeReport.OfficeFormat of
               ofOO:
@@ -17535,6 +17535,8 @@ begin
   {$ENDIF}
   GPT.UserLogging:=False;
   GPT.UserLoggingHistory:=False;
+  GPT.OfficeFormat:=ofMSO;
+  GPT.OfficeDocumentFormat:=odfMSO2007;
 
   GPT.TimeFormat:=DefaultTimeFormat;
   GPT.DateFormat:=DefaultDateFormat;
