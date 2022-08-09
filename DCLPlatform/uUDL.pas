@@ -13698,7 +13698,6 @@ end;
 procedure TDCLGrid.EditOnFloatData(Sender: TObject; var Key: Char);
 var
   Text:String;
-  inFormat: Boolean;
   EdNamb: Word;
 begin
   Text:=(Sender as TEdit).Text;
@@ -13739,11 +13738,22 @@ begin
     End;
   end;
   fftDigit:begin
-    if not IsDigits(Key) then
-    begin
-      inFormat:=False;
-      key:=#0;
-    end;
+    Case Key of
+    // разрешаем ввод цифр
+    '0'..'9':Key:=Key;
+    // разрешаем ввод всего, что похоже на десятичный разделитель
+    '-':
+    Begin
+      // запрещаем ввод более 1 минуса
+      If (Pos('-', Text)=0) then
+        Key:='-'
+      Else key:=#0;
+    End;
+    // разрешаем использование клавиш BackSpace и Delete
+    #8:Key:=Key;
+    // "гасим" все прочие клавиши
+    Else key:=#0;
+    End;
   end;
   end;
 end;
@@ -14878,15 +14888,19 @@ begin
   If FQuery.Active Then
   Begin
     FLocalBookmark:=FQuery.GetBookmark;
-    If FQuery.State in dsEditModes Then
-      FQuery.Post;
+    try
+      If FQuery.State in dsEditModes Then
+        FQuery.Post;
 
-    FQuery.SaveDB;
-    For tpc:=1 to Length(FTableParts) do
-    begin
-      FTableParts[tpc-1].Close;
+      FQuery.SaveDB;
+      For tpc:=1 to Length(FTableParts) do
+      begin
+        FTableParts[tpc-1].Close;
+      end;
+      Close;
+    Except
+      //
     end;
-    Close;
   End;
 
   Open;
