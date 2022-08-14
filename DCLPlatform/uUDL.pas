@@ -15776,9 +15776,9 @@ end;
 procedure TDCLOfficeReport.ReportOpenOfficeWriter(ParamStr: String; Save, Close: Boolean);
 var
   TextPointer, CursorPointer, BookmarksSupplier, InsLength, BookMark: Variant;
-  BookmarckNum, LayotCount, FontSize: Word;
+  BookmarckNum, LayotCount, FontSize, lastBookmarks: Word;
   DocNum: Cardinal;
-  SQLStr, FileName, OutFileName, Ext, InsStr, BookMarkName, LayotStr, LayotItem: String;
+  SQLStr, FileName, OutFileName, Ext, TemplateExt, InsStr, BookMarkName, LayotStr, LayotItem: String;
   Layot: TStringList;
   DCLQuery: TDCLDialogQuery;
 
@@ -15786,19 +15786,39 @@ var
   FontStyleRec: TFontStyleRec;
 begin
 {$IFDEF MSWINDOWS}
-  Case OfficeFormat of
-  ofMSO:
-  Ext:='doc';
-  ofOO, ofPossible:
   Ext:='odt';
-  end;
+  TemplateExt:='ott';
 
-  LayotCount:=0;
-  Layot:=TStringList.Create;
   if FindParam('TemplateName=', ParamStr)<>'' then
   begin
     FileName:=BinStor.GetTemplateFile(FindParam('TemplateName=', ParamStr),
       FindParam('Template=', ParamStr), Ext);
+  end;
+
+  FileName:=FindParam('Template=', ParamStr);
+  If not IsFullPath(FileName) then
+    FileName:=AppConfigDir+FileName;
+
+  If NoFileExt(FileName) then
+  begin
+    OfficeDocumentFormat:=odfOO;
+    if FileExists(FileName+'.'+TemplateExt) then
+    begin
+      OfficeDocumentFormat:=odfOO;
+      FileName:=FileName+'.'+TemplateExt;
+    end
+    else
+    begin
+      if FileExists(FileName+'.'+Ext) then
+      begin
+        OfficeDocumentFormat:=odfOO;
+        FileName:=FileName+'.'+Ext;
+      end;
+    end;
+  end
+  else
+  begin
+    OfficeDocumentFormat:=GetDocumentType(FileName);
   end;
 
   OutFileName:=FindParam('FileName=', ParamStr);
@@ -15806,227 +15826,236 @@ begin
     OutFileName:=AppConfigDir+OutFileName;
 
   If BinStor.ErrorCode=0 Then
-    If FileExists(FileName) Then
+  If FileExists(FileName) Then
+  begin
+    LayotStr:=FindParam('Layot=', ParamStr);
+    If LayotStr<>'' Then
     begin
-      LayotStr:=FindParam('Layot=', ParamStr);
-      If LayotStr<>'' Then
+      Layot.Clear;
+      LayotCount:=ParamsCount(LayotStr);
+      For BookmarckNum:=1 to ParamsCount(LayotStr) do
       begin
-        Layot.Clear;
-        LayotCount:=ParamsCount(LayotStr);
-        For BookmarckNum:=1 to ParamsCount(LayotStr) do
-        begin
-          BookmarkFromLayot:=True;
-          LayotItem:=SortParams(LayotStr, BookmarckNum);
+        BookmarkFromLayot:=True;
+        LayotItem:=SortParams(LayotStr, BookmarckNum);
 
-          Layot.Append(LayotItem);
-        end;
+        Layot.Append(LayotItem);
       end;
+    end;
 
-      DCLQuery:=TDCLDialogQuery.Create(nil);
-      DCLQuery.Name:='OfficeReport_'+IntToStr(UpTime);
-      FDCLLogOn.SetDBName(DCLQuery);
-      try
-        If VarIsEmpty(OO) Then
-          OO:=CreateOleObject('com.sun.star.ServiceManager');
+    DCLQuery:=TDCLDialogQuery.Create(nil);
+    DCLQuery.Name:='OfficeReport_'+IntToStr(UpTime);
+    FDCLLogOn.SetDBName(DCLQuery);
+    try
+      If VarIsEmpty(OO) Then
+        OO:=CreateOleObject('com.sun.star.ServiceManager');
 
-        Desktop:=OO.CreateInstance('com.sun.star.frame.Desktop');
-        VariantArray:=VarArrayCreate([0, 0], varVariant);
-        Case OfficeFormat of
-        ofMSO:
-        VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'MS Word 97');
-        ofOO, ofPossible:
-        VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'writer8');
-        end;
+      Desktop:=OO.CreateInstance('com.sun.star.frame.Desktop');
+      VariantArray:=VarArrayCreate([0, 0], varVariant);
+      Case OfficeDocumentFormat of
+      odfMSO2007:
+      VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'MS Word 2007');
+      odfMSO97:
+      VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'MS Word 97');
+      odfOO, odfPossible:
+      VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'writer8');
+      end;
+    Except
+      Sheets:=Unassigned;
+      Sheet:=Unassigned;
+      Document:=Unassigned;
+      Desktop:=Unassigned;
+      OO:=Unassigned;
+      ShowErrorMessage( - 6002, '');
+      Exit;
+    end;
+
+    If PosEx('ToPDF=1', ParamStr)<>0 Then
+      ToPDF:=True
+    Else
+      ToPDF:=False;
+
+    If PosEx('ToHTML=1', ParamStr)<>0 Then
+      ToHTML:=True
+    Else
+      ToHTML:=False;
+
+    SQLStr:=FindParam('SQL=', ParamStr);
+    If (SQLStr='')and Assigned(FDCLGrid) Then
+      SQLStr:=FDCLGrid.Query.SQL.Text;
+
+    If Assigned(FDCLGrid) Then
+      FDCLGrid.TranslateVal(SQLStr);
+    DCLQuery.Close;
+    DCLQuery.SQL.Clear;
+    FDCLLogOn.SetDBName(DCLQuery);
+    DCLQuery.SQL.Text:=SQLStr;
+    try
+      DCLQuery.Open;
+    Except
+      ShowErrorMessage( - 1104, 'SQL='+SQLStr);
+    end;
+    DCLQuery.First;
+
+    DocNum:=1;
+    While Not DCLQuery.Eof do
+    begin
+      Try
+        Document:=Desktop.LoadComponentFromURL(FileNameToURL(FileName), '_blank', 0, VariantArray);
+        OOSetVisible(Document, False);
+        TextPointer:=Document.GetText;
       Except
-        Sheets:=Unassigned;
-        Sheet:=Unassigned;
         Document:=Unassigned;
         Desktop:=Unassigned;
         OO:=Unassigned;
-        ShowErrorMessage( - 6002, '');
+        ShowErrorMessage( - 6003, '');
         Exit;
-      end;
+      End;
+      CursorPointer:=TextPointer.CreateTextCursor;
 
-      If PosEx('ToPDF=1', ParamStr)<>0 Then
-        ToPDF:=True
-      Else
-        ToPDF:=False;
+      BookmarksSupplier:=Document.getBookmarks;
+      If (Not BookmarkFromLayot)and(LayotCount=0) Then
+        LayotCount:=BookmarksSupplier.Count;
 
-      If PosEx('ToHTML=1', ParamStr)<>0 Then
-        ToHTML:=True
-      Else
-        ToHTML:=False;
-
-      SQLStr:=FindParam('SQL=', ParamStr);
-      If (SQLStr='')and Assigned(FDCLGrid) Then
-        SQLStr:=FDCLGrid.Query.SQL.Text;
-
-      If Assigned(FDCLGrid) Then
-        FDCLGrid.TranslateVal(SQLStr);
-      DCLQuery.Close;
-      DCLQuery.SQL.Clear;
-      FDCLLogOn.SetDBName(DCLQuery);
-      DCLQuery.SQL.Text:=SQLStr;
-      try
-        DCLQuery.Open;
-      Except
-        ShowErrorMessage( - 1104, 'SQL='+SQLStr);
-      end;
-      DCLQuery.First;
-
-      DocNum:=1;
-      While Not DCLQuery.Eof do
+      For BookmarckNum:=0 to LayotCount-1 do
       begin
-        Try
-          Document:=Desktop.LoadComponentFromURL(FileNameToURL(FileName), '_blank', 0, VariantArray);
-          OOSetVisible(Document, False);
-          TextPointer:=Document.GetText;
-        Except
-          Document:=Unassigned;
-          Desktop:=Unassigned;
-          OO:=Unassigned;
-          ShowErrorMessage( - 6003, '');
-          Exit;
-        End;
-        CursorPointer:=TextPointer.CreateTextCursor;
+        try
+          FontSize:=0;
+          BookmarksSupplier:=Document.getBookmarks;
+          CursorPointer:=TextPointer.CreateTextCursor;
 
-        BookmarksSupplier:=Document.getBookmarks;
-        If (Not BookmarkFromLayot)and(LayotCount=0) Then
-          LayotCount:=BookmarksSupplier.Count;
+          lastBookmarks:=BookmarksSupplier.Count;
 
-        For BookmarckNum:=0 to LayotCount-1 do
-        begin
-          try
-            FontSize:=0;
-            If BookmarkFromLayot Then
-            begin
-              ToWrite:=False;
+          if lastBookmarks=0 then break;
 
-              FontStyleRec.Bold:=0;
-              FontStyleRec.italic:=0;
-              FontStyleRec.Undeline:=0;
-              FontStyleRec.Center:=False;
-              FontStyleRec.StrikeThrough:=0;
+          If BookmarkFromLayot Then
+          begin
+            ToWrite:=False;
 
-              LayotItem:=Layot[BookmarckNum];
-              BookMarkName:=ExtractSection(LayotItem);
-              LayotStr:=ExtractSection(LayotItem);
-              If PosEx('B', LayotStr)<>0 Then
-                FontStyleRec.Bold:=1;
-              If PosEx('I', LayotStr)<>0 Then
-                FontStyleRec.italic:=1;
-              If PosEx('U', LayotStr)<>0 Then
-                FontStyleRec.Undeline:=1;
-              If PosEx('C', LayotStr)<>0 Then
-                FontStyleRec.Center:=True;
-              If PosEx('S', LayotStr)<>0 Then
-                FontStyleRec.StrikeThrough:=1;
+            FontStyleRec.Bold:=0;
+            FontStyleRec.italic:=0;
+            FontStyleRec.Undeline:=0;
+            FontStyleRec.Center:=False;
+            FontStyleRec.StrikeThrough:=0;
 
-              LayotStr:=ExtractSection(LayotItem);
-              If LayotStr<>'' Then
-                FontSize:=StrToIntEx(LayotStr);
+            LayotItem:=Layot[BookmarckNum];
+            BookMarkName:=ExtractSection(LayotItem);
+            LayotStr:=ExtractSection(LayotItem);
+            If PosEx('B', LayotStr)<>0 Then
+              FontStyleRec.Bold:=1;
+            If PosEx('I', LayotStr)<>0 Then
+              FontStyleRec.italic:=1;
+            If PosEx('U', LayotStr)<>0 Then
+              FontStyleRec.Undeline:=1;
+            If PosEx('C', LayotStr)<>0 Then
+              FontStyleRec.Center:=True;
+            If PosEx('S', LayotStr)<>0 Then
+              FontStyleRec.StrikeThrough:=1;
 
-              LayotStr:=ExtractSection(LayotItem);
-              If LayotStr<>'' Then
-                If PosEx('W', LayotStr)<>0 Then
-                  ToWrite:=True
-                Else
-                  ToWrite:=False;
-            end
-            Else
-              BookMarkName:=BookmarksSupplier.getByIndex(BookmarckNum).getName;
+            LayotStr:=ExtractSection(LayotItem);
+            If LayotStr<>'' Then
+              FontSize:=StrToIntEx(LayotStr);
 
-            If FieldExists(BookMarkName, DCLQuery) Then
-            begin
-              BookMark:=BookmarksSupplier.getByIndex(BookmarckNum).getAnchor;
-              If ToWrite Then
-                InsStr:=MoneyToString(DCLQuery.FieldByName(BookMarkName).AsCurrency, True, False)
+            LayotStr:=ExtractSection(LayotItem);
+            If LayotStr<>'' Then
+              If PosEx('W', LayotStr)<>0 Then
+                ToWrite:=True
               Else
-                InsStr:=Trim(DCLQuery.FieldByName(BookMarkName).AsString);
+                ToWrite:=False;
+          end
+          Else
+            BookMarkName:=BookmarksSupplier.getByIndex(BookmarckNum).getName;
 
-              InsLength:=Variant(Length(InsStr));
-              CursorPointer.GotoRange(BookMark.GetStart, False);
-              CursorPointer.GoRight(InsLength, True);
-              CursorPointer.setString('');
-              If FontStyleRec.italic=1 Then
-                CursorPointer.setPropertyValue('CharPosture', Ord(fsItalic));
-              If FontStyleRec.Bold=1 Then
-                CursorPointer.setPropertyValue('CharWeight', Ord(fsBold));
-              If FontStyleRec.StrikeThrough=1 Then
-                CursorPointer.setPropertyValue('CharStrikeout', Ord(fsStrikeout));
-              If FontStyleRec.Undeline=1 Then
-                CursorPointer.setPropertyValue('CharUnderline', Ord(fsUnderLine));
-              If FontSize<>0 Then
-                CursorPointer.setPropertyValue('CharHeight', FontSize);
+          If FieldExists(BookMarkName, DCLQuery) Then
+          begin
+            BookMark:=BookmarksSupplier.getByIndex(BookmarckNum).getAnchor;
+            If ToWrite Then
+              InsStr:=MoneyToString(DCLQuery.FieldByName(BookMarkName).AsCurrency, True, False)
+            Else
+              InsStr:=Trim(DCLQuery.FieldByName(BookMarkName).AsString);
 
-              CursorPointer.setString(InsStr);
-            end;
-          Except
-            OOSetVisible(Document, True);
-            ShowErrorMessage( - 5005, '');
+            //InsLength:=Variant(Length(InsStr));
+            CursorPointer.GotoRange(BookMark.GetStart, False);
+            //CursorPointer.GoRight(InsLength, True);
+            //CursorPointer.setString('');
+            If FontStyleRec.italic=1 Then
+              CursorPointer.setPropertyValue('CharPosture', Ord(fsItalic));
+            If FontStyleRec.Bold=1 Then
+              CursorPointer.setPropertyValue('CharWeight', Ord(fsBold));
+            If FontStyleRec.StrikeThrough=1 Then
+              CursorPointer.setPropertyValue('CharStrikeout', Ord(fsStrikeout));
+            If FontStyleRec.Undeline=1 Then
+              CursorPointer.setPropertyValue('CharUnderline', Ord(fsUnderLine));
+            If FontSize<>0 Then
+              CursorPointer.setPropertyValue('CharHeight', FontSize);
+
+            CursorPointer.setString(InsStr);
           end;
+        Except
+          OOSetVisible(Document, True);
+          ShowErrorMessage( - 5005, '');
         end;
-
-        If ToPDF Then
-          OOExportToFormat(Document, AddToFileName(OutFileName, '_'+IntToStr(DocNum)), 'pdf');
-
-        If ToHTML Then
-          OOExportToFormat(Document, AddToFileName(OutFileName, '_'+IntToStr(DocNum)), 'html');
-
-        OOSetVisible(Document, True);
-        If Save Then
-        begin
-          Case OfficeDocumentFormat of
-          odfMSO97:
-          begin
-            FileName:=FakeFileExt(FileName, 'doc');
-            VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'MS Word 97');
-          end;
-          odfMSO2007:
-          begin
-            FileName:=FakeFileExt(FileName, 'docx');
-            VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'MS Word 2007');
-          end;
-          odfOO, odfPossible:
-          begin
-            FileName:=FakeFileExt(FileName, 'odt');
-            VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'writer8');
-          end;
-          end;
-
-          Document.StoreAsURL(FileNameToURL(AddToFileName(OutFileName, '_'+IntToStr(DocNum))),
-            VariantArray);
-        end;
-
-        If Close then
-        Begin
-          Document.Close(True);
-          Document:=Unassigned;
-        End;
-
-        Sheets:=Unassigned;
-        Sheet:=Unassigned;
-        //Document:=Unassigned;
-        //Desktop:=Unassigned;
-        //OO:=Unassigned;
-
-        If ToPDF Then
-          Exec(FakeFileExt(AddToFileName(OutFileName, '_'+IntToStr(DocNum)), 'pdf'), '');
-
-        If ToHTML Then
-          Exec(FakeFileExt(AddToFileName(OutFileName, '_'+IntToStr(DocNum)), 'html'), '');
-
-        inc(DocNum);
-        DCLQuery.Next;
       end;
-      DCLQuery.Close;
+
+      If ToPDF Then
+        OOExportToFormat(Document, AddToFileName(OutFileName, '_'+IntToStr(DocNum)), 'pdf');
+
+      If ToHTML Then
+        OOExportToFormat(Document, AddToFileName(OutFileName, '_'+IntToStr(DocNum)), 'html');
+
+      OOSetVisible(Document, True);
+      If Save Then
+      begin
+        Case OfficeDocumentFormat of
+        odfMSO97:
+        begin
+          FileName:=FakeFileExt(OutFileName, 'doc');
+          VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'MS Word 97');
+        end;
+        odfMSO2007:
+        begin
+          FileName:=FakeFileExt(OutFileName, 'docx');
+          VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'MS Word 2007');
+        end;
+        odfOO, odfPossible:
+        begin
+          FileName:=FakeFileExt(OutFileName, 'odt');
+          VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'writer8');
+        end;
+        end;
+
+        Document.StoreAsURL(FileNameToURL(AddToFileName(OutFileName, '_'+IntToStr(DocNum))),
+          VariantArray);
+      end;
+
+      If Close then
+      Begin
+        Document.Close(True);
+        Document:=Unassigned;
+      End;
 
       Sheets:=Unassigned;
       Sheet:=Unassigned;
+      //Document:=Unassigned;
+      //Desktop:=Unassigned;
       //OO:=Unassigned;
-    end
-    Else
-      ShowErrorMessage( - 5006, FileName);
+
+      If ToPDF Then
+        Exec(FakeFileExt(AddToFileName(OutFileName, '_'+IntToStr(DocNum)), 'pdf'), '');
+
+      If ToHTML Then
+        Exec(FakeFileExt(AddToFileName(OutFileName, '_'+IntToStr(DocNum)), 'html'), '');
+
+      inc(DocNum);
+      DCLQuery.Next;
+    end;
+    DCLQuery.Close;
+
+    Sheets:=Unassigned;
+    Sheet:=Unassigned;
+    //OO:=Unassigned;
+  end
+  Else
+    ShowErrorMessage( - 5006, FileName);
 {$ENDIF}
 end;
 
@@ -16255,7 +16284,7 @@ procedure TDCLOfficeReport.ReportWord(ParamStr: String; Save, Close: Boolean);
 {$IFDEF MSWINDOWS}
 var
   StV: OleVariant;
-  SQLStr, FileName, LayotStr, LayotItem, BookmarckName: String;
+  SQLStr, FileName, OutFileName, Ext, TemplateExt, LayotStr, LayotItem, BookmarckName: String;
   Layot: TStringList;
   DocNum: Cardinal;
   ParamNum, BookmarckNum, LayotCount, FontSize: Byte;
@@ -16266,133 +16295,159 @@ var
 {$ENDIF}
 begin
 {$IFDEF MSWINDOWS}
-  LayotCount:=0;
-  Layot:=TStringList.Create;
+  Ext:='doc';
+  TemplateExt:='dot';
+
   if FindParam('TemplateName=', ParamStr)<>'' then
   begin
     FileName:=BinStor.GetTemplateFile(FindParam('TemplateName=', ParamStr),
-      FindParam('FileName=', ParamStr), 'doc');
+      FindParam('Template=', ParamStr), Ext);
+  end;
+
+  FileName:=FindParam('Template=', ParamStr);
+  If not IsFullPath(FileName) then
+    FileName:=AppConfigDir+FileName;
+
+  If NoFileExt(FileName) then
+  begin
+    OfficeDocumentFormat:=odfOO;
+    if FileExists(FileName+'.'+TemplateExt) then
+    begin
+      OfficeDocumentFormat:=odfOO;
+      FileName:=FileName+'.'+TemplateExt;
+    end
+    else
+    begin
+      if FileExists(FileName+'.'+Ext) then
+      begin
+        OfficeDocumentFormat:=odfOO;
+        FileName:=FileName+'.'+Ext;
+      end;
+    end;
   end
   else
   begin
-    FileName:=FindParam('FileName=', ParamStr);
-    if not IsFullPath(FileName) then
-      FileName:=AppConfigDir+FileName;
+    OfficeDocumentFormat:=GetDocumentType(FileName);
   end;
+
+  OutFileName:=FindParam('FileName=', ParamStr);
+  if not IsFullPath(OutFileName) then
+    OutFileName:=AppConfigDir+OutFileName;
+
   If BinStor.ErrorCode=0 Then
-    If FileExists(FileName) Then
+  If FileExists(FileName) Then
+  begin
+    LayotStr:=FindParam('Layot=', ParamStr);
+    If LayotStr<>'' Then
     begin
-      LayotStr:=FindParam('Layot=', ParamStr);
-      If LayotStr<>'' Then
+      Layot.Clear;
+      LayotCount:=ParamsCount(LayotStr);
+      For BookmarckNum:=1 to ParamsCount(LayotStr) do
       begin
-        Layot.Clear;
-        LayotCount:=ParamsCount(LayotStr);
-        For ParamNum:=1 to ParamsCount(LayotStr) do
-        begin
-          BookmarkFromLayot:=True;
-          LayotItem:=SortParams(LayotStr, ParamNum);
+        BookmarkFromLayot:=True;
+        LayotItem:=SortParams(LayotStr, BookmarckNum);
 
-          Layot.Append(LayotItem);
-        end;
+        Layot.Append(LayotItem);
       end;
+    end;
 
-      SQLStr:=FindParam('SQL=', ParamStr);
-      If (SQLStr='')and Assigned(FDCLGrid) Then
-        SQLStr:=FDCLGrid.Query.SQL.Text;
+    SQLStr:=FindParam('SQL=', ParamStr);
+    If (SQLStr='')and Assigned(FDCLGrid) Then
+      SQLStr:=FDCLGrid.Query.SQL.Text;
 
-      If Assigned(FDCLGrid) Then
-        FDCLGrid.TranslateVal(SQLStr);
-      DCLQuery:=TDCLDialogQuery.Create(nil);
-      DCLQuery.Name:='OfRep3_'+IntToStr(UpTime);
-      FDCLLogOn.SetDBName(DCLQuery);
-      DCLQuery.SQL.Text:=SQLStr;
-      try
-        DCLQuery.Open;
-      Except
-        ShowErrorMessage( - 1104, 'SQL='+SQLStr);
-      end;
-      DCLQuery.First;
+    If Assigned(FDCLGrid) Then
+      FDCLGrid.TranslateVal(SQLStr);
+    DCLQuery:=TDCLDialogQuery.Create(nil);
+    DCLQuery.Name:='OfRep3_'+IntToStr(UpTime);
+    FDCLLogOn.SetDBName(DCLQuery);
+    DCLQuery.SQL.Text:=SQLStr;
+    try
+      DCLQuery.Open;
+    Except
+      ShowErrorMessage( - 1104, 'SQL='+SQLStr);
+    end;
+    DCLQuery.First;
+
+    DocNum:=1;
+    While Not DCLQuery.Eof do
+    begin
+      WordRun(MsWord);
+      WordOpen(MsWord, FileName);
 
       If (Not BookmarkFromLayot)and(LayotCount=0) Then
         LayotCount:=MsWord.ActiveDocument.BookMarks.Count;
 
-      DocNum:=1;
-      While Not DCLQuery.Eof do
+      For BookmarckNum:=0 to LayotCount-1 do
       begin
-        WordRun(MsWord);
-        WordOpen(MsWord, FileName);
-
-        For BookmarckNum:=0 to LayotCount-1 do
+        If BookmarkFromLayot Then
         begin
-          If BookmarkFromLayot Then
-          begin
-            ToWrite:=False;
+          ToWrite:=False;
 
-            FontStyleRec.Bold:=0;
-            FontStyleRec.italic:=0;
-            FontStyleRec.Undeline:=0;
-            FontStyleRec.Center:=False;
-            FontStyleRec.StrikeThrough:=0;
+          FontStyleRec.Bold:=0;
+          FontStyleRec.italic:=0;
+          FontStyleRec.Undeline:=0;
+          FontStyleRec.Center:=False;
+          FontStyleRec.StrikeThrough:=0;
 
-            LayotItem:=Layot[BookmarckNum];
-            BookmarckName:=ExtractSection(LayotItem);
-            LayotStr:=ExtractSection(LayotItem);
-            If PosEx('B', LayotStr)<>0 Then
-              FontStyleRec.Bold:=1;
-            If PosEx('I', LayotStr)<>0 Then
-              FontStyleRec.italic:=1;
-            If PosEx('U', LayotStr)<>0 Then
-              FontStyleRec.Undeline:=1;
-            If PosEx('C', LayotStr)<>0 Then
-              FontStyleRec.Center:=True;
-            If PosEx('S', LayotStr)<>0 Then
-              FontStyleRec.StrikeThrough:=1;
+          LayotItem:=Layot[BookmarckNum];
+          BookmarckName:=ExtractSection(LayotItem);
+          LayotStr:=ExtractSection(LayotItem);
+          If PosEx('B', LayotStr)<>0 Then
+            FontStyleRec.Bold:=1;
+          If PosEx('I', LayotStr)<>0 Then
+            FontStyleRec.italic:=1;
+          If PosEx('U', LayotStr)<>0 Then
+            FontStyleRec.Undeline:=1;
+          If PosEx('C', LayotStr)<>0 Then
+            FontStyleRec.Center:=True;
+          If PosEx('S', LayotStr)<>0 Then
+            FontStyleRec.StrikeThrough:=1;
 
-            LayotStr:=ExtractSection(LayotItem);
-            If LayotStr<>'' Then
-              FontSize:=StrToIntEx(LayotStr);
+          LayotStr:=ExtractSection(LayotItem);
+          If LayotStr<>'' Then
+            FontSize:=StrToIntEx(LayotStr);
 
-            LayotStr:=ExtractSection(LayotItem);
-            If LayotStr<>'' Then
-              If PosEx('W', LayotStr)<>0 Then
-                ToWrite:=True
-              Else
-                ToWrite:=False;
-          end
-          Else
-            BookmarckName:=MsWord.ActiveDocument.BookMarks.Item(BookmarckNum+1).Name;
-
-          StV:='';
-          If FieldExists(BookmarckName, DCLQuery) Then
-            If ToWrite Then
-              StV:=MoneyToString(DCLQuery.FieldByName(BookmarckName).AsCurrency, True, False)
+          LayotStr:=ExtractSection(LayotItem);
+          If LayotStr<>'' Then
+            If PosEx('W', LayotStr)<>0 Then
+              ToWrite:=True
             Else
-              StV:=Trim(DCLQuery.FieldByName(BookmarckName).AsString);
+              ToWrite:=False;
+        end
+        Else
+          BookmarckName:=MsWord.ActiveDocument.BookMarks.Item(BookmarckNum+1).Name;
 
-          WordInsert(MsWord, BookmarckName, StV, FontStyleRec.Bold, FontStyleRec.italic,
-            FontStyleRec.StrikeThrough, FontStyleRec.Undeline, FontSize, FontStyleRec.Center);
-        end;
+        StV:='';
+        If FieldExists(BookmarckName, DCLQuery) Then
+          If ToWrite Then
+            StV:=MoneyToString(DCLQuery.FieldByName(BookmarckName).AsCurrency, True, False)
+          Else
+            StV:=Trim(DCLQuery.FieldByName(BookmarckName).AsString);
 
-        If Save Then
-        begin
-          StV:=AddToFileName(FileName, '_'+IntToStr(DocNum));
-          If WordVer=9 Then
-            MsWord.ActiveDocument.SaveAs(StV, EmptyParam, EmptyParam, EmptyParam, EmptyParam,
-              EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam) // Word 2000
-          Else If WordVer>9 Then
-            MsWord.ActiveDocument.SaveAs(StV, EmptyParam, EmptyParam, EmptyParam, EmptyParam,
-              EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam,
-              EmptyParam, EmptyParam, EmptyParam, EmptyParam); // Word XP
-        end;
-
-        If Close then
-        Begin
-          CloseDocument(MsWord);
-          WordClose(MsWord);
-        End;
-
-        DCLQuery.Next;
+        WordInsert(MsWord, BookmarckName, StV, FontStyleRec.Bold, FontStyleRec.italic,
+          FontStyleRec.StrikeThrough, FontStyleRec.Undeline, FontSize, FontStyleRec.Center);
       end;
+
+      If Save Then
+      begin
+        StV:=AddToFileName(OutFileName, '_'+IntToStr(DocNum));
+        If WordVer=9 Then
+          MsWord.ActiveDocument.SaveAs(StV, EmptyParam, EmptyParam, EmptyParam, EmptyParam,
+            EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam) // Word 2000
+        Else If WordVer>9 Then
+          MsWord.ActiveDocument.SaveAs(StV, EmptyParam, EmptyParam, EmptyParam, EmptyParam,
+            EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam,
+            EmptyParam, EmptyParam, EmptyParam, EmptyParam); // Word XP
+      end;
+
+      If Close then
+      Begin
+        CloseDocument(MsWord);
+        WordClose(MsWord);
+      End;
+
+      DCLQuery.Next;
+    end;
     end
     Else
       ShowErrorMessage( - 5004, FileName);

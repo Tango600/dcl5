@@ -78,13 +78,13 @@ Var
   Ext: String;
 Begin
   Ext:=ExtractFileExt(FileName);
-  if (LowerCase(Ext)='.xlsx') or (LowerCase(Ext)='.xlsx') then
+  if (LowerCase(Ext)='.xlsx') or (LowerCase(Ext)='.xltx') or (LowerCase(Ext)='.docx') or (LowerCase(Ext)='.dotx') then
      Result:=odfMSO2007
   else
-  if (LowerCase(Ext)='.xlt') or (LowerCase(Ext)='.xlt') then
+  if (LowerCase(Ext)='.xls') or (LowerCase(Ext)='.xlt') or (LowerCase(Ext)='.doc') or (LowerCase(Ext)='.dot') then
      Result:=odfMSO97
   else
-    If (LowerCase(Ext)='.ods') or (LowerCase(Ext)='.ots') then
+    If (LowerCase(Ext)='.ods') or (LowerCase(Ext)='.ots') or (LowerCase(Ext)='.odt') or (LowerCase(Ext)='.ott') then
      Result:=odfOO;
 End;
 
@@ -369,7 +369,7 @@ Begin
   MsWord.Selection.Goto(What, Which, Count, Name);
 {$ENDIF}
   C:=Length(info);
-  MsWord.Selection.Delete(EmptyParam, C);
+  //MsWord.Selection.Delete(EmptyParam, C);
 
   MsWord.Selection.Font.Bold:=_bold;
   MsWord.Selection.Font.italic:=_italic;
