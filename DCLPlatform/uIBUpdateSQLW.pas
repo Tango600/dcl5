@@ -5,9 +5,16 @@ interface
 
 uses
   SysUtils, Classes, DB,
+{$IFDEF FPC}
+  {$IFDEF IBX}
+  IBCustomDataSet, IBQuery, IB, IBUpdateSQL, IBDatabase,
+  {$ENDIF}
+{$ELSE}
   {$IFDEF IBX}
   IBX.IBCustomDataSet, IBX.IBQuery, IBX.IB, IBX.IBUpdateSQL, IBX.IBDatabase,
   {$ENDIF}
+{$ENDIF}
+
   Variants;
 
 type

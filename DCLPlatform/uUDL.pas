@@ -34,9 +34,16 @@ Uses
 {$IFDEF ADO}
   ActiveX, ADODB, ADOConst, ADOInt,
 {$ENDIF}
-{$IFDEF IBX}
-  IBX.IBDatabase, IBX.IBTable, IBX.IBCustomDataSet, IBX.IBHeader, IBX.IBSQL, IBX.IBQuery,
-  IBX.IBVisualConst, IBX.IBXConst,
+{$IFDEF FPC}
+  {$IFDEF IBX}
+    IBDatabase, IBTable, IBCustomDataSet, IBHeader, IBSQL, IBQuery,
+    IBXConst,
+  {$ENDIF}
+{$ELSE}
+  {$IFDEF IBX}
+    IBX.IBDatabase, IBX.IBTable, IBX.IBCustomDataSet, IBX.IBHeader, IBX.IBSQL, IBX.IBQuery,
+    IBX.IBVisualConst, IBX.IBXConst,
+  {$ENDIF}
 {$ENDIF}
 {$IFDEF ZEOS}
   ZDbcIntfs, // ZConnection, ZDataset, ZSqlUpdate,
@@ -80,9 +87,9 @@ Type
   TDCLLogOn=class(TObject)
   private
     FDBLogOn: TDBLogOn;
-{$IFDEF FPC}
+{$IFDEF FPC}{$IFDEF SQLdbFamily}
     FSQLDBLibraryLoader: TSQLDBLibraryLoader;
-{$ENDIF}
+{$ENDIF}{$ENDIF}
 {$IFDEF TRANSACTIONDB}
     IBTransaction: TTransaction;
 {$ENDIF}

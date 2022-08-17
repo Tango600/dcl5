@@ -19,10 +19,17 @@ Uses
 {$IFDEF ADO}
   ADODB, ADOConst, ADOInt,
 {$ENDIF}
-{$IFDEF IBX}
-  IBX.IBDatabase, IBX.IBTable, IBX.IBCustomDataSet, IBX.IBSQL, IBX.IBQuery,
-  IBX.IBVisualConst, IBX.IBXConst, IBX.IBUpdateSQL,
-  uIBUpdateSQLW,
+{$IFDEF FPC}
+  {$IFDEF IBX}
+    IBDatabase, IBTable, IBCustomDataSet, IBSQL, IBQuery,
+    IBXConst, IBUpdateSQL, uIBUpdateSQLW,
+  {$ENDIF}
+{$ELSE}
+  {$IFDEF IBX}
+    IBX.IBDatabase, IBX.IBTable, IBX.IBCustomDataSet, IBX.IBSQL, IBX.IBQuery,
+    IBX.IBVisualConst, IBX.IBXConst, IBX.IBUpdateSQL,
+    uIBUpdateSQLW,
+  {$ENDIF}
 {$ENDIF}
 {$IFDEF ZEOS}
   ZConnection, ZDataset, ZSqlUpdate,

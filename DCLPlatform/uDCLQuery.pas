@@ -9,9 +9,16 @@ uses
 {$IFDEF ADO}
   WideStrings, ADODB, ADOConst, ADOInt,
 {$ENDIF}
-{$IFDEF IBX}
+{$IFDEF FPC}
+  {$IFDEF IBX}
+  IBDatabase, IBTable, IBCustomDataSet, IBSQL, IBQuery,
+  IBXConst, uIBUpdateSQLW,
+  {$ENDIF}
+{$ELSE}
+  {$IFDEF IBX}
   IBX.IBDatabase, IBX.IBTable, IBX.IBCustomDataSet, IBX.IBSQL, IBX.IBQuery,
   IBX.IBVisualConst, IBX.IBXConst, uIBUpdateSQLW,
+  {$ENDIF}
 {$ENDIF}
 {$IFDEF SQLdbFamily}
   BufDataset, sqldb,
