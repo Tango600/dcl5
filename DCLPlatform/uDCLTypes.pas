@@ -22,7 +22,7 @@ Uses
 {$IFDEF FPC}
   {$IFDEF IBX}
     IBDatabase, IBTable, IBCustomDataSet, IBSQL, IBQuery,
-    IBXConst, IBUpdateSQL, uIBUpdateSQLW,
+    IBUpdateSQL, uIBUpdateSQLW,
   {$ENDIF}
 {$ELSE}
   {$IFDEF IBX}

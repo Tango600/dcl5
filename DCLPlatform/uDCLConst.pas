@@ -39,7 +39,7 @@ DefaultLibraryLocation='libfbclient.so';
 {$IFDEF SQLdb}
   DBEngineType='SQLdb (Universal)';
 {$ENDIF}
-  Ver='10.2.10.0';
+  Ver='10.2.11.0';
   VersionS='$VersionSignature$'+Ver+'$';
 
   CompotableVersion='9.1.129.309';
@@ -68,7 +68,7 @@ DefaultLibraryLocation='libfbclient.so';
   GraficWidth=166;
   GraficHeight=160;
   GroupHeight=160;
-  CheckWidth=100;
+  CheckWidth=20;
   TablePartHeight=250;
   RollHeight=33;
   NavigatorHeight=25;

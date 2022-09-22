@@ -7271,8 +7271,12 @@ begin
           begin
             If Assigned(FDCLForm) Then
             If GetRaightsByContext(InContext)>ulReadOnly Then
-              If FDCLForm.CurrentQuery.State in dsEditModes Then
+              If FDCLForm.CurrentQuery.CanModify and (FDCLForm.CurrentQuery.State in dsEditModes) Then
+              try
                 FDCLForm.CurrentQuery.Post;
+              finally
+                ////
+              end;
           end;
 
           If PosEx('PostClose;', ScrStr)=1 Then
@@ -11289,7 +11293,7 @@ begin
   CheckBoxes[l].CheckBox.OnClick:=CheckOnClick;
   CheckBoxes[l].CheckBox.Left:=Field.Left;
   CheckBoxes[l].CheckBox.Top:=Field.Top;
-  CheckBoxes[l].CheckBox.Width:=EditWidth;
+  CheckBoxes[l].CheckBox.Width:=CheckWidth;
   Field.Height:=CheckBoxes[l].CheckBox.Height;
 
   Case CheckBoxes[l].CheckBox.Checked of
@@ -11582,10 +11586,7 @@ begin
   DBCheckBoxes[l].Parent:=FieldPanel;
   DBCheckBoxes[l].Left:=Field.Left;
   DBCheckBoxes[l].Top:=Field.Top;
-  If Field.Width<>0 Then
-    DBCheckBoxes[l].Width:=Field.Width
-  Else
-    DBCheckBoxes[l].Width:=CheckWidth;
+  DBCheckBoxes[l].Width:=CheckWidth;
   Field.Height:=DBCheckBoxes[l].Height;
   DBCheckBoxes[l].ShowHint:=True;
   DBCheckBoxes[l].Hint:=Field.Hint;
