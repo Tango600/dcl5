@@ -14842,14 +14842,17 @@ begin
             If DBFilters[FN].Between<>StopFilterFlg Then
             begin
               Exempl2:='';
-              If WhereStr>' ' Then
-                WhereStr:=WhereStr+' and ';
-              If DBFilters[FN].Between<>0 Then
-                Exempl2:=DBFilters[DBFilters[FN].Between].FilterString;
+              if QFilterField<>'' then
+              begin
+                If WhereStr>' ' Then
+                  WhereStr:=WhereStr+' and ';
+                If DBFilters[FN].Between<>0 Then
+                  Exempl2:=DBFilters[DBFilters[FN].Between].FilterString;
 
-              WhereStr:=WhereStr+' '+ConstructQueryString(ExeplStr, QFilterField,
-                Not DBFilters[FN].CaseC, DBFilters[FN].NotLike, DBFilters[FN].Partial, DBFilters[FN].NotFilter,
-                DBFilters[FN].Between, Exempl2);
+                WhereStr:=WhereStr+' '+ConstructQueryString(ExeplStr, QFilterField,
+                  Not DBFilters[FN].CaseC, DBFilters[FN].NotLike, DBFilters[FN].Partial, DBFilters[FN].NotFilter,
+                  DBFilters[FN].Between, Exempl2);
+              end;
             end;
           end
           Else
