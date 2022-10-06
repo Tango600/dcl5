@@ -14564,11 +14564,18 @@ begin
   ExeplStr:=(Sender as TEdit).Text;
 
   If FQuery.Active then
-  if FieldExists(DBFilters[FilterIdx].Field, FQuery) then
+  if FieldExists(DBFilters[FilterIdx].Field, FQuery) or (DBFilters[FilterIdx].VarName<>'') then
   Begin
-    If not CheckStrFmtType(ExeplStr, GetSimplyFieldType(DBFilters[FilterIdx].Field, FQuery)) then
+    If DBFilters[FilterIdx].Field<>'' then
     Begin
-      ExeplStr:='';
+      If not CheckStrFmtType(ExeplStr, GetSimplyFieldType(DBFilters[FilterIdx].Field, FQuery)) then
+      Begin
+        ExeplStr:='';
+      End;
+    End
+    Else
+    Begin
+        FDCLLogOn.Variables.Variables[DBFilters[FilterIdx].VarName]:=TrimRight(ExeplStr);
     End;
   End;
 
@@ -14784,7 +14791,7 @@ begin
   0:
   begin
     OrderBy:='';
-    If FindSQLWhere(tmpSQL, 'order by')<>0 then //PosEx('order by', tmpSQL)<>0 Then
+    If FindSQLWhere(tmpSQL, 'order by')<>0 then
     begin
       OrderBy:=Copy(tmpSQL, FindSQLWhere(tmpSQL, 'order by'), Length(tmpSQL));
       Delete(tmpSQL, FindSQLWhere(tmpSQL, 'order by'), Length(tmpSQL));
