@@ -11674,15 +11674,18 @@ begin
     DBFilters[l].Lookup.Width:=Filter.Width;
     DBFilters[l].Lookup.ListField:=Filter.ListField+';'+Filter.KeyField;
 
-    DBFilters[l].NotCheck:=TCheckBox.Create(ToolPanel);
-    DBFilters[l].NotCheck.Parent:=ToolPanel;
-    DBFilters[l].NotCheck.Tag:=l;
-    DBFilters[l].NotCheck.Top:=FilterTop+EditHeight+LabelTopInterval;
-    DBFilters[l].NotCheck.Left:=BeginStepLeft+ToolPanelElementLeft;
-    DBFilters[l].NotCheck.Name:='NotCheck_'+IntToStr(l);
-    DBFilters[l].NotCheck.Width:=Filter.Width;
-    DBFilters[l].NotCheck.Caption:=GetDCLMessageString(msNotFilter);
-    DBFilters[l].NotCheck.OnClick:=OnNotCheckClick;
+    if Filter.Field<>'' then
+    begin
+      DBFilters[l].NotCheck:=TCheckBox.Create(ToolPanel);
+      DBFilters[l].NotCheck.Parent:=ToolPanel;
+      DBFilters[l].NotCheck.Tag:=l;
+      DBFilters[l].NotCheck.Top:=FilterTop+EditHeight+LabelTopInterval;
+      DBFilters[l].NotCheck.Left:=BeginStepLeft+ToolPanelElementLeft;
+      DBFilters[l].NotCheck.Name:='NotCheck_'+IntToStr(l);
+      DBFilters[l].NotCheck.Width:=Filter.Width;
+      DBFilters[l].NotCheck.Caption:=GetDCLMessageString(msNotFilter);
+      DBFilters[l].NotCheck.OnClick:=OnNotCheckClick;
+    end;
 
 {$IFDEF FPC}
     DBFilters[l].Lookup.OnSelect:=ExecFilter;
