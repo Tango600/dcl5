@@ -16594,13 +16594,15 @@ begin
         EnableColChColor:=True;
       end;
 
-      RecRepNum:=1;
+      RecRepNum:=0;
       While Not DCLQuery.Eof do
       begin
+        Excel.Sheets[1].Range['DATA'].Rows.Insert(-4121, 1);
         For v1:=0 to DCLQuery.FieldCount-1 do
         begin
           Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1]:=
             Trim(DCLQuery.Fields[v1].AsString);
+
           If EnableRowChColor Then
             If RecRepNum Mod 2=0 Then
               Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].Interior.Color:=
@@ -16610,7 +16612,6 @@ begin
               Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].Interior.Color:=
                 RGB(ColRColor, ColGColor, ColBColor);
         end;
-        inc(RecRepNum);
         DCLQuery.Next;
       end;
       DCLQuery.Close;
