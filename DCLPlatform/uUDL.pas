@@ -21,7 +21,7 @@ Uses
 {$ENDIF}
 {$ENDIF}
   Messages, Variants, Classes, Graphics, Controls, Forms, ExtCtrls, ToolWin,
-  Grids, DB, StdCtrls, ComCtrls, Dialogs, Buttons, ExtDlgs, Menus,
+  Grids, DB, StdCtrls, ComCtrls, Dialogs, Buttons, ExtDlgs, Menus, ClipBrd,
 {$IFnDEF FPC}
   Vcl.DBCtrls, Vcl.DBGrids,
 {$ELSE}
@@ -14658,23 +14658,18 @@ end;
 
 procedure TDCLGrid.PCopy(Sender: TObject);
 begin
-{$IFDEF MSWINDOWS}
-  SendMessage(GetFocus, WM_COPY, 0, 0);
-{$ENDIF}
+  Clipboard.AsText:=FGrid.SelectedField.AsString;
 end;
 
 procedure TDCLGrid.PCut(Sender: TObject);
 begin
-{$IFDEF MSWINDOWS}
-  SendMessage(GetFocus, WM_CUT, 0, 0);
-{$ENDIF}
+  Clipboard.AsText:=FGrid.SelectedField.AsString;
+  FGrid.SelectedField.Clear;
 end;
 
 procedure TDCLGrid.PPaste(Sender: TObject);
 begin
-{$IFDEF MSWINDOWS}
-  SendMessage(GetFocus, WM_PASTE, 0, 0);
-{$ENDIF}
+  FGrid.SelectedField.AsString:=Clipboard.AsText;
 end;
 
 procedure TDCLGrid.Print(Sender: TObject);
@@ -14708,6 +14703,9 @@ end;
 
 procedure TDCLGrid.PUndo(Sender: TObject);
 begin
+  if FGrid.DataSource<>nil then
+    if FGrid.DataSource.DataSet<>nil then
+      FGrid.DataSource.DataSet.Cancel;
 {$IFDEF MSWINDOWS}
   SendMessage(GetFocus, WM_UNDO, 0, 0);
 {$ENDIF}
@@ -15279,13 +15277,16 @@ var
     AddPopupMenuItem('-', 'Separator1', nil, '', 0, '');
     AddPopupMenuItem(GetDCLMessageString(msCopy), 'Copy', PCopy, 'Ctrl+C',
       0, 'Copy');
-    AddPopupMenuItem(GetDCLMessageString(msCut), 'Cut', PCut, 'Ctrl+X',
-      0, 'Cut');
-    AddPopupMenuItem(GetDCLMessageString(msPast), 'Paste', PPaste, 'Ctrl+V',
-      0, 'Paste');
-    AddPopupMenuItem('-', 'Separator2', nil, '', 0, '');
-    AddPopupMenuItem(GetDCLMessageString(msCancel), 'Undo', PUndo, 'Ctrl+U',
-      0, 'Undo');
+    if not FReadOnly then
+    begin
+      AddPopupMenuItem(GetDCLMessageString(msCut), 'Cut', PCut, 'Ctrl+X',
+        0, 'Cut');
+      AddPopupMenuItem(GetDCLMessageString(msPast), 'Paste', PPaste, 'Ctrl+V',
+        0, 'Paste');
+      AddPopupMenuItem('-', 'Separator2', nil, '', 0, '');
+      AddPopupMenuItem(GetDCLMessageString(msCancel), 'Undo', PUndo, 'Ctrl+U',
+        0, 'Undo');
+    end;
 
     If (KeyMarks.KeyField<>'')and FieldExists(KeyMarks.KeyField, FQuery) Then
     begin
