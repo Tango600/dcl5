@@ -16549,7 +16549,7 @@ begin
         Exit;
       end;
       try
-        Excel.ActiveSheet.Range['DATA'].Select;
+        Excel.Sheets[1].Range['DATA'].Select;
       Except
         ShowErrorMessage( - 5002, '');
         Excel.Visible:=True;
@@ -16599,15 +16599,15 @@ begin
       begin
         For v1:=0 to DCLQuery.FieldCount-1 do
         begin
-          Excel.ActiveSheet.Range['DATA'].Cells.Item[RecRepNum, v1+1]:=
+          Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1]:=
             Trim(DCLQuery.Fields[v1].AsString);
           If EnableRowChColor Then
             If RecRepNum Mod 2=0 Then
-              Excel.ActiveSheet.Range['DATA'].Cells.Item[RecRepNum, v1+1].Interior.Color:=
+              Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].Interior.Color:=
                 RGB(RowRColor, RowGColor, RowBColor);
           If EnableColChColor Then
             If v1 Mod 2=0 Then
-              Excel.ActiveSheet.Range['DATA'].Cells.Item[RecRepNum, v1+1].Interior.Color:=
+              Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].Interior.Color:=
                 RGB(ColRColor, ColGColor, ColBColor);
         end;
         inc(RecRepNum);
