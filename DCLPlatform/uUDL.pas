@@ -14658,18 +14658,23 @@ end;
 
 procedure TDCLGrid.PCopy(Sender: TObject);
 begin
-  Clipboard.AsText:=FGrid.SelectedField.AsString;
+  if Assigned(FGrid) then
+    Clipboard.AsText:=FGrid.SelectedField.AsString;
 end;
 
 procedure TDCLGrid.PCut(Sender: TObject);
 begin
-  Clipboard.AsText:=FGrid.SelectedField.AsString;
-  FGrid.SelectedField.Clear;
+  if Assigned(FGrid) then
+  begin
+    Clipboard.AsText:=FGrid.SelectedField.AsString;
+    FGrid.SelectedField.Clear;
+  end;
 end;
 
 procedure TDCLGrid.PPaste(Sender: TObject);
 begin
-  FGrid.SelectedField.AsString:=Clipboard.AsText;
+  if Assigned(FGrid) then
+    FGrid.SelectedField.AsString:=Clipboard.AsText;
 end;
 
 procedure TDCLGrid.Print(Sender: TObject);
@@ -14703,6 +14708,7 @@ end;
 
 procedure TDCLGrid.PUndo(Sender: TObject);
 begin
+  if Assigned(FGrid) then
   if FGrid.DataSource<>nil then
     if FGrid.DataSource.DataSet<>nil then
       FGrid.DataSource.DataSet.Cancel;
@@ -15274,18 +15280,22 @@ var
     If WithStructure Then
       AddPopupMenuItem(GetDCLMessageString(msStructure), 'Structure', Structure,
         'Ctrl+S', 0, 'Structure');
-    AddPopupMenuItem('-', 'Separator1', nil, '', 0, '');
-    AddPopupMenuItem(GetDCLMessageString(msCopy), 'Copy', PCopy, 'Ctrl+C',
-      0, 'Copy');
-    if not FReadOnly then
+
+    if Assigned(FGrid) then
     begin
-      AddPopupMenuItem(GetDCLMessageString(msCut), 'Cut', PCut, 'Ctrl+X',
-        0, 'Cut');
-      AddPopupMenuItem(GetDCLMessageString(msPast), 'Paste', PPaste, 'Ctrl+V',
-        0, 'Paste');
-      AddPopupMenuItem('-', 'Separator2', nil, '', 0, '');
-      AddPopupMenuItem(GetDCLMessageString(msCancel), 'Undo', PUndo, 'Ctrl+U',
-        0, 'Undo');
+      AddPopupMenuItem('-', 'Separator1', nil, '', 0, '');
+      AddPopupMenuItem(GetDCLMessageString(msCopy), 'Copy', PCopy, 'Ctrl+C',
+        0, 'Copy');
+      if not FReadOnly then
+      begin
+        AddPopupMenuItem(GetDCLMessageString(msCut), 'Cut', PCut, 'Ctrl+X',
+          0, 'Cut');
+        AddPopupMenuItem(GetDCLMessageString(msPast), 'Paste', PPaste, 'Ctrl+V',
+          0, 'Paste');
+        AddPopupMenuItem('-', 'Separator2', nil, '', 0, '');
+        AddPopupMenuItem(GetDCLMessageString(msCancel), 'Undo', PUndo, 'Ctrl+U',
+          0, 'Undo');
+      end;
     end;
 
     If (KeyMarks.KeyField<>'')and FieldExists(KeyMarks.KeyField, FQuery) Then
