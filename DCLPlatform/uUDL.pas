@@ -16500,6 +16500,7 @@ var
   RecRepNum, v1: Word;
   RowRColor, RowBColor, RowGColor, ColRColor, ColBColor, ColGColor: Integer;
   DCLQuery: TDCLDialogQuery;
+  FillStrategy: TSheetFillStrategy;
 begin
 {$IFDEF MSWINDOWS}
   Ext:='xls';
@@ -16509,6 +16510,19 @@ begin
   begin
     FileName:=BinStor.GetTemplateFile(FindParam('TemplateName=', ParamStr),
       FindParam('Template=', ParamStr), 'xlsx');
+  end;
+
+  FillStrategy:=sfsInsert;
+  if FindParam('FillStrategy=', ParamStr)<>'' then
+  begin
+    if LowerCase(FindParam('FillStrategy=', ParamStr))='insert' then
+    begin
+      //FillStrategy:=sfsInsert;
+    end else
+    if LowerCase(FindParam('FillStrategy=', ParamStr))='replace' then
+    begin
+      FillStrategy:=sfsReplace;
+    end;
   end;
 
   FileName:=FindParam('Template=', ParamStr);
@@ -16606,9 +16620,15 @@ begin
       end;
 
       RecRepNum:=0;
+      case FillStrategy of
+        sfsInsert:RecRepNum:=0;
+        sfsReplace:RecRepNum:=1;
+      end;
       While Not DCLQuery.Eof do
       begin
-        Excel.Sheets[1].Range['DATA'].Rows.Insert(-4121, 1);
+        if FillStrategy=sfsInsert then
+          Excel.Sheets[1].Range['DATA'].Rows.Insert(-4121, 1);
+
         For v1:=0 to DCLQuery.FieldCount-1 do
         begin
           Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1]:=
@@ -16623,6 +16643,8 @@ begin
               Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].Interior.Color:=
                 RGB(ColRColor, ColGColor, ColBColor);
         end;
+        if FillStrategy=sfsReplace then
+          inc(RecRepNum);
         DCLQuery.Next;
       end;
       DCLQuery.Close;

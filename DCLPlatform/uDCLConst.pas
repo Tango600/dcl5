@@ -39,7 +39,7 @@ DefaultLibraryLocation='libfbclient.so';
 {$IFDEF SQLdb}
   DBEngineType='SQLdb (Universal)';
 {$ENDIF}
-  Ver='10.2.13.3';
+  Ver='10.2.13.4';
   VersionS='$VersionSignature$'+Ver+'$';
 
   CompotableVersion='9.1.129.309';
@@ -373,6 +373,7 @@ Type
   TFastReportsScriptLanguage=(fslPascal, fslBasic, fslCppScript, fslJScript);
   TINIType=(itNone, itFormPos, itBookmarkMenu);
   TFieldFormat=(fftNone, fftDigit, fftDate, fftTime, fftDateTime, fftTrim, fftFloat);
+  TSheetFillStrategy=(sfsInsert, sfsReplace);
 
 const
   ReleaseStatus=rsBetta;
