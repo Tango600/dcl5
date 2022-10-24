@@ -7983,7 +7983,8 @@ begin
         ADOCommand.Open;
         {$ENDIF}
     Except
-      ShowErrorMessage( - 1110, 'SQL='+SQLCommand);
+      On ex: Exception do
+        ShowErrorMessage( - 1110, 'SQL='+SQLCommand+' / '+ex.Message);
     end;
     {$IFDEF TRANSACTIONDB}
     tmp_Transaction.Commit;
