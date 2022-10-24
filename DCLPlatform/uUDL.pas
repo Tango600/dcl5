@@ -16632,6 +16632,34 @@ begin
 
         For v1:=0 to DCLQuery.FieldCount-1 do
         begin
+          case DCLQuery.Fields[v1].DataType of
+          ftString, ftMemo, ftFmtMemo, ftWideString, ftFixedWideChar,
+            ftWideMemo:begin
+            Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:=AnsiChar('@');
+          end;
+          ftSmallint, ftInteger, ftWord, ftAutoInc, ftLargeint, ftVariant,
+            ftLongWord, ftShortint, ftBCD, ftByte:begin
+            Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:=AnsiChar('#');
+          end;
+          ftFloat, ftExtended, ftSingle:begin
+            Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:=AnsiChar('@');
+          end;
+          ftCurrency:begin
+            Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:=AnsiString('#,##0.00');
+          end;
+          ftDate:begin
+            Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:='ДД.ММ.ГГГГ';
+          end;
+          ftTime:begin
+            Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:='ЧЧ:мм:сс';
+          end;
+          ftDateTime, ftTimeStamp, ftOraTimeStamp:begin
+            Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:='ДД.ММ.ГГГГ ЧЧ:мм:сс';
+          end;
+          Else
+            Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:='';
+          end;
+
           Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1]:=
             Trim(DCLQuery.Fields[v1].AsString);
 
