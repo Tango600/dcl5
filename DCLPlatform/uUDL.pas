@@ -16645,7 +16645,7 @@ begin
             Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:=AnsiChar('@');
           end;
           ftCurrency:begin
-            Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:=AnsiString('#,##0.00');
+            Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:=AnsiString('# ##0.00');
           end;
           ftDate:begin
             Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:='ДД.ММ.ГГГГ';
