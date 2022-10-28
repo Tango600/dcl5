@@ -25,6 +25,7 @@ Procedure OOClosePreview(var Document: Variant);
 Procedure OOShowPreview(var Document: Variant);
 Procedure OOSetVisible(var Document: Variant; Const Value: Boolean);
 Function OOGetVisible(var Document: Variant): Boolean;
+Procedure SetFormulaByXY(var Sheet, Cell: Variant; Const Formula: String; row, col: Integer);
 Procedure InsertTextByXY(var Sheet, Cell: Variant; Const Text: String; row, col: Integer);
 Function GetTextByXY(var Sheet, Cell: Variant; Const row, col: Integer):String;
 Function FileNameToURL(FileName: String): Variant;
@@ -171,6 +172,12 @@ Begin
   Cell.setString(VarAsType(Text, varOleStr));
 End;
 
+Procedure SetFormulaByXY(var Sheet, Cell: Variant; Const Formula: String; row, col: Integer);
+Begin
+  Cell:=Sheet.getCellByPosition(col, row);
+  Cell.setFormula(Formula);
+End;
+
 Function GetTextByXY(var Sheet, Cell: Variant; Const row, col: Integer):String;
 begin
   Cell:=Sheet.getCellByPosition(col, row);
@@ -280,7 +287,7 @@ Const
 Begin
   Try
     MsWord:=CreateOleObject('Word.Application');
-    MsWord.Visible:=True;
+    MsWord.Visible:=False;
     WordRuning:=True;
   Except
     ShowErrorMessage(-6010, '');

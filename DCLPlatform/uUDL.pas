@@ -16461,6 +16461,7 @@ begin
         WordInsert(MsWord, BookmarckName, StV, FontStyleRec.Bold, FontStyleRec.italic,
           FontStyleRec.StrikeThrough, FontStyleRec.Undeline, FontSize, FontStyleRec.Center);
       end;
+      MsWord.Visible:=True;
 
       If Save Then
       begin
