@@ -14746,6 +14746,11 @@ var
     UpperPostfix:='';
     CondStr:='';
 
+    If NotWhere then
+    begin
+      Prefix:='!=';
+    end;
+
     If Upper Then
     begin
       Case GetFieldDataType(FilterField) of
@@ -14753,10 +14758,6 @@ var
       begin
         UpperPrefix:=GPT.UpperString;
         UpperPostfix:=GPT.UpperStringEnd;
-        If NotWhere then
-        begin
-          Prefix:='!=';
-        end;
 
         BetweenFormat;
       end;
