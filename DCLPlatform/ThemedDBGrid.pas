@@ -98,6 +98,7 @@ type
     procedure TitleClick(Column: TColumn); override;
     procedure ColWidthsChanged; override;
     function AcquireFocus: Boolean;
+    procedure KeyDown(var Key: Word; Shift: TShiftState); override;
 
     function DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint): Boolean; override;
     function DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint): Boolean; override;
@@ -469,6 +470,13 @@ begin
   end
   else
     inherited DrawCell(ACol, ARow, ARect, AState);
+end;
+
+procedure TDBGrid.KeyDown(var Key: Word; Shift: TShiftState);
+begin
+  if (ssCtrl in Shift) and (Key=VK_DELETE) then Exit;
+
+  inherited;
 end;
 
 procedure TDBGrid.MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
