@@ -2919,7 +2919,7 @@ begin
   if (gdFixed in AState) and (ACol < 0) then
   begin
     DrawCellBackground(ARect, FixedColor, AState, ACol, ARow);
-    if Assigned(DataLink) and DataLink.Active  then
+    if Assigned(DataLink) and DataLink.Active then
     begin
       MultiSelected := False;
       if ARow >= 0 then
