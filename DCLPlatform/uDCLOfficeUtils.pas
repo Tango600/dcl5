@@ -25,7 +25,7 @@ Procedure OOClosePreview(var Document: Variant);
 Procedure OOShowPreview(var Document: Variant);
 Procedure OOSetVisible(var Document: Variant; Const Value: Boolean);
 Function OOGetVisible(var Document: Variant): Boolean;
-Procedure SetFormulaByXY(var Sheet, Cell: Variant; Const Formula: String; row, col: Integer);
+Procedure SetFormulaByXY(var Loc, NF, Sheet, Cell: Variant; Const Formula: String; row, col: Integer);
 Procedure InsertTextByXY(var Sheet, Cell: Variant; Const Text: String; row, col: Integer);
 Function GetTextByXY(var Sheet, Cell: Variant; Const row, col: Integer):String;
 Function FileNameToURL(FileName: String): Variant;
@@ -172,10 +172,16 @@ Begin
   Cell.setString(VarAsType(Text, varOleStr));
 End;
 
-Procedure SetFormulaByXY(var Sheet, Cell: Variant; Const Formula: String; row, col: Integer);
+Procedure SetFormulaByXY(var Loc, NF, Sheet, Cell: Variant; Const Formula: String; row, col: Integer);
+var
+  NF_id : Integer;
 Begin
+  NF_id:=NF.QueryKey(Formula, Loc, False);
+  if NF_id=-1 then
+    NF_id:=NF.AddNew(Formula, Loc);
+
   Cell:=Sheet.getCellByPosition(col, row);
-  Cell.setFormula(Formula);
+  Cell.NumberFormat:=NF_id;
 End;
 
 Function GetTextByXY(var Sheet, Cell: Variant; Const row, col: Integer):String;

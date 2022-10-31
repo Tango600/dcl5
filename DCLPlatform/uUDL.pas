@@ -923,7 +923,7 @@ Type
     BinStor: TDCLBinStore;
     FDCLLogOn: TDCLLogOn;
     FDCLGrid: TDCLGrid;
-    OO, Sheets, Sheet, Cell, Range, Desktop, Document, VariantArray: Variant;
+    OO, NF, Loc, Sheets, Sheet, Cell, Range, Desktop, Document, VariantArray: Variant;
 {$IFDEF MSWINDOWS}
     MsWord, Excel, WBk: OleVariant;
 {$ENDIF}
@@ -16196,6 +16196,9 @@ begin
         Exit;
       end;
 
+      NF:=Document.GetNumberFormats;
+      Loc:=OO.Bridge_GetStruct('com.sun.star.lang.Locale');
+
       SQLStr:=FindParam('SQL=', ParamStr);
       If (SQLStr='')and Assigned(FDCLGrid) Then
         SQLStr:=FDCLGrid.Query.SQL.Text;
@@ -16252,6 +16255,35 @@ begin
           SQLStr:=TrimRight(DCLQuery.Fields[v1].AsString);
           InsertTextByXY(Sheet, Cell, BaseToInterface(SQLStr), RecRepNum+StartRow-1,
             v1+1+StartCol-1);
+
+          case DCLQuery.Fields[v1].DataType of
+          ftString, ftMemo, ftFmtMemo, ftWideString, ftFixedWideChar,
+            ftWideMemo:begin
+            SetFormulaByXY(Loc, NF, Sheet, Cell, '@', RecRepNum+StartRow-1, v1+1+StartCol-1);
+          end;
+          ftSmallint, ftInteger, ftWord, ftAutoInc, ftLargeint, ftVariant,
+            ftLongWord, ftShortint, ftBCD, ftByte:begin
+            SetFormulaByXY(Loc, NF, Sheet, Cell, '# ##0', RecRepNum+StartRow-1, v1+1+StartCol-1);
+          end;
+          ftFloat, ftExtended, ftSingle:begin
+            SetFormulaByXY(Loc, NF, Sheet, Cell, '@', RecRepNum+StartRow-1, v1+1+StartCol-1);
+          end;
+          ftCurrency:begin
+            SetFormulaByXY(Loc, NF, Sheet, Cell, '# ##0,00', RecRepNum+StartRow-1, v1+1+StartCol-1);
+          end;
+          ftDate:begin
+            SetFormulaByXY(Loc, NF, Sheet, Cell, 'DD.MM.YY', RecRepNum+StartRow-1, v1+1+StartCol-1);
+          end;
+          ftTime:begin
+            SetFormulaByXY(Loc, NF, Sheet, Cell, 'HH:MM:SS', RecRepNum+StartRow-1, v1+1+StartCol-1);
+          end;
+          ftDateTime, ftTimeStamp, ftOraTimeStamp:begin
+            SetFormulaByXY(Loc, NF, Sheet, Cell, 'DD.MM.YYYY HH:MM:SS', RecRepNum+StartRow-1, v1+1+StartCol-1);
+          end;
+          Else
+            SetFormulaByXY(Loc, NF, Sheet, Cell, '@', RecRepNum+StartRow-1, v1+1+StartCol-1);
+          end;
+
           If EnableRowChColor Then
             If RecRepNum Mod 2=0 Then
               Cell.cellBackColor:=(RowRColor or(RowGColor Shl 8)or(RowBColor Shl 16));
