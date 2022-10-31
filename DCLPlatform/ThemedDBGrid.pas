@@ -443,6 +443,30 @@ begin
       end;
     end;
   end
+  else if (ARow>0) and (ACol>0) and (HighlightCell(ACol, ARow, '', AState) and DefaultDrawing) then
+  begin
+    lCaptionRect := ARect;
+    lStr := Columns[ACol - ColumnOffset(Options)].Field.DisplayText;
+    if HighlightCell(ACol, ARow, '', AState) and DefaultDrawing then
+      DrawCellHighlight(ARect, AState, ACol, ARow);
+
+    Canvas.Brush.Style := bsClear;
+    Canvas.Font.Assign(Columns.Items[ACol - ColumnOffset(Options)].Title.Font);
+    TextY := lCaptionRect.Top + CentreV(lCaptionRect, Canvas.TextHeight(lStr));
+    case Columns.Items[ACol - ColumnOffset(Options)].Alignment of
+      taRightJustify:
+        TextX := lCaptionRect.Right - 2 - Canvas.TextWidth(lStr);
+      taCenter:
+        TextX := lCaptionRect.Left + CentreH(lCaptionRect, Canvas.TextWidth(lStr));
+    else
+      TextX := lCaptionRect.Left + 2;
+    end;
+
+    Canvas.Font.Color:=clBtnText;
+    Canvas.TextRect(lCaptionRect, TextX, TextY, lStr);
+    Canvas.Brush.Color:=clBtnShadow;
+    Canvas.FrameRect(lCaptionRect);
+  end
   else
     inherited DrawCell(ACol, ARow, ARect, AState);
 end;
