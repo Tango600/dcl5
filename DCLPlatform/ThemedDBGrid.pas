@@ -99,7 +99,6 @@ type
     procedure ColWidthsChanged; override;
     function AcquireFocus: Boolean;
     procedure KeyDown(var Key: Word; Shift: TShiftState); override;
-    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
 
     function DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint): Boolean; override;
     function DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint): Boolean; override;
@@ -126,49 +125,6 @@ type
   end;
 
 { TDBGrid }
-
-procedure TDBGrid.Notification(AComponent: TComponent;
-  Operation: TOperation);
-var
-  I: Integer;
-  NeedLayout: Boolean;
-begin
-  if (Operation = opRemove) then
-  begin
-    if (AComponent is TPopupMenu) then  // Tango
-    begin
-      If Assigned(Columns) then
-        If Columns.Count>0 then
-          for I := 0 to Columns.Count-1 do
-            if Columns[I].PopupMenu = AComponent then
-              Columns[I].PopupMenu := nil;
-    end
-    else if (DataLink <> nil) then
-      if (AComponent = DataSource)  then
-        DataSource := nil
-      else if (AComponent is TField) then
-      begin
-        NeedLayout := False;
-        BeginLayout;
-        try
-          for I := 0 to Columns.Count-1 do
-            with Columns[I] do
-              if Field = AComponent then
-              begin
-                Field := nil;
-                NeedLayout := True;
-              end;
-        finally
-          if NeedLayout and Assigned(Datalink.Dataset)
-            and not (csDestroying in Datalink.DataSet.ComponentState)
-            and not Datalink.Dataset.ControlsDisabled then
-            EndLayout
-          else
-            DeferLayout;
-        end;
-      end;
-  end;
-end;
 
 function TDBGrid.AcquireFocus: Boolean;
 begin
