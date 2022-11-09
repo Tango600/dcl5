@@ -8,7 +8,6 @@ __history
 *.exe
 *.dll
 bin/*
-/DCLPlatform/DCLRun.dproj
 /DCLPlatform/DCLRun.dsk
 /DCLPlatform/lib/
 /DCLPlatform/*.dbg
