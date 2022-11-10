@@ -128,11 +128,12 @@ TDCLQueryStore=record
   QuryType:TQueryType;
 end;
 
-TDBFilter=record
+TDBFilter=class
   FilterNum, Between, WaitForKey: Integer;
   Partial, NotLike, CaseC, NotFilter: Boolean;
   FilterName, FilterString, Field, KeyField, ListField: String;
   Lookup:TDBLookupComboBox;
+  Combo:TComboBox;
   Edit:TEdit;
   FilterType:TFilterType;
   FilterQuery:TDCLDialogQuery;
@@ -236,6 +237,10 @@ public
     aKeyVar, aValueVar:String);
 end;
 
+TComboFilterItem=class
+  Key, Value:String;
+end;
+
 TStrArray=Array of String;
 
 procedure ResetButtonParams(var ButtonParams: RButtonParams);
@@ -245,7 +250,6 @@ procedure ResetFieldParams(var Field: RField);
 procedure ResetChooseValue(var Val:TReturnFormValue);
 procedure ResetDCLField(var F:TDCLDataFields);
 procedure RVirtualScriptsClear(var ScrStruct:RVirtualScript);
-
 
 var
   GPT: TGPT;

@@ -402,6 +402,7 @@ Type
     procedure FieldsManege(Sender: TObject);
 
     procedure ExecFilter(Sender: TObject);
+    procedure ExecComboFilter(Sender: TObject);
     procedure OnContextFilter(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure CalendarOnChange(Sender: TObject);
     procedure OnNotCheckClick(Sender: TObject);
@@ -4071,6 +4072,7 @@ begin
 
       If PosEx('DBFilter=', ScrStr)=1 Then
       begin
+        FFilter:=TDBFilter.Create;
         TranslateVal(ScrStr, True);
         FFilter.SQL:=FindParam('SQL=', ScrStr);
         If FFilter.SQL='' Then
@@ -4123,8 +4125,41 @@ begin
         end;
       end;
 
+      If PosEx('ComboFilter=', ScrStr)=1 Then
+      begin
+        FFilter:=TDBFilter.Create;
+        TranslateVal(ScrStr, True);
+        ResetFilterParams(FFilter);
+        FFilter.FilterType:=ftComboFilter;
+
+        FFilter.Caption:=FindParam('Label=', ScrStr);
+        FFilter.Field:=FindParam('FilterField=', ScrStr);
+        FFilter.ListField:=FindParam('List=', ScrStr);
+
+        v3:=FilterWidth;
+        If FindParam('Width=', ScrStr)<>'' Then
+          v3:=StrToIntEx(Trim(FindParam('Width=', ScrStr)));
+        FFilter.Width:=v3;
+
+        If FindParam('VariableName=', ScrStr)<>'' Then
+        begin
+          FFilter.VarName:=FindParam('VariableName=', ScrStr);
+          FDCLLogOn.Variables.NewVariableWithTest(FFilter.VarName);
+        end;
+
+        tmpSQL:=FindParam('KeyValue=', ScrStr);
+        If tmpSQL<>'' Then
+        begin
+          RePlaseVariables(tmpSQL);
+          FFilter.KeyValue:=tmpSQL;
+        end;
+
+        FGrids[GridIndex].AddDBFilter(FFilter);
+      end;
+
       If PosEx('ContextFilter=', ScrStr)=1 Then
       begin
+        FFilter:=TDBFilter.Create;
         TranslateVal(ScrStr, True);
         ResetFilterParams(FFilter);
         FFilter.FilterType:=ftContextFilter;
@@ -11612,18 +11647,15 @@ end;
 
 procedure TDCLGrid.AddDBFilter(Filter: TDBFilter);
 var
-  l: Integer;
+  l, i: Integer;
   Key: Word;
+  S: String;
+  Item: TComboFilterItem;
 begin
   l:=Length(DBFilters);
   SetLength(DBFilters, l+1);
 
-  DBFilters[l].FilterNum:=l;
-  DBFilters[l].FilterName:='DBFilter'+IntToStr(l);
-  DBFilters[l].Field:=Filter.Field;
-  DBFilters[l].VarName:=Filter.VarName;
-  DBFilters[l].MaxLength:=Filter.MaxLength;
-  DBFilters[l].FilterType:=Filter.FilterType;
+  DBFilters[l]:=Filter;
 
   AddToolPanel;
 
@@ -11694,16 +11726,67 @@ begin
     DBFilters[l].Lookup.OnClick:=ExecFilter;
 {$ENDIF}
   end;
+
+  If Filter.FilterType=ftComboFilter Then
+  begin
+    DBFilters[l].CaseC:=False;
+    DBFilters[l].NotLike:=True;
+    DBFilters[l].FilterString:='';
+
+    if Filter.ListField<>'' then
+    begin
+      DBFilters[l].Combo:=TComboBox.Create(ToolPanel);
+      DBFilters[l].Combo.Style:=TComboBoxStyle.csDropDownList;
+      DBFilters[l].Combo.Parent:=ToolPanel;
+      DBFilters[l].Combo.Top:=FilterTop;
+      DBFilters[l].Combo.Tag:=l;
+
+      for I:=1 to ParamsCount(Filter.ListField) do
+      begin
+        S:=SortParams(Filter.ListField, i);
+
+        Item:=TComboFilterItem.Create;
+        Item.Value:=Copy(S, Pos('/', S)+1, Length(S));
+        Item.Key:=Copy(S, 1, Pos('/', S)-1);
+
+        DBFilters[l].Combo.AddItem(Copy(S, Pos('/', S)+1, Length(S)), Item);
+      end;
+      DBFilters[l].Combo.ItemIndex:=0;
+
+      DBFilters[l].Combo.Left:=BeginStepLeft+ToolPanelElementLeft;
+      DBFilters[l].Combo.Name:='DBComboFilter'+IntToStr(l);
+
+      If DBFilters[l].VarName<>'' Then
+        FDCLLogOn.Variables.Variables[DBFilters[l].VarName]:=
+          TrimRight(DBFilters[l].FilterQuery.FieldByName(DBFilters[l].Lookup.KeyField).AsString);
+
+      DBFilters[l].Combo.Width:=Filter.Width;
+
+      if Filter.Field<>'' then
+      begin
+        DBFilters[l].NotCheck:=TCheckBox.Create(ToolPanel);
+        DBFilters[l].NotCheck.Parent:=ToolPanel;
+        DBFilters[l].NotCheck.Tag:=l;
+        DBFilters[l].NotCheck.Top:=FilterTop+EditHeight+LabelTopInterval;
+        DBFilters[l].NotCheck.Left:=BeginStepLeft+ToolPanelElementLeft;
+        DBFilters[l].NotCheck.Name:='NotCheck_'+IntToStr(l);
+        DBFilters[l].NotCheck.Width:=Filter.Width;
+        DBFilters[l].NotCheck.Caption:=GetDCLMessageString(msNotFilter);
+        DBFilters[l].NotCheck.OnClick:=OnNotCheckClick;
+      end;
+
+  {$IFDEF FPC}
+      DBFilters[l].Combo.OnSelect:=ExecComboFilter;
+  {$ELSE}
+      DBFilters[l].Combo.OnClick:=ExecComboFilter;
+  {$ENDIF}
+    end;
+  end;
+
   If Filter.FilterType=ftContextFilter Then
   begin
-    DBFilters[l].CaseC:=Filter.CaseC;
-    DBFilters[l].NotLike:=Filter.NotLike;
-    DBFilters[l].Partial:=Filter.Partial;
-
-    DBFilters[l].WaitForKey:=Filter.WaitForKey;
     DBFilters[l].Edit:=TEdit.Create(ToolPanel);
     DBFilters[l].Edit.Parent:=ToolPanel;
-    DBFilters[l].FilterName:=Filter.FilterName;
 
     If Filter.FilterName<>'' Then
       DBFilters[l].Edit.Name:=Filter.FilterName
@@ -11716,8 +11799,6 @@ begin
     DBFilters[l].Edit.Tag:=l;
     DBFilters[l].Edit.Width:=Filter.Width;
     DBFilters[l].Edit.OnKeyUp:=OnContextFilter;
-
-    DBFilters[l].Field:=Filter.Field;
 
     DBFilters[l].NotCheck:=TCheckBox.Create(ToolPanel);
     DBFilters[l].NotCheck.Parent:=ToolPanel;
@@ -11736,6 +11817,8 @@ begin
   ToolPanelElementLeft:=ToolPanelElementLeft+ToolLeftInterval+DBFilters[l].Lookup.Width;
   ftContextFilter:
   ToolPanelElementLeft:=ToolPanelElementLeft+ToolLeftInterval+DBFilters[l].Edit.Width;
+  ftComboFilter:
+  ToolPanelElementLeft:=ToolPanelElementLeft+ToolLeftInterval+DBFilters[l].Combo.Width;
   end;
 
   Case Filter.FilterType of
@@ -11757,6 +11840,21 @@ begin
       Except
         //
       end;
+    end;
+  end;
+  ftComboFilter:
+  begin
+    If Filter.KeyValue<>'' Then
+    begin
+      for I:=1 to DBFilters[l].Combo.Items.Count do
+      begin
+        if (DBFilters[l].Combo.Items.Objects[i-1] as TComboFilterItem).Key=Filter.KeyValue then
+        begin
+          DBFilters[l].Combo.ItemIndex:=i-1;
+          break;
+        end;
+      end;
+      ExecComboFilter(DBFilters[l].Combo);
     end;
   end;
   ftContextFilter:
@@ -13815,6 +13913,29 @@ begin
     FDCLLogOn.Variables.Variables[DBFilters[FilterIdx].VarName]:=TrimRight(ExeplStr);
 
     OpenQuery(QueryBuilder(0));
+  end;
+end;
+
+procedure TDCLGrid.ExecComboFilter(Sender: TObject);
+var
+  ExeplStr: String;
+  FilterIdx: Integer;
+  cbx: TComboBox;
+begin
+  FilterIdx:=(Sender as TComboBox).Tag;
+  If FilterIdx<> - 1 Then
+  begin
+    cbx:=Sender as TComboBox;
+
+    if cbx.ItemIndex<>-1 then
+    begin
+      ExeplStr:=(cbx.Items.Objects[cbx.ItemIndex] as TComboFilterItem).Key;
+      DBFilters[FilterIdx].FilterString:=ExeplStr;
+
+      FDCLLogOn.Variables.Variables[DBFilters[FilterIdx].VarName]:=TrimRight(ExeplStr);
+
+      OpenQuery(QueryBuilder(0));
+    end;
   end;
 end;
 

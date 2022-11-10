@@ -62,18 +62,23 @@ var
   tmpFieldName:string;
 Begin
   tmpFieldName:=NormalizeFieldName(FieldName);
-  Case Query.FieldByName(tmpFieldName).DataType Of
-  ftString, ftBCD, ftFloat, ftCurrency:
-  Begin
-    Result:=GPT.StringTypeChar
+  if Query.Active then
+  begin
+    Case Query.FieldByName(tmpFieldName).DataType Of
+    ftString, ftBCD, ftFloat, ftCurrency:
+    Begin
+      Result:=GPT.StringTypeChar
+    End;
+    ftSmallint, ftInteger, ftWord, ftBoolean, ftAutoInc, ftLargeint, ftBytes, ftVarBytes:
+    Begin
+      Result:='';
+    End
+    Else
+      Result:=GPT.StringTypeChar;
   End;
-  ftSmallint, ftInteger, ftWord, ftBoolean, ftAutoInc, ftLargeint, ftBytes, ftVarBytes:
-  Begin
-    Result:='';
-  End
-Else
-Result:=GPT.StringTypeChar;
-  End;
+  end
+  Else
+    Result:=GPT.StringTypeChar;
 End;
 
 Function GetSimplyFieldType(Const FieldName: String; Query: TDCLDialogQuery): TSimplyFieldType;
