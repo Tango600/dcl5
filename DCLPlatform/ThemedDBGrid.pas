@@ -424,7 +424,7 @@ begin
         begin
           PenRecall := TPenRecall.Create(Canvas.Pen);
           try
-            Canvas.Pen.Color := clGray;  // clWhite;
+            Canvas.Pen.Color := clGray;
             DrawArrow(Canvas, sdRight, Point(lCellRect.Left + 5, lCellRect.Top + 5), 5);
             Canvas.Pen.Color := $00404040;
             DrawArrow(Canvas, sdRight, Point(lCellRect.Left + 3, lCellRect.Top + 3), 5);
@@ -434,19 +434,30 @@ begin
         end
         else
         begin
-          if Canvas.CanvasOrientation = coRightToLeft then
-            Inc(ARect.Left);
-          Indicators := TPrivateCustomDBGrid(Self).FIndicators;  // get access to the private field
-          if Assigned(Indicators) then
-            Indicators.Draw(Canvas,
-              ARect.Left + ((ARect.Right - ARect.Left) - Indicators.Width) div 2,
-              ARect.Top + ((ARect.Bottom - ARect.Top) - Indicators.Height) div 2,
-              Indicator, dsTransparent, itImage, True);
+          if Indicator = 3 then
+          begin
+            PenRecall := TPenRecall.Create(Canvas.Pen);
+            try
+              Canvas.Brush.Color := clGray;
+              Canvas.Ellipse(lCellRect.Left, lCellRect.Top, lCellRect.Left + 10, lCellRect.Top + 10);
+            finally
+              PenRecall.Free;
+            end;
+          end
+          else
+          begin
+            if Canvas.CanvasOrientation = coRightToLeft then
+              Inc(ARect.Left);
+
+            Canvas.Brush.Color:=clWindow;
+            Canvas.Pen.Color:=clBlack;
+            Canvas.TextOut(lCellRect.Left + 5, lCellRect.Top + 2, 'I');
+          end;
         end;
       end;
     end;
   end
-  else if (ARow>0) and (ACol>0) and HighlightCell(ACol, ARow, '', AState) and DefaultDrawing then
+  else if (not RowIsMultiSelected) and (ARow>0) and (ACol>0) and HighlightCell(ACol, ARow, '', AState) and DefaultDrawing then
   begin
     // Selected cell
     lCaptionRect := ARect;
