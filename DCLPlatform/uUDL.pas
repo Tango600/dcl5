@@ -4968,6 +4968,7 @@ var
   LocalCommand: TDCLCommand;
   Sign:TSigns;
   tmpDCLForm:TDCLForm;
+  nextLine:Boolean;
 
   procedure GotoGoto(LabelName: String);
   var
@@ -5341,919 +5342,985 @@ begin
         GPT.CurrentRunningCmdString:=ScriptStrings;
 
         ScrStr:=FCommandDCL[ScriptStrings];
-        TranslateValContext(ScrStr);
 
-        If Not StopFlag Then
+        nextLine:=False;
+        If Pos('//', ScrStr)=1 Then
         begin
-          If (PosEx('About;', ScrStr)=1)or(PosEx('Version;', ScrStr)=1) Then
-          begin
-            FDCLLogOn.About(nil);
-          end;
+          nextLine:=True;
+        end;
 
-          If PosEx('Lock;', ScrStr)=1 Then
-          begin
-            FDCLLogOn.Lock;
-          end;
+        if not nextLine then
+        begin
+          TranslateValContext(ScrStr);
 
-          If PosEx('GetScreen=', ScrStr)=1 Then
+          If Not StopFlag Then
           begin
-            tmpStr1:=FindParam('Qlty=', ScrStr);
-            TmpStr:=FindParam('FileName=', ScrStr);
-            If TmpStr<>'' then
+            If (PosEx('About;', ScrStr)=1)or(PosEx('Version;', ScrStr)=1) Then
             begin
-              If tmpStr1<>'' then
-                ConvertToJPEG(GetScreen, StrToIntDef(tmpStr1, JPEGCompressionQuality)).SaveToFile(TmpStr)
-              Else
-                GetScreen.SaveToFile(TmpStr);
+              FDCLLogOn.About(nil);
             end;
-          end;
 
-          If PosEx('ExtractScript;', ScrStr)=1 Then
-          begin
-            If FDCLLogOn.AccessLevel>=ulReadOnly Then
+            If PosEx('Lock;', ScrStr)=1 Then
             begin
-              OpenDialog:=TOpenDialog.Create(nil);
-              OpenDialog.DefaultExt:=SignedScriptExt;
-              OpenDialog.Filter:='DCL script files|*'+SignedScriptExt;
-              If OpenDialog.Execute Then
-                ExtractScriptFile(OpenDialog.FileName);
-              FreeAndNil(OpenDialog);
+              FDCLLogOn.Lock;
             end;
-          end;
 
-          If PosEx('ExtractScript=', ScrStr)=1 Then
-          begin
-            If FDCLLogOn.AccessLevel>=ulReadOnly Then
+            If PosEx('GetScreen=', ScrStr)=1 Then
             begin
-              tmp1:=FindParam('FileName=', ScrStr);
-              ExtractScriptFile(tmp1);
-            end;
-          end;
-
-          If PosEx('OpenScript;', ScrStr)=1 Then
-          begin
-            If FDCLLogOn.AccessLevel>=ulReadOnly Then
-            begin
-              OpenDialog:=TOpenDialog.Create(nil);
-              OpenDialog.DefaultExt:=SignedScriptExt;
-              OpenDialog.Filter:='DCL script files|*'+SignedScriptExt;
-              If OpenDialog.Execute Then
-                RunSkriptFromFile(OpenDialog.FileName);
-              FreeAndNil(OpenDialog);
-            end;
-          end;
-
-          If PosEx('OpenScript=', ScrStr)=1 Then
-          begin
-            If FDCLLogOn.AccessLevel>=ulReadOnly Then
-            begin
-              tmp1:=FindParam('FileName=', ScrStr);
-              RunSkriptFromFile(tmp1);
-            end;
-          end;
-
-          If PosEx('SignScript;', ScrStr)=1 Then
-          begin
-            If FDCLLogOn.AccessLevel=ulDeveloper Then
-            begin
-              OpenDialog:=TOpenDialog.Create(nil);
-              OpenDialog.DefaultExt:=TextScriptFileExt;
-              OpenDialog.Filter:='DCL script text|*'+TextScriptFileExt;
-              If OpenDialog.Execute Then
-                FDCLLogOn.SignScriptFile(OpenDialog.FileName, GPT.DCLUserName);
-              FreeAndNil(OpenDialog);
-            end;
-          end;
-
-          If PosEx('SignScript=', ScrStr)=1 Then
-          begin
-            If FDCLLogOn.AccessLevel=ulDeveloper Then
-            begin
-              tmp1:=FindParam('FileName=', ScrStr);
-              FDCLLogOn.SignScriptFile(tmp1, GPT.DCLUserName);
-            end;
-          end;
-
-          If PosEx('ReSignScript;', ScrStr)=1 Then
-          begin
-            If FDCLLogOn.AccessLevel=ulDeveloper Then
-            begin
-              OpenDialog:=TOpenDialog.Create(nil);
-              OpenDialog.DefaultExt:=SignedScriptExt;
-              OpenDialog.Filter:='DCL script files|*'+SignedScriptExt;
-              If OpenDialog.Execute Then
-                FDCLLogOn.ReSignScriptFile(OpenDialog.FileName);
-              FreeAndNil(OpenDialog);
-            end;
-          end;
-
-          If PosEx('ReSignScript=', ScrStr)=1 Then
-          begin
-            If FDCLLogOn.AccessLevel=ulDeveloper Then
-            begin
-              tmp1:=FindParam('FileName=', ScrStr);
-              FDCLLogOn.ReSignScriptFile(tmp1);
-            end;
-          end;
-
-          If PosEx('ExecCommand=', ScrStr)=1 Then
-          begin
-            tmp1:=FindParam('ExecCommand=', ScrStr);
-            LocalCommand:=TDCLCommand.Create(FDCLForm, FDCLLogOn);
-            LocalCommand.ExecCommand(tmp1, FDCLForm);
-            FreeAndNil(LocalCommand);
-          end;
-
-          If PosEx('SeparateChar=', ScrStr)=1 Then
-          begin
-            GPT.StringTypeChar:=FindParam('SeparateChar=', ScrStr);
-          end;
-
-          If PosEx('SetValueSeparator=', ScrStr)=1 Then
-          begin
-            GPT.GetValueSeparator:=FindParam('SetValueSeparator=', ScrStr);
-          end;
-
-          If PosEx('Export=', ScrStr)=1 Then
-          begin
-            TmpStr:=FindParam('Spool=', ScrStr);
-            If TmpStr='' Then
-              TmpStr:='0';
-            If TmpStr='1' Then
-            begin
-              ExportData(stSpool, ScrStr);
-              Spool.SaveToFile(SpoolFileName);
-            end;
-            If TmpStr='0' Then
-              ExportData(stText, ScrStr);
-          end;
-
-          If PosEx('DialogByName=', ScrStr)=1 Then
-          begin
-            TmpStr:=FindParam('DialogByName=', ScrStr);
-            tmpStr1:=Copy(TmpStr, 1, Pos('.', TmpStr)-1);
-            tmpStr2:=Copy(TmpStr, Pos('.', TmpStr)+1, Length(TmpStr));
-            Enything:=False;
-            v2:= - 1;
-            For v1:=1 to FDCLLogOn.FormsCount do
-            begin
-              If CompareString(FDCLLogOn.Forms[v1-1].DialogName, tmpStr1) Then
+              tmpStr1:=FindParam('Qlty=', ScrStr);
+              TmpStr:=FindParam('FileName=', ScrStr);
+              If TmpStr<>'' then
               begin
-                Enything:=True;
-                v2:=v1;
-                break;
-              end;
-            end;
-            If Enything Then
-            begin
-              If CompareString(tmpStr2, 'hide') Then
-                FDCLLogOn.Forms[v2].FForm.Hide;
-              If CompareString(tmpStr2, 'show') Then
-                FDCLLogOn.Forms[v2].FForm.Show;
-              If CompareString(tmpStr2, 'close') Then
-              Begin
-                If Assigned(FDCLLogOn.Forms[v2]) then
-                Begin
-                  tmpDCLForm:=FDCLLogOn.Forms[v2].GetParentForm;
-                  FDCLLogOn.Forms[v2].Free;
-                  FDCLForm:=tmpDCLForm;
-                End;
-              End;
-              If CompareString(tmpStr2, 'refresh') Then
-              begin
-                For v3:=1 to FDCLLogOn.Forms[v2].GetTablesCount do
-                  FDCLLogOn.Forms[v2].Tables[v3-1].ReFreshQuery;
-              end;
-            end;
-          end;
-
-          If PosEx('NoCloseable=', ScrStr)=1 Then
-          begin
-            TmpStr:=FindParam('NoCloseable=', ScrStr);
-            If Assigned(FDCLForm) Then
-            Begin
-              FDCLForm.NoCloseable:=Trim(TmpStr)='1';
-            End;
-          end;
-
-          If PosEx('Navigator=', ScrStr)=1 Then
-          begin
-            If FindParam('Navigator=', ScrStr)='0' Then
-            begin
-              If Assigned(FDCLForm.Tables[ - 1].Navig) Then
-              begin
-                FDCLForm.Tables[ - 1].Navig.Hide;
-              end;
-            end
-            Else
-            begin
-              If FindParam('buttons=', ScrStr)<>'' Then
-              begin
-                TmpStr:=FindParam('buttons=', ScrStr);
-                For v1:=1 to 10 do
-                  NavigVisiButtonsVar[v1]:=[];
-                If PosEx('first', TmpStr)<>0 Then
-                  NavigVisiButtonsVar[1]:=[nbFirst];
-                If PosEx('prior', TmpStr)<>0 Then
-                  NavigVisiButtonsVar[2]:=[nbPrior];
-                If PosEx('next', TmpStr)<>0 Then
-                  NavigVisiButtonsVar[3]:=[nbNext];
-                If PosEx('last', TmpStr)<>0 Then
-                  NavigVisiButtonsVar[4]:=[nbLast];
-                If PosEx('insert', TmpStr)<>0 Then
-                  NavigVisiButtonsVar[5]:=[nbInsert];
-                If PosEx('delete', TmpStr)<>0 Then
-                  NavigVisiButtonsVar[6]:=[nbDelete];
-                If PosEx('edit', TmpStr)<>0 Then
-                  NavigVisiButtonsVar[7]:=[nbEdit];
-                If PosEx('post', TmpStr)<>0 Then
-                  NavigVisiButtonsVar[8]:=[nbPost];
-                If PosEx('cancel', TmpStr)<>0 Then
-                  NavigVisiButtonsVar[9]:=[nbCancel];
-                If PosEx('refresh', TmpStr)<>0 Then
-                  NavigVisiButtonsVar[10]:=[nbRefresh];
-                FDCLForm.Tables[ - 1].Navig.VisibleButtons:=NavigVisiButtonsVar[1]+
-                  NavigVisiButtonsVar[2]+NavigVisiButtonsVar[3]+NavigVisiButtonsVar[4]+
-                  NavigVisiButtonsVar[5]+NavigVisiButtonsVar[6]+NavigVisiButtonsVar[7]+
-                  NavigVisiButtonsVar[8]+NavigVisiButtonsVar[9]+NavigVisiButtonsVar[10];
-              end;
-              If FindParam('Flat=', ScrStr)<>'' Then
-              begin
-                TmpStr:=FindParam('Flat=', ScrStr);
-                If TmpStr='1' Then
-                  FDCLForm.Tables[ - 1].Navig.Flat:=True;
-              end;
-            end;
-          end;
-
-{$IFDEF DELPHI}
-          If PosEx('ParamCheck=', ScrStr)=1 Then
-          begin
-            TmpStr:=FindParam('ParamCheck=', ScrStr);
-            If TmpStr='1' Then
-              FDCLForm.Tables[ - 1].Query.ParamCheck:=True;
-            If TmpStr='0' Then
-              FDCLForm.Tables[ - 1].Query.ParamCheck:=False;
-          end;
-{$ENDIF}
-          If PosEx('DisableParams=', ScrStr)=1 Then
-          begin
-            If FindParam('DisableParams=', ScrStr)='1' Then
-              TransParams:=True;
-
-            If FindParam('DisableParams=', ScrStr)='0' Then
-              TransParams:=False;
-          end;
-
-{$IFDEF DELPHI}
-          If PosEx('FieldsList=', ScrStr)=1 Then
-          begin
-            tmp1:=FindParam('FieldsList=', ScrStr);
-            If Not IsFullPAth(tmp1) Then
-              tmp1:=IncludeTrailingPathDelimiter(AppConfigDir)+tmp1;
-
-            FDCLForm.Tables[ - 1].Query.FieldList.SaveToFile(tmp1);
-          end;
-{$ENDIF}
-          If PosEx('SetContextFilterText=', ScrStr)=1 Then
-          begin
-            TmpStr:=FindParam('ComponentName=', ScrStr);
-            If TmpStr='' Then
-            begin
-              TmpStr:=FindParam('ComponentNumber=', ScrStr);
-              If TmpStr='' Then
-                TmpStr:='ContextFilter_1'
-              Else
-                TmpStr:='ContextFilter_'+TmpStr;
-            end;
-            If Assigned(FDCLForm) Then
-              If Assigned(FDCLForm.Tables[ - 1].ToolPanel) Then
-                If Assigned(FDCLForm.Tables[ - 1].ToolPanel.FindComponent(TmpStr)) Then
-                begin
-                  tmpStr1:=FindParam('SetContextFilterText=', ScrStr);
-                  RePlaseVariabless(tmpStr1);
-                  (FDCLForm.Tables[ - 1].ToolPanel.FindComponent(TmpStr) as TEdit).Text:=tmpStr1;
-                end;
-          end;
-
-          If PosEx('ClearAllContextFilters;', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) Then
-              If Length(FDCLForm.Tables[ - 1].DBFilters)>0 Then
-                For v1:=1 to Length(FDCLForm.Tables[ - 1].DBFilters) do
-                begin
-                  If FDCLForm.Tables[ - 1].DBFilters[v1-1].FilterType=ftContextFilter Then
-                    If Assigned(FDCLForm.Tables[ - 1].DBFilters[v1-1].Edit) Then
-                      FDCLForm.Tables[ - 1].DBFilters[v1-1].Edit.Clear;
-                end;
-          end;
-
-          If PosEx('DownloadHTTP=', ScrStr)=1 Then
-          begin
-            TmpStr:=FindParam('DownloadHTTP=', ScrStr);
-            tmpStr1:=FindParam('Path=', ScrStr);
-            tmpStr2:=FindParam('FileName=', ScrStr);
-            Downloader:=TDownloader.Create;
-
-            If tmpStr1='' Then
-            begin
-              If tmpStr2='' Then
-                tmp1:=ExtractFileName(TmpStr)
-              Else
-                tmp1:=tmpStr2;
-            end
-            Else
-              TmpStr:=tmpStr1+ExtractFileName(TmpStr);
-
-            If FindParam('Progress=', ScrStr)='1' Then
-              DownloadProgress:=True
-            Else
-              DownloadProgress:=False;
-
-            If FindParam('Cancel=', ScrStr)='1' Then
-              DownLoadCancel:=True
-            Else
-              DownLoadCancel:=False;
-
-            DownLoadProcess:=True;
-            tmpStr2:=Trim(FindParam('Reset=', ScrStr));
-            If tmpStr2='1' Then
-              Downloader.DownLoadHTTP(TmpStr, tmp1, True, DownloadProgress, DownLoadCancel)
-            Else
-              Downloader.DownLoadHTTP(TmpStr, tmp1, False, DownloadProgress, DownLoadCancel);
-            DownLoadProcess:=False;
-
-            Sleep(100);
-            Downloader.Free;
-          end;
-
-          If PosEx('Execute=', ScrStr)=1 Then
-          begin
-            If GetRaightsByContext(InContext)>ulReadOnly Then
-            Begin
-              TmpStr:=FindParam('execute=', ScrStr);
-
-              tmpStr1:=FindParam('WorkDir=', ScrStr);
-              If tmpStr1='' Then
-                tmpStr1:=Path;
-
-              If Not DirectoryExists(tmpStr1) Then
-                SetCurrentDir(Path)
-              Else
-                SetCurrentDir(tmpStr1);
-
-              try
-                If FindParam('Wait=', ScrStr)='1' Then
-                Begin
-                  If Not ExecAndWait(TmpStr, SW_SHOWNORMAL, True) Then
-                    ShowErrorMessage( - 8000, tmpStr1+TmpStr);
-                End
-                Else If FindParam('ShellExec=', ScrStr)='1' Then
-                  Exec(TmpStr, tmpStr1)
+                If tmpStr1<>'' then
+                  ConvertToJPEG(GetScreen, StrToIntDef(tmpStr1, JPEGCompressionQuality)).SaveToFile(TmpStr)
                 Else
-                  ExecApp(TmpStr);
-              Except
-                ShowErrorMessage( - 8000, tmpStr1+TmpStr);
+                  GetScreen.SaveToFile(TmpStr);
               end;
-            End
-            Else
-              ShowErrorMessage(0, GetDCLMessageString(msNotAllowExecuteApps));
-          end;
+            end;
 
-          If PosEx('Sleep=', ScrStr)=1 Then
-          begin
-            TmpStr:=FindParam('Sleep=', ScrStr);
-            Sleep(StrToIntEx(TmpStr));
-          end;
-
-          If PosEx('Beep;', ScrStr)=1 Then
-          begin
-{$IFDEF MSWINDOWS}
-            Windows.Beep(500, 250)
-{$ELSE}
-            Beep;
-{$ENDIF};
-          end;
-
-          If PosEx('Beep=', ScrStr)=1 Then
-          begin
-            TmpStr:=FindParam('Beep=', ScrStr);
-            v1:=Pos(',', TmpStr);
-            tmpStr1:=Copy(TmpStr, 1, v1-1);
-            Delete(TmpStr, 1, v1);
-            tmpStr2:=TmpStr;
-{$IFDEF MSWINDOWS}
-            Windows.Beep(StrToIntEx(tmpStr1), StrToIntEx(tmpStr2));
-{$ELSE}
-            Beep;
-{$ENDIF};
-          end;
-
-          If PosEx('ReOpen;', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) Then
-              FDCLForm.RefreshForm;
-          end;
-
-          If PosEx('ReConnect;', ScrStr)=1 Then
-          begin
-            FDCLLogOn.ReconnectDB;
-          end;
-
-          If PosEx('GotoKey=', ScrStr)=1 Then
-          begin
-            TmpStr:=FindParam('KeyField=', ScrStr);
-            tmpStr1:=FindParam('GotoKey=', ScrStr);
-            If Assigned(FDCLForm.CurrentQuery) Then
-              FDCLForm.CurrentQuery.Locate(tmpStr1, TmpStr, [loCaseInsensitive]);
-          end;
-
-          If PosEx('Goto=', ScrStr)=1 Then
-          begin
-            TmpStr:=FindParam('Goto=', ScrStr);
-            SetRetPoint;
-            GotoGoto(TmpStr);
-          end;
-
-          If PosEx('Return;', ScrStr)=1 Then
-          begin
-            GetRetPoint;
-          end;
-
-          If PosEx('Break;', ScrStr)=1 Then
-          begin
-            ScriptStrings:=FCommandDCL.Count;
-          end;
-
-          If PosEx('ExecQuery=', ScrStr)=1 Then
-          begin
-            TmpStr:=FindParam('ExecQuery=', ScrStr);
-            TranslateValContext(TmpStr);
-            ExecSQLCommand(TmpStr, InContext);
-          end;
-
-          If PosEx('Query=', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) Then
+            If PosEx('ExtractScript;', ScrStr)=1 Then
             begin
-              FDCLLogOn.SetDBName(DCLQuery);
-              TmpStr:=FindParam('Query=', ScrStr);
-              FDCLForm.FGrids[FDCLForm.CurrentGridIndex].SetSQLToStore(TmpStr, qtMain, ulUndefined);
-              If Not IsReturningQuery(TmpStr) Then
+              If FDCLLogOn.AccessLevel>=ulReadOnly Then
               begin
-                DCLQuery.Close;
-                DCLQuery.SQL.Text:=TmpStr;
-                If GetRaightsByContext(InContext)>ulWrite Then
-                  DCLQuery.ExecSQL;
+                OpenDialog:=TOpenDialog.Create(nil);
+                OpenDialog.DefaultExt:=SignedScriptExt;
+                OpenDialog.Filter:='DCL script files|*'+SignedScriptExt;
+                If OpenDialog.Execute Then
+                  ExtractScriptFile(OpenDialog.FileName);
+                FreeAndNil(OpenDialog);
+              end;
+            end;
+
+            If PosEx('ExtractScript=', ScrStr)=1 Then
+            begin
+              If FDCLLogOn.AccessLevel>=ulReadOnly Then
+              begin
+                tmp1:=FindParam('FileName=', ScrStr);
+                ExtractScriptFile(tmp1);
+              end;
+            end;
+
+            If PosEx('OpenScript;', ScrStr)=1 Then
+            begin
+              If FDCLLogOn.AccessLevel>=ulReadOnly Then
+              begin
+                OpenDialog:=TOpenDialog.Create(nil);
+                OpenDialog.DefaultExt:=SignedScriptExt;
+                OpenDialog.Filter:='DCL script files|*'+SignedScriptExt;
+                If OpenDialog.Execute Then
+                  RunSkriptFromFile(OpenDialog.FileName);
+                FreeAndNil(OpenDialog);
+              end;
+            end;
+
+            If PosEx('OpenScript=', ScrStr)=1 Then
+            begin
+              If FDCLLogOn.AccessLevel>=ulReadOnly Then
+              begin
+                tmp1:=FindParam('FileName=', ScrStr);
+                RunSkriptFromFile(tmp1);
+              end;
+            end;
+
+            If PosEx('SignScript;', ScrStr)=1 Then
+            begin
+              If FDCLLogOn.AccessLevel=ulDeveloper Then
+              begin
+                OpenDialog:=TOpenDialog.Create(nil);
+                OpenDialog.DefaultExt:=TextScriptFileExt;
+                OpenDialog.Filter:='DCL script text|*'+TextScriptFileExt;
+                If OpenDialog.Execute Then
+                  FDCLLogOn.SignScriptFile(OpenDialog.FileName, GPT.DCLUserName);
+                FreeAndNil(OpenDialog);
+              end;
+            end;
+
+            If PosEx('SignScript=', ScrStr)=1 Then
+            begin
+              If FDCLLogOn.AccessLevel=ulDeveloper Then
+              begin
+                tmp1:=FindParam('FileName=', ScrStr);
+                FDCLLogOn.SignScriptFile(tmp1, GPT.DCLUserName);
+              end;
+            end;
+
+            If PosEx('ReSignScript;', ScrStr)=1 Then
+            begin
+              If FDCLLogOn.AccessLevel=ulDeveloper Then
+              begin
+                OpenDialog:=TOpenDialog.Create(nil);
+                OpenDialog.DefaultExt:=SignedScriptExt;
+                OpenDialog.Filter:='DCL script files|*'+SignedScriptExt;
+                If OpenDialog.Execute Then
+                  FDCLLogOn.ReSignScriptFile(OpenDialog.FileName);
+                FreeAndNil(OpenDialog);
+              end;
+            end;
+
+            If PosEx('ReSignScript=', ScrStr)=1 Then
+            begin
+              If FDCLLogOn.AccessLevel=ulDeveloper Then
+              begin
+                tmp1:=FindParam('FileName=', ScrStr);
+                FDCLLogOn.ReSignScriptFile(tmp1);
+              end;
+            end;
+
+            If PosEx('ExecCommand=', ScrStr)=1 Then
+            begin
+              tmp1:=FindParam('ExecCommand=', ScrStr);
+              LocalCommand:=TDCLCommand.Create(FDCLForm, FDCLLogOn);
+              LocalCommand.ExecCommand(tmp1, FDCLForm);
+              FreeAndNil(LocalCommand);
+            end;
+
+            If PosEx('SeparateChar=', ScrStr)=1 Then
+            begin
+              GPT.StringTypeChar:=FindParam('SeparateChar=', ScrStr);
+            end;
+
+            If PosEx('SetValueSeparator=', ScrStr)=1 Then
+            begin
+              GPT.GetValueSeparator:=FindParam('SetValueSeparator=', ScrStr);
+            end;
+
+            If PosEx('Export=', ScrStr)=1 Then
+            begin
+              TmpStr:=FindParam('Spool=', ScrStr);
+              If TmpStr='' Then
+                TmpStr:='0';
+              If TmpStr='1' Then
+              begin
+                ExportData(stSpool, ScrStr);
+                Spool.SaveToFile(SpoolFileName);
+              end;
+              If TmpStr='0' Then
+                ExportData(stText, ScrStr);
+            end;
+
+            If PosEx('DialogByName=', ScrStr)=1 Then
+            begin
+              TmpStr:=FindParam('DialogByName=', ScrStr);
+              tmpStr1:=Copy(TmpStr, 1, Pos('.', TmpStr)-1);
+              tmpStr2:=Copy(TmpStr, Pos('.', TmpStr)+1, Length(TmpStr));
+              Enything:=False;
+              v2:= - 1;
+              For v1:=1 to FDCLLogOn.FormsCount do
+              begin
+                If CompareString(FDCLLogOn.Forms[v1-1].DialogName, tmpStr1) Then
+                begin
+                  Enything:=True;
+                  v2:=v1;
+                  break;
+                end;
+              end;
+              If Enything Then
+              begin
+                If CompareString(tmpStr2, 'hide') Then
+                  FDCLLogOn.Forms[v2].FForm.Hide;
+                If CompareString(tmpStr2, 'show') Then
+                  FDCLLogOn.Forms[v2].FForm.Show;
+                If CompareString(tmpStr2, 'close') Then
+                Begin
+                  If Assigned(FDCLLogOn.Forms[v2]) then
+                  Begin
+                    tmpDCLForm:=FDCLLogOn.Forms[v2].GetParentForm;
+                    FDCLLogOn.Forms[v2].Free;
+                    FDCLForm:=tmpDCLForm;
+                  End;
+                End;
+                If CompareString(tmpStr2, 'refresh') Then
+                begin
+                  For v3:=1 to FDCLLogOn.Forms[v2].GetTablesCount do
+                    FDCLLogOn.Forms[v2].Tables[v3-1].ReFreshQuery;
+                end;
+              end;
+            end;
+
+            If PosEx('NoCloseable=', ScrStr)=1 Then
+            begin
+              TmpStr:=FindParam('NoCloseable=', ScrStr);
+              If Assigned(FDCLForm) Then
+              Begin
+                FDCLForm.NoCloseable:=Trim(TmpStr)='1';
+              End;
+            end;
+
+            If PosEx('Navigator=', ScrStr)=1 Then
+            begin
+              If FindParam('Navigator=', ScrStr)='0' Then
+              begin
+                If Assigned(FDCLForm.Tables[ - 1].Navig) Then
+                begin
+                  FDCLForm.Tables[ - 1].Navig.Hide;
+                end;
               end
               Else
-                try
-                  FDCLForm.CurrentQuery.SQL.Text:=TmpStr;
-                  FDCLForm.CurrentQuery.Open;
-                Except
-                  ShowErrorMessage( - 1100);
-                end;
-            end;
-          end;
-
-          If PosEx('GlobQuery=', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) Then
-            begin
-              FDCLForm.CurrentQuery.DisableControls;
-
-              TmpStr:=FindParam('GlobQuery=', ScrStr);
-              FDCLForm.FGrids[FDCLForm.CurrentGridIndex].SetSQLToStore(TmpStr, qtMain, ulUndefined);
-              TranslateValContext(TmpStr);
-              FDCLForm.FGrids[FDCLForm.CurrentGridIndex].Close;
-              FDCLForm.FGrids[FDCLForm.CurrentGridIndex].SetSQL(TmpStr);
-              try
-                FDCLForm.FGrids[FDCLForm.CurrentGridIndex].Open;
-              Except
-                ShowErrorMessage( - 1113, 'SQL='+TmpStr);
-              end;
-              FDCLForm.CurrentQuery.EnableControls;
-            end;
-          end;
-
-          If PosEx('MultiSelect=', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) Then
-              FDCLForm.Tables[ - 1].MultiSelect:=FindParam('MultiSelect=', ScrStr)='1';
-          end;
-
-          If PosEx('TablePartQuery=', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) Then
-            begin
-              v1:=1;
-              TmpStr:=Trim(FindParam('TablePartNum=', ScrStr));
-              If TmpStr<>'' Then
-                v1:=StrToIntEx(TmpStr)-1;
-
-              TmpStr:=FindParam('TablePartQuery=', ScrStr);
-              FDCLForm.Tables[ - 1].TableParts[v1].SetSQLToStore(TmpStr, qtMain, ulUndefined);
-              FDCLForm.TranslateVal(TmpStr, False);
-
-              FDCLForm.Tables[ - 1].TableParts[v1].Query.SQL.Text:=TmpStr;
-              try
-                FDCLForm.Tables[ - 1].TableParts[v1].Query.Open;
-              Except
-                ShowErrorMessage( - 1201, 'SQL='+TmpStr);
-              end;
-            end;
-          end;
-
-          If PosEx('Report=', ScrStr)=1 Then
-          begin
-            tmpDCL:=TStringList.Create;
-            RepIdParams:=0;
-            RepTable:=FindParam('FromTable=', ScrStr);
-            If RepTable='' Then
-              RepTable:=GPT.DCLTable;
-            tmp1:=FindParam('FromFile=', ScrStr);
-            If tmp1='' Then
-            begin
-              tmp2:=FindParam('ReportName=', ScrStr);
-              TranslateVals(tmp2, FDCLForm.CurrentQuery);
-              DCLQuery.Close;
-              DCLQuery.SQL.Text:='select Count(*) from '+RepTable+' where '+GPT.UpperString+
-                GPT.DCLNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+tmp2+
-                GPT.StringTypeChar+GPT.UpperStringEnd;
-              DCLQuery.Open;
-              RecCount:=DCLQuery.Fields[0].AsInteger;
-              If RecCount=1 Then
               begin
+                If FindParam('buttons=', ScrStr)<>'' Then
+                begin
+                  TmpStr:=FindParam('buttons=', ScrStr);
+                  For v1:=1 to 10 do
+                    NavigVisiButtonsVar[v1]:=[];
+                  If PosEx('first', TmpStr)<>0 Then
+                    NavigVisiButtonsVar[1]:=[nbFirst];
+                  If PosEx('prior', TmpStr)<>0 Then
+                    NavigVisiButtonsVar[2]:=[nbPrior];
+                  If PosEx('next', TmpStr)<>0 Then
+                    NavigVisiButtonsVar[3]:=[nbNext];
+                  If PosEx('last', TmpStr)<>0 Then
+                    NavigVisiButtonsVar[4]:=[nbLast];
+                  If PosEx('insert', TmpStr)<>0 Then
+                    NavigVisiButtonsVar[5]:=[nbInsert];
+                  If PosEx('delete', TmpStr)<>0 Then
+                    NavigVisiButtonsVar[6]:=[nbDelete];
+                  If PosEx('edit', TmpStr)<>0 Then
+                    NavigVisiButtonsVar[7]:=[nbEdit];
+                  If PosEx('post', TmpStr)<>0 Then
+                    NavigVisiButtonsVar[8]:=[nbPost];
+                  If PosEx('cancel', TmpStr)<>0 Then
+                    NavigVisiButtonsVar[9]:=[nbCancel];
+                  If PosEx('refresh', TmpStr)<>0 Then
+                    NavigVisiButtonsVar[10]:=[nbRefresh];
+                  FDCLForm.Tables[ - 1].Navig.VisibleButtons:=NavigVisiButtonsVar[1]+
+                    NavigVisiButtonsVar[2]+NavigVisiButtonsVar[3]+NavigVisiButtonsVar[4]+
+                    NavigVisiButtonsVar[5]+NavigVisiButtonsVar[6]+NavigVisiButtonsVar[7]+
+                    NavigVisiButtonsVar[8]+NavigVisiButtonsVar[9]+NavigVisiButtonsVar[10];
+                end;
+                If FindParam('Flat=', ScrStr)<>'' Then
+                begin
+                  TmpStr:=FindParam('Flat=', ScrStr);
+                  If TmpStr='1' Then
+                    FDCLForm.Tables[ - 1].Navig.Flat:=True;
+                end;
+              end;
+            end;
+
+  {$IFDEF DELPHI}
+            If PosEx('ParamCheck=', ScrStr)=1 Then
+            begin
+              TmpStr:=FindParam('ParamCheck=', ScrStr);
+              If TmpStr='1' Then
+                FDCLForm.Tables[ - 1].Query.ParamCheck:=True;
+              If TmpStr='0' Then
+                FDCLForm.Tables[ - 1].Query.ParamCheck:=False;
+            end;
+  {$ENDIF}
+            If PosEx('DisableParams=', ScrStr)=1 Then
+            begin
+              If FindParam('DisableParams=', ScrStr)='1' Then
+                TransParams:=True;
+
+              If FindParam('DisableParams=', ScrStr)='0' Then
+                TransParams:=False;
+            end;
+
+  {$IFDEF DELPHI}
+            If PosEx('FieldsList=', ScrStr)=1 Then
+            begin
+              tmp1:=FindParam('FieldsList=', ScrStr);
+              If Not IsFullPAth(tmp1) Then
+                tmp1:=IncludeTrailingPathDelimiter(AppConfigDir)+tmp1;
+
+              FDCLForm.Tables[ - 1].Query.FieldList.SaveToFile(tmp1);
+            end;
+  {$ENDIF}
+            If PosEx('SetContextFilterText=', ScrStr)=1 Then
+            begin
+              TmpStr:=FindParam('ComponentName=', ScrStr);
+              If TmpStr='' Then
+              begin
+                TmpStr:=FindParam('ComponentNumber=', ScrStr);
+                If TmpStr='' Then
+                  TmpStr:='ContextFilter_1'
+                Else
+                  TmpStr:='ContextFilter_'+TmpStr;
+              end;
+              If Assigned(FDCLForm) Then
+                If Assigned(FDCLForm.Tables[ - 1].ToolPanel) Then
+                  If Assigned(FDCLForm.Tables[ - 1].ToolPanel.FindComponent(TmpStr)) Then
+                  begin
+                    tmpStr1:=FindParam('SetContextFilterText=', ScrStr);
+                    RePlaseVariabless(tmpStr1);
+                    (FDCLForm.Tables[ - 1].ToolPanel.FindComponent(TmpStr) as TEdit).Text:=tmpStr1;
+                  end;
+            end;
+
+            If PosEx('ClearAllContextFilters;', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) Then
+                If Length(FDCLForm.Tables[ - 1].DBFilters)>0 Then
+                  For v1:=1 to Length(FDCLForm.Tables[ - 1].DBFilters) do
+                  begin
+                    If FDCLForm.Tables[ - 1].DBFilters[v1-1].FilterType=ftContextFilter Then
+                      If Assigned(FDCLForm.Tables[ - 1].DBFilters[v1-1].Edit) Then
+                        FDCLForm.Tables[ - 1].DBFilters[v1-1].Edit.Clear;
+                  end;
+            end;
+
+            If PosEx('DownloadHTTP=', ScrStr)=1 Then
+            begin
+              TmpStr:=FindParam('DownloadHTTP=', ScrStr);
+              tmpStr1:=FindParam('Path=', ScrStr);
+              tmpStr2:=FindParam('FileName=', ScrStr);
+              Downloader:=TDownloader.Create;
+
+              If tmpStr1='' Then
+              begin
+                If tmpStr2='' Then
+                  tmp1:=ExtractFileName(TmpStr)
+                Else
+                  tmp1:=tmpStr2;
+              end
+              Else
+                TmpStr:=tmpStr1+ExtractFileName(TmpStr);
+
+              If FindParam('Progress=', ScrStr)='1' Then
+                DownloadProgress:=True
+              Else
+                DownloadProgress:=False;
+
+              If FindParam('Cancel=', ScrStr)='1' Then
+                DownLoadCancel:=True
+              Else
+                DownLoadCancel:=False;
+
+              DownLoadProcess:=True;
+              tmpStr2:=Trim(FindParam('Reset=', ScrStr));
+              If tmpStr2='1' Then
+                Downloader.DownLoadHTTP(TmpStr, tmp1, True, DownloadProgress, DownLoadCancel)
+              Else
+                Downloader.DownLoadHTTP(TmpStr, tmp1, False, DownloadProgress, DownLoadCancel);
+              DownLoadProcess:=False;
+
+              Sleep(100);
+              Downloader.Free;
+            end;
+
+            If PosEx('Execute=', ScrStr)=1 Then
+            begin
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+              Begin
+                TmpStr:=FindParam('execute=', ScrStr);
+
+                tmpStr1:=FindParam('WorkDir=', ScrStr);
+                If tmpStr1='' Then
+                  tmpStr1:=Path;
+
+                If Not DirectoryExists(tmpStr1) Then
+                  SetCurrentDir(Path)
+                Else
+                  SetCurrentDir(tmpStr1);
+
+                try
+                  If FindParam('Wait=', ScrStr)='1' Then
+                  Begin
+                    If Not ExecAndWait(TmpStr, SW_SHOWNORMAL, True) Then
+                      ShowErrorMessage( - 8000, tmpStr1+TmpStr);
+                  End
+                  Else If FindParam('ShellExec=', ScrStr)='1' Then
+                    Exec(TmpStr, tmpStr1)
+                  Else
+                    ExecApp(TmpStr);
+                Except
+                  ShowErrorMessage( - 8000, tmpStr1+TmpStr);
+                end;
+              End
+              Else
+                ShowErrorMessage(0, GetDCLMessageString(msNotAllowExecuteApps));
+            end;
+
+            If PosEx('Sleep=', ScrStr)=1 Then
+            begin
+              TmpStr:=FindParam('Sleep=', ScrStr);
+              Sleep(StrToIntEx(TmpStr));
+            end;
+
+            If PosEx('Beep;', ScrStr)=1 Then
+            begin
+  {$IFDEF MSWINDOWS}
+              Windows.Beep(500, 250)
+  {$ELSE}
+              Beep;
+  {$ENDIF};
+            end;
+
+            If PosEx('Beep=', ScrStr)=1 Then
+            begin
+              TmpStr:=FindParam('Beep=', ScrStr);
+              v1:=Pos(',', TmpStr);
+              tmpStr1:=Copy(TmpStr, 1, v1-1);
+              Delete(TmpStr, 1, v1);
+              tmpStr2:=TmpStr;
+  {$IFDEF MSWINDOWS}
+              Windows.Beep(StrToIntEx(tmpStr1), StrToIntEx(tmpStr2));
+  {$ELSE}
+              Beep;
+  {$ENDIF};
+            end;
+
+            If PosEx('ReOpen;', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) Then
+                FDCLForm.RefreshForm;
+            end;
+
+            If PosEx('ReConnect;', ScrStr)=1 Then
+            begin
+              FDCLLogOn.ReconnectDB;
+            end;
+
+            If PosEx('GotoKey=', ScrStr)=1 Then
+            begin
+              TmpStr:=FindParam('KeyField=', ScrStr);
+              tmpStr1:=FindParam('GotoKey=', ScrStr);
+              If Assigned(FDCLForm.CurrentQuery) Then
+                FDCLForm.CurrentQuery.Locate(tmpStr1, TmpStr, [loCaseInsensitive]);
+            end;
+
+            If PosEx('Goto=', ScrStr)=1 Then
+            begin
+              TmpStr:=FindParam('Goto=', ScrStr);
+              SetRetPoint;
+              GotoGoto(TmpStr);
+            end;
+
+            If PosEx('Return;', ScrStr)=1 Then
+            begin
+              GetRetPoint;
+            end;
+
+            If PosEx('Break;', ScrStr)=1 Then
+            begin
+              ScriptStrings:=FCommandDCL.Count;
+            end;
+
+            If PosEx('ExecQuery=', ScrStr)=1 Then
+            begin
+              TmpStr:=FindParam('ExecQuery=', ScrStr);
+              TranslateValContext(TmpStr);
+              ExecSQLCommand(TmpStr, InContext);
+            end;
+
+            If PosEx('Query=', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) Then
+              begin
+                FDCLLogOn.SetDBName(DCLQuery);
+                TmpStr:=FindParam('Query=', ScrStr);
+                FDCLForm.FGrids[FDCLForm.CurrentGridIndex].SetSQLToStore(TmpStr, qtMain, ulUndefined);
+                If Not IsReturningQuery(TmpStr) Then
+                begin
+                  DCLQuery.Close;
+                  DCLQuery.SQL.Text:=TmpStr;
+                  If GetRaightsByContext(InContext)>ulWrite Then
+                    DCLQuery.ExecSQL;
+                end
+                Else
+                  try
+                    FDCLForm.CurrentQuery.SQL.Text:=TmpStr;
+                    FDCLForm.CurrentQuery.Open;
+                  Except
+                    ShowErrorMessage( - 1100);
+                  end;
+              end;
+            end;
+
+            If PosEx('GlobQuery=', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) Then
+              begin
+                FDCLForm.CurrentQuery.DisableControls;
+
+                TmpStr:=FindParam('GlobQuery=', ScrStr);
+                FDCLForm.FGrids[FDCLForm.CurrentGridIndex].SetSQLToStore(TmpStr, qtMain, ulUndefined);
+                TranslateValContext(TmpStr);
+                FDCLForm.FGrids[FDCLForm.CurrentGridIndex].Close;
+                FDCLForm.FGrids[FDCLForm.CurrentGridIndex].SetSQL(TmpStr);
+                try
+                  FDCLForm.FGrids[FDCLForm.CurrentGridIndex].Open;
+                Except
+                  ShowErrorMessage( - 1113, 'SQL='+TmpStr);
+                end;
+                FDCLForm.CurrentQuery.EnableControls;
+              end;
+            end;
+
+            If PosEx('MultiSelect=', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) Then
+                FDCLForm.Tables[ - 1].MultiSelect:=FindParam('MultiSelect=', ScrStr)='1';
+            end;
+
+            If PosEx('TablePartQuery=', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) Then
+              begin
+                v1:=1;
+                TmpStr:=Trim(FindParam('TablePartNum=', ScrStr));
+                If TmpStr<>'' Then
+                  v1:=StrToIntEx(TmpStr)-1;
+
+                TmpStr:=FindParam('TablePartQuery=', ScrStr);
+                FDCLForm.Tables[ - 1].TableParts[v1].SetSQLToStore(TmpStr, qtMain, ulUndefined);
+                FDCLForm.TranslateVal(TmpStr, False);
+
+                FDCLForm.Tables[ - 1].TableParts[v1].Query.SQL.Text:=TmpStr;
+                try
+                  FDCLForm.Tables[ - 1].TableParts[v1].Query.Open;
+                Except
+                  ShowErrorMessage( - 1201, 'SQL='+TmpStr);
+                end;
+              end;
+            end;
+
+            If PosEx('Report=', ScrStr)=1 Then
+            begin
+              tmpDCL:=TStringList.Create;
+              RepIdParams:=0;
+              RepTable:=FindParam('FromTable=', ScrStr);
+              If RepTable='' Then
+                RepTable:=GPT.DCLTable;
+              tmp1:=FindParam('FromFile=', ScrStr);
+              If tmp1='' Then
+              begin
+                tmp2:=FindParam('ReportName=', ScrStr);
+                TranslateVals(tmp2, FDCLForm.CurrentQuery);
                 DCLQuery.Close;
-                DCLQuery.SQL.Text:='select * from '+RepTable+' where '+GPT.UpperString+
+                DCLQuery.SQL.Text:='select Count(*) from '+RepTable+' where '+GPT.UpperString+
                   GPT.DCLNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+tmp2+
                   GPT.StringTypeChar+GPT.UpperStringEnd;
                 DCLQuery.Open;
-                tmpDCL.Text:=DCLQuery.FieldByName(GPT.DCLTextField).AsString;
-                RepIdParams:=DCLQuery.FieldByName(GPT.IdentifyField).AsInteger;
-                DCLQuery.Close;
-              end;
-            end
-            Else
-            begin
-              If Not IsFullPAth(tmp1) Then
-                tmp1:=IncludeTrailingPathDelimiter(AppConfigDir)+tmp1;
-              If FileExists(tmp1) Then
-                tmpDCL.LoadFromFile(tmp1);
-            end;
-            tmp2:=FindParam('QueryMode=', ScrStr);
-            v1:=0;
-            If LowerCase(tmp2)='bkmode' Then
-              v1:=1;
-            If LowerCase(tmp2)='main' Then
-              v1:=0;
-            If LowerCase(tmp2)='isolate' Then
-              v1:=2;
-            Case v1 of
-            0:
-              If Assigned(FDCLForm) Then
-                TextReport:=TDCLTextReport.InitReport(FDCLLogOn,
-                  FDCLForm.Tables[FDCLForm.CurrentTableIndex], tmpDCL, RepIdParams, nqmFromGrid);
-            1:
-              If Assigned(FDCLForm) Then
-                TextReport:=TDCLTextReport.InitReport(FDCLLogOn,
-                  FDCLForm.Tables[FDCLForm.CurrentTableIndex], tmpDCL, RepIdParams, nqmNew);
-            2:
-              TextReport:=TDCLTextReport.InitReport(FDCLLogOn, nil, tmpDCL, RepIdParams, nqmNew);
-            end;
-
-            If Assigned(TextReport) then
-            begin
-              If TextReport.DialogRes=mrOk Then
-              begin
-                tmp1:=Trim(FindParam('FileName=', ScrStr));
-                TranslateVals(tmp1, FDCLForm.CurrentQuery);
-                If FindParam('ToDos=', ScrStr)='1' Then
-                  TextReport.InConsoleCodePage:=True;
-
-                v1:=StrToIntEx(Trim(FindParam('ViewMode=', ScrStr)));
-                TextReport.OpenReport(tmp1, TReportViewMode(v1));
-                tmp1:=TextReport.SaveReport(tmp1);
-
-                tmp2:=FindParam('NoPrint=', ScrStr);
-                TranslateVals(tmp2, FDCLForm.CurrentQuery);
-                If TReportViewMode(v1-1)=rvmMultitRecordReport Then
-                  tmp2:='1';
-                If tmp2<>'1' Then
-                  If FindParam('Viewer=', ScrStr)<>'' Then
-                    ExecApp('"'+FindParam('Viewer=', ScrStr)+'" "'+tmp1+'"')
-                  Else
-                    ExecApp('"'+GPT.Viewer+'" "'+tmp1+'"');
-              end;
-
-              TextReport.CloseReport('Report.txt');
-            end;
-            FreeAndNil(tmpDCL);
-          end;
-
-          If PosEx('ReportExcel=', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) Then
-            begin
-              Enything:=FindParam('Save=', ScrStr)='1';
-              EnythingElse:=FindParam('Close=', ScrStr)='1';
-              OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
-                FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-              OfficeReport.ReportExcel(ScrStr, Enything, EnythingElse);
-            end;
-          end;
-
-          If PosEx('ReportOOCalc=', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) Then
-            begin
-              OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
-                FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-              Enything:=FindParam('Save=', ScrStr)='1';
-              EnythingElse:=FindParam('Close=', ScrStr)='1';
-              OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything, EnythingElse);
-            end;
-          end;
-
-          If PosEx('ReportOfficeSheet=', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) Then
-            begin
-              Enything:=FindParam('Save=', ScrStr)='1';
-              EnythingElse:=FindParam('Close=', ScrStr)='1';
-              TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
-              OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
-                FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-              OfficeReport.OfficeFormat:=GetPossibleOffice(dtSheet, ConvertOfficeType(TmpStr), GPT.OfficeFormat);
-
-              Case OfficeReport.OfficeFormat of
-              ofOO:
-              OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything, EnythingElse);
-              ofMSO:
-              OfficeReport.ReportExcel(ScrStr, Enything, EnythingElse);
-              ofNone:
-              ShowErrorMessage( - 6200, '');
-              end;
-            end;
-          end;
-
-          If PosEx('ReportWord=', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) Then
-            begin
-              Enything:=FindParam('Save=', ScrStr)='1';
-              EnythingElse:=FindParam('Close=', ScrStr)='1';
-              OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
-                FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-              OfficeReport.ReportWord(ScrStr, Enything, EnythingElse);
-            end;
-          end;
-
-          If PosEx('ReportOOWriter=', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) Then
-            begin
-              Enything:=FindParam('Save=', ScrStr)='1';
-              EnythingElse:=FindParam('Close=', ScrStr)='1';
-              OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
-                FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-              OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything, EnythingElse);
-            end;
-          end;
-
-          If PosEx('ReportOfficeText=', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) Then
-            begin
-              Enything:=FindParam('Save=', ScrStr)='1';
-              EnythingElse:=FindParam('Close=', ScrStr)='1';
-              TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
-              OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
-                FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-              OfficeReport.OfficeFormat:=GetPossibleOffice(dtText, ConvertOfficeType(TmpStr), GPT.OfficeFormat);
-
-              Case OfficeReport.OfficeFormat of
-              ofOO:
-              OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything, EnythingElse);
-              ofMSO:
-              OfficeReport.ReportWord(ScrStr, Enything, EnythingElse);
-              ofNone:
-              ShowErrorMessage( - 6200, '');
-              end;
-            end;
-          end;
-
-          If PosEx('OpenFileDialog=', ScrStr)=1 Then
-          begin
-            tmp1:=FindParam('OpenFileDialog=', ScrStr);
-            tmp2:=FindParam('Ext=', ScrStr);
-            OpenDialog:=TOpenDialog.Create(nil);
-            If tmp2<>'' Then
-              OpenDialog.DefaultExt:=tmp2;
-            If OpenDialog.Execute Then
-              SetVariable(tmp1, OpenDialog.FileName)
-            Else
-              SetVariable(tmp1, '');
-            FreeAndNil(OpenDialog);
-          end;
-
-          If PosEx('SaveFileDialog=', ScrStr)=1 Then
-          begin
-            tmp1:=FindParam('SaveFileDialog=', ScrStr);
-            tmp2:=FindParam('Ext=', ScrStr);
-            SaveDialog:=TSaveDialog.Create(nil);
-            SaveDialog.FileName:=FindParam('FileName=', ScrStr);
-            If tmp2<>'' Then
-              SaveDialog.DefaultExt:=tmp2;
-            If SaveDialog.Execute Then
-              SetVariable(tmp1, SaveDialog.FileName)
-            Else
-              SetVariable(tmp1, '');
-            FreeAndNil(SaveDialog);
-          end;
-
-          If PosEx('OpenFolder=', ScrStr)=1 Then
-          begin
-            tmp1:=FindParam('OpenFolder=', ScrStr);
-            TranslateVals(tmp1, FDCLForm.CurrentQuery);
-            OpenDir(tmp1);
-          end;
-
-          If PosEx('EditByName=', ScrStr)=1 Then
-          begin
-            TmpStr:=FindParam('EditByName=', ScrStr);
-            tmpStr1:=Copy(TmpStr, 1, Pos('.', TmpStr)-1);
-            tmpStr2:=Copy(TmpStr, Pos('.', TmpStr)+1, Length(TmpStr));
-            If Assigned(FDCLForm) Then
-              If Assigned((FDCLForm.Tables[ - 1].FieldPanel.FindComponent(tmpStr1) as TEdit)) Then
-              begin
-                If FDCLForm.FForm.Showing Then
-                  If LowerCase(tmpStr2)='setfocus' Then
-                    (FDCLForm.Tables[ - 1].FieldPanel.FindComponent(tmpStr1) as TEdit).SetFocus;
-                If LowerCase(tmpStr2)='clear' Then
-                  (FDCLForm.Tables[ - 1].FieldPanel.FindComponent(tmpStr1) as TEdit).Clear;
-                If LowerCase(tmpStr2)='show' Then
-                  (FDCLForm.Tables[ - 1].FieldPanel.FindComponent(tmpStr1) as TEdit).Show;
-                If LowerCase(tmpStr2)='hide' Then
-                  (FDCLForm.Tables[ - 1].FieldPanel.FindComponent(tmpStr1) as TEdit).Hide;
-                If LowerCase(tmpStr2)='enabled' Then
-                  (FDCLForm.Tables[ - 1].FieldPanel.FindComponent(tmpStr1) as TEdit).Enabled:=True;
-                If LowerCase(tmpStr2)='disabled' Then
-                  (FDCLForm.Tables[ - 1].FieldPanel.FindComponent(tmpStr1) as TEdit).Enabled:=False;
-                If LowerCase(tmpStr2)='select' Then
-                  (FDCLForm.Tables[ - 1].FieldPanel.FindComponent(tmpStr1) as TEdit).SelectAll;
-                If LowerCase(tmpStr2)='settext' Then
+                RecCount:=DCLQuery.Fields[0].AsInteger;
+                If RecCount=1 Then
                 begin
-                  If PosEx('_Value=', ScrStr)<>0 Then
-                  begin
-                    TmpStr:=FindParam('_Value=', ScrStr);
-                    TranslateVals(tmpStr, FDCLForm.CurrentQuery);
-                    (FDCLForm.Tables[ - 1].FieldPanel.FindComponent(tmpStr1) as TEdit).Text:=TmpStr;
-                  end;
-                end;
-              end;
-          end;
-
-          If (PosEx('If ', ScrStr)=1)and(PosEx(' then', ScrStr)<>0) Then
-          begin
-            inc(IfCounter);
-
-            If Breaking=False Then
-            begin
-              IfSign:=0;
-              TmpStr:=ScrStr;
-              tmp1:='';
-              tmp2:='';
-              tmp3:='';
-
-              If (FindParam('Expression1=', TmpStr)='')and(FindParam('Expression2=', TmpStr)='')and
-                (FindParam('Sign=', TmpStr)='') Then
-              begin
-                If PosEx('If ', TmpStr)<>0 Then
-                  Delete(TmpStr, PosEx('If ', TmpStr), 3);
-                If PosEx(' then', TmpStr)<>0 Then
-                  Delete(TmpStr, PosEx(' then', TmpStr), 5);
-
-                TranslateValContext(TmpStr);
-
-                v2:=LastDelimiter('<>=', TmpStr);
-                If v2<>0 Then
-                begin
-                  v1:=FindSubstrInString(TmpStr, Signs);
-                  If v1<0 then
-                    v1:=0;
-                  Sign:=TSigns(v1);
-                  tmp3:=Signs[Sign];
-
-                  v1:=Pos(Signs[Sign], TmpStr);
-                  v2:=Length(Signs[Sign]);
-                  Tmp1:=Copy(TmpStr, 1, v1-1);
-                  Tmp2:=Copy(TmpStr, v1+v2, Length(TmpStr));
-                  tmp1:=Trim(AnsiLowerCase(tmp1));
-                  tmp2:=Trim(AnsiLowerCase(tmp2));
+                  DCLQuery.Close;
+                  DCLQuery.SQL.Text:='select * from '+RepTable+' where '+GPT.UpperString+
+                    GPT.DCLNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+tmp2+
+                    GPT.StringTypeChar+GPT.UpperStringEnd;
+                  DCLQuery.Open;
+                  tmpDCL.Text:=DCLQuery.FieldByName(GPT.DCLTextField).AsString;
+                  RepIdParams:=DCLQuery.FieldByName(GPT.IdentifyField).AsInteger;
+                  DCLQuery.Close;
                 end;
               end
               Else
               begin
-                tmp1:=FindParam('Expression1=', TmpStr);
-                If tmp1<>'' Then
-                  tmp1:=ExpressionParser(tmp1);
-                tmp2:=FindParam('Expression2=', TmpStr);
-                If tmp2<>'' Then
-                  tmp2:=ExpressionParser(tmp2);
-                tmp3:=FindParam('Sign=', TmpStr);
+                If Not IsFullPAth(tmp1) Then
+                  tmp1:=IncludeTrailingPathDelimiter(AppConfigDir)+tmp1;
+                If FileExists(tmp1) Then
+                  tmpDCL.LoadFromFile(tmp1);
               end;
-              If tmp3<>'' Then
-              begin
-                If tmp3='=' Then
-                  IfSign:=0;
-                If tmp3='<>' Then
-                  IfSign:=1;
-                If tmp3='>' Then
-                  IfSign:=2;
-                If tmp3='<' Then
-                  IfSign:=3;
-                If tmp3='<=' Then
-                  IfSign:=4;
-                If tmp3='>=' Then
-                  IfSign:=5;
-              end;
-              StopFlag:=True;
-              Case IfSign of
+              tmp2:=FindParam('QueryMode=', ScrStr);
+              v1:=0;
+              If LowerCase(tmp2)='bkmode' Then
+                v1:=1;
+              If LowerCase(tmp2)='main' Then
+                v1:=0;
+              If LowerCase(tmp2)='isolate' Then
+                v1:=2;
+              Case v1 of
               0:
-              If tmp1=tmp2 Then
-                StopFlag:=False;
+                If Assigned(FDCLForm) Then
+                  TextReport:=TDCLTextReport.InitReport(FDCLLogOn,
+                    FDCLForm.Tables[FDCLForm.CurrentTableIndex], tmpDCL, RepIdParams, nqmFromGrid);
               1:
-              If tmp1<>tmp2 Then
-                StopFlag:=False;
+                If Assigned(FDCLForm) Then
+                  TextReport:=TDCLTextReport.InitReport(FDCLLogOn,
+                    FDCLForm.Tables[FDCLForm.CurrentTableIndex], tmpDCL, RepIdParams, nqmNew);
               2:
-              If tmp1>tmp2 Then
-                StopFlag:=False;
-              3:
-              If tmp1<tmp2 Then
-                StopFlag:=False;
-              4:
-              If tmp1<=tmp2 Then
-                StopFlag:=False;
-              5:
-              If tmp1>=tmp2 Then
-                StopFlag:=False;
+                TextReport:=TDCLTextReport.InitReport(FDCLLogOn, nil, tmpDCL, RepIdParams, nqmNew);
+              end;
+
+              If Assigned(TextReport) then
+              begin
+                If TextReport.DialogRes=mrOk Then
+                begin
+                  tmp1:=Trim(FindParam('FileName=', ScrStr));
+                  TranslateVals(tmp1, FDCLForm.CurrentQuery);
+                  If FindParam('ToDos=', ScrStr)='1' Then
+                    TextReport.InConsoleCodePage:=True;
+
+                  v1:=StrToIntEx(Trim(FindParam('ViewMode=', ScrStr)));
+                  TextReport.OpenReport(tmp1, TReportViewMode(v1));
+                  tmp1:=TextReport.SaveReport(tmp1);
+
+                  tmp2:=FindParam('NoPrint=', ScrStr);
+                  TranslateVals(tmp2, FDCLForm.CurrentQuery);
+                  If TReportViewMode(v1-1)=rvmMultitRecordReport Then
+                    tmp2:='1';
+                  If tmp2<>'1' Then
+                    If FindParam('Viewer=', ScrStr)<>'' Then
+                      ExecApp('"'+FindParam('Viewer=', ScrStr)+'" "'+tmp1+'"')
+                    Else
+                      ExecApp('"'+GPT.Viewer+'" "'+tmp1+'"');
+                end;
+
+                TextReport.CloseReport('Report.txt');
+              end;
+              FreeAndNil(tmpDCL);
+            end;
+
+            If PosEx('ReportOfficeSheet=', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) Then
+              begin
+                ScrStr:=FCommandDCL[ScriptStrings];
+                Enything:=FindParam('Save=', ScrStr)='1';
+                EnythingElse:=FindParam('Close=', ScrStr)='1';
+                TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
+                OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
+                  FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
+                OfficeReport.OfficeFormat:=GetPossibleOffice(dtSheet, ConvertOfficeType(TmpStr), GPT.OfficeFormat);
+
+                If FDCLForm.Tables[ - 1].DisplayMode in TDataGrid Then
+                begin
+                  if FDCLForm.Tables[ - 1].MultiSelect then
+                  begin
+                    if FDCLForm.Tables[ - 1].Grid.SelectedRows.Count>0 then
+                    begin
+                      For v1:=0 to FDCLForm.Tables[ - 1].Grid.SelectedRows.Count-1 do
+                      begin
+                        FDCLForm.Tables[ - 1].FQueryGlob.GoToBookmark(TBookmark(FDCLForm.Tables[ - 1].Grid.SelectedRows[v1]));
+
+                        Case OfficeReport.OfficeFormat of
+                        ofOO:
+                        OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything, EnythingElse);
+                        ofMSO:
+                        OfficeReport.ReportExcel(ScrStr, Enything, EnythingElse);
+                        ofNone:
+                        ShowErrorMessage( - 6200, '');
+                        end;
+                        end;
+                    end;
+                  end;
+                end
+                else
+                begin
+                  Case OfficeReport.OfficeFormat of
+                  ofOO:
+                  OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything, EnythingElse);
+                  ofMSO:
+                  OfficeReport.ReportExcel(ScrStr, Enything, EnythingElse);
+                  ofNone:
+                  ShowErrorMessage( - 6200, '');
+                  end;
+                end;
               end;
             end;
-          end;
 
-          If PosEx('Else', ScrStr)=1 Then
-          begin
-            If Breaking=False Then
-              StopFlag:=Not StopFlag;
-          end;
-
-          If PosEx('EndIf', ScrStr)=1 Then
-          begin
-            Dec(IfCounter);
-            If Breaking=False Then
-              StopFlag:=False;
-          end;
-
-          If PosEx('Message=', ScrStr)=1 Then
-          begin
-            TmpStr:=FindParam('message=', ScrStr);
-            TranslateValContext(TmpStr);
-            tmpStr3:=FindParam('Flags=', ScrStr);
-            If tmpStr3<>'' Then
+            If PosEx('ReportOfficeText=', ScrStr)=1 Then
             begin
-              tmpStr2:=FindParam('VariableName=', ScrStr);
-              FDCLLogOn.Variables.NewVariableWithTest(tmpStr2);
+              If Assigned(FDCLForm) Then
+              begin
+                ScrStr:=FCommandDCL[ScriptStrings];
+                Enything:=FindParam('Save=', ScrStr)='1';
+                EnythingElse:=FindParam('Close=', ScrStr)='1';
+                TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
+                OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
+                  FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
+                OfficeReport.OfficeFormat:=GetPossibleOffice(dtText, ConvertOfficeType(TmpStr), GPT.OfficeFormat);
 
-              If LowerCase(tmpStr3)='yesno' Then
-              begin
-                If ShowErrorMessage(10, TmpStr)=1 Then
-                  FDCLLogOn.Variables.Variables[tmpStr2]:='1'
-                Else
-                  FDCLLogOn.Variables.Variables[tmpStr2]:='0';
-              end
-              Else If LowerCase(tmpStr3)='input' Then
-              begin
-                TranslateValContext(tmpStr2);
-                tmpStr3:=FindParam('DefaultValue=', ScrStr);
-                TranslateValContext(tmpStr3);
-                FDCLLogOn.Variables.Variables[tmpStr2]:=InputBox(TmpStr, '', tmpStr3);
+                If FDCLForm.Tables[ - 1].DisplayMode in TDataGrid Then
+                begin
+                  if FDCLForm.Tables[ - 1].MultiSelect then
+                  begin
+                    if FDCLForm.Tables[ - 1].Grid.SelectedRows.Count>0 then
+                    begin
+                      For v1:=0 to FDCLForm.Tables[ - 1].Grid.SelectedRows.Count-1 do
+                      begin
+                        FDCLForm.Tables[ - 1].FQueryGlob.GoToBookmark(TBookmark(FDCLForm.Tables[ - 1].Grid.SelectedRows[v1]));
+
+                        Case OfficeReport.OfficeFormat of
+                        ofOO:
+                        OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything, EnythingElse);
+                        ofMSO:
+                        OfficeReport.ReportWord(ScrStr, Enything, EnythingElse);
+                        ofNone:
+                        ShowErrorMessage( - 6200, '');
+                        end;
+                      end;
+                    end;
+                  end;
+                end
+                else
+                begin
+                  Case OfficeReport.OfficeFormat of
+                  ofOO:
+                  OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything, EnythingElse);
+                  ofMSO:
+                  OfficeReport.ReportWord(ScrStr, Enything, EnythingElse);
+                  ofNone:
+                  ShowErrorMessage( - 6200, '');
+                  end;
+                end;
               end;
-            end
-            Else
-              ShowErrorMessage(9, TmpStr);
-          end;
+            end;
 
-          If PosEx('SetValue=', ScrStr)=1 Then
-          begin
-            SetValue(ScrStr);
-          end;
-
-          If PosEx('SetFieldValue=', ScrStr)=1 Then
-          begin
-            If GetRaightsByContext(InContext)>ulReadOnly Then
+            If PosEx('OpenFileDialog=', ScrStr)=1 Then
             begin
-              TmpStr:=FindParam('SetFieldValue=', ScrStr);
+              tmp1:=FindParam('OpenFileDialog=', ScrStr);
+              tmp2:=FindParam('Ext=', ScrStr);
+              OpenDialog:=TOpenDialog.Create(nil);
+              If tmp2<>'' Then
+                OpenDialog.DefaultExt:=tmp2;
+              If OpenDialog.Execute Then
+                SetVariable(tmp1, OpenDialog.FileName)
+              Else
+                SetVariable(tmp1, '');
+              FreeAndNil(OpenDialog);
+            end;
+
+            If PosEx('SaveFileDialog=', ScrStr)=1 Then
+            begin
+              tmp1:=FindParam('SaveFileDialog=', ScrStr);
+              tmp2:=FindParam('Ext=', ScrStr);
+              SaveDialog:=TSaveDialog.Create(nil);
+              SaveDialog.FileName:=FindParam('FileName=', ScrStr);
+              If tmp2<>'' Then
+                SaveDialog.DefaultExt:=tmp2;
+              If SaveDialog.Execute Then
+                SetVariable(tmp1, SaveDialog.FileName)
+              Else
+                SetVariable(tmp1, '');
+              FreeAndNil(SaveDialog);
+            end;
+
+            If PosEx('OpenFolder=', ScrStr)=1 Then
+            begin
+              tmp1:=FindParam('OpenFolder=', ScrStr);
+              TranslateVals(tmp1, FDCLForm.CurrentQuery);
+              OpenDir(tmp1);
+            end;
+
+            If PosEx('EditByName=', ScrStr)=1 Then
+            begin
+              TmpStr:=FindParam('EditByName=', ScrStr);
+              tmpStr1:=Copy(TmpStr, 1, Pos('.', TmpStr)-1);
+              tmpStr2:=Copy(TmpStr, Pos('.', TmpStr)+1, Length(TmpStr));
+              If Assigned(FDCLForm) Then
+                If Assigned((FDCLForm.Tables[ - 1].FieldPanel.FindComponent(tmpStr1) as TEdit)) Then
+                begin
+                  If FDCLForm.FForm.Showing Then
+                    If LowerCase(tmpStr2)='setfocus' Then
+                      (FDCLForm.Tables[ - 1].FieldPanel.FindComponent(tmpStr1) as TEdit).SetFocus;
+                  If LowerCase(tmpStr2)='clear' Then
+                    (FDCLForm.Tables[ - 1].FieldPanel.FindComponent(tmpStr1) as TEdit).Clear;
+                  If LowerCase(tmpStr2)='show' Then
+                    (FDCLForm.Tables[ - 1].FieldPanel.FindComponent(tmpStr1) as TEdit).Show;
+                  If LowerCase(tmpStr2)='hide' Then
+                    (FDCLForm.Tables[ - 1].FieldPanel.FindComponent(tmpStr1) as TEdit).Hide;
+                  If LowerCase(tmpStr2)='enabled' Then
+                    (FDCLForm.Tables[ - 1].FieldPanel.FindComponent(tmpStr1) as TEdit).Enabled:=True;
+                  If LowerCase(tmpStr2)='disabled' Then
+                    (FDCLForm.Tables[ - 1].FieldPanel.FindComponent(tmpStr1) as TEdit).Enabled:=False;
+                  If LowerCase(tmpStr2)='select' Then
+                    (FDCLForm.Tables[ - 1].FieldPanel.FindComponent(tmpStr1) as TEdit).SelectAll;
+                  If LowerCase(tmpStr2)='settext' Then
+                  begin
+                    If PosEx('_Value=', ScrStr)<>0 Then
+                    begin
+                      TmpStr:=FindParam('_Value=', ScrStr);
+                      TranslateVals(tmpStr, FDCLForm.CurrentQuery);
+                      (FDCLForm.Tables[ - 1].FieldPanel.FindComponent(tmpStr1) as TEdit).Text:=TmpStr;
+                    end;
+                  end;
+                end;
+            end;
+
+            If (PosEx('If ', ScrStr)=1)and(PosEx(' then', ScrStr)<>0) Then
+            begin
+              inc(IfCounter);
+
+              If Breaking=False Then
+              begin
+                IfSign:=0;
+                TmpStr:=ScrStr;
+                tmp1:='';
+                tmp2:='';
+                tmp3:='';
+
+                If (FindParam('Expression1=', TmpStr)='')and(FindParam('Expression2=', TmpStr)='')and
+                  (FindParam('Sign=', TmpStr)='') Then
+                begin
+                  If PosEx('If ', TmpStr)<>0 Then
+                    Delete(TmpStr, PosEx('If ', TmpStr), 3);
+                  If PosEx(' then', TmpStr)<>0 Then
+                    Delete(TmpStr, PosEx(' then', TmpStr), 5);
+
+                  TranslateValContext(TmpStr);
+
+                  v2:=LastDelimiter('<>=', TmpStr);
+                  If v2<>0 Then
+                  begin
+                    v1:=FindSubstrInString(TmpStr, Signs);
+                    If v1<0 then
+                      v1:=0;
+                    Sign:=TSigns(v1);
+                    tmp3:=Signs[Sign];
+
+                    v1:=Pos(Signs[Sign], TmpStr);
+                    v2:=Length(Signs[Sign]);
+                    Tmp1:=Copy(TmpStr, 1, v1-1);
+                    Tmp2:=Copy(TmpStr, v1+v2, Length(TmpStr));
+                    tmp1:=Trim(AnsiLowerCase(tmp1));
+                    tmp2:=Trim(AnsiLowerCase(tmp2));
+                  end;
+                end
+                Else
+                begin
+                  tmp1:=FindParam('Expression1=', TmpStr);
+                  If tmp1<>'' Then
+                    tmp1:=ExpressionParser(tmp1);
+                  tmp2:=FindParam('Expression2=', TmpStr);
+                  If tmp2<>'' Then
+                    tmp2:=ExpressionParser(tmp2);
+                  tmp3:=FindParam('Sign=', TmpStr);
+                end;
+                If tmp3<>'' Then
+                begin
+                  If tmp3='=' Then
+                    IfSign:=0;
+                  If tmp3='<>' Then
+                    IfSign:=1;
+                  If tmp3='>' Then
+                    IfSign:=2;
+                  If tmp3='<' Then
+                    IfSign:=3;
+                  If tmp3='<=' Then
+                    IfSign:=4;
+                  If tmp3='>=' Then
+                    IfSign:=5;
+                end;
+                StopFlag:=True;
+                Case IfSign of
+                0:
+                If tmp1=tmp2 Then
+                  StopFlag:=False;
+                1:
+                If tmp1<>tmp2 Then
+                  StopFlag:=False;
+                2:
+                If tmp1>tmp2 Then
+                  StopFlag:=False;
+                3:
+                If tmp1<tmp2 Then
+                  StopFlag:=False;
+                4:
+                If tmp1<=tmp2 Then
+                  StopFlag:=False;
+                5:
+                If tmp1>=tmp2 Then
+                  StopFlag:=False;
+                end;
+              end;
+            end;
+
+            If PosEx('Else', ScrStr)=1 Then
+            begin
+              If Breaking=False Then
+                StopFlag:=Not StopFlag;
+            end;
+
+            If PosEx('EndIf', ScrStr)=1 Then
+            begin
+              Dec(IfCounter);
+              If Breaking=False Then
+                StopFlag:=False;
+            end;
+
+            If PosEx('Message=', ScrStr)=1 Then
+            begin
+              TmpStr:=FindParam('message=', ScrStr);
+              TranslateValContext(TmpStr);
+              tmpStr3:=FindParam('Flags=', ScrStr);
+              If tmpStr3<>'' Then
+              begin
+                tmpStr2:=FindParam('VariableName=', ScrStr);
+                FDCLLogOn.Variables.NewVariableWithTest(tmpStr2);
+
+                If LowerCase(tmpStr3)='yesno' Then
+                begin
+                  If ShowErrorMessage(10, TmpStr)=1 Then
+                    FDCLLogOn.Variables.Variables[tmpStr2]:='1'
+                  Else
+                    FDCLLogOn.Variables.Variables[tmpStr2]:='0';
+                end
+                Else If LowerCase(tmpStr3)='input' Then
+                begin
+                  TranslateValContext(tmpStr2);
+                  tmpStr3:=FindParam('DefaultValue=', ScrStr);
+                  TranslateValContext(tmpStr3);
+                  FDCLLogOn.Variables.Variables[tmpStr2]:=InputBox(TmpStr, '', tmpStr3);
+                end;
+              end
+              Else
+                ShowErrorMessage(9, TmpStr);
+            end;
+
+            If PosEx('SetValue=', ScrStr)=1 Then
+            begin
+              SetValue(ScrStr);
+            end;
+
+            If PosEx('SetFieldValue=', ScrStr)=1 Then
+            begin
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+              begin
+                TmpStr:=FindParam('SetFieldValue=', ScrStr);
+                For v1:=1 to ParamsCount(TmpStr) do
+                begin
+                  tmpStr2:=SortParams(TmpStr, v1);
+                  v2:=Pos('=', tmpStr2);
+                  If v2<>0 Then
+                  begin
+                    tmp1:=Trim(Copy(tmpStr2, 1, v2-1));
+                    tmp2:=Copy(tmpStr2, v2+1, Length(tmpStr2)-v2);
+                    TranslateValContext(tmp2);
+                    tmpStr3:=Trim(FindParam('TablePartNum=', ScrStr));
+                    If GetRaightsByContext(InContext)>ulReadOnly Then
+                      If tmpStr3<>'' Then
+                      begin
+                        v3:=StrToIntEx(tmpStr3)-1;
+                        If Assigned(FDCLForm.Tables[ - 1]) Then
+                          If Assigned(FDCLForm.Tables[ - 1].TableParts[v3]) Then
+                          begin
+                            If Not (FDCLForm.Tables[ - 1].TableParts[v3].Query.State
+                                in dsEditModes) Then
+                              FDCLForm.Tables[ - 1].TableParts[v3].Query.Edit;
+                            FDCLForm.Tables[ - 1].TableParts[v3].Query.FieldByName(tmp1)
+                              .AsString:=tmp2;
+                          end;
+                      end
+                      Else
+                      begin
+                        If Not (FDCLForm.CurrentQuery.State in dsEditModes) Then
+                          FDCLForm.CurrentQuery.Edit;
+                        FDCLForm.CurrentQuery.FieldByName(tmp1).AsString:=tmp2;
+                      end;
+                  end;
+
+                  If FindParam('Post=', ScrStr)='1' Then
+                  begin
+                    If GetRaightsByContext(InContext)>ulReadOnly Then
+                      If Trim(FindParam('TablePartNum=', ScrStr))<>'' Then
+                      begin
+                        If FDCLForm.Tables[ - 1].TableParts[v1].Query.State in dsEditModes Then
+                          FDCLForm.Tables[ - 1].TableParts[v1].Query.Post;
+                      end
+                      Else
+                      begin
+                        If FDCLForm.CurrentQuery.State in dsEditModes Then
+                          FDCLForm.CurrentQuery.Post;
+                      end;
+                  end;
+                end;
+              end;
+            end;
+
+            If PosEx('GetFieldValue=', ScrStr)=1 Then
+            begin
+              TmpStr:=FindParam('GetFieldValue=', ScrStr);
               For v1:=1 to ParamsCount(TmpStr) do
               begin
                 tmpStr2:=SortParams(TmpStr, v1);
@@ -6262,877 +6329,824 @@ begin
                 begin
                   tmp1:=Trim(Copy(tmpStr2, 1, v2-1));
                   tmp2:=Copy(tmpStr2, v2+1, Length(tmpStr2)-v2);
-                  TranslateValContext(tmp2);
-                  tmpStr3:=Trim(FindParam('TablePartNum=', ScrStr));
-                  If GetRaightsByContext(InContext)>ulReadOnly Then
-                    If tmpStr3<>'' Then
-                    begin
-                      v3:=StrToIntEx(tmpStr3)-1;
-                      If Assigned(FDCLForm.Tables[ - 1]) Then
-                        If Assigned(FDCLForm.Tables[ - 1].TableParts[v3]) Then
-                        begin
-                          If Not (FDCLForm.Tables[ - 1].TableParts[v3].Query.State
-                              in dsEditModes) Then
-                            FDCLForm.Tables[ - 1].TableParts[v3].Query.Edit;
-                          FDCLForm.Tables[ - 1].TableParts[v3].Query.FieldByName(tmp1)
-                            .AsString:=tmp2;
-                        end;
-                    end
-                    Else
-                    begin
-                      If Not (FDCLForm.CurrentQuery.State in dsEditModes) Then
-                        FDCLForm.CurrentQuery.Edit;
-                      FDCLForm.CurrentQuery.FieldByName(tmp1).AsString:=tmp2;
-                    end;
-                end;
-
-                If FindParam('Post=', ScrStr)='1' Then
-                begin
-                  If GetRaightsByContext(InContext)>ulReadOnly Then
-                    If Trim(FindParam('TablePartNum=', ScrStr))<>'' Then
-                    begin
-                      If FDCLForm.Tables[ - 1].TableParts[v1].Query.State in dsEditModes Then
-                        FDCLForm.Tables[ - 1].TableParts[v1].Query.Post;
-                    end
-                    Else
-                    begin
-                      If FDCLForm.CurrentQuery.State in dsEditModes Then
-                        FDCLForm.CurrentQuery.Post;
-                    end;
-                end;
-              end;
-            end;
-          end;
-
-          If PosEx('GetFieldValue=', ScrStr)=1 Then
-          begin
-            TmpStr:=FindParam('GetFieldValue=', ScrStr);
-            For v1:=1 to ParamsCount(TmpStr) do
-            begin
-              tmpStr2:=SortParams(TmpStr, v1);
-              v2:=Pos('=', tmpStr2);
-              If v2<>0 Then
-              begin
-                tmp1:=Trim(Copy(tmpStr2, 1, v2-1));
-                tmp2:=Copy(tmpStr2, v2+1, Length(tmpStr2)-v2);
-                v3:=Pos('.', tmp2);
-                If v3<>0 Then
-                begin
-                  tmp3:=Trim(Copy(tmp2, 1, v3-1));
-                  tmp4:=Copy(tmp2, v3+1, Length(tmp2)-v3);
-                  tmp3:=FindParam('where=', ScrStr);
-                  TranslateValContext(tmp3);
-                  DCLQuery.Close;
-                  DCLQuery.SQL.Text:='select '+tmp4+' from '+tmp3;
-                  If tmp3<>'' Then
-                    DCLQuery.SQL.Text:='select '+tmp4+' from '+tmp3+' where '+tmp3;
-                  DCLQuery.Open;
-                  FDCLLogOn.Variables.Variables[tmp1]:=TrimRight(DCLQuery.Fields[0].AsString);
-                  DCLQuery.Close;
-                end
-                Else
-                begin
-                  TmpStr:=Trim(FindParam('TablePartNum=', ScrStr));
-                  If TmpStr<>'' Then
+                  v3:=Pos('.', tmp2);
+                  If v3<>0 Then
                   begin
-                    v3:=StrToIntEx(TmpStr)-1;
-                    If Assigned(FDCLForm.Tables[ - 1].TableParts[v3]) Then
-                      FDCLLogOn.Variables.Variables[tmp1]:=FDCLForm.Tables[ - 1].TableParts[v3]
-                        .Query.FieldByName(tmp1).AsString;
+                    tmp3:=Trim(Copy(tmp2, 1, v3-1));
+                    tmp4:=Copy(tmp2, v3+1, Length(tmp2)-v3);
+                    tmp3:=FindParam('where=', ScrStr);
+                    TranslateValContext(tmp3);
+                    DCLQuery.Close;
+                    DCLQuery.SQL.Text:='select '+tmp4+' from '+tmp3;
+                    If tmp3<>'' Then
+                      DCLQuery.SQL.Text:='select '+tmp4+' from '+tmp3+' where '+tmp3;
+                    DCLQuery.Open;
+                    FDCLLogOn.Variables.Variables[tmp1]:=TrimRight(DCLQuery.Fields[0].AsString);
+                    DCLQuery.Close;
                   end
                   Else
                   begin
-                    FDCLLogOn.Variables.Variables[tmp1]:=
-                      TrimRight(FDCLForm.CurrentQuery.FieldByName(tmp2).AsString);
+                    TmpStr:=Trim(FindParam('TablePartNum=', ScrStr));
+                    If TmpStr<>'' Then
+                    begin
+                      v3:=StrToIntEx(TmpStr)-1;
+                      If Assigned(FDCLForm.Tables[ - 1].TableParts[v3]) Then
+                        FDCLLogOn.Variables.Variables[tmp1]:=FDCLForm.Tables[ - 1].TableParts[v3]
+                          .Query.FieldByName(tmp1).AsString;
+                    end
+                    Else
+                    begin
+                      FDCLLogOn.Variables.Variables[tmp1]:=
+                        TrimRight(FDCLForm.CurrentQuery.FieldByName(tmp2).AsString);
+                    end;
                   end;
                 end;
               end;
             end;
-          end;
 
-          If PosEx('CurrentTablePart=', ScrStr)=1 Then
-          begin
-            tmpStr2:=Trim(FindParam('CurrentTablePart=', ScrStr));
-            TranslateValContext(tmpStr2);
-            If Assigned(FDCLForm) Then
-            If tmpStr2<>'' Then
+            If PosEx('CurrentTablePart=', ScrStr)=1 Then
             begin
-              If tmpStr2='-1' then
-                v1:=FDCLForm.Tables[-1].TablePartsCount-1
-              Else
-                v1:=StrToIntEx(tmpStr2)-1;
-              If Assigned(FDCLForm.Tables[ - 1].TableParts[v1]) Then
-                FDCLForm.Tables[ - 1].FTablePartsPages.ActivePageIndex:=v1;
-            end;
-          end;
-
-          If PosEx('Insert_part;', ScrStr)=1 Then
-          begin
-            If GetRaightsByContext(InContext)>ulReadOnly Then
+              tmpStr2:=Trim(FindParam('CurrentTablePart=', ScrStr));
+              TranslateValContext(tmpStr2);
               If Assigned(FDCLForm) Then
-              If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
-                FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Insert;
-          end;
-
-          If PosEx('Append_part;', ScrStr)=1 Then
-          begin
-            If GetRaightsByContext(InContext)>ulReadOnly Then
-              If Assigned(FDCLForm) Then
-              If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
-                FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Append;
-          end;
-
-          If PosEx('Post_part;', ScrStr)=1 Then
-          begin
-            If GetRaightsByContext(InContext)>ulReadOnly Then
-              If Assigned(FDCLForm) Then
-              If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
-                FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Post;
-          end;
-
-          If PosEx('Delete_part;', ScrStr)=1 Then
-          begin
-            If GetRaightsByContext(InContext)>ulReadOnly Then
-              If Assigned(FDCLForm) Then
-              If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
-                FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Delete;
-          end;
-
-          If PosEx('DeleteConf_part;', ScrStr)=1 Then
-          begin
-            If GetRaightsByContext(InContext)>ulReadOnly Then
-              If Assigned(FDCLForm) Then
-              If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
-                If ShowErrorMessage(10, GetDCLMessageString(msDeleteRecordQ))=1 Then
-                  FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Delete;
-          end;
-
-          If PosEx('Edit_part;', ScrStr)=1 Then
-          begin
-            If GetRaightsByContext(InContext)>ulReadOnly Then
-              If Assigned(FDCLForm) Then
-              If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
-                FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Edit;
-          end;
-
-          If PosEx('Next_part;', ScrStr)=1 Then
-          begin
-            If GetRaightsByContext(InContext)>ulReadOnly Then
-              If Assigned(FDCLForm) Then
-              If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
-                FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Next;
-          end;
-
-          If PosEx('Prior_part;', ScrStr)=1 Then
-          begin
-            If GetRaightsByContext(InContext)>ulReadOnly Then
-              If Assigned(FDCLForm) Then
-              If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
-                FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Prior;
-          end;
-
-          If PosEx('First_part;', ScrStr)=1 Then
-          begin
-            If GetRaightsByContext(InContext)>ulReadOnly Then
-              If Assigned(FDCLForm) Then
-              If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
-                FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.First;
-          end;
-
-          If PosEx('Last_part;', ScrStr)=1 Then
-          begin
-            If GetRaightsByContext(InContext)>ulReadOnly Then
-              If Assigned(FDCLForm) Then
-              If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
-                FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Last;
-          end;
-
-          If PosEx('Next;', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) Then
-            If GetRaightsByContext(InContext)>ulReadOnly Then
-              FDCLForm.CurrentQuery.Next;
-          end;
-
-          If PosEx('Prior;', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) Then
-            If GetRaightsByContext(InContext)>ulReadOnly Then
-              FDCLForm.CurrentQuery.Prior;
-          end;
-
-          If PosEx('First;', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) Then
-            If GetRaightsByContext(InContext)>ulReadOnly Then
-              FDCLForm.CurrentQuery.First;
-          end;
-
-          If PosEx('Last;', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) Then
-            If GetRaightsByContext(InContext)>ulReadOnly Then
-              FDCLForm.CurrentQuery.Last;
-          end;
-
-          If PosEx('Edit;', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) Then
-            If GetRaightsByContext(InContext)>ulReadOnly Then
-              FDCLForm.CurrentQuery.Edit;
-          end;
-
-          If PosEx('Post;', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) Then
-            If GetRaightsByContext(InContext)>ulReadOnly Then
-              If FDCLForm.CurrentQuery.CanModify and (FDCLForm.CurrentQuery.State in dsEditModes) Then
-              try
-                FDCLForm.CurrentQuery.Post;
-              finally
-                ////
-              end;
-          end;
-
-          If PosEx('PostClose;', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) Then
-            begin
-              If FDCLForm.CurrentQuery.State in dsEditModes Then
-                FDCLForm.CurrentQuery.Post;
-              tmpDCLForm:=FDCLForm.GetParentForm;
-              FDCLForm.CloseAction:=fcaClose;
-              FDCLForm:=tmpDCLForm;
-            end;
-          end;
-
-          If PosEx('CancelClose;', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) Then
-            begin
-              If FDCLForm.CurrentQuery.State in dsEditModes Then
-                FDCLForm.CurrentQuery.Cancel;
-              tmpDCLForm:=FDCLForm.GetParentForm;
-              FDCLForm.CloseAction:=fcaClose;
-              FDCLForm:=tmpDCLForm;
-            end;
-          end;
-
-          If PosEx('PostRefresh;', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) then
-            Begin
-              FDCLForm.CurrentQuery.Post;
-              FDCLForm.Tables[ - 1].ReFreshQuery;
-            End;
-          end;
-
-          If PosEx('Cancel;', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) then
-              If FDCLForm.CurrentQuery.State in dsEditModes Then
-                FDCLForm.CurrentQuery.Cancel;
-          end;
-
-          If PosEx('Delete;', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) then
-              If GetRaightsByContext(InContext)>ulReadOnly Then
-                FDCLForm.CurrentQuery.Delete;
-          end;
-
-          If PosEx('DeleteConf;', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) then
-              If GetRaightsByContext(InContext)>ulReadOnly Then
-                If ShowErrorMessage(10, GetDCLMessageString(msDeleteRecordQ))=1 Then
-                  FDCLForm.CurrentQuery.Delete;
-          end;
-
-          If PosEx('Insert;', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) then
-              FDCLForm.CurrentQuery.Insert;
-          end;
-
-          If PosEx('Append;', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) then
-              FDCLForm.CurrentQuery.Append;
-          end;
-
-          If PosEx('Refresh;', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) then
-              FDCLForm.Tables[ - 1].ReFreshQuery;
-          end;
-
-          If PosEx('EvalFormula=', ScrStr)=1 Then
-          begin
-            tmp1:=FindParam('EvalFormula=', ScrStr);
-            If Assigned(FDCLForm) then
-              TranslateVals(tmp1, FDCLForm.CurrentQuery)
-            Else
-              TranslateVals(tmp1, nil);
-
-            FDCLLogOn.EvalFormula:=Calculate(tmp1);
-          end;
-
-          If PosEx('Dialog=', ScrStr)=1 Then
-          begin
-            TmpStr:=FindParam('Dialog=', ScrStr);
-            ModalOpen:=FindParam('ModalOpen=', TmpStr)='1';
-            ChooseMode:=chmNone;
-            ReturnValueParams:=nil;
-            If FindParam('ChooseMode=', ScrStr)<>'' Then
-            begin
-              v1:=StrToIntEx(FindParam('ChooseMode=', ScrStr));
-              ChooseMode:=TChooseMode(v1);
-              ReturnValueParams:=TReturnValueParams.Create(FindParam('KeyField=', ScrStr),
-                FindParam('ValueField=', ScrStr), FindParam('KeyEditName=', ScrStr), FindParam('ValueEditName=', ScrStr),
-                FindParam('KeyModifyField=', ScrStr), FindParam('ValueModifyField=', ScrStr),
-                FindParam('KeyVariable=', ScrStr), FindParam('ValueVariable=', ScrStr));
-            end;
-
-            If FindParam('Child=', ScrStr)='1' Then
-            Begin
-              If Assigned(FDCLForm) then
-                FDCLForm:=FDCLLogOn.CreateForm(TmpStr, FDCLForm, FDCLForm, nil, FDCLForm.GetDataSource,
-                  ModalOpen, ChooseMode, ReturnValueParams);
-            End
-            Else
-            Begin
-              tmpStr2:=Trim(FindParam('TablePart=', ScrStr));
               If tmpStr2<>'' Then
               begin
-                If Assigned(FDCLForm) then
-                Begin
+                If tmpStr2='-1' then
+                  v1:=FDCLForm.Tables[-1].TablePartsCount-1
+                Else
                   v1:=StrToIntEx(tmpStr2)-1;
-                  If Assigned(FDCLForm.Tables[ - 1].TableParts[v1]) Then
-                    FDCLForm:=FDCLLogOn.CreateForm(TmpStr, nil, FDCLForm,
-                      FDCLForm.Tables[ - 1].TableParts[v1].Query, nil, ModalOpen, ChooseMode,
-                      ReturnValueParams);
-                End;
-              end
-              Else
-                FDCLForm:=FDCLLogOn.CreateForm(TmpStr, nil, FDCLForm, FDCLForm.CurrentQuery, nil, ModalOpen, ChooseMode,
-                  ReturnValueParams);
-
-                If Assigned(FDCLForm) Then
-                begin
-                  If FDCLForm.ReturnFormValue.Choosen Then
-                  begin
-                    RetVal:=FDCLForm.ReturnFormValue;
-                    FDCLForm:=FDCLForm.FCallerForm;
-
-                    If FieldExists(RetVal.KeyModifyField, FDCLForm.CurrentQuery) Then
-                    begin
-                      If FDCLForm.CurrentQuery.Active and Not (FDCLForm.CurrentQuery.State in dsEditModes) Then
-                      begin
-                        if FDCLForm.CurrentQuery.CanModify then
-                        begin
-                          if Not (FDCLForm.CurrentQuery.State in dsEditModes) then
-                            FDCLForm.CurrentQuery.Edit;
-                          FDCLForm.CurrentQuery.FieldByName(RetVal.KeyModifyField).AsString:=RetVal.Key;
-                        end;
-                      end;
-                    end;
-
-                    If FieldExists(RetVal.ValueModifyField, FDCLForm.CurrentQuery) Then
-                    begin
-                      If FDCLForm.CurrentQuery.Active Then
-                      begin
-                        If FDCLForm.CurrentQuery.CanModify Then
-                        begin
-                          if Not (FDCLForm.CurrentQuery.State in dsEditModes) then
-                            FDCLForm.CurrentQuery.Edit;
-                          FDCLForm.CurrentQuery.FieldByName(RetVal.ValueModifyField).AsString:=RetVal.Val;
-                        end;
-                      end;
-                    end;
-
-                    If RetVal.KeyEditName<>'' Then
-                    begin
-                      If Assigned(FDCLForm.Tables[FDCLForm.CurrentGridIndex]) Then
-                        If Length(FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits)>0 Then
-                        begin
-                          v1:=Length(FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits);
-                          For v2:=1 to v1 do
-                          begin
-                            If CompareString(RetVal.KeyEditName, FDCLForm.Tables[FDCLForm.CurrentGridIndex]
-                                .Edits[v2-1].Edit.Name) Then
-                            begin
-                              FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits[v2-1].Edit.Text:=
-                                RetVal.Key;
-
-                              break;
-                            end;
-                          end;
-                        end;
-                    end;
-
-                    If RetVal.ValueEditName<>'' Then
-                    begin
-                      If Assigned(FDCLForm.Tables[FDCLForm.CurrentGridIndex]) Then
-                        If Length(FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits)>0 Then
-                        begin
-                          v1:=Length(FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits);
-                          For v2:=1 to v1 do
-                          begin
-                            If CompareString(RetVal.ValueEditName, FDCLForm.Tables[FDCLForm.CurrentGridIndex]
-                                .Edits[v2-1].Edit.Name) Then
-                            begin
-                              FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits[v2-1].Edit.Text:=
-                                RetVal.Val;
-
-                              break;
-                            end;
-                          end;
-                        end;
-                    end;
-
-                    if RetVal.KeyVar<>'' then
-                    begin
-                      FDCLLogOn.Variables.NewVariableWithTest(RetVal.KeyVar);
-                      FDCLLogOn.Variables.SetVariableByName(RetVal.KeyVar, RetVal.Key);
-                    end;
-
-                    if RetVal.ValueVar<>'' then
-                    begin
-                      FDCLLogOn.Variables.NewVariableWithTest(RetVal.ValueVar);
-                      FDCLLogOn.Variables.SetVariableByName(RetVal.ValueVar, RetVal.Val);
-                    end;
-
-                    If Assigned(ReturnValueParams) Then
-                      FreeAndNil(ReturnValueParams);
-                  end;
-                end;
-            End;
-          end;
-
-          If PosEx('CloseDialog;', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) Then
-            Begin
-              tmpDCLForm:=FDCLForm.GetParentForm;
-              FDCLForm.CloseAction:=fcaClose;
-              FDCLForm:=tmpDCLForm;
-            End;
-          end;
-
-          If PosEx('Hold;', ScrStr)=1 Then
-          begin
-{$IFNDEF DCLDEBUG}
-            If Assigned(FDCLForm) then
-              FDCLForm.Form.FormStyle:=fsStayOnTop;
-{$ENDIF}
-          end;
-
-          If PosEx('HoldDown;', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) then
-              If Not FDCLForm.Modal Then
-                FDCLForm.Form.FormStyle:=fsNormal;
-          end;
-
-          If PosEx('Declare=', ScrStr)=1 Then
-          begin
-            TmpStr:=Trim(FindParam('declare=', ScrStr));
-            For v1:=1 to ParamsCount(TmpStr) do
-            begin
-              tmpStr1:=SortParams(TmpStr, v1);
-              v2:=PosEx('=', tmpStr1);
-              If v2=0 Then
-                FDCLLogOn.Variables.NewVariable(tmpStr1, '')
-              Else
-              begin
-                tmpStr2:=Trim(Copy(tmpStr1, 1, v2-1));
-                tmpStr3:=Copy(tmpStr1, v2+1, Length(tmpStr1)-v2);
-                TranslateValContext(tmpStr3);
-
-                FDCLLogOn.Variables.NewVariable(tmpStr2, tmpStr3);
+                If Assigned(FDCLForm.Tables[ - 1].TableParts[v1]) Then
+                  FDCLForm.Tables[ - 1].FTablePartsPages.ActivePageIndex:=v1;
               end;
             end;
-          end;
 
-          If PosEx('Dispose=', ScrStr)=1 Then
-          begin
-            tmpStr2:=FindParam('dispose=', ScrStr);
-            For v1:=1 to ParamsCount(tmpStr2) do
-              FDCLLogOn.Variables.FreeVariable(SortParams(tmpStr2, v1));
-          end;
+            If PosEx('Insert_part;', ScrStr)=1 Then
+            begin
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+                If Assigned(FDCLForm) Then
+                If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
+                  FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Insert;
+            end;
 
-          If PosEx('Exit;', ScrStr)=1 Then
-          begin
-            Application.MainForm.Close;
-          end;
+            If PosEx('Append_part;', ScrStr)=1 Then
+            begin
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+                If Assigned(FDCLForm) Then
+                If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
+                  FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Append;
+            end;
 
-          If PosEx('Debug;', ScrStr)=1 Then
-          begin
-            GPT.DebugOn:=Not GPT.DebugOn;
-          end;
+            If PosEx('Post_part;', ScrStr)=1 Then
+            begin
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+                If Assigned(FDCLForm) Then
+                If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
+                  FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Post;
+            end;
 
-          If PosEx('SetMainFormCaption=', ScrStr)=1 Then
-          begin
-            TmpStr:=FindParam('SetMainFormCaption=', ScrStr);
-            TranslateValContext(TmpStr);
-            Application.MainForm.Caption:=TmpStr;
-          end;
+            If PosEx('Delete_part;', ScrStr)=1 Then
+            begin
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+                If Assigned(FDCLForm) Then
+                If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
+                  FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Delete;
+            end;
 
-          If PosEx('SetFormCaption=', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) then
-            Begin
-              TmpStr:=FindParam('SetFormCaption=', ScrStr);
+            If PosEx('DeleteConf_part;', ScrStr)=1 Then
+            begin
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+                If Assigned(FDCLForm) Then
+                If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
+                  If ShowErrorMessage(10, GetDCLMessageString(msDeleteRecordQ))=1 Then
+                    FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Delete;
+            end;
+
+            If PosEx('Edit_part;', ScrStr)=1 Then
+            begin
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+                If Assigned(FDCLForm) Then
+                If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
+                  FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Edit;
+            end;
+
+            If PosEx('Next_part;', ScrStr)=1 Then
+            begin
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+                If Assigned(FDCLForm) Then
+                If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
+                  FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Next;
+            end;
+
+            If PosEx('Prior_part;', ScrStr)=1 Then
+            begin
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+                If Assigned(FDCLForm) Then
+                If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
+                  FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Prior;
+            end;
+
+            If PosEx('First_part;', ScrStr)=1 Then
+            begin
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+                If Assigned(FDCLForm) Then
+                If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
+                  FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.First;
+            end;
+
+            If PosEx('Last_part;', ScrStr)=1 Then
+            begin
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+                If Assigned(FDCLForm) Then
+                If Assigned(FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex]) Then
+                  FDCLForm.Tables[ - 1].TableParts[FDCLForm.CurrentTabIndex].Query.Last;
+            end;
+
+            If PosEx('Next;', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) Then
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+                FDCLForm.CurrentQuery.Next;
+            end;
+
+            If PosEx('Prior;', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) Then
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+                FDCLForm.CurrentQuery.Prior;
+            end;
+
+            If PosEx('First;', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) Then
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+                FDCLForm.CurrentQuery.First;
+            end;
+
+            If PosEx('Last;', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) Then
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+                FDCLForm.CurrentQuery.Last;
+            end;
+
+            If PosEx('Edit;', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) Then
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+                FDCLForm.CurrentQuery.Edit;
+            end;
+
+            If PosEx('Post;', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) Then
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+                If FDCLForm.CurrentQuery.CanModify and (FDCLForm.CurrentQuery.State in dsEditModes) Then
+                try
+                  FDCLForm.CurrentQuery.Post;
+                finally
+                  ////
+                end;
+            end;
+
+            If PosEx('PostClose;', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) Then
+              begin
+                If FDCLForm.CurrentQuery.State in dsEditModes Then
+                  FDCLForm.CurrentQuery.Post;
+                tmpDCLForm:=FDCLForm.GetParentForm;
+                FDCLForm.CloseAction:=fcaClose;
+                FDCLForm:=tmpDCLForm;
+              end;
+            end;
+
+            If PosEx('CancelClose;', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) Then
+              begin
+                If FDCLForm.CurrentQuery.State in dsEditModes Then
+                  FDCLForm.CurrentQuery.Cancel;
+                tmpDCLForm:=FDCLForm.GetParentForm;
+                FDCLForm.CloseAction:=fcaClose;
+                FDCLForm:=tmpDCLForm;
+              end;
+            end;
+
+            If PosEx('PostRefresh;', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) then
+              Begin
+                FDCLForm.CurrentQuery.Post;
+                FDCLForm.Tables[ - 1].ReFreshQuery;
+              End;
+            end;
+
+            If PosEx('Cancel;', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) then
+                If FDCLForm.CurrentQuery.State in dsEditModes Then
+                  FDCLForm.CurrentQuery.Cancel;
+            end;
+
+            If PosEx('Delete;', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) then
+                If GetRaightsByContext(InContext)>ulReadOnly Then
+                  FDCLForm.CurrentQuery.Delete;
+            end;
+
+            If PosEx('DeleteConf;', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) then
+                If GetRaightsByContext(InContext)>ulReadOnly Then
+                  If ShowErrorMessage(10, GetDCLMessageString(msDeleteRecordQ))=1 Then
+                    FDCLForm.CurrentQuery.Delete;
+            end;
+
+            If PosEx('Insert;', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) then
+                FDCLForm.CurrentQuery.Insert;
+            end;
+
+            If PosEx('Append;', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) then
+                FDCLForm.CurrentQuery.Append;
+            end;
+
+            If PosEx('Refresh;', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) then
+                FDCLForm.Tables[ - 1].ReFreshQuery;
+            end;
+
+            If PosEx('EvalFormula=', ScrStr)=1 Then
+            begin
+              tmp1:=FindParam('EvalFormula=', ScrStr);
+              If Assigned(FDCLForm) then
+                TranslateVals(tmp1, FDCLForm.CurrentQuery)
+              Else
+                TranslateVals(tmp1, nil);
+
+              FDCLLogOn.EvalFormula:=Calculate(tmp1);
+            end;
+
+            If PosEx('Dialog=', ScrStr)=1 Then
+            begin
+              TmpStr:=FindParam('Dialog=', ScrStr);
+              ModalOpen:=FindParam('ModalOpen=', TmpStr)='1';
+              ChooseMode:=chmNone;
+              ReturnValueParams:=nil;
+              If FindParam('ChooseMode=', ScrStr)<>'' Then
+              begin
+                v1:=StrToIntEx(FindParam('ChooseMode=', ScrStr));
+                ChooseMode:=TChooseMode(v1);
+                ReturnValueParams:=TReturnValueParams.Create(FindParam('KeyField=', ScrStr),
+                  FindParam('ValueField=', ScrStr), FindParam('KeyEditName=', ScrStr), FindParam('ValueEditName=', ScrStr),
+                  FindParam('KeyModifyField=', ScrStr), FindParam('ValueModifyField=', ScrStr),
+                  FindParam('KeyVariable=', ScrStr), FindParam('ValueVariable=', ScrStr));
+              end;
+
+              If FindParam('Child=', ScrStr)='1' Then
+              Begin
+                If Assigned(FDCLForm) then
+                  FDCLForm:=FDCLLogOn.CreateForm(TmpStr, FDCLForm, FDCLForm, nil, FDCLForm.GetDataSource,
+                    ModalOpen, ChooseMode, ReturnValueParams);
+              End
+              Else
+              Begin
+                tmpStr2:=Trim(FindParam('TablePart=', ScrStr));
+                If tmpStr2<>'' Then
+                begin
+                  If Assigned(FDCLForm) then
+                  Begin
+                    v1:=StrToIntEx(tmpStr2)-1;
+                    If Assigned(FDCLForm.Tables[ - 1].TableParts[v1]) Then
+                      FDCLForm:=FDCLLogOn.CreateForm(TmpStr, nil, FDCLForm,
+                        FDCLForm.Tables[ - 1].TableParts[v1].Query, nil, ModalOpen, ChooseMode,
+                        ReturnValueParams);
+                  End;
+                end
+                Else
+                  FDCLForm:=FDCLLogOn.CreateForm(TmpStr, nil, FDCLForm, FDCLForm.CurrentQuery, nil, ModalOpen, ChooseMode,
+                    ReturnValueParams);
+
+                  If Assigned(FDCLForm) Then
+                  begin
+                    If FDCLForm.ReturnFormValue.Choosen Then
+                    begin
+                      RetVal:=FDCLForm.ReturnFormValue;
+                      FDCLForm:=FDCLForm.FCallerForm;
+
+                      If FieldExists(RetVal.KeyModifyField, FDCLForm.CurrentQuery) Then
+                      begin
+                        If FDCLForm.CurrentQuery.Active and Not (FDCLForm.CurrentQuery.State in dsEditModes) Then
+                        begin
+                          if FDCLForm.CurrentQuery.CanModify then
+                          begin
+                            if Not (FDCLForm.CurrentQuery.State in dsEditModes) then
+                              FDCLForm.CurrentQuery.Edit;
+                            FDCLForm.CurrentQuery.FieldByName(RetVal.KeyModifyField).AsString:=RetVal.Key;
+                          end;
+                        end;
+                      end;
+
+                      If FieldExists(RetVal.ValueModifyField, FDCLForm.CurrentQuery) Then
+                      begin
+                        If FDCLForm.CurrentQuery.Active Then
+                        begin
+                          If FDCLForm.CurrentQuery.CanModify Then
+                          begin
+                            if Not (FDCLForm.CurrentQuery.State in dsEditModes) then
+                              FDCLForm.CurrentQuery.Edit;
+                            FDCLForm.CurrentQuery.FieldByName(RetVal.ValueModifyField).AsString:=RetVal.Val;
+                          end;
+                        end;
+                      end;
+
+                      If RetVal.KeyEditName<>'' Then
+                      begin
+                        If Assigned(FDCLForm.Tables[FDCLForm.CurrentGridIndex]) Then
+                          If Length(FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits)>0 Then
+                          begin
+                            v1:=Length(FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits);
+                            For v2:=1 to v1 do
+                            begin
+                              If CompareString(RetVal.KeyEditName, FDCLForm.Tables[FDCLForm.CurrentGridIndex]
+                                  .Edits[v2-1].Edit.Name) Then
+                              begin
+                                FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits[v2-1].Edit.Text:=
+                                  RetVal.Key;
+
+                                break;
+                              end;
+                            end;
+                          end;
+                      end;
+
+                      If RetVal.ValueEditName<>'' Then
+                      begin
+                        If Assigned(FDCLForm.Tables[FDCLForm.CurrentGridIndex]) Then
+                          If Length(FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits)>0 Then
+                          begin
+                            v1:=Length(FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits);
+                            For v2:=1 to v1 do
+                            begin
+                              If CompareString(RetVal.ValueEditName, FDCLForm.Tables[FDCLForm.CurrentGridIndex]
+                                  .Edits[v2-1].Edit.Name) Then
+                              begin
+                                FDCLForm.Tables[FDCLForm.CurrentGridIndex].Edits[v2-1].Edit.Text:=
+                                  RetVal.Val;
+
+                                break;
+                              end;
+                            end;
+                          end;
+                      end;
+
+                      if RetVal.KeyVar<>'' then
+                      begin
+                        FDCLLogOn.Variables.NewVariableWithTest(RetVal.KeyVar);
+                        FDCLLogOn.Variables.SetVariableByName(RetVal.KeyVar, RetVal.Key);
+                      end;
+
+                      if RetVal.ValueVar<>'' then
+                      begin
+                        FDCLLogOn.Variables.NewVariableWithTest(RetVal.ValueVar);
+                        FDCLLogOn.Variables.SetVariableByName(RetVal.ValueVar, RetVal.Val);
+                      end;
+
+                      If Assigned(ReturnValueParams) Then
+                        FreeAndNil(ReturnValueParams);
+                    end;
+                  end;
+              End;
+            end;
+
+            If PosEx('CloseDialog;', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) Then
+              Begin
+                tmpDCLForm:=FDCLForm.GetParentForm;
+                FDCLForm.CloseAction:=fcaClose;
+                FDCLForm:=tmpDCLForm;
+              End;
+            end;
+
+            If PosEx('Hold;', ScrStr)=1 Then
+            begin
+  {$IFNDEF DCLDEBUG}
+              If Assigned(FDCLForm) then
+                FDCLForm.Form.FormStyle:=fsStayOnTop;
+  {$ENDIF}
+            end;
+
+            If PosEx('HoldDown;', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) then
+                If Not FDCLForm.Modal Then
+                  FDCLForm.Form.FormStyle:=fsNormal;
+            end;
+
+            If PosEx('Declare=', ScrStr)=1 Then
+            begin
+              TmpStr:=Trim(FindParam('declare=', ScrStr));
+              For v1:=1 to ParamsCount(TmpStr) do
+              begin
+                tmpStr1:=SortParams(TmpStr, v1);
+                v2:=PosEx('=', tmpStr1);
+                If v2=0 Then
+                  FDCLLogOn.Variables.NewVariable(tmpStr1, '')
+                Else
+                begin
+                  tmpStr2:=Trim(Copy(tmpStr1, 1, v2-1));
+                  tmpStr3:=Copy(tmpStr1, v2+1, Length(tmpStr1)-v2);
+                  TranslateValContext(tmpStr3);
+
+                  FDCLLogOn.Variables.NewVariable(tmpStr2, tmpStr3);
+                end;
+              end;
+            end;
+
+            If PosEx('Dispose=', ScrStr)=1 Then
+            begin
+              tmpStr2:=FindParam('dispose=', ScrStr);
+              For v1:=1 to ParamsCount(tmpStr2) do
+                FDCLLogOn.Variables.FreeVariable(SortParams(tmpStr2, v1));
+            end;
+
+            If PosEx('Exit;', ScrStr)=1 Then
+            begin
+              Application.MainForm.Close;
+            end;
+
+            If PosEx('Debug;', ScrStr)=1 Then
+            begin
+              GPT.DebugOn:=Not GPT.DebugOn;
+            end;
+
+            If PosEx('SetMainFormCaption=', ScrStr)=1 Then
+            begin
+              TmpStr:=FindParam('SetMainFormCaption=', ScrStr);
               TranslateValContext(TmpStr);
-              FDCLForm.FForm.Caption:=TmpStr;
-            End;
-          end;
+              Application.MainForm.Caption:=TmpStr;
+            end;
 
-          If PosEx('ApplicationTitle=', ScrStr)=1 Then
-          begin
-            TmpStr:=FindParam('ApplicationTitle=', ScrStr);
-            TranslateValContext(TmpStr);
-            Application.Title:=TmpStr;
-          end;
+            If PosEx('SetFormCaption=', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) then
+              Begin
+                TmpStr:=FindParam('SetFormCaption=', ScrStr);
+                TranslateValContext(TmpStr);
+                FDCLForm.FForm.Caption:=TmpStr;
+              End;
+            end;
 
-          If PosEx('Status=', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) then
-            Begin
-              TmpStr:=FindParam('Status=', ScrStr);
+            If PosEx('ApplicationTitle=', ScrStr)=1 Then
+            begin
+              TmpStr:=FindParam('ApplicationTitle=', ScrStr);
               TranslateValContext(TmpStr);
-              FDCLForm.SetDBStatus(TmpStr);
-            End;
-          end;
+              Application.Title:=TmpStr;
+            end;
 
-          If PosEx('AddStatus=', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) then
-            Begin
-              TmpStr:=FindParam('AddStatus=', ScrStr);
-              v1:= - 1;
-              If FindParam('Width=', ScrStr)<>'' Then
-                v1:=StrToIntEx(FindParam('Width=', ScrStr));
+            If PosEx('Status=', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) then
+              Begin
+                TmpStr:=FindParam('Status=', ScrStr);
+                TranslateValContext(TmpStr);
+                FDCLForm.SetDBStatus(TmpStr);
+              End;
+            end;
 
-              FDCLForm.AddStatus(TmpStr, v1);
-            End;
-          end;
+            If PosEx('AddStatus=', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) then
+              Begin
+                TmpStr:=FindParam('AddStatus=', ScrStr);
+                v1:= - 1;
+                If FindParam('Width=', ScrStr)<>'' Then
+                  v1:=StrToIntEx(FindParam('Width=', ScrStr));
 
-          If PosEx('SetStatusText=', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) then
-            Begin
-              TmpStr:=FindParam('Status=', ScrStr);
+                FDCLForm.AddStatus(TmpStr, v1);
+              End;
+            end;
+
+            If PosEx('SetStatusText=', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) then
+              Begin
+                TmpStr:=FindParam('Status=', ScrStr);
+                If TmpStr<>'' Then
+                begin
+                  If LowerCase(TmpStr)='last' Then
+                    v1:=0
+                  Else
+                    v1:=StrToIntEx(Trim(FindParam('Status=', ScrStr)))
+                end
+                Else
+                  v1:=0;
+
+                TmpStr:=FindParam('SetStatusText=', ScrStr);
+                TranslateValContext(TmpStr);
+                v2:= - 1;
+                If FindParam('Width=', ScrStr)<>'' Then
+                  v2:=StrToIntEx(Trim(FindParam('Width=', ScrStr)));
+                FDCLForm.SetStatus(TmpStr, v1-1, v2);
+              End;
+            end;
+
+            If PosEx('StatusWidth=', ScrStr)=1 Then
+            begin
+              TmpStr:=FindParam('StatusWidth=', ScrStr);
               If TmpStr<>'' Then
               begin
                 If LowerCase(TmpStr)='last' Then
                   v1:=0
                 Else
-                  v1:=StrToIntEx(Trim(FindParam('Status=', ScrStr)))
+                  v1:=StrToIntEx(Trim(FindParam('StatusWidth=', ScrStr)))
               end
               Else
                 v1:=0;
 
-              TmpStr:=FindParam('SetStatusText=', ScrStr);
-              TranslateValContext(TmpStr);
               v2:= - 1;
               If FindParam('Width=', ScrStr)<>'' Then
                 v2:=StrToIntEx(Trim(FindParam('Width=', ScrStr)));
-              FDCLForm.SetStatus(TmpStr, v1-1, v2);
-            End;
-          end;
+              If Assigned(FDCLForm) then
+                FDCLForm.SetStatusWidth(v1-1, v2);
+            end;
 
-          If PosEx('StatusWidth=', ScrStr)=1 Then
-          begin
-            TmpStr:=FindParam('StatusWidth=', ScrStr);
-            If TmpStr<>'' Then
+            If PosEx('DeleteStatus=', ScrStr)=1 Then
             begin
-              If LowerCase(TmpStr)='last' Then
-                v1:=0
-              Else
-                v1:=StrToIntEx(Trim(FindParam('StatusWidth=', ScrStr)))
-            end
-            Else
-              v1:=0;
-
-            v2:= - 1;
-            If FindParam('Width=', ScrStr)<>'' Then
-              v2:=StrToIntEx(Trim(FindParam('Width=', ScrStr)));
-            If Assigned(FDCLForm) then
-              FDCLForm.SetStatusWidth(v1-1, v2);
-          end;
-
-          If PosEx('DeleteStatus=', ScrStr)=1 Then
-          begin
-            TmpStr:=FindParam('DeleteStatus=', ScrStr);
-            If TmpStr<>'' Then
-            begin
-              If LowerCase(TmpStr)='last' Then
-                v1:=0
-              Else
-                v1:=StrToIntEx(Trim(FindParam('DeleteStatus=', ScrStr)));
-            end
-            Else
-              v1:=0;
-
-            If Assigned(FDCLForm) then
-              FDCLForm.DeleteStatus(v1);
-          end;
-
-          If PosEx('DeleteAllStatus;', ScrStr)=1 Then
-          begin
-            If Assigned(FDCLForm) then
-              FDCLForm.DeleteAllStatus;
-          end;
-
-          If PosEx('WriteConfig=', ScrStr)=1 Then
-          begin
-            tmp1:=FindParam('WriteConfig=', ScrStr);
-            tmp3:=FindParam('UserID=', ScrStr);
-            tmp2:=Copy(ScrStr, PosEx('_Value=', ScrStr), Length(ScrStr));
-            Delete(tmp2, 1, 7);
-
-            FDCLLogOn.WriteConfig(tmp1, tmp2, tmp3);
-          end;
-
-          If PosEx('FormHeight=', ScrStr)=1 Then
-          begin
-            v1:=StrToIntEx(FindParam('FormHeight=', ScrStr));
-            If Assigned(FDCLForm) Then
-              FDCLForm.FForm.ClientHeight:=v1;
-          end;
-
-          If PosEx('FormWidth=', ScrStr)=1 Then
-          begin
-            v1:=StrToIntEx(FindParam('FormWidth=', ScrStr));
-            If Assigned(FDCLForm) Then
-              FDCLForm.FForm.ClientWidth:=v1;
-          end;
-
-          If (PosEx('PutInDB=', ScrStr)=1)or(PosEx('PutToDB=', ScrStr)=1) Then
-          begin
-            If GetRaightsByContext(InContext)>ulReadOnly Then
-            begin
-              TmpStr:=FindParam('FileName=', ScrStr);
-              tmpStr2:=FindParam('Compress=', ScrStr);
-
-              If Not IsFullPAth(TmpStr) Then
-                TmpStr:=IncludeTrailingPathDelimiter(AppConfigDir)+TmpStr;
-              If FileExists(TmpStr) Then
+              TmpStr:=FindParam('DeleteStatus=', ScrStr);
+              If TmpStr<>'' Then
               begin
+                If LowerCase(TmpStr)='last' Then
+                  v1:=0
+                Else
+                  v1:=StrToIntEx(Trim(FindParam('DeleteStatus=', ScrStr)));
+              end
+              Else
+                v1:=0;
+
+              If Assigned(FDCLForm) then
+                FDCLForm.DeleteStatus(v1);
+            end;
+
+            If PosEx('DeleteAllStatus;', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) then
+                FDCLForm.DeleteAllStatus;
+            end;
+
+            If PosEx('WriteConfig=', ScrStr)=1 Then
+            begin
+              tmp1:=FindParam('WriteConfig=', ScrStr);
+              tmp3:=FindParam('UserID=', ScrStr);
+              tmp2:=Copy(ScrStr, PosEx('_Value=', ScrStr), Length(ScrStr));
+              Delete(tmp2, 1, 7);
+
+              FDCLLogOn.WriteConfig(tmp1, tmp2, tmp3);
+            end;
+
+            If PosEx('FormHeight=', ScrStr)=1 Then
+            begin
+              v1:=StrToIntEx(FindParam('FormHeight=', ScrStr));
+              If Assigned(FDCLForm) Then
+                FDCLForm.FForm.ClientHeight:=v1;
+            end;
+
+            If PosEx('FormWidth=', ScrStr)=1 Then
+            begin
+              v1:=StrToIntEx(FindParam('FormWidth=', ScrStr));
+              If Assigned(FDCLForm) Then
+                FDCLForm.FForm.ClientWidth:=v1;
+            end;
+
+            If (PosEx('PutInDB=', ScrStr)=1)or(PosEx('PutToDB=', ScrStr)=1) Then
+            begin
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+              begin
+                TmpStr:=FindParam('FileName=', ScrStr);
+                tmpStr2:=FindParam('Compress=', ScrStr);
+
+                If Not IsFullPAth(TmpStr) Then
+                  TmpStr:=IncludeTrailingPathDelimiter(AppConfigDir)+TmpStr;
+                If FileExists(TmpStr) Then
+                begin
+                  If Not Assigned(BinStore) Then
+                    BinStore:=TBinStore.Create(FDCLLogOn, ftSQL, '', '', '',
+                      FindParam('DataField=', ScrStr));
+                  BinStore.StoreFromFile(TmpStr, FindParam('SQL=', ScrStr), '', tmpStr2='1');
+                end
+                Else
+                  ShowErrorMessage( - 8001, TmpStr);
+              end;
+            end;
+
+            If PosEx('GetFromDB=', ScrStr)=1 Then
+            begin
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+              begin
+                TmpStr:=FindParam('FileName=', ScrStr);
+                If Not IsFullPAth(TmpStr) Then
+                  TmpStr:=IncludeTrailingPathDelimiter(AppConfigDir)+TmpStr;
+
                 If Not Assigned(BinStore) Then
                   BinStore:=TBinStore.Create(FDCLLogOn, ftSQL, '', '', '',
                     FindParam('DataField=', ScrStr));
-                BinStore.StoreFromFile(TmpStr, FindParam('SQL=', ScrStr), '', tmpStr2='1');
-              end
+
+                BinStore.SaveToFile(TmpStr, FindParam('SQL=', ScrStr));
+              end;
+            end;
+
+            If PosEx('ClearBLOB=', ScrStr)=1 Then
+            begin
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+              begin
+                tmpStr1:=FindParam('ClearBLOB=', ScrStr);
+
+                If Not Assigned(BinStore) Then
+                  BinStore:=TBinStore.Create(FDCLLogOn, ftSQL, '', '', '',
+                    FindParam('DataField=', ScrStr));
+
+                BinStore.ClearData(FindParam('SQL=', ScrStr));
+              end;
+            end;
+
+            If PosEx('DeleteBLOB=', ScrStr)=1 Then
+            begin
+              If GetRaightsByContext(InContext)>ulReadOnly Then
+              begin
+                tmpStr1:=FindParam('DeleteBLOB=', ScrStr);
+
+                If Not Assigned(BinStore) Then
+                  BinStore:=TBinStore.Create(FDCLLogOn, ftSQL, '', '', '',
+                    FindParam('DataField=', ScrStr));
+
+                BinStore.DeleteData(FindParam('SQL=', ScrStr));
+              end;
+            end;
+
+            If PosEx('DecompressData=', ScrStr)=1 Then
+            begin
+              If Not Assigned(BinStore) Then
+                BinStore:=TBinStore.Create(FDCLLogOn, ftSQL, '', '', '',
+                  FindParam('DataField=', ScrStr));
+
+              BinStore.DeCompressData(FindParam('SQL=', ScrStr), '');
+            end;
+
+            If PosEx('CompressData=', ScrStr)=1 Then
+            begin
+              If Not Assigned(BinStore) Then
+                BinStore:=TBinStore.Create(FDCLLogOn, ftSQL, '', '', '',
+                  FindParam('DataField=', ScrStr));
+
+              BinStore.CompressData(FindParam('SQL=', ScrStr), '');
+            end;
+
+            If PosEx('MD5Data=', ScrStr)=1 Then
+            begin
+              tmpStr1:=FindParam('MD5Data=', ScrStr);
+
+              If Not Assigned(BinStore) Then
+                BinStore:=TBinStore.Create(FDCLLogOn, ftSQL, '', '', '',
+                  FindParam('DataField=', ScrStr));
+              FDCLLogOn.Variables.NewVariable(tmpStr1, BinStore.MD5(FindParam('SQL=', ScrStr)));
+            end;
+
+            If PosEx('SQLmon_Clear;', ScrStr)=1 Then
+            begin
+              FDCLLogOn.SQLMon.Clear;
+            end;
+
+            If PosEx('SQLMon;', ScrStr)=1 Then
+            begin
+              FDCLLogOn.SQLMon.TrraceStatus:=Not FDCLLogOn.SQLMon.TrraceStatus;
+            end;
+
+            If PosEx('OpenSpool=', ScrStr)=1 Then
+            begin
+              SpoolFileName:=FindParam('OpenSpool=', ScrStr);
+              If Not IsFullPAth(SpoolFileName) Then
+                SpoolFileName:=IncludeTrailingPathDelimiter(AppConfigDir)+SpoolFileName;
+
+              If Not Assigned(Spool) Then
+                Spool:=TStringList.Create;
+            end;
+
+            If PosEx('Spool=', ScrStr)=1 Then
+            begin
+              If Not Assigned(Spool) Then
+                Spool:=TStringList.Create;
+              If SpoolFileName='' Then
+                SpoolFileName:='spool.txt';
+
+              If Not IsFullPAth(SpoolFileName) Then
+                SpoolFileName:=IncludeTrailingPathDelimiter(AppConfigDir)+SpoolFileName;
+
+              TmpStr:=Copy(ScrStr, 7, Length(ScrStr)-6);
+              Spool.Append(TmpStr);
+              Spool.SaveToFile(SpoolFileName);
+            end;
+
+            If PosEx('Evalute=', ScrStr)=1 Then
+            begin
+              tmp1:=FindParam('Evalute=', ScrStr);
+
+              tmp2:=FindParam('ResultVar=', ScrStr);
+              If Not FDCLLogOn.Variables.Exists(tmp2) Then
+                tmp2:='';
+              If tmp2='' Then
+                EvalResultScript:=RunScript(tmp1)
               Else
-                ShowErrorMessage( - 8001, TmpStr);
+              begin
+                SetVariable(tmp2, RunScript(tmp1));
+              end;
             end;
-          end;
 
-          If PosEx('GetFromDB=', ScrStr)=1 Then
-          begin
-            If GetRaightsByContext(InContext)>ulReadOnly Then
+            If PosEx('AddFunctions=', ScrStr)=1 Then
             begin
-              TmpStr:=FindParam('FileName=', ScrStr);
-              If Not IsFullPAth(TmpStr) Then
-                TmpStr:=IncludeTrailingPathDelimiter(AppConfigDir)+TmpStr;
+              tmpDCL:=TStringList.Create;
 
-              If Not Assigned(BinStore) Then
-                BinStore:=TBinStore.Create(FDCLLogOn, ftSQL, '', '', '',
-                  FindParam('DataField=', ScrStr));
-
-              BinStore.SaveToFile(TmpStr, FindParam('SQL=', ScrStr));
-            end;
-          end;
-
-          If PosEx('ClearBLOB=', ScrStr)=1 Then
-          begin
-            If GetRaightsByContext(InContext)>ulReadOnly Then
-            begin
-              tmpStr1:=FindParam('ClearBLOB=', ScrStr);
-
-              If Not Assigned(BinStore) Then
-                BinStore:=TBinStore.Create(FDCLLogOn, ftSQL, '', '', '',
-                  FindParam('DataField=', ScrStr));
-
-              BinStore.ClearData(FindParam('SQL=', ScrStr));
-            end;
-          end;
-
-          If PosEx('DeleteBLOB=', ScrStr)=1 Then
-          begin
-            If GetRaightsByContext(InContext)>ulReadOnly Then
-            begin
-              tmpStr1:=FindParam('DeleteBLOB=', ScrStr);
-
-              If Not Assigned(BinStore) Then
-                BinStore:=TBinStore.Create(FDCLLogOn, ftSQL, '', '', '',
-                  FindParam('DataField=', ScrStr));
-
-              BinStore.DeleteData(FindParam('SQL=', ScrStr));
-            end;
-          end;
-
-          If PosEx('DecompressData=', ScrStr)=1 Then
-          begin
-            If Not Assigned(BinStore) Then
-              BinStore:=TBinStore.Create(FDCLLogOn, ftSQL, '', '', '',
-                FindParam('DataField=', ScrStr));
-
-            BinStore.DeCompressData(FindParam('SQL=', ScrStr), '');
-          end;
-
-          If PosEx('CompressData=', ScrStr)=1 Then
-          begin
-            If Not Assigned(BinStore) Then
-              BinStore:=TBinStore.Create(FDCLLogOn, ftSQL, '', '', '',
-                FindParam('DataField=', ScrStr));
-
-            BinStore.CompressData(FindParam('SQL=', ScrStr), '');
-          end;
-
-          If PosEx('MD5Data=', ScrStr)=1 Then
-          begin
-            tmpStr1:=FindParam('MD5Data=', ScrStr);
-
-            If Not Assigned(BinStore) Then
-              BinStore:=TBinStore.Create(FDCLLogOn, ftSQL, '', '', '',
-                FindParam('DataField=', ScrStr));
-            FDCLLogOn.Variables.NewVariable(tmpStr1, BinStore.MD5(FindParam('SQL=', ScrStr)));
-          end;
-
-          If PosEx('SQLmon_Clear;', ScrStr)=1 Then
-          begin
-            FDCLLogOn.SQLMon.Clear;
-          end;
-
-          If PosEx('SQLMon;', ScrStr)=1 Then
-          begin
-            FDCLLogOn.SQLMon.TrraceStatus:=Not FDCLLogOn.SQLMon.TrraceStatus;
-          end;
-
-          If PosEx('OpenSpool=', ScrStr)=1 Then
-          begin
-            SpoolFileName:=FindParam('OpenSpool=', ScrStr);
-            If Not IsFullPAth(SpoolFileName) Then
-              SpoolFileName:=IncludeTrailingPathDelimiter(AppConfigDir)+SpoolFileName;
-
-            If Not Assigned(Spool) Then
-              Spool:=TStringList.Create;
-          end;
-
-          If PosEx('Spool=', ScrStr)=1 Then
-          begin
-            If Not Assigned(Spool) Then
-              Spool:=TStringList.Create;
-            If SpoolFileName='' Then
-              SpoolFileName:='spool.txt';
-
-            If Not IsFullPAth(SpoolFileName) Then
-              SpoolFileName:=IncludeTrailingPathDelimiter(AppConfigDir)+SpoolFileName;
-
-            TmpStr:=Copy(ScrStr, 7, Length(ScrStr)-6);
-            Spool.Append(TmpStr);
-            Spool.SaveToFile(SpoolFileName);
-          end;
-
-          If PosEx('Evalute=', ScrStr)=1 Then
-          begin
-            tmp1:=FindParam('Evalute=', ScrStr);
-
-            tmp2:=FindParam('ResultVar=', ScrStr);
-            If Not FDCLLogOn.Variables.Exists(tmp2) Then
-              tmp2:='';
-            If tmp2='' Then
-              EvalResultScript:=RunScript(tmp1)
-            Else
-            begin
-              SetVariable(tmp2, RunScript(tmp1));
-            end;
-          end;
-
-          If PosEx('AddFunctions=', ScrStr)=1 Then
-          begin
-            tmpDCL:=TStringList.Create;
-
-            TmpStr:=FindParam('AddFunctions=', ScrStr);
-            DCLQuery.Close;
-            DCLQuery.SQL.Text:='select Count(*) from '+GPT.DCLTable+' where '+GPT.UpperString+
-              GPT.DCLNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+TmpStr+
-              GPT.StringTypeChar+GPT.UpperStringEnd;
-            DCLQuery.Open;
-            RecCount:=DCLQuery.Fields[0].AsInteger;
-            If RecCount=1 Then
-            begin
+              TmpStr:=FindParam('AddFunctions=', ScrStr);
               DCLQuery.Close;
-              DCLQuery.SQL.Text:='select '+GPT.DCLTextField+' from '+GPT.DCLTable+' where '+
-                GPT.UpperString+GPT.DCLNameField+GPT.UpperStringEnd+'='+GPT.UpperString+
-                GPT.StringTypeChar+TmpStr+GPT.StringTypeChar+GPT.UpperStringEnd;
+              DCLQuery.SQL.Text:='select Count(*) from '+GPT.DCLTable+' where '+GPT.UpperString+
+                GPT.DCLNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+TmpStr+
+                GPT.StringTypeChar+GPT.UpperStringEnd;
               DCLQuery.Open;
-              TmpStr:=DCLQuery.FieldByName(GPT.DCLTextField).AsString;
-              If Assigned(FDCLForm) then
-                TranslateVals(TmpStr, FDCLForm.Tables[ - 1].FQuery);
-              tmpDCL.Text:=TmpStr;
-              AddCodeScript(tmpDCL);
+              RecCount:=DCLQuery.Fields[0].AsInteger;
+              If RecCount=1 Then
+              begin
+                DCLQuery.Close;
+                DCLQuery.SQL.Text:='select '+GPT.DCLTextField+' from '+GPT.DCLTable+' where '+
+                  GPT.UpperString+GPT.DCLNameField+GPT.UpperStringEnd+'='+GPT.UpperString+
+                  GPT.StringTypeChar+TmpStr+GPT.StringTypeChar+GPT.UpperStringEnd;
+                DCLQuery.Open;
+                TmpStr:=DCLQuery.FieldByName(GPT.DCLTextField).AsString;
+                If Assigned(FDCLForm) then
+                  TranslateVals(TmpStr, FDCLForm.Tables[ - 1].FQuery);
+                tmpDCL.Text:=TmpStr;
+                AddCodeScript(tmpDCL);
+              end;
+              FreeAndNil(tmpDCL);
             end;
-            FreeAndNil(tmpDCL);
-          end;
 
-          If PosEx('ExecVBS=', ScrStr)=1 Then
-          begin
-            tmpDCL:=TStringList.Create;
-
-            TmpStr:=FindParam('ExecVBS=', ScrStr);
-            DCLQuery.Close;
-            DCLQuery.SQL.Text:='select Count(*) from '+GPT.DCLTable+' where '+GPT.UpperString+
-              GPT.DCLNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+TmpStr+
-              GPT.StringTypeChar+GPT.UpperStringEnd;
-            DCLQuery.Open;
-            RecCount:=DCLQuery.Fields[0].AsInteger;
-            If RecCount=1 Then
+            If PosEx('ExecVBS=', ScrStr)=1 Then
             begin
+              tmpDCL:=TStringList.Create;
+
+              TmpStr:=FindParam('ExecVBS=', ScrStr);
               DCLQuery.Close;
-              DCLQuery.SQL.Text:='select '+GPT.DCLTextField+' from '+GPT.DCLTable+' where '+
-                GPT.UpperString+GPT.DCLNameField+GPT.UpperStringEnd+'='+GPT.UpperString+
-                GPT.StringTypeChar+TmpStr+GPT.StringTypeChar+GPT.UpperStringEnd;
+              DCLQuery.SQL.Text:='select Count(*) from '+GPT.DCLTable+' where '+GPT.UpperString+
+                GPT.DCLNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+TmpStr+
+                GPT.StringTypeChar+GPT.UpperStringEnd;
               DCLQuery.Open;
-              TmpStr:=DCLQuery.FieldByName(GPT.DCLTextField).AsString;
-              If Assigned(FDCLForm) then
-                TranslateVals(TmpStr, FDCLForm.Tables[ - 1].FQuery);
-              ExecVBS(TmpStr);
+              RecCount:=DCLQuery.Fields[0].AsInteger;
+              If RecCount=1 Then
+              begin
+                DCLQuery.Close;
+                DCLQuery.SQL.Text:='select '+GPT.DCLTextField+' from '+GPT.DCLTable+' where '+
+                  GPT.UpperString+GPT.DCLNameField+GPT.UpperStringEnd+'='+GPT.UpperString+
+                  GPT.StringTypeChar+TmpStr+GPT.StringTypeChar+GPT.UpperStringEnd;
+                DCLQuery.Open;
+                TmpStr:=DCLQuery.FieldByName(GPT.DCLTextField).AsString;
+                If Assigned(FDCLForm) then
+                  TranslateVals(TmpStr, FDCLForm.Tables[ - 1].FQuery);
+                ExecVBS(TmpStr);
+              end;
+              FreeAndNil(tmpDCL);
             end;
-            FreeAndNil(tmpDCL);
-          end;
 
-          If PosEx('ReadOnly=', ScrStr)=1 Then
+            If PosEx('ReadOnly=', ScrStr)=1 Then
+            begin
+              If Assigned(FDCLForm) then
+                FDCLForm.Tables[ - 1].ReadOnly:=Trim(FindParam('ReadOnly=', ScrStr))='1';
+            end;
+
+            If LowerCase(ScrStr)='print' Then
+              If Assigned(FDCLForm) then
+                FDCLForm.Tables[FDCLForm.CurrentGridIndex].Print(nil);
+
+          end
+          Else
           begin
-            If Assigned(FDCLForm) then
-              FDCLForm.Tables[ - 1].ReadOnly:=Trim(FindParam('ReadOnly=', ScrStr))='1';
-          end;
+            If PosEx('Else', ScrStr)=1 Then
+            begin
+              If Breaking=False Then
+                StopFlag:=Not StopFlag;
+            end;
 
-          If LowerCase(ScrStr)='print' Then
-            If Assigned(FDCLForm) then
-              FDCLForm.Tables[FDCLForm.CurrentGridIndex].Print(nil);
-
-        end
-        Else
-        begin
-          If PosEx('Else', ScrStr)=1 Then
-          begin
-            If Breaking=False Then
-              StopFlag:=Not StopFlag;
-          end;
-
-          If PosEx('EndIf', ScrStr)=1 Then
-          begin
-            Dec(IfCounter);
-            If Breaking=False Then
-              StopFlag:=False;
+            If PosEx('EndIf', ScrStr)=1 Then
+            begin
+              Dec(IfCounter);
+              If Breaking=False Then
+                StopFlag:=False;
+            end;
           end;
         end;
-
         inc(ScriptStrings);
       end;
     end;
@@ -14732,6 +14746,7 @@ begin
       FreeAndNil(ToolButtonPanel);
   end;
   SetReadOnly(FReadOnly);
+  SetMultiselect(FMultiSelect);
 
   FShowed:=True;
 end;
