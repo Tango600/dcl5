@@ -327,6 +327,7 @@ begin
   lCellRect := ARect;
   if (ARow = 0) and (ACol - ColumnOffset(Options) >= 0) and (dgTitles in Options) then
   begin
+    // Titles
     lCaptionRect := ARect;
     if not FPaintInfo.ColPressed or (FPaintInfo.ColPressedIdx <> ACol) then
     begin
@@ -369,11 +370,12 @@ begin
 
     Canvas.Font.Color:=clBtnText;
     Canvas.TextRect(lCaptionRect, TextX, TextY, lStr);
-    Canvas.Brush.Color:=clBtnShadow; //   clGray;
+    Canvas.Brush.Color:=clBtnShadow;  // clGray;
     Canvas.FrameRect(lCaptionRect);
   end
   else if (ACol = 0) and (dgIndicator in Options) and (gdFixed in AState) then
   begin
+    // Indicator column
     MultiSelected := False;
     if (ARow >= TitleOffset(Options)) and DataLink.Active then
     begin
@@ -409,7 +411,7 @@ begin
             dsInsert: Indicator := 2;
           end;
           if Indicator > 0 then
-            Inc(ARect.Left); // center edit/insert indicator
+            Inc(ARect.Left);  // center edit/insert indicator
         end;
       end
       else
@@ -422,7 +424,7 @@ begin
         begin
           PenRecall := TPenRecall.Create(Canvas.Pen);
           try
-            Canvas.Pen.Color := clGray; //  clWhite;
+            Canvas.Pen.Color := clGray;  // clWhite;
             DrawArrow(Canvas, sdRight, Point(lCellRect.Left + 5, lCellRect.Top + 5), 5);
             Canvas.Pen.Color := $00404040;
             DrawArrow(Canvas, sdRight, Point(lCellRect.Left + 3, lCellRect.Top + 3), 5);
@@ -434,7 +436,7 @@ begin
         begin
           if Canvas.CanvasOrientation = coRightToLeft then
             Inc(ARect.Left);
-          Indicators := TPrivateCustomDBGrid(Self).FIndicators; // get access to the private field
+          Indicators := TPrivateCustomDBGrid(Self).FIndicators;  // get access to the private field
           if Assigned(Indicators) then
             Indicators.Draw(Canvas,
               ARect.Left + ((ARect.Right - ARect.Left) - Indicators.Width) div 2,
@@ -444,12 +446,21 @@ begin
       end;
     end;
   end
-  else if (ARow>0) and (ACol>0) and (HighlightCell(ACol, ARow, '', AState) and DefaultDrawing) then
+  else if (ARow>0) and (ACol>0) and HighlightCell(ACol, ARow, '', AState) and DefaultDrawing then
   begin
+    // Selected cell
     lCaptionRect := ARect;
-    lStr := Columns[ACol - ColumnOffset(Options)].Field.DisplayText;
-    if HighlightCell(ACol, ARow, '', AState) and DefaultDrawing then
-      DrawCellHighlight(ARect, AState, ACol, ARow);
+
+    OldActive := DataLink.ActiveRecord;
+    try
+      Datalink.ActiveRecord := ARow - TitleOffset(Options);
+      lStr := Columns[ACol - ColumnOffset(Options)].Field.DisplayText;
+      MultiSelected := RowIsMultiselected;
+    finally
+      Datalink.ActiveRecord := OldActive;
+    end;
+
+    DrawCellHighlight(ARect, AState, ACol, ARow);
 
     Canvas.Brush.Style := bsClear;
     Canvas.Font.Assign(Columns.Items[ACol - ColumnOffset(Options)].Title.Font);
