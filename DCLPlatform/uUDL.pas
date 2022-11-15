@@ -5993,17 +5993,17 @@ begin
                         end;
                         end;
                     end;
-                  end;
-                end
-                else
-                begin
-                  Case OfficeReport.OfficeFormat of
-                  ofOO:
-                  OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything, EnythingElse);
-                  ofMSO:
-                  OfficeReport.ReportExcel(ScrStr, Enything, EnythingElse);
-                  ofNone:
-                  ShowErrorMessage( - 6200, '');
+                  end
+                  else
+                  begin
+                    Case OfficeReport.OfficeFormat of
+                    ofOO:
+                    OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything, EnythingElse);
+                    ofMSO:
+                    OfficeReport.ReportExcel(ScrStr, Enything, EnythingElse);
+                    ofNone:
+                    ShowErrorMessage( - 6200, '');
+                    end;
                   end;
                 end;
               end;
@@ -6041,17 +6041,17 @@ begin
                         end;
                       end;
                     end;
-                  end;
-                end
-                else
-                begin
-                  Case OfficeReport.OfficeFormat of
-                  ofOO:
-                  OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything, EnythingElse);
-                  ofMSO:
-                  OfficeReport.ReportWord(ScrStr, Enything, EnythingElse);
-                  ofNone:
-                  ShowErrorMessage( - 6200, '');
+                  end
+                  else
+                  begin
+                    Case OfficeReport.OfficeFormat of
+                    ofOO:
+                    OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything, EnythingElse);
+                    ofMSO:
+                    OfficeReport.ReportWord(ScrStr, Enything, EnythingElse);
+                    ofNone:
+                    ShowErrorMessage( - 6200, '');
+                    end;
                   end;
                 end;
               end;
