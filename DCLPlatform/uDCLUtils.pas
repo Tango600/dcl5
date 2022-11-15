@@ -1905,8 +1905,8 @@ end;
 Function ReplaceSQLFields(SQL, Fields: String): String;
 var
   i, s, f, skb, t, l:Integer;
-  First, Last:Boolean;
-  tmp1, DelimsSet, OpenerSet, CloseerSet, FindToken:String;
+  First:Boolean;
+  OpenerSet, CloseerSet, FindToken:String;
 begin
   Result:='';
 
@@ -1916,19 +1916,15 @@ begin
   begin
     s:=s+8;
 
-    DelimsSet:='( )[]'#39;
     OpenerSet:='(';
     CloseerSet:=')';
     First:=True;
-    Last:=False;
     l:=Length(FindToken);
     i:=1;
     t:=1;
     skb:=0;
     while i<Length(SQL) do
     Begin
-      Last:=i=Length(SQL);
-
       If Pos(SQL[i], OpenerSet)<>0 then
         Inc(skb)
       Else

@@ -15516,7 +15516,7 @@ begin
       Loc:=OO.Bridge_GetStruct('com.sun.star.lang.Locale');
 
       SQLStr:=FindParam('SQL=', ParamStr);
-      If (SQLStr='')and Assigned(FDCLGrid) Then
+      If (SQLStr='') and Assigned(FDCLGrid) Then
         SQLStr:=FDCLGrid.Query.SQL.Text;
 
       Fields:=FindParam('FieldsSet=', ParamStr);

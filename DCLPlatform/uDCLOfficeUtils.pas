@@ -382,8 +382,6 @@ Begin
   MsWord.Selection.Goto(What, Which, Count, Name);
 {$ENDIF}
   C:=Length(info);
-  //MsWord.Selection.Delete(EmptyParam, C);
-
   MsWord.Selection.Font.Bold:=_bold;
   MsWord.Selection.Font.italic:=_italic;
   MsWord.Selection.Font.StrikeThrough:=_StrikeThrough;
