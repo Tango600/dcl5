@@ -17,3 +17,9 @@ bin/*
 /DCLPlatform/SQLMon.txt
 /DCLPlatform/Dialogs.ini
 /DCLPlatform/*.lps
+/DCLPlatform/*.ini
+/Doc/*.pdf
+/DCLPlatform/*.odt
+/DCLPlatform/*.FDB
+*.docx
+/DCLPlatform/*_0.dproj
