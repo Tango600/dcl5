@@ -85,6 +85,7 @@ Function HashString(S: String): String;
 Function IsReturningQuery(SQQL: String): Boolean;
 function TrimSQLComment(SQLText: String): String;
 function FindSQLWhere(SQL, FindToken:String; Opened:Boolean=True):Integer;
+Function ReplaceSQLFields(SQL, Fields: String): String;
 
 Procedure ExecuteStatement(Code: String);
 Function GetOnOffMode(Mode: Boolean): String;
@@ -1899,6 +1900,64 @@ begin
     Inc(i);
     First:=False;
   End;
+end;
+
+Function ReplaceSQLFields(SQL, Fields: String): String;
+var
+  i, s, f, skb, t, l:Integer;
+  First, Last:Boolean;
+  tmp1, DelimsSet, OpenerSet, CloseerSet, FindToken:String;
+begin
+  Result:='';
+
+  FindToken:=' from';
+  s:=PosEx('select ', SQL);
+  if s>0 then
+  begin
+    s:=s+8;
+
+    DelimsSet:='( )[]'#39;
+    OpenerSet:='(';
+    CloseerSet:=')';
+    First:=True;
+    Last:=False;
+    l:=Length(FindToken);
+    i:=1;
+    t:=1;
+    skb:=0;
+    while i<Length(SQL) do
+    Begin
+      Last:=i=Length(SQL);
+
+      If Pos(SQL[i], OpenerSet)<>0 then
+        Inc(skb)
+      Else
+        If Pos(SQL[i], CloseerSet)<>0 then
+          Dec(skb);
+
+      if skb=0 then
+      If (SQL[i]=FindToken[t]) or not First then
+      Begin
+        First:=False;
+        If i+Length(FindToken)<Length(SQL) then
+        Begin
+          if t=Length(FindToken) then
+          begin
+            f:=i;
+            Break;
+          end;
+        End;
+        Inc(t);
+      End
+      Else
+      Begin
+        First:=True;
+      End;
+      Inc(i);
+    End;
+
+    Result:='select ' + Fields + ' ' +Copy(SQL, f-1, Length(SQL));
+  end;
 end;
 
 /// ////////////////////////////////////////////////////////////

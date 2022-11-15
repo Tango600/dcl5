@@ -15411,7 +15411,7 @@ end;
 
 procedure TDCLOfficeReport.ReportOpenOfficeCalc(ParamStr: String; Save, Close: Boolean);
 var
-  SQLStr, FileName, OutFileName, ColorStr, Ext, TemplateExt: String;
+  SQLStr, Fields, FileName, OutFileName, ColorStr, Ext, TemplateExt: String;
   ToPDF, ToHTML, EnableRowChColor, EnableColChColor: Boolean;
   v1: Byte;
   RecRepNum: Cardinal;
@@ -15519,11 +15519,20 @@ begin
       If (SQLStr='')and Assigned(FDCLGrid) Then
         SQLStr:=FDCLGrid.Query.SQL.Text;
 
+      Fields:=FindParam('FieldsSet=', ParamStr);
+
+      if Fields<>'' then
+      begin
+        SQLStr:=ReplaceSQLFields(SQLStr, Fields);
+      end;
+
       If Assigned(FDCLGrid) Then
         FDCLGrid.TranslateVal(SQLStr);
+
       DCLQuery:=TDCLDialogQuery.Create(nil);
       DCLQuery.Name:='OfficeReport2_'+IntToStr(UpTime);
       FDCLLogOn.SetDBName(DCLQuery);
+
       DCLQuery.SQL.Text:=SQLStr;
       try
         DCLQuery.Open;
@@ -15846,7 +15855,7 @@ end;
 
 procedure TDCLOfficeReport.ReportExcel(ParamStr: String; Save, Close: Boolean);
 var
-  SQLStr, FileName, OutFileName, ColorStr, Ext, TemplateExt: String;
+  SQLStr, FileName, OutFileName, ColorStr, Ext, TemplateExt, Fields: String;
   EnableRowChColor, EnableColChColor: Boolean;
   RecRepNum, v1: Word;
   RowRColor, RowBColor, RowGColor, ColRColor, ColBColor, ColGColor: Integer;
@@ -15936,11 +15945,20 @@ begin
       If (SQLStr='')and Assigned(FDCLGrid) Then
         SQLStr:=FDCLGrid.Query.SQL.Text;
 
+      Fields:=FindParam('FieldsSet=', ParamStr);
+
+      if Fields<>'' then
+      begin
+        SQLStr:=ReplaceSQLFields(SQLStr, Fields);
+      end;
+
       If Assigned(FDCLGrid) Then
         FDCLGrid.TranslateVal(SQLStr);
+
       DCLQuery:=TDCLDialogQuery.Create(nil);
-      DCLQuery.Name:='OfRep4_'+IntToStr(UpTime);
+      DCLQuery.Name:='OfficeReport2_'+IntToStr(UpTime);
       FDCLLogOn.SetDBName(DCLQuery);
+
       DCLQuery.SQL.Text:=SQLStr;
       try
         DCLQuery.Open;
