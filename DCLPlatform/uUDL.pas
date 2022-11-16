@@ -15586,11 +15586,11 @@ begin
             ftWideMemo:begin
             SetFormulaByXY(Loc, NF, Sheet, Cell, '@', RecRepNum+StartRow-1, v1+1+StartCol-1);
           end;
-          ftSmallint, ftInteger, ftWord, ftAutoInc, ftLargeint, ftVariant,
-            ftLongWord, ftShortint, ftBCD, ftByte:begin
+          ftSmallint, ftInteger, ftWord, ftAutoInc, ftLargeint, ftVariant, ftBCD
+            {$IFnDEF FPC},ftLongWord, ftShortint, ftByte{$ENDIF}:begin
             SetFormulaByXY(Loc, NF, Sheet, Cell, '# ##0', RecRepNum+StartRow-1, v1+1+StartCol-1);
           end;
-          ftFloat, ftExtended, ftSingle:begin
+          ftFloat {$IFnDEF FPC}, ftExtended, ftSingle{$ENDIF}:begin
             SetFormulaByXY(Loc, NF, Sheet, Cell, '@', RecRepNum+StartRow-1, v1+1+StartCol-1);
           end;
           ftCurrency:begin
@@ -15602,7 +15602,7 @@ begin
           ftTime:begin
             SetFormulaByXY(Loc, NF, Sheet, Cell, 'HH:MM:SS', RecRepNum+StartRow-1, v1+1+StartCol-1);
           end;
-          ftDateTime, ftTimeStamp, ftOraTimeStamp:begin
+          ftDateTime, ftTimeStamp{$IFnDEF FPC}, ftOraTimeStamp{$ENDIF}:begin
             SetFormulaByXY(Loc, NF, Sheet, Cell, 'DD.MM.YYYY HH:MM:SS', RecRepNum+StartRow-1, v1+1+StartCol-1);
           end;
           Else
@@ -16003,14 +16003,14 @@ begin
           case DCLQuery.Fields[v1].DataType of
           ftString, ftMemo, ftFmtMemo, ftWideString, ftFixedWideChar,
             ftWideMemo:begin
-            Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:=AnsiChar('@');
+            Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:=String(Chr(64));
           end;
-          ftSmallint, ftInteger, ftWord, ftAutoInc, ftLargeint, ftVariant,
-            ftLongWord, ftShortint, ftBCD, ftByte:begin
-            Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:=AnsiChar('#');
+          ftSmallint, ftInteger, ftWord, ftAutoInc, ftLargeint, ftVariant, ftBCD
+            {$IFnDEF FPC},ftLongWord, ftShortint, ftByte{$ENDIF}:begin
+            Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:=String(Chr(35));
           end;
-          ftFloat, ftExtended, ftSingle:begin
-            Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:=AnsiChar('@');
+          ftFloat{$IFnDEF FPC}, ftExtended, ftSingle{$ENDIF}:begin
+            Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:=String(Chr(64));
           end;
           ftCurrency:begin
             Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:=AnsiString('# ##0.00');
@@ -16021,7 +16021,7 @@ begin
           ftTime:begin
             Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:='ЧЧ:мм:сс';
           end;
-          ftDateTime, ftTimeStamp, ftOraTimeStamp:begin
+          ftDateTime, ftTimeStamp{$IFnDEF FPC}, ftOraTimeStamp{$ENDIF}:begin
             Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:='ДД.ММ.ГГГГ ЧЧ:мм:сс';
           end;
           Else
