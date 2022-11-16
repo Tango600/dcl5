@@ -427,6 +427,9 @@ Begin
       Begin
         {$IFnDEF SELFUPDATESQL}
         FUpdateSQL:=TUpdateSQLObj.Create(Self);
+        {$IFDEF ZEOS}
+        FUpdateSQL.UseSequenceFieldForRefreshSQL:=False;
+        {$ENDIF}
         {$IFDEF TRANSACTIONDB}
         {$IFDEF IBX}
         FUpdateSQL.UpdateTransaction:=ShadowTransaction;

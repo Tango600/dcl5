@@ -39,7 +39,7 @@ DefaultLibraryLocation='libfbclient.so';
 {$IFDEF SQLdb}
   DBEngineType='SQLdb (Universal)';
 {$ENDIF}
-  Ver='10.2.16.1';
+  Ver='10.3.0.0';
   VersionS='$VersionSignature$'+Ver+'$';
 
   CompotableVersion='9.1.129.309';

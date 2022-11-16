@@ -5974,37 +5974,34 @@ begin
                   FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
                 OfficeReport.OfficeFormat:=GetPossibleOffice(dtSheet, ConvertOfficeType(TmpStr), GPT.OfficeFormat);
 
-                If FDCLForm.Tables[ - 1].DisplayMode in TDataGrid Then
+                If (FDCLForm.Tables[ - 1].DisplayMode in TDataGrid) and FDCLForm.Tables[ - 1].MultiSelect then
                 begin
-                  if FDCLForm.Tables[ - 1].MultiSelect then
+                  if FDCLForm.Tables[ - 1].Grid.SelectedRows.Count>0 then
                   begin
-                    if FDCLForm.Tables[ - 1].Grid.SelectedRows.Count>0 then
+                    For v1:=0 to FDCLForm.Tables[ - 1].Grid.SelectedRows.Count-1 do
                     begin
-                      For v1:=0 to FDCLForm.Tables[ - 1].Grid.SelectedRows.Count-1 do
-                      begin
-                        FDCLForm.Tables[ - 1].FQueryGlob.GoToBookmark(TBookmark(FDCLForm.Tables[ - 1].Grid.SelectedRows[v1]));
+                      FDCLForm.Tables[ - 1].FQueryGlob.GoToBookmark(TBookmark(FDCLForm.Tables[ - 1].Grid.SelectedRows[v1]));
 
-                        Case OfficeReport.OfficeFormat of
-                        ofOO:
-                        OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything, EnythingElse);
-                        ofMSO:
-                        OfficeReport.ReportExcel(ScrStr, Enything, EnythingElse);
-                        ofNone:
-                        ShowErrorMessage( - 6200, '');
-                        end;
-                        end;
-                    end;
-                  end
-                  else
-                  begin
-                    Case OfficeReport.OfficeFormat of
-                    ofOO:
-                    OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything, EnythingElse);
-                    ofMSO:
-                    OfficeReport.ReportExcel(ScrStr, Enything, EnythingElse);
-                    ofNone:
-                    ShowErrorMessage( - 6200, '');
-                    end;
+                      Case OfficeReport.OfficeFormat of
+                      ofOO:
+                      OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything, EnythingElse);
+                      ofMSO:
+                      OfficeReport.ReportExcel(ScrStr, Enything, EnythingElse);
+                      ofNone:
+                      ShowErrorMessage( - 6200, '');
+                      end;
+                      end;
+                  end;
+                end
+                else
+                begin
+                  Case OfficeReport.OfficeFormat of
+                  ofOO:
+                  OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything, EnythingElse);
+                  ofMSO:
+                  OfficeReport.ReportExcel(ScrStr, Enything, EnythingElse);
+                  ofNone:
+                  ShowErrorMessage( - 6200, '');
                   end;
                 end;
               end;
@@ -6022,37 +6019,34 @@ begin
                   FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
                 OfficeReport.OfficeFormat:=GetPossibleOffice(dtText, ConvertOfficeType(TmpStr), GPT.OfficeFormat);
 
-                If FDCLForm.Tables[ - 1].DisplayMode in TDataGrid Then
+                If (FDCLForm.Tables[ - 1].DisplayMode in TDataGrid) and (FDCLForm.Tables[ - 1].MultiSelect) then
                 begin
-                  if FDCLForm.Tables[ - 1].MultiSelect then
+                  if FDCLForm.Tables[ - 1].Grid.SelectedRows.Count>0 then
                   begin
-                    if FDCLForm.Tables[ - 1].Grid.SelectedRows.Count>0 then
+                    For v1:=0 to FDCLForm.Tables[ - 1].Grid.SelectedRows.Count-1 do
                     begin
-                      For v1:=0 to FDCLForm.Tables[ - 1].Grid.SelectedRows.Count-1 do
-                      begin
-                        FDCLForm.Tables[ - 1].FQueryGlob.GoToBookmark(TBookmark(FDCLForm.Tables[ - 1].Grid.SelectedRows[v1]));
+                      FDCLForm.Tables[ - 1].FQueryGlob.GoToBookmark(TBookmark(FDCLForm.Tables[ - 1].Grid.SelectedRows[v1]));
 
-                        Case OfficeReport.OfficeFormat of
-                        ofOO:
-                        OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything, EnythingElse);
-                        ofMSO:
-                        OfficeReport.ReportWord(ScrStr, Enything, EnythingElse);
-                        ofNone:
-                        ShowErrorMessage( - 6200, '');
-                        end;
+                      Case OfficeReport.OfficeFormat of
+                      ofOO:
+                      OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything, EnythingElse);
+                      ofMSO:
+                      OfficeReport.ReportWord(ScrStr, Enything, EnythingElse);
+                      ofNone:
+                      ShowErrorMessage( - 6200, '');
                       end;
                     end;
-                  end
-                  else
-                  begin
-                    Case OfficeReport.OfficeFormat of
-                    ofOO:
-                    OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything, EnythingElse);
-                    ofMSO:
-                    OfficeReport.ReportWord(ScrStr, Enything, EnythingElse);
-                    ofNone:
-                    ShowErrorMessage( - 6200, '');
-                    end;
+                  end;
+                end
+                else
+                begin
+                  Case OfficeReport.OfficeFormat of
+                  ofOO:
+                  OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything, EnythingElse);
+                  ofMSO:
+                  OfficeReport.ReportWord(ScrStr, Enything, EnythingElse);
+                  ofNone:
+                  ShowErrorMessage( - 6200, '');
                   end;
                 end;
               end;
