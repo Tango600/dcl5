@@ -7542,7 +7542,7 @@ end;
 
 procedure TDCLLogOn.About(Sender: TObject);
 Const
-  FormWidth=435;
+  FormWidth=445;
   FormHeight=300;
   PanelLeft=8;
 var
@@ -7995,7 +7995,7 @@ begin
     begin
       DebugProc('  DBPath: '+GPT.DBPath);
       DebugProc('UNC paths not supported.');
-      ShowErrorMessage(0, 'UNC '+GetDCLMessageString(msmsPathsNotSupportedPaths)+'.');
+      ShowErrorMessage(0, 'UNC '+GetDCLMessageString(msPathsNotSupported)+'.');
       Result:=255;
       Exit;
     end;
