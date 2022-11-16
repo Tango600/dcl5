@@ -13943,6 +13943,7 @@ procedure TDCLGrid.OpenQuery(QText: String);
 var
   FFactor: Word;
 begin
+  FQuery.Close;
   FQuery.SQL.Clear;
   FDCLForm.RePlaseVariables(QText);
   FFactor:=0;
