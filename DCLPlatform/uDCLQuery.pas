@@ -186,10 +186,12 @@ begin
     j:=0;
     For i:=1 to Fields.Count do
     Begin
+      Fields[i-1].Required:=False;
       Case Fields[i-1].DataType of
       ftSmallint, ftInteger, ftLargeint, ftWord, ftAutoInc:Begin
         FieldsDefs[j]:=TIntegerField.Create(Self);
         FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
+        FieldsDefs[j].Required:=False;
         Inc(j);
       end;
       ftFloat:Begin
@@ -197,57 +199,67 @@ begin
         FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
         TFloatField(FieldsDefs[j]).Precision:=5;
         TFloatField(FieldsDefs[j]).DisplayFormat:='#.#####0.00000';
+        FieldsDefs[j].Required:=False;
         Inc(j);
       End;
       ftCurrency:Begin
         FieldsDefs[j]:=TCurrencyField.Create(Self);
         FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
         TFloatField(FieldsDefs[j]).DisplayFormat:='#.##0.00';
+        FieldsDefs[j].Required:=False;
         Inc(j);
       End;
       ftBCD, ftFMTBcd:Begin
         FieldsDefs[j]:=TNumericField.Create(Self);
         FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
         TNumericField(FieldsDefs[j]).DisplayFormat:='#.#####0.00000';
+        FieldsDefs[j].Required:=False;
         Inc(j);
       End;
       ftString, ftFixedChar, ftVariant:Begin
         FieldsDefs[j]:=TStringField.Create(Self);
         FieldsDefs[j].Size:=Fields[i-1].Size;
         FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
+        FieldsDefs[j].Required:=False;
         Inc(j);
       End;
       ftFixedWideChar, ftWideString:Begin
         FieldsDefs[j]:=TWideStringField.Create(Self);
         FieldsDefs[j].Size:=Fields[i-1].Size;
         FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
+        FieldsDefs[j].Required:=False;
         Inc(j);
       End;
       ftDate:Begin
         FieldsDefs[j]:=TDateField.Create(Self);
         FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
+        FieldsDefs[j].Required:=False;
         Inc(j);
       End;
       ftTime:Begin
         FieldsDefs[j]:=TTimeField.Create(Self);
         FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
+        FieldsDefs[j].Required:=False;
         Inc(j);
       End;
       ftDateTime{$IFDEF FPC}, ftTimeStamp{$ENDIF}:Begin
         FieldsDefs[j]:=TDateTimeField.Create(Self);
         FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
+        FieldsDefs[j].Required:=False;
         Inc(j);
       End;
-      {$IFNDEF FPC}
+      {$IFnDEF FPC}
       ftTimeStamp:Begin
         FieldsDefs[j]:=TSQLTimeStampField.Create(Self);
         FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
+        FieldsDefs[j].Required:=False;
         Inc(j);
       End;
       {$ENDIF}
       ftBoolean:Begin
         FieldsDefs[j]:=TBooleanField.Create(Self);
         FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
+        FieldsDefs[j].Required:=False;
         Inc(j);
       End;
       ftBytes, ftOraBlob, ftVarBytes, ftBlob, ftMemo, ftGraphic, ftFmtMemo,
@@ -255,6 +267,7 @@ begin
       ftWideMemo:Begin
         FieldsDefs[j]:=TBlobField.Create(Self);
         FieldsDefs[j].FieldName:=Fields[i-1].FieldName;
+        FieldsDefs[j].Required:=False;
         Inc(j);
       End;
       End;

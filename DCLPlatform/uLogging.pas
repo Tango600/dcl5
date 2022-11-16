@@ -115,7 +115,7 @@ begin
   End;
   End;
 
-  WriteLog('-=Начало журнала=-', etNone);
+  WriteLog('-=РќР°С‡Р°Р»Рѕ Р¶СѓСЂРЅР°Р»Р°=-', etNone);
 end;
 
 destructor TLogging.Destroy;
@@ -128,7 +128,7 @@ begin
   End;
   End;
 
-  WriteLog('-=Окончание журнала=-', etNone);
+  WriteLog('-=РћРєРѕРЅС‡Р°РЅРёРµ Р¶СѓСЂРЅР°Р»Р°=-', etNone);
   inherited Destroy;
 end;
 
