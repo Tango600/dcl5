@@ -4957,7 +4957,8 @@ end;
 procedure TDCLCommand.ExecCommand(Command: String; DCLForm: TDCLForm);
 var
   ModalOpen, InContext, Enything, EnythingElse, DownLoadCancel, DownloadProgress: Boolean;
-  IfCounter, IfSign: Byte;
+  IfSign: Byte;
+  IfCounter:Integer;
   RecCount, ScriptStrings, RetPoint, v1, v2, v3, RepIdParams: Integer;
   ScrStr, TmpStr, tmpStr1, tmpStr2, tmpStr3, tmp1, tmp2, tmp3, tmp4, RepTable: String;
   ChooseMode: TChooseMode;
