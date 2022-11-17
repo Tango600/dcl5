@@ -5966,7 +5966,7 @@ begin
             begin
               If Assigned(FDCLForm) Then
               begin
-                ScrStr:=FCommandDCL[ScriptStrings];
+                //ScrStr:=FCommandDCL[ScriptStrings];
                 Enything:=FindParam('Save=', ScrStr)='1';
                 EnythingElse:=FindParam('Close=', ScrStr)='1';
                 TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
@@ -5974,35 +5974,13 @@ begin
                   FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
                 OfficeReport.OfficeFormat:=GetPossibleOffice(dtSheet, ConvertOfficeType(TmpStr), GPT.OfficeFormat);
 
-                If (FDCLForm.Tables[ - 1].DisplayMode in TDataGrid) and FDCLForm.Tables[ - 1].MultiSelect then
-                begin
-                  if FDCLForm.Tables[ - 1].Grid.SelectedRows.Count>0 then
-                  begin
-                    For v1:=0 to FDCLForm.Tables[ - 1].Grid.SelectedRows.Count-1 do
-                    begin
-                      FDCLForm.Tables[ - 1].FQueryGlob.GoToBookmark(TBookmark(FDCLForm.Tables[ - 1].Grid.SelectedRows[v1]));
-
-                      Case OfficeReport.OfficeFormat of
-                      ofOO:
-                      OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything, EnythingElse);
-                      ofMSO:
-                      OfficeReport.ReportExcel(ScrStr, Enything, EnythingElse);
-                      ofNone:
-                      ShowErrorMessage( - 6200, '');
-                      end;
-                      end;
-                  end;
-                end
-                else
-                begin
-                  Case OfficeReport.OfficeFormat of
-                  ofOO:
-                  OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything, EnythingElse);
-                  ofMSO:
-                  OfficeReport.ReportExcel(ScrStr, Enything, EnythingElse);
-                  ofNone:
-                  ShowErrorMessage( - 6200, '');
-                  end;
+                Case OfficeReport.OfficeFormat of
+                ofOO:
+                OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything, EnythingElse);
+                ofMSO:
+                OfficeReport.ReportExcel(ScrStr, Enything, EnythingElse);
+                ofNone:
+                ShowErrorMessage( - 6200, '');
                 end;
               end;
             end;
@@ -6011,7 +5989,7 @@ begin
             begin
               If Assigned(FDCLForm) Then
               begin
-                ScrStr:=FCommandDCL[ScriptStrings];
+                //ScrStr:=FCommandDCL[ScriptStrings];
                 Enything:=FindParam('Save=', ScrStr)='1';
                 EnythingElse:=FindParam('Close=', ScrStr)='1';
                 TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
@@ -6019,35 +5997,13 @@ begin
                   FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
                 OfficeReport.OfficeFormat:=GetPossibleOffice(dtText, ConvertOfficeType(TmpStr), GPT.OfficeFormat);
 
-                If (FDCLForm.Tables[ - 1].DisplayMode in TDataGrid) and (FDCLForm.Tables[ - 1].MultiSelect) then
-                begin
-                  if FDCLForm.Tables[ - 1].Grid.SelectedRows.Count>0 then
-                  begin
-                    For v1:=0 to FDCLForm.Tables[ - 1].Grid.SelectedRows.Count-1 do
-                    begin
-                      FDCLForm.Tables[ - 1].FQueryGlob.GoToBookmark(TBookmark(FDCLForm.Tables[ - 1].Grid.SelectedRows[v1]));
-
-                      Case OfficeReport.OfficeFormat of
-                      ofOO:
-                      OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything, EnythingElse);
-                      ofMSO:
-                      OfficeReport.ReportWord(ScrStr, Enything, EnythingElse);
-                      ofNone:
-                      ShowErrorMessage( - 6200, '');
-                      end;
-                    end;
-                  end;
-                end
-                else
-                begin
-                  Case OfficeReport.OfficeFormat of
-                  ofOO:
-                  OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything, EnythingElse);
-                  ofMSO:
-                  OfficeReport.ReportWord(ScrStr, Enything, EnythingElse);
-                  ofNone:
-                  ShowErrorMessage( - 6200, '');
-                  end;
+                Case OfficeReport.OfficeFormat of
+                ofOO:
+                OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything, EnythingElse);
+                ofMSO:
+                OfficeReport.ReportWord(ScrStr, Enything, EnythingElse);
+                ofNone:
+                ShowErrorMessage( - 6200, '');
                 end;
               end;
             end;
@@ -14962,13 +14918,31 @@ end;
 
 procedure TDCLCommandButton.ExecCommand(Sender: TObject);
 var
-  Tag: Integer;
+  Tag, v1: Integer;
   FDCLCommand: TDCLCommand;
 begin
   Tag:=(Sender as TDialogButton).Tag;
-  FDCLCommand:=TDCLCommand.Create(FDCLForm, FDCLLogOn);
-  FDCLCommand.ExecCommand(Commands[Tag], FDCLForm);
-  FreeAndNil(FDCLCommand);
+
+  If (FDCLForm.Tables[ - 1].DisplayMode in TDataGrid) and FDCLForm.Tables[ - 1].MultiSelect then
+  begin
+    if FDCLForm.Tables[ - 1].Grid.SelectedRows.Count>0 then
+    begin
+      For v1:=0 to FDCLForm.Tables[ - 1].Grid.SelectedRows.Count-1 do
+      begin
+        FDCLForm.Tables[ - 1].FQueryGlob.GoToBookmark(TBookmark(FDCLForm.Tables[ - 1].Grid.SelectedRows[v1]));
+
+        FDCLCommand:=TDCLCommand.Create(FDCLForm, FDCLLogOn);
+        FDCLCommand.ExecCommand(Commands[Tag], FDCLForm);
+        FreeAndNil(FDCLCommand);
+      end;
+    end;
+  end
+  else
+  begin
+    FDCLCommand:=TDCLCommand.Create(FDCLForm, FDCLLogOn);
+    FDCLCommand.ExecCommand(Commands[Tag], FDCLForm);
+    FreeAndNil(FDCLCommand);
+  end;
 end;
 
 { TMainFormAction }
