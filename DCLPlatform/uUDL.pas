@@ -13615,6 +13615,7 @@ var
   strTmp: String;
   ColorsCount: Byte;
   bmp: TBitmap;
+  flg: Boolean;
 begin
   With (Sender as TDCLDBGrid).Canvas do
   begin
@@ -13632,6 +13633,7 @@ begin
     end
     Else
     begin
+      flg:=False;
       RowColor:=clWhite;
       RowTextColor:=clBlack;
 
@@ -13648,6 +13650,7 @@ begin
             begin
               RowColor:=BrushColors[ColorsCount-1].Color;
               RowTextColor:=clWhite;
+              flg:=True;
             end;
           end
           Else
@@ -13661,6 +13664,7 @@ begin
               begin
                 RowColor:=BrushColors[ColorsCount-1].Color;
                 RowTextColor:=clWhite;
+                flg:=True;
               end;
             end
             Else
@@ -13674,6 +13678,7 @@ begin
                 begin
                   RowColor:=BrushColors[ColorsCount-1].Color;
                   RowTextColor:=clWhite;
+                  flg:=True;
                 end;
               end
               Else
@@ -13688,6 +13693,7 @@ begin
                   begin
                     RowColor:=BrushColors[ColorsCount-1].Color;
                     RowTextColor:=clWhite;
+                    flg:=True;
                   end;
                 end
                 Else If Pos('>=', strTmp)<>0 Then
@@ -13700,6 +13706,7 @@ begin
                   begin
                     RowColor:=BrushColors[ColorsCount-1].Color;
                     RowTextColor:=clWhite;
+                    flg:=True;
                   end;
                 end
                 Else
@@ -13711,14 +13718,19 @@ begin
                   begin
                     RowColor:=BrushColors[ColorsCount-1].Color;
                     RowTextColor:=clWhite;
+                    flg:=True;
                   end;
                 end;
               end;
             end;
           end;
         end;
-      TDCLDBGrid(Sender).Canvas.Brush.Color:=RowColor;
-      TDCLDBGrid(Sender).Canvas.Font.Color:=RowTextColor;
+
+      if flg then
+      begin
+        TDCLDBGrid(Sender).Canvas.Brush.Color:=RowColor;
+        TDCLDBGrid(Sender).Canvas.Font.Color:=RowTextColor;
+      end;
       TDCLDBGrid(Sender).DefaultDrawColumnCell(Rect, DataCol, Column, State);
     end;
   end;
