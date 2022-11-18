@@ -99,7 +99,7 @@ End;
 RButtonParams=record
   Caption, Hint, Command, Pict: string;
   Top, Left, Width, Height: Word;
-  Default, Cancel: Boolean;
+  Default, Cancel, ForEach: Boolean;
   FontStyle:TFontStyles;
 end;
 

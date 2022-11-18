@@ -548,6 +548,7 @@ Type
   private
     Commands: Array of String;
     CommandButton: Array of TDialogButton;
+    Params:Array of RButtonParams;
     FDCLForm: TDCLForm;
     FDCLLogOn: TDCLLogOn;
 
@@ -3582,6 +3583,8 @@ begin
               ButtonParams.Pict:=FindParam('Pict=', ScrStr);
             end;
 
+            ButtonParams.ForEach:=FindParam('ForEach=', ScrStr)='1';
+
             If PosEx('bold', FindParam('FontStyle=', ScrStr))<>0 Then
               ButtonParams.FontStyle:=ButtonParams.FontStyle+[fsBold];
             If PosEx('italic', FindParam('FontStyle=', ScrStr))<>0 Then
@@ -5966,7 +5969,6 @@ begin
             begin
               If Assigned(FDCLForm) Then
               begin
-                //ScrStr:=FCommandDCL[ScriptStrings];
                 Enything:=FindParam('Save=', ScrStr)='1';
                 EnythingElse:=FindParam('Close=', ScrStr)='1';
                 TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
@@ -5989,7 +5991,6 @@ begin
             begin
               If Assigned(FDCLForm) Then
               begin
-                //ScrStr:=FCommandDCL[ScriptStrings];
                 Enything:=FindParam('Save=', ScrStr)='1';
                 EnythingElse:=FindParam('Close=', ScrStr)='1';
                 TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
@@ -14844,6 +14845,9 @@ begin
   inc(FButtonsCount);
   SetLength(Commands, FButtonsCount);
   SetLength(CommandButton, FButtonsCount);
+  SetLength(Params, FButtonsCount);
+
+  Params[FButtonsCount-1]:=ButtonParams;
 
   CommandButton[FButtonsCount-1]:=TDialogButton.Create(Parent);
   CommandButton[FButtonsCount-1].Parent:=Parent;
@@ -14923,7 +14927,7 @@ var
 begin
   Tag:=(Sender as TDialogButton).Tag;
 
-  If (FDCLForm.Tables[ - 1].DisplayMode in TDataGrid) and FDCLForm.Tables[ - 1].MultiSelect then
+  If Params[Tag].ForEach and (FDCLForm.Tables[ - 1].DisplayMode in TDataGrid) and FDCLForm.Tables[ - 1].MultiSelect then
   begin
     if FDCLForm.Tables[ - 1].Grid.SelectedRows.Count>0 then
     begin
