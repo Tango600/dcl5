@@ -317,7 +317,6 @@ var
   lCaptionRect: TRect;
   lCellRect: TRect;
   lStr: string;
-  PenRecall: TPenRecall;
   MultiSelected: Boolean;
   OldActive: Integer;
   Indicator: Integer;
@@ -422,26 +421,29 @@ begin
       begin
         if Indicator = 0 then
         begin
-          PenRecall := TPenRecall.Create(Canvas.Pen);
-          try
-            Canvas.Pen.Color := clGray;
-            DrawArrow(Canvas, sdRight, Point(lCellRect.Left + 5, lCellRect.Top + 5), 5);
-            Canvas.Pen.Color := $00404040;
-            DrawArrow(Canvas, sdRight, Point(lCellRect.Left + 3, lCellRect.Top + 3), 5);
-          finally
-            PenRecall.Free;
-          end;
+          Canvas.Pen.Color := clGray;
+          DrawArrow(Canvas, sdRight, Point(lCellRect.Left + 5, lCellRect.Top + 5), 5);
+          Canvas.Pen.Color := clBlack;  // $00404040;
+          DrawArrow(Canvas, sdRight, Point(lCellRect.Left + 3, lCellRect.Top + 3), 5);
         end
         else
         begin
           if Indicator = 3 then
           begin
-            PenRecall := TPenRecall.Create(Canvas.Pen);
-            try
-              Canvas.Brush.Color := clGray;
-              Canvas.Ellipse(lCellRect.Left, lCellRect.Top, lCellRect.Left + 10, lCellRect.Top + 10);
-            finally
-              PenRecall.Free;
+            if ARow<>Datalink.ActiveRecord then
+            begin
+              Canvas.Brush.Color := clBlack;
+              Canvas.Ellipse(lCellRect.Left, lCellRect.Top + 5, lCellRect.Left + 10, lCellRect.Top + 15);
+            end
+            else
+            begin
+              Canvas.Pen.Color := clGray;
+              DrawArrow(Canvas, sdRight, Point(lCellRect.Left + 5, lCellRect.Top + 5), 5);
+              Canvas.Pen.Color := clBtnFace;
+              DrawArrow(Canvas, sdRight, Point(lCellRect.Left + 3, lCellRect.Top + 5), 5);
+
+              //Canvas.Brush.Color := clBlack;
+              ///Canvas.Ellipse(lCellRect.Left, lCellRect.Top, lCellRect.Left + 10, lCellRect.Top + 10);
             end;
           end
           else
