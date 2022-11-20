@@ -340,7 +340,7 @@ begin
     else if AllowTitleClick then
     begin
       Details := ThemeServices.GetElementDetails(thHeaderItemPressed);
-      InflateRect(lCaptionRect, -1, 1);
+      InflateRect(lCaptionRect, -2, 1);
     end
     else
     begin
@@ -363,13 +363,9 @@ begin
       TextX := lCaptionRect.Left + 2;
     end;
 
-    {Canvas.Font.Color:=$00909090;
-    Canvas.TextRect(lCaptionRect, TextX+1, TextY+2, lStr);
-    Canvas.FrameRect(lCaptionRect);}
-
     Canvas.Font.Color:=clBtnText;
     Canvas.TextRect(lCaptionRect, TextX, TextY, lStr);
-    Canvas.Brush.Color:=clBtnShadow;  // clGray;
+    Canvas.Brush.Color:=clGray;
     Canvas.FrameRect(lCaptionRect);
   end
   else if (ACol = 0) and (dgIndicator in Options) and (gdFixed in AState) then
@@ -423,7 +419,7 @@ begin
         begin
           Canvas.Pen.Color := clGray;
           DrawArrow(Canvas, sdRight, Point(lCellRect.Left + 5, lCellRect.Top + 5), 5);
-          Canvas.Pen.Color := clBlack;  // $00404040;
+          Canvas.Pen.Color := clBlack;
           DrawArrow(Canvas, sdRight, Point(lCellRect.Left + 3, lCellRect.Top + 3), 5);
         end
         else
