@@ -9572,14 +9572,11 @@ begin
   If Not GPT.UseMessages Then
     Exit;
 
-  If ExitFlag>1 Then
-    inc(ExitFlag);
-
-  If ExitFlag>1 Then
+  If ExitFlag>0 Then
     If TimeToExit<=UpTime Then
       Application.MainForm.Close;
 
-  If ExitFlag>1 Then
+  If ExitFlag>0 Then
     If TimeToExit+TimeToTerminate<=UpTime Then
       Application.Terminate;
 
@@ -9635,16 +9632,21 @@ begin
             TimeToExit:=UpTime+(ExitTime*1000);
           end;
         end
-      Else
-      MessageToUser(Trim(ShadowQuery.FieldByName('NOTIFY_TEXT').AsString));
+        Else
+          MessageToUser(Trim(ShadowQuery.FieldByName('NOTIFY_TEXT').AsString));
         end;
+
         ShadowQuery1.Close;
-        ShadowQuery1.SQL.Text:='update '+GPT.NotifycationsTable+' n set n.NOTIFY_STATE='+
-          IntToStr(Ord(naDone))+' where n.NOTIFY_ID='+ShadowQuery.FieldByName('NOTIFY_ID').AsString;
-        ShadowQuery1.ExecSQL;
+
+        try
+          ShadowQuery1.SQL.Text:='update '+GPT.NotifycationsTable+' n set n.NOTIFY_STATE='+
+            IntToStr(Ord(naDone))+' where n.NOTIFY_ID='+ShadowQuery.FieldByName('NOTIFY_ID').AsString+
+            ' and n.NOTIFY_STATE<>'+IntToStr(Ord(naDone));
+          ShadowQuery1.ExecSQL;
+        finally
+          ///
+        end;
       end;
-      If ExitFlag>1 Then
-        inc(ExitFlag);
 
       ShadowQuery.Next;
     end;

@@ -59,7 +59,7 @@ begin
   MessageForm.FormStyle:=fsStayOnTop;
   MessageForm.BorderStyle:=bsSingle;
   MessageForm.BorderIcons:=[biSystemMenu];
-  MessageForm.Caption:=GetDCLMessageString(msNotifycation)+TimeStampToStr(Date);
+  MessageForm.Caption:=GetDCLMessageString(msNotifycation)+' '+TimeStampToStr(Time);
   MessageForm.Position:=poScreenCenter;
   MessageForm.ClientWidth:=400;
   MessageForm.ClientHeight:=300;
