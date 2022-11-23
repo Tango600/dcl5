@@ -661,13 +661,13 @@ Type
     procedure SaveFieldsSettings(Sender: TObject);
   public
     LocalVariables: TVariables;
-    Modal, NotDestroyedDCLForm, ExitNoSave: Boolean;
+    OnTop, NotDestroyedDCLForm, ExitNoSave: Boolean;
     FDialogName: String;
     ExitCode: Byte;
 
     constructor Create(DialogName: String; var DCLLogOn: TDCLLogOn; ParentForm, CallerForm: TDCLForm;
       aFormNum: Integer; OPL: TStringList; Query: TDCLDialogQuery; Data: TDataSource;
-      Modal: Boolean=False; ReturnValueMode: TChooseMode=chmNone;
+      Modal:Boolean=False; ReturnValueMode: TChooseMode=chmNone;
       ReturnValueParams: TReturnValueParams=nil);
     destructor Destroy; override;
 
@@ -2694,7 +2694,7 @@ end;
 
 constructor TDCLForm.Create(DialogName: String; var DCLLogOn: TDCLLogOn; ParentForm, CallerForm: TDCLForm;
   aFormNum: Integer; OPL: TStringList; Query: TDCLDialogQuery; Data: TDataSource;
-  Modal: Boolean=False; ReturnValueMode: TChooseMode=chmNone;
+  Modal:Boolean=False; ReturnValueMode: TChooseMode=chmNone;
   ReturnValueParams: TReturnValueParams=nil);
 var
   ScrStr, TmpStr, tmpStr2, tmpSQL, tmpSQL1: String;
@@ -2742,11 +2742,10 @@ begin
   FParentForm:=ParentForm;
   FCallerForm:=CallerForm;
   FRetunValue.Choosen:=False;
-  Modal:=ReturnValueMode<>chmNone;
+  ModalOpen:=(ReturnValueMode<>chmNone) or Modal;
   FReturnValueParams:=ReturnValueParams;
   FReturningMode:=ReturnValueMode;
   ResetChooseValue(FRetunValue);
-  ModalOpen:=Modal;
   NoStdKeys:=False;
   LocalVariables:=TVariables.Create(FDCLLogOn, Self);
   FOPL:=TStringList.Create;
@@ -2779,7 +2778,7 @@ begin
     If Assigned(FDCLLogOn.Forms[v1-1]) Then
       If FDCLLogOn.Forms[v1-1].Form.FormStyle=fsStayOnTop Then
       begin
-        Modal:=True;
+        OnTop:=True;
         break;
       end;
   end;
@@ -3622,13 +3621,11 @@ begin
         end;
       end;
 
-      If PosEx('modal=', ScrStr)=1 Then
+      If PosEx('OnTop=', ScrStr)=1 Then
       begin
         TranslateVal(ScrStr, True);
-        tmpSQL:=FindParam('Modal=', ScrStr);
-        // If tmpSQL='0' Then Modal:=False;
-        If tmpSQL='1' Then
-          Modal:=True;
+        tmpSQL:=FindParam('OnTop=', ScrStr);
+        OnTop:=tmpSQL='1';
       end;
 
       If PosEx('GetFieldValue=', ScrStr)=1 Then
@@ -4226,7 +4223,7 @@ begin
 
           // Query.AfterScroll(Query);
 {$IFNDEF DCLDEBUG}
-          If Modal Then
+          If OnTop Then
             FForm.FormStyle:=fsStayOnTop;
 {$ENDIF}
         end;
@@ -6547,7 +6544,7 @@ begin
             If PosEx('Dialog=', ScrStr)=1 Then
             begin
               TmpStr:=FindParam('Dialog=', ScrStr);
-              ModalOpen:=FindParam('ModalOpen=', TmpStr)='1';
+              ModalOpen:=FindParam('ModalOpen=', ScrStr)='1';
               ChooseMode:=chmNone;
               ReturnValueParams:=nil;
               If FindParam('ChooseMode=', ScrStr)<>'' Then
@@ -6686,19 +6683,19 @@ begin
               End;
             end;
 
-            If PosEx('Hold;', ScrStr)=1 Then
+            If PosEx('OnTop=', ScrStr)=1 Then
             begin
   {$IFNDEF DCLDEBUG}
+              TmpStr:=Trim(FindParam('OnTop=', ScrStr));
               If Assigned(FDCLForm) then
-                FDCLForm.Form.FormStyle:=fsStayOnTop;
-  {$ENDIF}
-            end;
-
-            If PosEx('HoldDown;', ScrStr)=1 Then
-            begin
-              If Assigned(FDCLForm) then
-                If Not FDCLForm.Modal Then
+              begin
+                if TmpStr='1' then
+                  If Not FDCLForm.OnTop Then
+                    FDCLForm.Form.FormStyle:=fsStayOnTop
+                else
                   FDCLForm.Form.FormStyle:=fsNormal;
+              end;
+  {$ENDIF}
             end;
 
             If PosEx('Declare=', ScrStr)=1 Then
@@ -8311,8 +8308,8 @@ begin
   End;
 
   i:=FForms.Count;
-  FormPoint:=TDCLForm.Create(FormName, Self, ParentForm, CallerForm, i, Scr, Query, Data, ModalMode,
-    ReturnValueMode, ReturnValueParams);
+  FormPoint:=TDCLForm.Create(FormName, Self, ParentForm, CallerForm, i, Scr, Query, Data,
+    ModalMode, ReturnValueMode, ReturnValueParams);
 
   if Assigned(FormPoint) then
     FForms.Add(FormPoint);
@@ -9558,6 +9555,7 @@ begin
 
   If TableExists(GPT.NotifycationsTable) Then
   begin
+
     try
       ShadowQuery.Open;
       GPT.UseMessages:=True;
