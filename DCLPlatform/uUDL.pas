@@ -14094,8 +14094,8 @@ begin
   end;
   1:
   begin
-    If FindSQLWhere(tmpSQL, 'group by')<>0 Then
-      Delete(tmpSQL, FindSQLWhere(tmpSQL, 'group by'), Length(tmpSQL));
+    If FindSQLWhere(tmpSQL, 'order by')<>0 Then
+      Delete(tmpSQL, FindSQLWhere(tmpSQL, 'order by'), Length(tmpSQL));
 
     If FindSQLWhere(tmpSQL, 'group by')<>0 Then
       Delete(tmpSQL, FindSQLWhere(tmpSQL, 'group by'), Length(tmpSQL));
@@ -14738,10 +14738,10 @@ begin
   begin
     FQuery.Close;
     tmpSQL1:=FQuery.SQL.Text;
-    If PosEx('order by', tmpSQL1)<>0 Then
+    If FindSQLWhere(tmpSQL1, ' order by')<>0 Then
     begin
-      OrderBy:=Copy(tmpSQL1, PosEx(' order by', tmpSQL1), Length(tmpSQL1));
-      Delete(tmpSQL1, PosEx(' order by', tmpSQL1), Length(tmpSQL1));
+      OrderBy:=Copy(tmpSQL1, FindSQLWhere(tmpSQL1, ' order by'), Length(tmpSQL1));
+      Delete(tmpSQL1, FindSQLWhere(tmpSQL1, ' order by'), Length(tmpSQL1));
     end;
 
     If KeyState(VK_CONTROL) Then
