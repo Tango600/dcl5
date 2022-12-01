@@ -344,6 +344,7 @@ Begin
   Begin
     MsWord.Quit;
     WordRuning:=False;
+    MsWord:=Unassigned;
   End;
 End;
 

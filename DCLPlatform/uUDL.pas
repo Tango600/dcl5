@@ -14738,10 +14738,10 @@ begin
   begin
     FQuery.Close;
     tmpSQL1:=FQuery.SQL.Text;
-    If FindSQLWhere(tmpSQL1, ' order by')<>0 Then
+    If FindSQLWhere(tmpSQL1, 'order by')<>0 Then
     begin
-      OrderBy:=Copy(tmpSQL1, FindSQLWhere(tmpSQL1, ' order by'), Length(tmpSQL1));
-      Delete(tmpSQL1, FindSQLWhere(tmpSQL1, ' order by'), Length(tmpSQL1));
+      OrderBy:=Copy(tmpSQL1, FindSQLWhere(tmpSQL1, 'order by'), Length(tmpSQL1));
+      Delete(tmpSQL1, FindSQLWhere(tmpSQL1, 'order by'), Length(tmpSQL1));
     end;
 
     If KeyState(VK_CONTROL) Then
