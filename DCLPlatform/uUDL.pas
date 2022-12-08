@@ -15982,7 +15982,7 @@ begin
       While Not DCLQuery.Eof do
       begin
         if FillStrategy=sfsInsert then
-          Excel.Sheets[1].Range['DATA'].Rows.Insert(-4121, 1);
+          Excel.Sheets[1].Range['DATA'].EntireRow.Insert;
 
         For v1:=0 to DCLQuery.FieldCount-1 do
         begin
@@ -16014,7 +16014,7 @@ begin
             Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:='';
           end;
 
-          Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1]:=
+          Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].Value:=
             Trim(DCLQuery.Fields[v1].AsString);
 
           If EnableRowChColor Then
