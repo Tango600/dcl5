@@ -4866,11 +4866,14 @@ begin
           If Assigned(FDCLLogOn.Forms[v2].FGrids[sv_v2-1]) Then
             For i:=1 to Length(FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits) do
             begin
-              Case FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits[i-1].EditsType of
-              fbtOutBox, fbtEditBox:
-              FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits[i-1].Edit.Text:=
-                FDCLLogOn.Variables.Variables[FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits[i-1]
-                  .EditToVariables];
+              if FDCLLogOn.Variables.Exists(FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits[i-1].EditToVariables) then
+              begin
+                Case FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits[i-1].EditsType of
+                fbtOutBox, fbtEditBox:
+                FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits[i-1].Edit.Text:=
+                  FDCLLogOn.Variables.Variables[FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits[i-1]
+                    .EditToVariables];
+                end;
               end;
             end;
 
@@ -4881,13 +4884,16 @@ begin
                 begin
                   For i:=1 to Length(FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits) do
                   begin
-                    Case FDCLLogOn.Forms[v2].FGrids[sv_v2-1].FTableParts[v0-1].Edits[i-1]
-                      .EditsType of
-                    fbtOutBox, fbtEditBox:
-                    FDCLLogOn.Forms[v2].FGrids[sv_v2-1].FTableParts[v0-1].Edits[i-1].Edit.Text:=
-                      FDCLLogOn.Variables.Variables
-                      [FDCLLogOn.Forms[v2].FGrids[sv_v2-1].FTableParts[v0-1].Edits[i-1]
-                        .EditToVariables];
+                    if FDCLLogOn.Variables.Exists(FDCLLogOn.Forms[v2].FGrids[sv_v2-1].FTableParts[v0-1].Edits[i-1].EditToVariables) then
+                    begin
+                      Case FDCLLogOn.Forms[v2].FGrids[sv_v2-1].FTableParts[v0-1].Edits[i-1]
+                        .EditsType of
+                      fbtOutBox, fbtEditBox:
+                      FDCLLogOn.Forms[v2].FGrids[sv_v2-1].FTableParts[v0-1].Edits[i-1].Edit.Text:=
+                        FDCLLogOn.Variables.Variables
+                        [FDCLLogOn.Forms[v2].FGrids[sv_v2-1].FTableParts[v0-1].Edits[i-1]
+                          .EditToVariables];
+                      end;
                     end;
                   end;
                 end;
