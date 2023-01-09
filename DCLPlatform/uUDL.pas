@@ -15929,7 +15929,12 @@ begin
     end;
   end;
 
-  OutFileName:=FindParam('FileName=', ParamStr);
+  OutFileName:=AddToFileName(FileName, '_Report');
+  if FindParam('FileName=', ParamStr)<>'' then
+  begin
+    OutFileName:=FindParam('FileName=', ParamStr);
+  end;
+
   if not IsFullPath(OutFileName) then
     OutFileName:=AppConfigDir+OutFileName;
 
@@ -16058,10 +16063,11 @@ begin
       DCLQuery.Close;
       Excel.Visible:=True;
 
-      FileName:=AddToFileName(OutFileName, '_Report');
-
       If Save Then
+      begin
+        ForceDirectories(ExtractFilePath(FileName));
         ExcelSave(Excel, FileName);
+      end;
 
       if Close then
         ExcelQuit(Excel);
