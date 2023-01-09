@@ -151,7 +151,7 @@ Begin
       Case Ord(FileName[i]) of
       $20:Result:=Result+'%20';
       $5C:Result:=Result+'/';
-      $3A:Result:=Result+'|';
+      $40:Result:=Result+'%40';
       Else
         Result:=Result+FileName[i];
       End;
@@ -161,6 +161,8 @@ Begin
       For j:=1 to Length(utf8ch) do
         Result:=Result+'%'+IntToHex(Ord(utf8ch[j]), 2);
     End;
+    Else
+      Result:=Result+'%'+IntToHex(Ord(FileName[i]));
     End;
   End;
   Result:=VarAsType('file:///'+Result, varOleStr);

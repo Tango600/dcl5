@@ -52,9 +52,11 @@ function ReplaseWINtoCP(CodePageName:String):String;
 procedure ShellExecute(const AWnd: HWND; const AOperation, AFileName: String; const AParameters: String = ''; const ADirectory: String = ''; const AShowCmd: Integer = SW_SHOWNORMAL);
 {$ENDIF}
 
+function GetAppName(App: String): String;
+function GetParams(App: String): String;
 Function ExecAndWait(Const FileName: ShortString; Const WinState: Word; Wait:Boolean=True): Boolean;
 Procedure Exec(Const FileName, Directory: String);
-Procedure ExecApp(const App: String);
+procedure ExecApp(const App: String; const CurrDir: String);
 Procedure OpenDir(Dir: string);
 Procedure InitGetAppConfigDir;
 function GetUserDocumentsDir: String;
@@ -306,6 +308,32 @@ Begin
 {$R+}
 End;
 
+function GetAppName(App: String): String;
+var
+  p:Integer;
+begin
+  p:=Pos(' ', App);
+  if p=0 then
+    Result:=App
+  else
+  begin
+    Result:=Copy(App, 1, p-1);
+  end;
+end;
+
+function GetParams(App: String): String;
+var
+  p:Integer;
+begin
+  p:=Pos(' ', App);
+  if p=0 then
+    Result:=App
+  else
+  begin
+    Result:=Copy(App, p+1, Length(App));
+  end;
+end;
+
 Function ExecAndWait(Const FileName: ShortString; Const WinState: Word; Wait:Boolean=True): Boolean;
 Var
   StartInfo: TStartupInfo;
@@ -338,7 +366,7 @@ var
   NeedUninitialize: Boolean;
 begin
   Assert(AFileName <> '');
- 
+
   NeedUninitialize := SUCCEEDED(CoInitializeEx(nil, COINIT_APARTMENTTHREADED or COINIT_DISABLE_OLE1DDE));
   try
     FillChar(ExecInfo, SizeOf(ExecInfo), 0);
@@ -366,7 +394,7 @@ begin
   end;
 end;
 
-procedure ExecApp(const App: String);
+procedure ExecApp(const App: String; const CurrDir: String);
 var
   SI: TStartupInfo;
   PI: TProcessInformation;
@@ -385,7 +413,7 @@ begin
 
   SetLastError(ERROR_INVALID_PARAMETER);
   {$WARN SYMBOL_PLATFORM OFF}
-  Win32Check(CreateProcess(nil, PChar(CmdLine), nil, nil, False, CREATE_DEFAULT_ERROR_MODE {$IFDEF UNICODE}or CREATE_UNICODE_ENVIRONMENT{$ENDIF}, nil, nil, SI, PI));
+  Win32Check(CreateProcess(nil, PChar(CmdLine), nil, nil, False, CREATE_DEFAULT_ERROR_MODE {$IFDEF UNICODE}or CREATE_UNICODE_ENVIRONMENT{$ENDIF}, nil, PChar(CurrDir), SI, PI));
   {$WARN SYMBOL_PLATFORM ON}
   CloseHandle(PI.hThread);
   CloseHandle(PI.hProcess);
@@ -393,12 +421,12 @@ end;
 
 Procedure Exec(Const FileName, Directory: String);
 Begin
-  ShellExecute(0, '', FileName, '', Directory, SW_SHOWNORMAL);
+  ShellExecute(0, '', GetAppName(FileName), GetParams(FileName), Directory, SW_SHOWNORMAL);
 End;
 
 Procedure OpenDir(Dir: string);
 Begin
-  ExecApp('EXPLORER.exe /e, '+PChar(Dir));
+  ExecApp('EXPLORER.exe /e, '+PChar(Dir), '');
 End;
 
 function GetSpecialPath(CSIDL: Word): string;

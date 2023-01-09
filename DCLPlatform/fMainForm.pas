@@ -76,6 +76,11 @@ begin
   Result:=FindCommandStrParam('Form=');
 end;
 
+function FindScriptName: String;
+begin
+  Result:=FindCommandStrParam('Script=');
+end;
+
 function FindScryptFileCall: String;
 begin
   Result:=FindCommandStrParam('ScryptFile=');
@@ -91,14 +96,9 @@ begin
   Result:=FindCommandStrParam('MDI=')='1';
 end;
 
-function FindSetBaseUID: String;
+function FindVariablesParams: String;
 begin
-  Result:=FindCommandStrParam('INISection=');
-end;
-
-function FindBasesINI: String;
-begin
-  Result:=FindCommandStrParam('BasesINI=');
+  Result:=FindCommandStrParam('Variables=');
 end;
 
 {$IFnDEF FPC}
@@ -111,7 +111,8 @@ end;
 procedure TMainForm.FormCreate(Sender: TObject);
 var
   MDI: Boolean;
-  S, DialogName: String;
+  i, p:Integer;
+  S, vn, v, DialogName, Variables: String;
   T: TextFile;
 begin
   PixelsPerInch:=96;
@@ -123,11 +124,6 @@ begin
     Pchar(UTF8ToWinCP('DCL '+GetDCLMessageString(msVersion)+' : '+uDCLConst.Version)));
   AppendMenu(GetSystemMenu(Handle, False), MF_STRING, LockMenuItem, PChar(UTF8ToWinCP(GetDCLMessageString(msLock)+'...')));
 {$ENDIF}
-
-  If (FindSetBaseUID<>'') and (FindBasesINI<>'') then
-  Begin
-    uUDL.DCLMainLogOn.WriteBaseUIDtoINI(FindBasesINI, FindSetBaseUID);
-  End;
 
   MDI:=False;
   if FileExists('interface.ini') then
@@ -143,6 +139,28 @@ begin
     CloseFile(T);
   end;
 
+  Variables:=FindVariablesParams;
+  if Variables<>'' then
+  begin
+    for i:=1 to ParamsCount(Variables) do
+    begin
+      S:=SortParams(Variables, i);
+      if S<>'' then
+      begin
+        p:=Pos('=', S);
+        if p<>0 then
+        begin
+          vn:=Copy(S, 1, p-1);
+          v:=Copy(S, p+1, Length(S));
+
+          if vn<>'' then
+            uUDL.DCLMainLogOn.Variables.NewVariable(Trim(vn), v);
+        end;
+      end;
+    end;
+
+  end;
+
   S:=FindScryptFileCall;
   If S<>'' then
     uUDL.DCLMainLogOn.RunSkriptFromFile(S);
@@ -151,7 +169,15 @@ begin
     Self.FormStyle:=fsMDIForm;
   DialogName:=FindFormCall;
   if DialogName='' then
-    uUDL.DCLMainLogOn.CreateMenu(Self)
+  begin
+    DialogName:=FindScriptName;
+    if DialogName='' then
+      uUDL.DCLMainLogOn.CreateMenu(Self)
+    else
+    begin
+      uUDL.DCLMainLogOn.RunCommand(DialogName);
+    end;
+  end
   Else
   begin
     if FindMainMenu then

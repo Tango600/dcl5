@@ -5728,7 +5728,7 @@ begin
                   Else If FindParam('ShellExec=', ScrStr)='1' Then
                     Exec(TmpStr, tmpStr1)
                   Else
-                    ExecApp(TmpStr);
+                    ExecApp(TmpStr, tmpStr1);
                 Except
                   ShowErrorMessage( - 8000, tmpStr1+TmpStr);
                 end;
@@ -5958,9 +5958,9 @@ begin
                     tmp2:='1';
                   If tmp2<>'1' Then
                     If FindParam('Viewer=', ScrStr)<>'' Then
-                      ExecApp('"'+FindParam('Viewer=', ScrStr)+'" "'+tmp1+'"')
+                      ExecApp('"'+FindParam('Viewer=', ScrStr)+'" "'+tmp1+'"', '')
                     Else
-                      ExecApp('"'+GPT.Viewer+'" "'+tmp1+'"');
+                      ExecApp('"'+GPT.Viewer+'" "'+tmp1+'"', '');
                 end;
 
                 TextReport.CloseReport('Report.txt');
@@ -5970,45 +5970,47 @@ begin
 
             If PosEx('ReportOfficeSheet=', ScrStr)=1 Then
             begin
-              If Assigned(FDCLForm) Then
-              begin
-                Enything:=FindParam('Save=', ScrStr)='1';
-                EnythingElse:=FindParam('Close=', ScrStr)='1';
-                TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
-                OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
-                  FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-                OfficeReport.OfficeFormat:=GetPossibleOffice(dtSheet, ConvertOfficeType(TmpStr), GPT.OfficeFormat);
+              Enything:=FindParam('Save=', ScrStr)='1';
+              EnythingElse:=FindParam('Close=', ScrStr)='1';
+              TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
 
-                Case OfficeReport.OfficeFormat of
-                ofOO:
-                OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything, EnythingElse);
-                ofMSO:
-                OfficeReport.ReportExcel(ScrStr, Enything, EnythingElse);
-                ofNone:
-                ShowErrorMessage( - 6200, '');
-                end;
+              If Assigned(FDCLForm) Then
+                OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
+                  FDCLForm.Tables[FDCLForm.CurrentTableIndex])
+              Else
+                OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn, nil);
+              OfficeReport.OfficeFormat:=GetPossibleOffice(dtSheet, ConvertOfficeType(TmpStr), GPT.OfficeFormat);
+
+              Case OfficeReport.OfficeFormat of
+              ofOO:
+              OfficeReport.ReportOpenOfficeCalc(ScrStr, Enything, EnythingElse);
+              ofMSO:
+              OfficeReport.ReportExcel(ScrStr, Enything, EnythingElse);
+              ofNone:
+              ShowErrorMessage( - 6200, '');
               end;
             end;
 
             If PosEx('ReportOfficeText=', ScrStr)=1 Then
             begin
+              Enything:=FindParam('Save=', ScrStr)='1';
+              EnythingElse:=FindParam('Close=', ScrStr)='1';
+              TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
               If Assigned(FDCLForm) Then
-              begin
-                Enything:=FindParam('Save=', ScrStr)='1';
-                EnythingElse:=FindParam('Close=', ScrStr)='1';
-                TmpStr:=LowerCase(FindParam('OfficeType=', ScrStr));
                 OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn,
-                  FDCLForm.Tables[FDCLForm.CurrentTableIndex]);
-                OfficeReport.OfficeFormat:=GetPossibleOffice(dtText, ConvertOfficeType(TmpStr), GPT.OfficeFormat);
+                  FDCLForm.Tables[FDCLForm.CurrentTableIndex])
+              Else
+                OfficeReport:=TDCLOfficeReport.Create(FDCLLogOn, nil);
 
-                Case OfficeReport.OfficeFormat of
-                ofOO:
-                OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything, EnythingElse);
-                ofMSO:
-                OfficeReport.ReportWord(ScrStr, Enything, EnythingElse);
-                ofNone:
-                ShowErrorMessage( - 6200, '');
-                end;
+              OfficeReport.OfficeFormat:=GetPossibleOffice(dtText, ConvertOfficeType(TmpStr), GPT.OfficeFormat);
+
+              Case OfficeReport.OfficeFormat of
+              ofOO:
+              OfficeReport.ReportOpenOfficeWriter(ScrStr, Enything, EnythingElse);
+              ofMSO:
+              OfficeReport.ReportWord(ScrStr, Enything, EnythingElse);
+              ofNone:
+              ShowErrorMessage( - 6200, '');
               end;
             end;
 
@@ -6733,7 +6735,15 @@ begin
 
             If PosEx('Exit;', ScrStr)=1 Then
             begin
-              Application.MainForm.Close;
+              if Assigned(Application.MainForm) then
+              begin
+                Application.MainForm.Close;
+              end
+              Else
+              begin
+                Application.Terminate;
+              end;
+              Exit;
             end;
 
             If PosEx('Debug;', ScrStr)=1 Then
@@ -9621,7 +9631,7 @@ begin
         end;
         naExec:
         begin
-          ExecApp(ShadowQuery.FieldByName('NOTIFY_TEXT').AsString);
+          ExecApp(ShadowQuery.FieldByName('NOTIFY_TEXT').AsString, '');
         end;
         naMessage:
         begin
@@ -15112,7 +15122,7 @@ begin
 
   PrintBox.SaveToFile(IncludeTrailingPathDelimiter(AppConfigDir)+'table.tmp');
   FreeAndNil(PrintBox);
-  ExecApp('"'+GPT.Viewer+'" "'+IncludeTrailingPathDelimiter(AppConfigDir)+'table.tmp"');
+  ExecApp('"'+GPT.Viewer+'" "'+IncludeTrailingPathDelimiter(AppConfigDir)+'table.tmp"', '');
 end;
 
 procedure TDCLOfficeReport.ReportOpenOfficeWriter(ParamStr: String; Save, Close: Boolean);
@@ -15347,6 +15357,7 @@ begin
       OOSetVisible(Document, True);
       If Save Then
       begin
+        ForceDirectories(ExtractFilePath(OutFileName));
         Case OfficeDocumentFormat of
         odfMSO97:
         begin
@@ -15672,7 +15683,7 @@ var
   DocNum: Cardinal;
   ParamNum, BookmarckNum, LayotCount, FontSize: Byte;
 
-  ToWrite, BookmarkFromLayot: Boolean;
+  ToWrite, BookmarkFromLayot, OneDoc: Boolean;
   FontStyleRec: TFontStyleRec;
   DCLQuery: TDCLDialogQuery;
 {$ENDIF}
@@ -15712,6 +15723,8 @@ begin
   begin
     OfficeDocumentFormat:=GetDocumentType(FileName);
   end;
+
+  OneDoc:=FindParam('OneDoc=', ParamStr)='1';
 
   OutFileName:=FindParam('FileName=', ParamStr);
   if not IsFullPath(OutFileName) then
@@ -15802,10 +15815,16 @@ begin
 
         StV:='';
         If FieldExists(BookmarckName, DCLQuery) Then
+        begin
           If ToWrite Then
             StV:=MoneyToString(DCLQuery.FieldByName(BookmarckName).AsCurrency, True, False)
           Else
             StV:=Trim(DCLQuery.FieldByName(BookmarckName).AsString);
+        end
+        else
+        begin
+          StV:='<>';
+        end;
 
         WordInsert(MsWord, BookmarckName, StV, FontStyleRec.Bold, FontStyleRec.italic,
           FontStyleRec.StrikeThrough, FontStyleRec.Undeline, FontSize, FontStyleRec.Center);
@@ -15814,14 +15833,14 @@ begin
 
       If Save Then
       begin
-        StV:=AddToFileName(OutFileName, '_'+IntToStr(DocNum));
-        If WordVer=9 Then
-          MsWord.ActiveDocument.SaveAs(StV, EmptyParam, EmptyParam, EmptyParam, EmptyParam,
-            EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam) // Word 2000
-        Else If WordVer>9 Then
-          MsWord.ActiveDocument.SaveAs(StV, EmptyParam, EmptyParam, EmptyParam, EmptyParam,
-            EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam,
-            EmptyParam, EmptyParam, EmptyParam, EmptyParam); // Word XP
+        if not OneDoc then
+          StV:=AddToFileName(OutFileName, '_'+IntToStr(DocNum))
+        else
+          StV:=OutFileName;
+        ForceDirectories(ExtractFilePath(StV));
+        MsWord.ActiveDocument.SaveAs(StV, EmptyParam, EmptyParam, EmptyParam, EmptyParam,
+          EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam, EmptyParam,
+          EmptyParam, EmptyParam, EmptyParam, EmptyParam);
       end;
 
       If Close then
@@ -16997,7 +17016,7 @@ begin
   CoUninitialize;
 {$ENDIF}
   If GPT.DebugOn and GPT.DebugMesseges Then
-    ExecApp('"'+GPT.Viewer+'" "'+IncludeTrailingPathDelimiter(AppConfigDir)+'DebugApp.txt"');
+    ExecApp('"'+GPT.Viewer+'" "'+IncludeTrailingPathDelimiter(AppConfigDir)+'DebugApp.txt"', '');
 end;
 
 procedure InitDCL(DBLogOn: TDBLogOn);
