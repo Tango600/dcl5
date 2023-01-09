@@ -399,6 +399,7 @@ var
   SI: TStartupInfo;
   PI: TProcessInformation;
   CmdLine: String;
+  cd:PChar;
 begin
   Assert(App <> '');
 
@@ -412,8 +413,11 @@ begin
   SI.wShowWindow := SW_SHOWNORMAL;
 
   SetLastError(ERROR_INVALID_PARAMETER);
+  if CurrDir<>'' then
+    cd:=PChar(CurrDir);
+
   {$WARN SYMBOL_PLATFORM OFF}
-  Win32Check(CreateProcess(nil, PChar(CmdLine), nil, nil, False, CREATE_DEFAULT_ERROR_MODE {$IFDEF UNICODE}or CREATE_UNICODE_ENVIRONMENT{$ENDIF}, nil, PChar(CurrDir), SI, PI));
+  Win32Check(CreateProcess(nil, PChar(CmdLine), nil, nil, False, CREATE_DEFAULT_ERROR_MODE {$IFDEF UNICODE}or CREATE_UNICODE_ENVIRONMENT{$ENDIF}, nil, cd, SI, PI));
   {$WARN SYMBOL_PLATFORM ON}
   CloseHandle(PI.hThread);
   CloseHandle(PI.hProcess);
