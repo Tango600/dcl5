@@ -16065,8 +16065,8 @@ begin
 
       If Save Then
       begin
-        ForceDirectories(ExtractFilePath(FileName));
-        ExcelSave(Excel, FileName);
+        ForceDirectories(ExtractFilePath(OutFileName));
+        ExcelSave(Excel, OutFileName);
       end;
 
       if Close then
