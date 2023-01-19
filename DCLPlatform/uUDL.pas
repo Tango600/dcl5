@@ -15683,7 +15683,7 @@ var
   DocNum: Cardinal;
   ParamNum, BookmarckNum, LayotCount, FontSize: Byte;
 
-  ToWrite, BookmarkFromLayot, OneDoc: Boolean;
+  ToWrite, BookmarkFromLayot, OneDoc, Hide: Boolean;
   FontStyleRec: TFontStyleRec;
   DCLQuery: TDCLDialogQuery;
 {$ENDIF}
@@ -15691,6 +15691,8 @@ begin
 {$IFDEF MSWINDOWS}
   Ext:='doc';
   TemplateExt:='dot';
+
+  Hide:=FindParam('Hide=', ParamStr)='1';
 
   if FindParam('TemplateName=', ParamStr)<>'' then
   begin
@@ -15769,6 +15771,8 @@ begin
     begin
       WordRun(MsWord);
       WordOpen(MsWord, FileName);
+      if Hide then
+        MsWord.Visible:=False;
 
       If (Not BookmarkFromLayot)and(LayotCount=0) Then
         LayotCount:=MsWord.ActiveDocument.BookMarks.Count;
@@ -15829,7 +15833,8 @@ begin
         WordInsert(MsWord, BookmarckName, StV, FontStyleRec.Bold, FontStyleRec.italic,
           FontStyleRec.StrikeThrough, FontStyleRec.Undeline, FontSize, FontStyleRec.Center);
       end;
-      MsWord.Visible:=True;
+      if not Hide then
+        MsWord.Visible:=True;
 
       If Save Then
       begin
@@ -15867,7 +15872,7 @@ end;
 procedure TDCLOfficeReport.ReportExcel(ParamStr: String; Save, Close: Boolean);
 var
   SQLStr, FileName, OutFileName, ColorStr, Ext, TemplateExt, Fields: String;
-  EnableRowChColor, EnableColChColor: Boolean;
+  EnableRowChColor, EnableColChColor, Hide: Boolean;
   RecRepNum, v1: Word;
   RowRColor, RowBColor, RowGColor, ColRColor, ColBColor, ColGColor: Integer;
   DCLQuery: TDCLDialogQuery;
@@ -15876,6 +15881,7 @@ begin
 {$IFDEF MSWINDOWS}
   Ext:='xls';
   TemplateExt:='xlt';
+  Hide:=FindParam('Hide=', ParamStr)='1';
 
   if FindParam('TemplateName=', ParamStr)<>'' then
   begin
@@ -16061,7 +16067,8 @@ begin
         DCLQuery.Next;
       end;
       DCLQuery.Close;
-      Excel.Visible:=True;
+      if not Hide then
+        Excel.Visible:=True;
 
       If Save Then
       begin
