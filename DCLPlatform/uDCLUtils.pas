@@ -402,6 +402,7 @@ var
   cd:PChar;
 begin
   Assert(App <> '');
+  cd:=nil;
 
   CmdLine := App;
   UniqueString(CmdLine);
@@ -413,8 +414,10 @@ begin
   SI.wShowWindow := SW_SHOWNORMAL;
 
   SetLastError(ERROR_INVALID_PARAMETER);
-  if CurrDir<>'' then
+  if (CurrDir<>'') and FileExists(CurrDir) then
+  begin
     cd:=PChar(CurrDir);
+  end;
 
   {$WARN SYMBOL_PLATFORM OFF}
   Win32Check(CreateProcess(nil, PChar(CmdLine), nil, nil, False, CREATE_DEFAULT_ERROR_MODE {$IFDEF UNICODE}or CREATE_UNICODE_ENVIRONMENT{$ENDIF}, nil, cd, SI, PI));

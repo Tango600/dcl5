@@ -7903,8 +7903,7 @@ begin
 
       If GPT.ServerCodePage='' Then
       Begin
-        GPT.ServerCodePage:=ReplaseCPtoWIN(DefaultSystemEncoding);
-        FDBLogOn.Params.Append('lc_ctype='+ReplaseCPtoWIN(DefaultSystemEncoding));
+        raise Exception.Create('Server code page not define!');
       End
       Else
         FDBLogOn.Params.Append('lc_ctype='+UpperCase(ReplaseCPtoWIN(GPT.ServerCodePage)));
@@ -8016,8 +8015,7 @@ begin
 {$ENDIF}
     If GPT.ServerCodePage='' Then
     begin
-      FDBLogOn.Properties.Append('lc_ctype='+DefaultSystemEncoding);
-      GPT.ServerCodePage:=DefaultSystemEncoding;
+      raise Exception.Create('Server code page not define!');
     end
     Else
       FDBLogOn.Properties.Append('lc_ctype='+UpperCase(GPT.ServerCodePage));
@@ -15013,12 +15011,6 @@ var
   PrintBox: TStringList;
 begin
   PrintBox:=TStringList.Create;
-  If DefaultSystemEncoding=EncodingUTF8 Then
-    PrintBox.Append(UTF8BOM+Caption)
-  Else If DefaultSystemEncoding='utf16' Then
-    PrintBox.Append(UTF16LEBOM+Caption)
-  Else
-    PrintBox.Append(Caption);
 
   PrintBox.Append('');
   S:='|';
@@ -15120,7 +15112,7 @@ begin
   Separator:=Separator+'|';
   PrintBox.Append(Separator);
 
-  PrintBox.SaveToFile(IncludeTrailingPathDelimiter(AppConfigDir)+'table.tmp');
+  PrintBox.SaveToFile(IncludeTrailingPathDelimiter(AppConfigDir)+'table.tmp'{$IFNDEF FPC}, TEncoding.UTF8{$ENDIF});
   FreeAndNil(PrintBox);
   ExecApp('"'+GPT.Viewer+'" "'+IncludeTrailingPathDelimiter(AppConfigDir)+'table.tmp"', '');
 end;
@@ -16546,11 +16538,6 @@ begin
   If DialogRes=mrCancel Then
     Exit;
 
-  If DefaultSystemEncoding=EncodingUTF8 Then
-    Report.Append(UTF8BOM)
-  Else If DefaultSystemEncoding='utf16' Then
-    Report.Append(UTF16LEBOM);
-
   Report.AddStrings(HeadLine);
   Report.AddStrings(Body);
   Report.AddStrings(Futer);
@@ -16573,7 +16560,7 @@ begin
 
   If InConsoleCodePage then
     Report.Text:=Transcode(tdtDOS, Report.Text);
-  Report.SaveToFile(FileName);
+  Report.SaveToFile(FileName{$IFNDEF FPC}, TEncoding.UTF8{$ENDIF});
   Result:=FileName;
   FSaved:=True;
 
@@ -17089,11 +17076,6 @@ begin
   GPT.TimeSeparator:=DefaultTimeSeparator;
 {$IFDEF MSWINDOWS}
   SysUtils.GetFormatSettings;
-{$ENDIF}
-{$IFDEF FPC}
-  DefaultSystemEncoding:=GetDefaultTextEncoding;
-{$ELSE}
-  DefaultSystemEncoding:='cp'+IntToStr(GetACP);
 {$ENDIF}
   Params:=TStringList.Create;
   If ParamStr(1)<>'' Then

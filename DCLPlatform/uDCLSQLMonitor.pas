@@ -69,11 +69,6 @@ end;
 procedure TDCLSQLMon.Clear;
 begin
   FSQLContaner.Clear;
-
-  If DefaultSystemEncoding=EncodingUTF8 Then
-    FSQLContaner.Append(UTF8BOM)
-  Else If DefaultSystemEncoding='utf16' Then
-    FSQLContaner.Append(UTF16LEBOM);
 end;
 
 constructor TDCLSQLMon.Create(FileName: string);
@@ -117,7 +112,7 @@ end;
 procedure TDCLSQLMon.Resume;
 begin
   FTrraceStatus:=True;
-  FSQLContaner.SaveToFile(FFileName);
+  FSQLContaner.SaveToFile(FFileName{$IFNDEF FPC}, TEncoding.UTF8{$ENDIF});
 end;
 
 procedure TDCLSQLMon.SetTrraceStatus(Status: Boolean);

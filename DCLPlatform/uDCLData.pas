@@ -255,7 +255,7 @@ var
   GPT: TGPT;
   ConnectErrorCode: Byte;
   TransParams, ScriptRunCreated, ShowFormPanel: Boolean;
-  DefaultSystemEncoding, Path, AppConfigDir, UserProfileDir: string;
+  Path, AppConfigDir, UserProfileDir: string;
 {$IFDEF MSWINDOWS}
   ScriptRun: Variant;
 {$ENDIF}

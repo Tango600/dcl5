@@ -1,4 +1,4 @@
-unit uLogging;
+﻿unit uLogging;
 
 interface
 
@@ -89,10 +89,6 @@ begin
     FFileName:='Log.txt';
 
   FLogData:=TStringList.Create;
-  If DefaultSystemEncoding=EncodingUTF8 Then
-    FLogData.Append(UTF8BOM)
-  Else If DefaultSystemEncoding='utf16' Then
-    FLogData.Append(UTF16LEBOM);
 
   Case State of
   lsNew:Begin
@@ -106,7 +102,6 @@ begin
   End;
   End;
 
-  FLogData.Append('Default system encoding: '+DefaultSystemEncoding);
   Case WriteTime of
   ltBegin, ltBeginEnd:
   Begin
@@ -135,7 +130,7 @@ end;
 procedure TLogging.FlushLog;
 begin
   If Assigned(FLogData) then
-    FLogData.SaveToFile(FFileName);
+    FLogData.SaveToFile(FFileName{$IFNDEF FPC}, TEncoding.UTF8{$ENDIF});
 end;
 
 procedure TLogging.SetActive(ActState: Boolean);
@@ -156,7 +151,7 @@ begin
 
   FLogData.Append(S);
   If FActive then
-    FLogData.SaveToFile(FFileName);
+    FLogData.SaveToFile(FFileName{$IFNDEF FPC}, TEncoding.UTF8{$ENDIF});
   FFirstLog:=False;
 end;
 
