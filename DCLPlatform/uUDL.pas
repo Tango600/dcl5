@@ -15684,7 +15684,7 @@ begin
   Ext:='doc';
   TemplateExt:='dot';
 
-  Hide:=FindParam('Hide=', ParamStr)='1';
+  Hide:=Save and Close;
 
   if FindParam('TemplateName=', ParamStr)<>'' then
   begin
@@ -15873,7 +15873,7 @@ begin
 {$IFDEF MSWINDOWS}
   Ext:='xls';
   TemplateExt:='xlt';
-  Hide:=FindParam('Hide=', ParamStr)='1';
+  Hide:=Save and Close;
 
   if FindParam('TemplateName=', ParamStr)<>'' then
   begin
