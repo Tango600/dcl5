@@ -59,8 +59,6 @@ uses
 
 procedure TForm1.ConnectDB;
 Begin
-  FDBLogOn.Charset:='UTF8';
-
   if GPT.ServerCodePage='' then
     GPT.ServerCodePage:='utf8';
 
@@ -89,6 +87,8 @@ Begin
 
   If Not FDBLogOn.Connected Then
   begin
+    FDBLogOn.Charset:=GPT.ServerCodePage;
+
     If GPT.DBPath<>'' Then
     begin
       If Not IsFullPAth(GPT.DBPath) Then
@@ -113,9 +113,6 @@ Begin
       Else
         FDBLogOn.LoginPrompt:=True;
 
-      If GPT.ServerCodePage='' Then
-        FDBLogOn.Charset:='utf8';
-
       FDBLogOn.Dialect:=GPT.SQLDialect;
       IBTransaction.Database:=FDBLogOn;
       try
@@ -130,9 +127,17 @@ End;
 procedure TForm1.FormCreate(Sender: TObject);
 var
   IniFile: TIniFile;
+  dclIni: String;
 begin
   SetLength(Scripts, 0);
-  LoadIni('DCL.ini', GPT);
+  dclIni:='DCL.ini';
+  if Pos('.ini', LowerCase(ParamStr(1)))<>0 then
+  begin
+    dclIni:=ParamStr(1);
+  end;
+
+  LoadIni(dclIni, GPT);
+  StatusBar1.Panels[1].Text:=dclIni;
 
   ConnectDB;
 
@@ -297,6 +302,7 @@ var
   retval, i: Integer;
   FileDate, DBLastUpdate: TDateTime;
   MetadataFileName:String;
+  NotEmpty: Boolean;
   ScrName, FileName: String;
   MS:TMemoryStream;
   Modified, MetaDataExist:Boolean;
@@ -316,21 +322,25 @@ begin
       FileDate:=FileDateToDateTime(FileAge(FileName));
 
       ScrName:=ExtractFileNameWithoutExt(SRec.name);
-      SQLQuery1.SQL.Text:='select * from DCL_SCRIPTS where DCLNAME='''+ScrName+'''';
+      SQLQuery1.Params.Clear;
+      SQLQuery1.SQL.Text:='select * from DCL_SCRIPTS where DCLNAME=:ScrName';
+      SQLQuery1.ParamByName('ScrName').AsString:=ScrName;
       SQLQuery1.Open;
-      SQLQuery1.Last;
-      if SQLQuery1.RecordCount=1 then
-      begin
-        DBLastUpdate:=SQLQuery1.FieldByName('UPDATES').AsDateTime;
-        SQLQuery1.Close;
+      DBLastUpdate:=SQLQuery1.FieldByName('UPDATES').AsDateTime;
+      NotEmpty:=SQLQuery1.EOF and SQLQuery1.BOF;
+      SQLQuery1.Close;
 
+      if not NotEmpty then
+      begin
         if FileDate>DBLastUpdate then
         begin
           MS:=TMemoryStream.Create;
           MS.LoadFromFile(FileName);
 
-          SQLQuery2.SQL.Text:='update DCL_SCRIPTS set DCLTEXT=:DCLTEXT where DCLNAME='''+ScrName+'''';
+          SQLQuery2.Params.Clear;
+          SQLQuery2.SQL.Text:='update DCL_SCRIPTS set DCLTEXT=:DCLTEXT where DCLNAME=:ScrName';
           SQLQuery2.ParamByName('DCLTEXT').LoadFromStream(MS, ftMemo);
+          SQLQuery1.ParamByName('ScrName').AsString:=ScrName;
           SQLQuery2.ExecSQL;
 
           FreeAndNil(MS);
@@ -339,9 +349,8 @@ begin
       end
       else
       begin
-        if SQLQuery1.RecordCount=0 then
+        if NotEmpty then
         begin
-          SQLQuery1.Close;
           Scr:=TDCLScript.Create;
 
           MetaDataExist:=False;
@@ -376,13 +385,13 @@ begin
               begin
                 Scr.Command:=FindParam('COMMAND=', MDFile[i-1]);
               end;
-
             end;
           end;
 
           MS:=TMemoryStream.Create;
           MS.LoadFromFile(FileName);
 
+          SQLQuery2.Params.Clear;
           SQLQuery2.SQL.Text:='insert into DCL_SCRIPTS (NUMSEQ, IDENT, PARENT, COMMAND, DCLNAME, DCLTEXT) '+
           'values(:NUMSEQ, :IDENT, :PARENT, :COMMAND, :DCLNAME, :DCLTEXT)';
           SQLQuery2.ParamByName('DCLNAME').AsString:=ScrName;
@@ -423,15 +432,18 @@ begin
   Begin
     If (SRec.Attr and(faDirectory or faVolumeID))=0 Then
     Begin
-      FileName:=IncludeTrailingPathDelimiter(ScriptDir)+SRec.name;
       ScrName:=ExtractFileNameWithoutExt(SRec.name);
-      SQLQuery1.SQL.Text:='select * from DCL_SCRIPTS where DCLNAME='''+ScrName+'''';
+      SQLQuery1.Params.Clear;
+      SQLQuery1.SQL.Text:='select * from DCL_SCRIPTS where DCLNAME=:ScrName';
+      SQLQuery1.ParamByName('ScrName').AsString:=ScrName;
       SQLQuery1.Open;
-      SQLQuery1.Last;
-      if SQLQuery1.RecordCount=1 then
+      NotEmpty:=SQLQuery1.EOF and SQLQuery1.BOF;
+      SQLQuery1.Close;
+
+      if not NotEmpty then
       begin
-        SQLQuery1.Close;
-        SQLQuery1.SQL.Text:='delete from DCL_SCRIPTS where DCLNAME='''+ScrName+'''';
+        SQLQuery1.SQL.Text:='delete from DCL_SCRIPTS where DCLNAME=:ScrName';
+        SQLQuery1.ParamByName('ScrName').AsString:=ScrName;
         SQLQuery1.ExecSQL;
         Modified:=True;
       end;

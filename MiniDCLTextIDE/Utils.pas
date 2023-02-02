@@ -67,8 +67,6 @@ Begin
     Begin
       If Pos('//', TrimLeft(Params[i]))<>1 Then
       Begin
-
-
         If PosEx('CodePage=', Params[i])=1 Then
           GPT.ServerCodePage:=FindParam('CodePage=', Params[i]);
         If PosEx('MainFormCaption=', Params[i])=1 Then
@@ -106,7 +104,6 @@ Begin
           GPT.DBType:=FindParam('DBType=', Params[i]);
       End;
     End;
-
 End;
 
 
