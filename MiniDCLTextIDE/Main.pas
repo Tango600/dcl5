@@ -309,6 +309,7 @@ var
   MDFile:TStringList;
 begin
   MDFile:=TStringList.Create;
+  StatusBar1.Panels[2].Text:='';
 
   if not IBTransaction.Active then
     IBTransaction.StartTransaction;
@@ -340,7 +341,7 @@ begin
           SQLQuery2.Params.Clear;
           SQLQuery2.SQL.Text:='update DCL_SCRIPTS set DCLTEXT=:DCLTEXT where DCLNAME=:ScrName';
           SQLQuery2.ParamByName('DCLTEXT').LoadFromStream(MS, ftMemo);
-          SQLQuery1.ParamByName('ScrName').AsString:=ScrName;
+          SQLQuery2.ParamByName('ScrName').AsString:=ScrName;
           SQLQuery2.ExecSQL;
 
           FreeAndNil(MS);
@@ -442,16 +443,19 @@ begin
 
       if not NotEmpty then
       begin
-        SQLQuery1.SQL.Text:='delete from DCL_SCRIPTS where DCLNAME=:ScrName';
-        SQLQuery1.ParamByName('ScrName').AsString:=ScrName;
-        SQLQuery1.ExecSQL;
+        SQLQuery2.SQL.Text:='delete from DCL_SCRIPTS where DCLNAME=:ScrName';
+        SQLQuery2.ParamByName('ScrName').AsString:=ScrName;
+        SQLQuery2.ExecSQL;
         Modified:=True;
       end;
     end;
     retval:=FindNext(SRec);
   end;
   if Modified then
+  begin
     IBTransaction.Commit;
+    StatusBar1.Panels[2].Text:='*';
+  end;
   if IBTransaction.Active then
     IBTransaction.EndTransaction;
 end;
