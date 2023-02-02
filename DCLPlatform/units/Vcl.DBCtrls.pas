@@ -4778,7 +4778,7 @@ begin
   Buttons[nbNext].Enabled := DnEnable;
   Buttons[nbLast].Enabled := DnEnable;
   Buttons[nbDelete].Enabled := CanModify and not (FDataLink.DataSet.BOF and FDataLink.DataSet.EOF);
-  Buttons[nbRefresh].Enabled := Enabled and (nbRefresh in VisibleButtons) and FDataLink.Active and FDataLink.DataSet.CanRefresh;
+  Buttons[nbRefresh].Enabled := Enabled and (nbRefresh in VisibleButtons) and FDataLink.Active;
   Buttons[nbApplyUpdates].Enabled := CanModify and (nbApplyUpdates in VisibleButtons) and Self.CanApplyUpdates;
   Buttons[nbCancelUpdates].Enabled := CanModify and (nbCancelUpdates in VisibleButtons) and Self.CanCancelUpdates;
 end;
