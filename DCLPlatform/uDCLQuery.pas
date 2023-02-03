@@ -53,7 +53,7 @@ type
     FUpdateSQL: TDCLDialogQuery;
     {$ENDIF}
     {$IFDEF TRANSACTIONDB}
-    ShadowTransaction:TTransaction;
+    ShadowTransaction: TTransaction;
     {$ENDIF}
 {$ENDIF}
     FMainTable, FKeyField: string;
@@ -116,6 +116,7 @@ type
     procedure Insert;
     procedure Edit;
     procedure Delete;
+    procedure Post; override;
     procedure SetUpdateSQL(TableName, KeyField: String);
     procedure ExecSQL;
 
@@ -904,6 +905,12 @@ procedure TDCLQuery.Delete;
 begin
   If not FindNotAllowedOperation(dsoDelete) then
     inherited Delete;
+end;
+
+procedure TDCLQuery.Post;
+begin
+  If not FindNotAllowedOperation(dsoEdit) then
+    inherited Post;
 end;
 
 procedure TDCLQuery.SaveDB;
