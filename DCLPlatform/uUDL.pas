@@ -15681,8 +15681,8 @@ var
 {$ENDIF}
 begin
 {$IFDEF MSWINDOWS}
-  Ext:='doc';
-  TemplateExt:='dot';
+  Ext:='docx';
+  TemplateExt:='dotx';
 
   Hide:=Save and Close;
 
@@ -15701,14 +15701,14 @@ begin
     OfficeDocumentFormat:=odfOO;
     if FileExists(FileName+'.'+TemplateExt) then
     begin
-      OfficeDocumentFormat:=odfOO;
+      OfficeDocumentFormat:=odfMSO2007;
       FileName:=FileName+'.'+TemplateExt;
     end
     else
     begin
       if FileExists(FileName+'.'+Ext) then
       begin
-        OfficeDocumentFormat:=odfOO;
+        OfficeDocumentFormat:=odfMSO2007;
         FileName:=FileName+'.'+Ext;
       end;
     end;
@@ -15918,9 +15918,10 @@ begin
         end
         else
         begin
-          if FileExists(FileName+'.'+TemplateExt+'x') then
+          if FileExists(FileName+'.'+Ext+'x') then
           begin
-            FileName:=FileName+'.'+TemplateExt;
+            Ext:=Ext+'x';
+            FileName:=FileName+'.'+Ext;
           end;
         end;
       end;
