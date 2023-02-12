@@ -14233,6 +14233,7 @@ begin
         FQuery.GoToBookmark(FLocalBookmark);
     finally
       FQuery.FreeBookmark(FLocalBookmark);
+      FLocalBookmark:=nil;
     end;
 
   For tpc:=1 to Length(FTableParts) do
