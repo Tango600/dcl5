@@ -3,9 +3,9 @@ unit uDCLOfficeUtils;
 interface
 
 uses
-  uDCLConst
+  uDCLConst, SysUtils
 {$IFDEF MSWINDOWS}
-  , Variants, Classes, ComObj, SysUtils, uDCLUtils
+  , Variants, Classes, ComObj, uDCLUtils
 {$ENDIF};
 
 {$IFDEF MSWINDOWS}

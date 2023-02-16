@@ -300,14 +300,6 @@ Begin
   Result:=FilePath+NewFileName;
 End;
 
-{$IFDEF MSWINDOWS}
-Function KeyState(Key: Integer): Boolean;
-Begin
-{$R-}
-  Result:=HiWord(GetKeyState(Key))<>0;
-{$R+}
-End;
-
 function GetAppName(App: String): String;
 var
   p:Integer;
@@ -333,6 +325,14 @@ begin
     Result:=Copy(App, p+1, Length(App));
   end;
 end;
+
+{$IFDEF MSWINDOWS}
+Function KeyState(Key: Integer): Boolean;
+Begin
+{$R-}
+  Result:=HiWord(GetKeyState(Key))<>0;
+{$R+}
+End;
 
 Function ExecAndWait(Const FileName: ShortString; Const WinState: Word; Wait:Boolean=True): Boolean;
 Var
@@ -502,7 +502,7 @@ Begin
   end;
 End;
 
-Procedure ExecApp(const App: String);
+procedure ExecApp(const App: String; const CurrDir: String);
 Begin
   ExecuteApp(App);
 End;
