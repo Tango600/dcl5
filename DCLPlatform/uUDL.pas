@@ -595,6 +595,7 @@ Type
     FReturningMode: TChooseMode;
     FReturnValueParams: TReturnValueParams;
     FFormMenu: TMainMenu;
+    FSeed:Integer;
 
     function AddGrid(Parent: TWinControl; SurfType: TDataControlType; Query: TDCLDialogQuery;
       Data: TDataSource): Integer;
@@ -707,6 +708,7 @@ Type
     property ReturnFormValue: TReturnFormValue read FRetunValue;
     property CloseAction: TDCLFormCloseAction read FCloseAction write FCloseAction;
     property IsSingle: Boolean read SingleMod write SingleMod;
+    property FormSeed: Integer read FSeed;
   end;
 
   { TDCLCommand }
@@ -2039,10 +2041,13 @@ begin
     If Assigned(FDCLLogOn.FDCLMainMenu) Then
       If Assigned(FDCLLogOn.FDCLMainMenu.FormBar) Then
       begin
-        TB1:=(FDCLLogOn.FDCLMainMenu.FormBar.FindComponent('TB'+IntToStr(FForm.Handle))
+        TB1:=(FDCLLogOn.FDCLMainMenu.FormBar.FindComponent('TB'+IntToStr(FormSeed))
             as TFormPanelButton);
         If Assigned(TB1) then
+        begin
+          TB1.Hide;
           FreeAndNil(TB1);
+        end;
       end;
   end;
 
@@ -2800,6 +2805,7 @@ begin
   FForm.Font:=GUIFont;
 {$ENDIF}{$ENDIF}
 
+  FSeed:=FForm.Handle;
   FFormMenu:=TMainMenu.Create(FForm);
   // FFormMenu.Parent:=FForm;
 
@@ -2829,7 +2835,7 @@ begin
       If FDCLLogOn.FDCLMainMenu.FormBar.Parent<>FForm Then
       begin
         TB:=TFormPanelButton.Create(FDCLLogOn.FDCLMainMenu.FormBar);
-        TB.Name:='TB'+IntToStr(FForm.Handle);
+        TB.Name:='TB'+IntToStr(FSeed);
         TB.Parent:=FDCLLogOn.FDCLMainMenu.FormBar;
         TB.Width:=FormPanelButtonWidth;
         TB.Height:=FormPanelButtonHeight;
@@ -5299,7 +5305,7 @@ begin
           DCLQuery.Close;
           DCLQuery.SQL.Text:='select Count(*) from '+GPT.DCLTable+' where '+GPT.UpperString+
             GPT.DCLNameField+GPT.UpperStringEnd+'='+GPT.UpperString+GPT.StringTypeChar+Command+
-            GPT.StringTypeChar+GPT.UpperStringEnd;
+            GPT.StringTypeChar+GPT.UpperStringEnd+' and '+GPT.IdentifyField+' is null';
           try
             DCLQuery.Open;
             RecCount:=DCLQuery.Fields[0].AsInteger;
@@ -5308,7 +5314,7 @@ begin
             DCLQuery.SQL.Clear;
             RecCount:=0;
           end;
-          If RecCount>0 Then
+          If RecCount=1 Then
           begin
             DCLQuery.Close;
             DCLQuery.SQL.Text:='select * from '+GPT.DCLTable+' where '+GPT.UpperString+
@@ -13298,6 +13304,7 @@ begin
                 end;
               end;
     end;
+
     BaseChanged:=False;
     if Assigned(FGridPanel) then
       FreeAndNil(FGridPanel);
@@ -17014,9 +17021,9 @@ begin
     FreeAndNil(DCLMainLogOn);
   end;
 
-{$IFDEF ADO}
+{$IFDEF ADO}{$IFNDEF EMBEDDED}
   CoUninitialize;
-{$ENDIF}
+{$ENDIF}{$ENDIF}
   If GPT.DebugOn and GPT.DebugMesseges Then
     ExecApp('"'+GPT.Viewer+'" "'+IncludeTrailingPathDelimiter(AppConfigDir)+'DebugApp.txt"', '');
 end;
