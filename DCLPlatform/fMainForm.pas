@@ -154,7 +154,7 @@ begin
           v:=Copy(S, p+1, Length(S));
 
           if vn<>'' then
-            uUDL.DCLMainLogOn.Variables.NewVariable(Trim(vn), v);
+            uUDL.DCLMainLogOn.Variables.NewVariable('', Trim(vn), v);
         end;
       end;
     end;
@@ -183,7 +183,7 @@ begin
     if FindMainMenu then
       uUDL.DCLMainLogOn.CreateMenu(Self);
 
-    uUDL.DCLMainLogOn.CreateForm(DialogName, nil, nil, nil, nil, False, chmNone);
+    uUDL.DCLMainLogOn.CreateForm(DialogName, nil, nil, nil, nil, nil, False, chmNone);
   end;
 end;
 
