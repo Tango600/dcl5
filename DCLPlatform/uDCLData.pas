@@ -46,18 +46,19 @@ type
     StringTypeChar, DCLNameField, DCLTextField, DCLTable, ShowRoleField, ACTIVE_USERS_TABLE,
     USER_LOGIN_HISTORY_TABLE, TemplatesNameField, TemplatesKeyField, TemplatesDataField,
     UserAdminField, {INITable,} RolesMenuTable, TimeStampFormat, DCLLongUserName, UserID, RoleID,
-    DCLRoleName, NewDBPassword, DBPassword, LibPath, LaunchScrFile, LaunchForm: String;
+    DCLRoleName, NewDBPassword, DBPassword, LibPath, LaunchScrFile, LaunchForm,
+    WordOLEExtension, ExcelOLEExtension: String;
     FormPosInDB:TIniStore;
     OfficeDocumentFormat: TOfficeDocumentFormat;
     OfficeFormat: TOfficeFormat;
   end;
 
-TLogonParams=record
+{TLogonParams=record
 //
-end;
+end;}
 
 TVariable=Record
-  Name: String[25];
+  NameSpace, Name: String;
   Value:String;
 End;
 
@@ -99,7 +100,7 @@ End;
 RButtonParams=record
   Caption, Hint, Command, Pict: string;
   Top, Left, Width, Height: Word;
-  Default, Cancel, ForEach: Boolean;
+  Default, Cancel, ForEach, Host: Boolean;
   FontStyle:TFontStyles;
 end;
 
@@ -259,7 +260,7 @@ var
 {$IFDEF MSWINDOWS}
   ScriptRun: Variant;
 {$ENDIF}
-  NavigVisiButtonsVar: Array [1..10] Of TNavButtonsSet;
+  NavigVisiButtonsVar: Array [1..12] Of TNavButtonsSet;
   TDataGrid: set of TDataControlType;
   TDataFields: set of TDataControlType;
   DefaultOrientation: TOrientation;
@@ -280,6 +281,7 @@ begin
   ButtonParams.Pict:='';
   ButtonParams.Top:=0;
   ButtonParams.Left:=0;
+  ButtonParams.Host:=False;
   ButtonParams.Width:=0;
   ButtonParams.Height:=0;
   ButtonParams.Default:=False;

@@ -1777,8 +1777,18 @@ Begin
         If PosEx('UserLocalProfile=', Params[i])=1 Then
         Begin
           AppConfigDir:=Trim(FindParam('UserLocalProfile=', Params[i]));
-          DCLMainLogOn.TranslateVal(AppConfigDir);
+          DCLMainLogOn.TranslateVal('', AppConfigDir);
           AppConfigDir:=IncludeTrailingPathDelimiter(AppConfigDir);
+        End;
+
+        If PosEx('WordOLEExtension=', Params[i])=1 Then
+        Begin
+          GPT.WordOLEExtension:=Trim(FindParam('WordOLEExtension=', Params[i]));
+        End;
+
+        If PosEx('ExcelOLEExtension=', Params[i])=1 Then
+        Begin
+          GPT.ExcelOLEExtension:=Trim(FindParam('ExcelOLEExtension=', Params[i]));
         End;
       End;
     End;

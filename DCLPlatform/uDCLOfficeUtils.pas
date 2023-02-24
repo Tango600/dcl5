@@ -18,7 +18,7 @@ Procedure WordClose(var MsWord: OleVariant);
 procedure WordDocumentClose(var MsWord: OleVariant; Save:Boolean);
 Function CloseDocument(var MsWord: OleVariant): Boolean;
 Function SaveDocumentAs(var MsWord: OleVariant; FileName: String): Boolean;
-Procedure WordRun(var MsWord: OleVariant);
+Procedure WordRun(var MsWord: OleVariant; OLEExtension:String);
 Procedure OOExportToFormat(var Document: Variant; FileName, Format: String);
 Procedure OOCloseDocument(var Document: Variant);
 Procedure OOClosePreview(var Document: Variant);
@@ -286,7 +286,7 @@ Begin
 End;
 
 {$IFDEF MSWINDOWS}
-Procedure WordRun(var MsWord: OleVariant);
+Procedure WordRun(var MsWord: OleVariant; OLEExtension:String);
 Var
   verr, verr1: String;
   i: Integer;

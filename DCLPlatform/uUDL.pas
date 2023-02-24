@@ -161,7 +161,7 @@ Type
     procedure InitActions(Sender: TObject);
     procedure RunCommand(CommandName: String);
     procedure CreateMenu(MainForm: TForm);
-    function CreateForm(FormName: String; ParentForm, CallerForm: TDCLForm; Query: TDCLDialogQuery;
+    function CreateForm(FormName: String; ParentForm, CallerForm: TDCLForm; Command:TDCLCommand; Query: TDCLDialogQuery;
       Data: TDataSource; ModalMode: Boolean; ReturnValueMode: TChooseMode;
       ReturnValueParams: TReturnValueParams=nil; Script:TStringList=nil): TDCLForm;
     procedure CloseForm(Form: TDCLForm);
@@ -174,8 +174,8 @@ Type
 
     procedure GetTableNames(var List: TStrings);
 
-    procedure RePlaseVariables(var VariablesSet: String);
-    procedure TranslateVal(var S: String);
+    procedure RePlaseVariables(const Namespace: String; var VariablesSet: String);
+    procedure TranslateVal(const Namespace: String; var S: String);
     procedure ExecVBS(VBSScript: String);
     procedure ExecShellCommand(ShellCommandText: String);
 
@@ -211,21 +211,23 @@ Type
     FDCLForm: TDCLForm;
 
     function FindEmptyVariableSlot: Integer;
-    function VariableNumByName(Const VariableName: String): Integer;
-    function GetVariableByName(Const VariableName: String): String;
-    procedure SetVariableByName(Const VariableName, Value: String);
+    function VariableNumByName(Const Namespace, VariableName: String): Integer;
+    function GetVariableByName(Const Namespace, VariableName: String): String; overload;
+    procedure SetVariableByName(Const Namespace, VariableName, Value: String); overload;
+    function GetVariableByName(Const VariableName: String): String; overload;
+    procedure SetVariableByName(Const VariableName, Value: String); overload;
     function GetAllVariables: TList;
   public
     constructor Create(var DCLLogOn: TDCLLogOn; DCLForm: TDCLForm);
     destructor Destroy; override;
 
-    procedure NewVariable(Const VariableName: String; Value: String);
-    procedure NewVariableWithTest(Const VariableName: String);
-    procedure FreeVariable(Const VariableName: String);
-    function Exists(Const VariableName: String): Boolean;
-    procedure RePlaseVariables(var VariablesSet: String; Query: TDCLDialogQuery);
+    procedure NewVariable(Const Namespace, VariableName: String; Value: String);
+    procedure NewVariableWithTest(Const Namespace, VariableName: String);
+    procedure FreeVariable(Const Namespace, VariableName: String);
+    function Exists(Const Namespace, VariableName: String): Boolean;
+    procedure RePlaseVariables(const Namespace: String; var VariablesSet: String; Query: TDCLDialogQuery);
 
-    property Variables[Const VariableName: String]: String read GetVariableByName
+    property Variables[Const Namespace, VariableName: String]: String read GetVariableByName
       write SetVariableByName;
     property VariablesList: TList read GetAllVariables;
   end;
@@ -320,6 +322,9 @@ Type
     StructModify: Array of RStructModify;
     OrderByFields: Array of String;
 
+    procedure RePlaseVariables(var VariablesSet: String);
+
+    function GetNamespace: String;
     procedure ToolButtonsOnClick(Sender: TObject);
 
     function AddTablePart(Parent: TWinControl; Data: TDataSource; Style:TDataControlType): Integer;
@@ -564,7 +569,7 @@ Type
   TDCLForm=class(TComponent)
   private
     SingleMod: Boolean;
-    FName, CloseQueryText: String;
+    FName, CloseQueryText, Namespace: String;
     FCloseAction: TDCLFormCloseAction;
     FParentForm, FCallerForm: TDCLForm;
     UserLevelLocal: TUserLevelsType;
@@ -589,6 +594,7 @@ Type
     ParentPanel: TWinControl;
     ItemMenu, ToItem: TMenuItem;
     Commands: TDCLCommandButton;
+    FCommand: TDCLCommand;
     EventsClose: TEventsArray;
     FRetunValue: TReturnFormValue;
     FReturningMode: TChooseMode;
@@ -666,11 +672,12 @@ Type
     ExitCode: Byte;
 
     constructor Create(DialogName: String; var DCLLogOn: TDCLLogOn; ParentForm, CallerForm: TDCLForm;
-      aFormNum: Integer; OPL: TStringList; Query: TDCLDialogQuery; Data: TDataSource;
+      Command:TDCLCommand; aFormNum: Integer; OPL: TStringList; Query: TDCLDialogQuery; Data: TDataSource;
       Modal:Boolean=False; ReturnValueMode: TChooseMode=chmNone;
       ReturnValueParams: TReturnValueParams=nil);
     destructor Destroy; override;
 
+    function GetNamespace: String;
     procedure CloseDialog;
     procedure Choose;
     function GetActive: Boolean;
@@ -723,7 +730,7 @@ Type
     TextReport: TDCLTextReport;
     OfficeReport: TDCLOfficeReport;
     BinStore: TBinStore;
-    SpoolFileName: String;
+    _Namespace, SpoolFileName: String;
     Downloader: TDownloader;
 
     procedure ExportData(Tagert: TSpoolType; Scr: String);
@@ -744,6 +751,8 @@ Type
     procedure SetVariable(VarName, VValue: String);
 
     procedure ExecCommand(Command: String; DCLForm: TDCLForm);
+    procedure SetNamespace(const Namespace: String);
+    function GetNamespace: String;
   end;
 
   { TDCLMainMenu }
@@ -840,6 +849,7 @@ Type
     GrabValueForm: TForm;
     VarsToControls: Array of String;
     FSaved: Boolean;
+    _NameSpace:String;
 
     procedure RePlaseVariables(var VarsSet: String);
     procedure GrabValListOnChange(Sender: TObject);
@@ -855,7 +865,7 @@ Type
     FDialogRes: TModalResult;
     InConsoleCodePage:Boolean;
 
-    constructor InitReport(DCLLogOn: TDCLLogOn; DCLGrid: TDCLGrid; OPL: TStringList;
+    constructor InitReport(const NameSpace: String; DCLLogOn: TDCLLogOn; DCLGrid: TDCLGrid; OPL: TStringList;
       ParamsSet: Cardinal; Mode: TNewQueryMode);
     destructor Destroy; override;
 
@@ -1029,16 +1039,28 @@ begin
   Result:=i;
 end;
 
-procedure TVariables.SetVariableByName(Const VariableName, Value: String);
+procedure TVariables.SetVariableByName(Const Namespace, VariableName, Value: String) overload;
 var
   vv1: Integer;
 begin
-  vv1:=VariableNumByName(VariableName);
+  vv1:=VariableNumByName(Namespace, VariableName);
   If vv1<> - 1 Then
     FVariables[vv1].Value:=Value;
 end;
 
-function TVariables.VariableNumByName(Const VariableName: String): Integer;
+procedure TVariables.SetVariableByName(Const VariableName, Value: String) overload;
+var
+  vv1: Integer;
+  ns: String;
+begin
+  if Assigned(FDCLForm) then
+    ns:=FDCLForm.GetNamespace;
+  vv1:=VariableNumByName(ns, VariableName);
+  If vv1<> - 1 Then
+    FVariables[vv1].Value:=Value;
+end;
+
+function TVariables.VariableNumByName(Const Namespace, VariableName: String): Integer;
 var
   VarNum: Integer;
 begin
@@ -1046,7 +1068,7 @@ begin
   If VariableName<>'' Then
   begin
     For VarNum:=0 to Length(FVariables)-1 do
-      If LowerCase(FVariables[VarNum].Name)=LowerCase(Trim(VariableName)) Then
+      If (LowerCase(Namespace)=LowerCase(FVariables[VarNum].NameSpace)) and (LowerCase(FVariables[VarNum].Name)=LowerCase(Trim(VariableName))) Then
       begin
         Result:=VarNum;
         break;
@@ -1066,42 +1088,56 @@ begin
   //
 end;
 
-function TVariables.Exists(Const VariableName: String): Boolean;
+function TVariables.Exists(Const Namespace, VariableName: String): Boolean;
 var
   VarNum: Integer;
 begin
   Result:=False;
   if VariableName<>'' then
     For VarNum:=0 to Length(FVariables)-1 do
-      If UpperCase(Trim(VariableName))=UpperCase(FVariables[VarNum].Name) Then
+      If (LowerCase(Namespace)=LowerCase(FVariables[VarNum].NameSpace)) and (LowerCase(FVariables[VarNum].Name)=LowerCase(Trim(VariableName))) Then
       begin
         Result:=True;
         break;
       end;
 end;
 
-function TVariables.GetVariableByName(Const VariableName: String): String;
+function TVariables.GetVariableByName(Const Namespace, VariableName: String): String overload;
 var
   vv1: Integer;
 begin
   Result:='';
-  vv1:=VariableNumByName(VariableName);
+  vv1:=VariableNumByName(Namespace, VariableName);
   If vv1<> - 1 Then
     Result:=FVariables[vv1].Value;
 end;
 
-procedure TVariables.NewVariable(Const VariableName: String; Value: String);
+function TVariables.GetVariableByName(Const VariableName: String): String overload;
+var
+  vv1: Integer;
+  ns: String;
+begin
+  Result:='';
+  if Assigned(FDCLForm) then
+    ns:=FDCLForm.GetNamespace;
+  vv1:=VariableNumByName(ns, VariableName);
+  If vv1<> - 1 Then
+    Result:=FVariables[vv1].Value;
+end;
+
+procedure TVariables.NewVariable(Const Namespace, VariableName: String; Value: String);
 var
   RetVarNum: Integer;
 begin
   if VariableName<>'' then
   begin
-    RetVarNum:=VariableNumByName(VariableName);
+    RetVarNum:=VariableNumByName(Namespace, VariableName);
     If RetVarNum= - 1 Then
     begin
       RetVarNum:=FindEmptyVariableSlot;
       If RetVarNum<> - 1 Then
       begin
+        FVariables[RetVarNum].NameSpace:=Trim(Namespace);
         FVariables[RetVarNum].Name:=Trim(VariableName);
         FVariables[RetVarNum].Value:=Value;
       end;
@@ -1113,18 +1149,19 @@ begin
   end;
 end;
 
-procedure TVariables.NewVariableWithTest(Const VariableName: String);
+procedure TVariables.NewVariableWithTest(Const Namespace, VariableName: String);
 var
   RetVarNum: Integer;
 begin
   if VariableName<>'' then
   begin
-    RetVarNum:=VariableNumByName(VariableName);
+    RetVarNum:=VariableNumByName(Namespace, VariableName);
     If RetVarNum= - 1 Then
     begin
       RetVarNum:=FindEmptyVariableSlot;
       If RetVarNum<> - 1 Then
       begin
+        FVariables[RetVarNum].NameSpace:=Trim(Namespace);
         FVariables[RetVarNum].Name:=Trim(VariableName);
         FVariables[RetVarNum].Value:='';
       end;
@@ -1132,17 +1169,18 @@ begin
   end;
 end;
 
-procedure TVariables.FreeVariable(Const VariableName: String);
+procedure TVariables.FreeVariable(Const Namespace, VariableName: String);
 var
   VarNum: Integer;
 begin
   If VariableName<>'' Then
   begin
-    VarNum:=VariableNumByName(VariableName);
+    VarNum:=VariableNumByName(Namespace, VariableName);
     If VarNum<> - 1 Then
     begin
       If VarNum<Length(FVariables) Then
       begin
+        FVariables[VarNum].NameSpace:='';
         FVariables[VarNum].Name:='';
         FVariables[VarNum].Value:='';
       end;
@@ -1163,8 +1201,7 @@ begin
   end;
 end;
 
-
-procedure TVariables.RePlaseVariables(var VariablesSet: String; Query: TDCLDialogQuery);
+procedure TVariables.RePlaseVariables(const Namespace: String; var VariablesSet: String; Query: TDCLDialogQuery);
 Const
   MaxSysVars=49;
   SysVarsSet: Array [1..MaxSysVars] of String=('_TIME_', '_TIMES_', '_DATE_', '_DATETIME_', // 4
@@ -1209,7 +1246,7 @@ begin
           FindVar:=False;
           If Length(FVariables[pv3].Name)>=pv2 Then
           begin
-            If UpperCase(VariablesSet[pv1])=UpperCase(FVariables[pv3].Name[pv2]) Then
+            If ((Namespace=FVariables[pv3].NameSpace) or (Namespace='')) and (UpperCase(VariablesSet[pv1])=UpperCase(FVariables[pv3].Name[pv2])) Then
             begin
               FindVar:=True;
               If MaxMatch<pv1 Then
@@ -1390,7 +1427,7 @@ begin
         end;
       end;
 
-      VarExists:=Exists(ReplaseVar);
+      VarExists:=Exists(Namespace, ReplaseVar);
       If SysVar Then
         VarExists:=True;
 
@@ -1398,7 +1435,7 @@ begin
       begin
         Delete(VariablesSet, StartSel, VarNameLength+Length(VariablePrefix));
         If Not SysVar Then
-          TmpStr:=Variables[ReplaseVar];
+          TmpStr:=Variables[Namespace, ReplaseVar];
         Insert(TmpStr, VariablesSet, StartSel);
         inc(StartSearch, Length(TmpStr)+Length(VariablePrefix));
         TmpStr:='';
@@ -2081,12 +2118,19 @@ procedure TDCLForm.ExecCommand(CommandName: String);
 var
   DCLCommand: TDCLCommand;
 begin
-  DCLCommand:=TDCLCommand.Create(Self, FDCLLogOn);
-  Try
-    DCLCommand.ExecCommand(CommandName, Self);
-  Finally
-    FreeAndNil(DCLCommand);
-  End;
+  if Assigned(FCommand) then
+  begin
+    FCommand.ExecCommand(CommandName, Self);
+  end
+  else
+  begin
+    DCLCommand:=TDCLCommand.Create(Self, FDCLLogOn);
+    try
+      DCLCommand.ExecCommand(CommandName, Self);
+    Finally
+      ///FreeAndNil(DCLCommand);
+    end;
+  end;
 end;
 
 function TDCLForm.GetQueryToRaights(S: String): String;
@@ -2100,7 +2144,7 @@ begin
   FDCLLogOn.SetDBName(DCLQuery);
   RaightsStr:=FindParam('UserRaights=', S);
   RePlaseVariables(RaightsStr);
-  FDCLLogOn.RePlaseVariables(RaightsStr);
+  FDCLLogOn.RePlaseVariables(Namespace, RaightsStr);
   Factor:=0;
   TranslateProc(RaightsStr, Factor, nil);
 
@@ -2697,7 +2741,7 @@ begin
 end;
 
 constructor TDCLForm.Create(DialogName: String; var DCLLogOn: TDCLLogOn; ParentForm, CallerForm: TDCLForm;
-  aFormNum: Integer; OPL: TStringList; Query: TDCLDialogQuery; Data: TDataSource;
+  Command:TDCLCommand; aFormNum: Integer; OPL: TStringList; Query: TDCLDialogQuery; Data: TDataSource;
   Modal:Boolean=False; ReturnValueMode: TChooseMode=chmNone;
   ReturnValueParams: TReturnValueParams=nil);
 var
@@ -2713,6 +2757,7 @@ var
   ButtonParams: RButtonParams;
   FField: RField;
   FieldsOPL: TStringList;
+  guid:TGUID;
 
   procedure SetNewQuery(SQL: String);
   begin
@@ -2738,6 +2783,17 @@ begin
   NoCloseable:=False;
   FormCanClose:=True;
   FCloseAction:=fcaNone;
+  FCommand:=Command;
+
+  Namespace:='';
+  if Assigned(CallerForm) then
+    Namespace:=CallerForm.GetNamespace
+  else if Assigned(ParentForm) then
+    Namespace:=ParentForm.GetNamespace;
+
+  if Assigned(Command) then
+    Namespace:=Command.GetNamespace;
+
   FieldsOPL:=nil;
   ExitCode:=0;
   FieldsSettingsReseted:=False;
@@ -2883,6 +2939,12 @@ begin
         Continue;
       end;
 
+      If PosEx('HostForm;', ScrStr)=1 Then
+      begin
+        CreateGUID(guid);
+        Namespace:=GUIDToString(guid);
+      end;
+
       If PosEx('DialogName=', ScrStr)=1 Then
       begin
         TranslateVal(ScrStr, True);
@@ -2923,6 +2985,7 @@ begin
         TranslateVal(ScrStr, True);
         tmpSQL:=ScrStr;
         RePlaseVariables(tmpSQL);
+        FDCLLogOn.RePlaseVariables(Namespace, tmpSQL);
         v1:=StrToIntEx(FindParam('AutoRefresh=', tmpSQL))*1000;
         If v1>0 Then
         begin
@@ -3264,6 +3327,7 @@ begin
 
         tmpSQL1:=FindParam('DefaultValue=', ScrStr);
         RePlaseVariables(tmpSQL1);
+        FDCLLogOn.RePlaseVariables(Namespace, tmpSQL1);
         If tmpSQL1<>'' Then
           Calendar.Value:=StrToDate(tmpSQL1)
         Else
@@ -3271,6 +3335,7 @@ begin
 
         tmpSQL1:=FindParam('ReOpen=', ScrStr);
         RePlaseVariables(tmpSQL1);
+        FDCLLogOn.RePlaseVariables(Namespace, tmpSQL1);
         If tmpSQL1<>'' Then
           Calendar.ReOpen:=True
         Else
@@ -3304,13 +3369,14 @@ begin
           If FindParam('VariableName=', ScrStr)<>'' Then
           begin
             FFilter.VarName:=FindParam('VariableName=', ScrStr);
-            FDCLLogOn.Variables.NewVariableWithTest(FFilter.VarName);
+            FDCLLogOn.Variables.NewVariableWithTest(Namespace, FFilter.VarName);
           end;
 
           tmpSQL:=FindParam('KeyValue=', ScrStr);
           If tmpSQL<>'' Then
           begin
             RePlaseVariables(tmpSQL);
+            FDCLLogOn.RePlaseVariables(Namespace, tmpSQL);
             If PosEx('select ', tmpSQL)<>0 Then
               If PosEx(' from ', tmpSQL)<>0 Then
               begin
@@ -3353,13 +3419,14 @@ begin
         If FindParam('VariableName=', ScrStr)<>'' Then
         begin
           FFilter.VarName:=FindParam('VariableName=', ScrStr);
-          FDCLLogOn.Variables.NewVariableWithTest(FFilter.VarName);
+          FDCLLogOn.Variables.NewVariableWithTest(Namespace, FFilter.VarName);
         end;
 
         tmpSQL:=FindParam('KeyValue=', ScrStr);
         If tmpSQL<>'' Then
         begin
           RePlaseVariables(tmpSQL);
+          FDCLLogOn.RePlaseVariables(Namespace, tmpSQL);
           FFilter.KeyValue:=tmpSQL;
         end;
 
@@ -3383,7 +3450,7 @@ begin
         If FindParam('VariableName=', ScrStr)<>'' Then
         begin
           FFilter.VarName:=FindParam('VariableName=', ScrStr);
-          FDCLLogOn.Variables.NewVariableWithTest(FFilter.VarName);
+          FDCLLogOn.Variables.NewVariableWithTest(Namespace, FFilter.VarName);
         end;
 
         If FindParam('MaxLength=', ScrStr)<>'' Then
@@ -3494,6 +3561,9 @@ begin
             If FindParam('_Cancel=', ScrStr)='1' Then
               ButtonParams.Cancel:=True;
 
+            If FindParam('Host=', ScrStr)='1' then
+              ButtonParams.Host:=True;
+
             ButtonParams.Hint:=InitCap(FindParam('hint=', ScrStr));
 
             TmpStr:=FindParam('Action=', ScrStr);
@@ -3570,6 +3640,9 @@ begin
 
             If FindParam('_Cancel=', ScrStr)='1' Then
               ButtonParams.Cancel:=True;
+
+            If FindParam('Host=', ScrStr)='1' then
+              ButtonParams.Host:=True;
 
             ButtonParams.Hint:=InitCap(FindParam('hint=', ScrStr));
 
@@ -3850,7 +3923,8 @@ begin
                 FGrids[GridIndex].TableParts[TabIndex].Navig.VisibleButtons:=NavigVisiButtonsVar[1]+
                   NavigVisiButtonsVar[2]+NavigVisiButtonsVar[3]+NavigVisiButtonsVar[4]+
                   NavigVisiButtonsVar[5]+NavigVisiButtonsVar[6]+NavigVisiButtonsVar[7]+
-                  NavigVisiButtonsVar[8]+NavigVisiButtonsVar[9]+NavigVisiButtonsVar[10];
+                  NavigVisiButtonsVar[8]+NavigVisiButtonsVar[9]+NavigVisiButtonsVar[10]+
+                  NavigVisiButtonsVar[11]+NavigVisiButtonsVar[12];
               end;
             end;
 
@@ -4016,14 +4090,14 @@ begin
           v2:=PosEx('=', tmpStr2);
           If v2=0 Then
           begin
-            LocalVariables.NewVariable(tmpStr2, '');
+            LocalVariables.NewVariable(Namespace, tmpStr2, '');
           end
           Else
           begin
             tmpStr2:=Trim(Copy(tmpStr2, 1, v1-1));
             tmpSQL:=Copy(tmpStr2, v1+1, Length(tmpStr2)-v1);
 
-            LocalVariables.NewVariable(tmpStr2, tmpSQL);
+            LocalVariables.NewVariable(Namespace, tmpStr2, tmpSQL);
           end;
         end;
       end;
@@ -4485,6 +4559,11 @@ begin
   end;
 end;
 
+function TDCLForm.GetNamespace: String;
+begin
+  Result:=Namespace;
+end;
+
 procedure TDCLForm.CloseDialog;
 begin
   If Assigned(FForm) then
@@ -4514,8 +4593,8 @@ procedure TDCLForm.RePlaseVariables(var VariablesSet: String);
 var
   Factor:Word;
 begin
-  LocalVariables.RePlaseVariables(VariablesSet, GetMainQuery);
-  FDCLLogOn.RePlaseVariables(VariablesSet);
+  LocalVariables.RePlaseVariables(Namespace, VariablesSet, GetMainQuery);
+  ///FDCLLogOn.RePlaseVariables(Namespace, VariablesSet);
   Factor:=0;
   TranslateProc(VariablesSet, Factor, GetMainQuery);
 end;
@@ -4602,10 +4681,10 @@ end;
 
 procedure TDCLForm.SetVariable(VarName, VValue: String);
 begin
-  If LocalVariables.Exists(VarName) Then
-    LocalVariables.Variables[VarName]:=VValue
-  Else If FDCLLogOn.Variables.Exists(VarName) Then
-    FDCLLogOn.Variables.Variables[VarName]:=VValue;
+  If LocalVariables.Exists(Namespace, VarName) Then
+    LocalVariables.Variables[Namespace, VarName]:=VValue
+  Else If FDCLLogOn.Variables.Exists(Namespace, VarName) Then
+    FDCLLogOn.Variables.Variables[Namespace, VarName]:=VValue;
 end;
 
 procedure TDCLForm.GetChooseValue;
@@ -4698,6 +4777,7 @@ begin
   If CheckParams Then
     RePlaseParams(Params);
   RePlaseVariables(Params);
+  FDCLLogOn.RePlaseVariables(Namespace, Params);
   Factor:=0;
   TranslateProc(Params, Factor, nil);
 end;
@@ -4778,7 +4858,7 @@ begin
     If sv_v2<=0 Then
       sv_v2:=Length(tmp2);
     VarName:=Copy(LowerCase(tmp2), 1, sv_v2);
-    If FDCLLogOn.Variables.Exists(VarName) Then
+    If FDCLLogOn.Variables.Exists(_Namespace, VarName) Then
       If Pos('=', tmp2)<>0 Then
       begin
         sv_v2:=Pos('=', tmp2)-1;
@@ -4799,10 +4879,10 @@ begin
           TranslateValContext(tmp2);
 
         TranslateValContext(tmp2);
-        FDCLLogOn.Variables.Variables[VarName]:=tmp2;
+        FDCLLogOn.Variables.Variables[_Namespace, VarName]:=tmp2;
       end
       Else
-        FDCLLogOn.Variables.Variables[VarName]:='';
+        FDCLLogOn.Variables.Variables[_Namespace, VarName]:='';
   end;
 
   If (PosEx('ReturnQuery=', S)<>0)or(PosEx('SQL=', S)<>0) Then
@@ -4851,7 +4931,7 @@ begin
       TranslateValContext(tmp2);
       DCLQuery.Close;
 
-      FDCLLogOn.Variables.NewVariable(tmp1, tmp2);
+      FDCLLogOn.Variables.NewVariable(_Namespace, tmp1, tmp2);
 
       {$IFDEF TRANSACTIONDB}
       tmp_Transaction.Commit;
@@ -4871,12 +4951,12 @@ begin
           If Assigned(FDCLLogOn.Forms[v2].FGrids[sv_v2-1]) Then
             For i:=1 to Length(FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits) do
             begin
-              if FDCLLogOn.Variables.Exists(FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits[i-1].EditToVariables) then
+              if FDCLLogOn.Variables.Exists(_Namespace, FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits[i-1].EditToVariables) then
               begin
                 Case FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits[i-1].EditsType of
                 fbtOutBox, fbtEditBox:
                 FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits[i-1].Edit.Text:=
-                  FDCLLogOn.Variables.Variables[FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits[i-1]
+                  FDCLLogOn.Variables.Variables[_Namespace, FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits[i-1]
                     .EditToVariables];
                 end;
               end;
@@ -4889,14 +4969,14 @@ begin
                 begin
                   For i:=1 to Length(FDCLLogOn.Forms[v2].FGrids[sv_v2-1].Edits) do
                   begin
-                    if FDCLLogOn.Variables.Exists(FDCLLogOn.Forms[v2].FGrids[sv_v2-1].FTableParts[v0-1].Edits[i-1].EditToVariables) then
+                    if FDCLLogOn.Variables.Exists(_Namespace, FDCLLogOn.Forms[v2].FGrids[sv_v2-1].FTableParts[v0-1].Edits[i-1].EditToVariables) then
                     begin
                       Case FDCLLogOn.Forms[v2].FGrids[sv_v2-1].FTableParts[v0-1].Edits[i-1]
                         .EditsType of
                       fbtOutBox, fbtEditBox:
                       FDCLLogOn.Forms[v2].FGrids[sv_v2-1].FTableParts[v0-1].Edits[i-1].Edit.Text:=
                         FDCLLogOn.Variables.Variables
-                        [FDCLLogOn.Forms[v2].FGrids[sv_v2-1].FTableParts[v0-1].Edits[i-1]
+                        [_Namespace, FDCLLogOn.Forms[v2].FGrids[sv_v2-1].FTableParts[v0-1].Edits[i-1]
                           .EditToVariables];
                       end;
                     end;
@@ -4911,8 +4991,8 @@ procedure TDCLCommand.SetVariable(VarName, VValue: String);
 begin
   If Assigned(FDCLForm) Then
     FDCLForm.SetVariable(VarName, VValue)
-  Else If FDCLLogOn.Variables.Exists(VarName) Then
-    FDCLLogOn.Variables.Variables[VarName]:=VValue;
+  Else If FDCLLogOn.Variables.Exists(_Namespace, VarName) Then
+    FDCLLogOn.Variables.Variables[_Namespace, VarName]:=VValue;
 end;
 
 procedure TDCLCommand.TranslateVals(var Params: String; Query: TDCLDialogQuery);
@@ -4942,6 +5022,9 @@ begin
   FDCLLogOn:=DCLLogOn;
   FDCLForm:=DCLForm;
 
+  if Assigned(FDCLForm) then
+    _Namespace:=FDCLForm.GetNamespace;
+
   DCLQuery:=TDCLDialogQuery.Create(nil);
   DCLQuery.Name:='Command_'+IntToStr(UpTime);
   FDCLLogOn.SetDBName(DCLQuery);
@@ -4949,6 +5032,11 @@ begin
   DCLQuery2:=TDCLDialogQuery.Create(nil);
   DCLQuery2.Name:='Command2_'+IntToStr(UpTime);
   FDCLLogOn.SetDBName(DCLQuery2);
+
+  if Assigned(DCLQuery) then
+    FDCLLogOn.SQLMon.AddTrace(DCLQuery);
+  if Assigned(DCLQuery2) then
+    FDCLLogOn.SQLMon.AddTrace(DCLQuery2);
 
   Spool:=TStringList.Create;
   SpoolFileName:=IncludeTrailingPathDelimiter(AppConfigDir)+'Spool.txt';
@@ -4965,6 +5053,16 @@ begin
     FreeAndNil(DCLQuery2);
 end;
 
+procedure TDCLCommand.SetNamespace(const Namespace: String);
+begin
+  _Namespace:=Namespace;
+end;
+
+function TDCLCommand.GetNamespace: String;
+begin
+  Result:=_Namespace;
+end;
+
 procedure TDCLCommand.ExecCommand(Command: String; DCLForm: TDCLForm);
 var
   ModalOpen, InContext, Enything, EnythingElse, DownLoadCancel, DownloadProgress: Boolean;
@@ -4977,7 +5075,6 @@ var
   OpenDialog: TOpenDialog;
   SaveDialog: TSaveDialog;
   tmpDCL: TStringList;
-  LocalCommand: TDCLCommand;
   Sign:TSigns;
   tmpDCLForm:TDCLForm;
   nextLine:Boolean;
@@ -5008,8 +5105,6 @@ var
   end;
 
 begin
-  FDCLLogOn.SQLMon.AddTrace(DCLQuery);
-  FDCLLogOn.SQLMon.AddTrace(DCLQuery2);
   IfCounter:=0;
 
   If FDCLLogOn.RoleOK<>lsLogonOK Then
@@ -5133,7 +5228,6 @@ begin
   begin
     If Assigned(FDCLForm.CurrentQuery) then
     If GetRaightsByContext(InContext)>ulReadOnly Then
-//      FDCLForm.FGrids[FDCLForm.CurrentGridIndex].DataSource.DataSet.Delete;
       FDCLForm.CurrentQuery.Delete;
     Executed:=True;
   end;
@@ -5481,9 +5575,7 @@ begin
             If PosEx('ExecCommand=', ScrStr)=1 Then
             begin
               tmp1:=FindParam('ExecCommand=', ScrStr);
-              LocalCommand:=TDCLCommand.Create(FDCLForm, FDCLLogOn);
-              LocalCommand.ExecCommand(tmp1, FDCLForm);
-              FreeAndNil(LocalCommand);
+              ExecCommand(tmp1, FDCLForm);
             end;
 
             If PosEx('SeparateChar=', ScrStr)=1 Then
@@ -5934,14 +6026,14 @@ begin
               Case v1 of
               0:
                 If Assigned(FDCLForm) Then
-                  TextReport:=TDCLTextReport.InitReport(FDCLLogOn,
+                  TextReport:=TDCLTextReport.InitReport(_Namespace, FDCLLogOn,
                     FDCLForm.Tables[FDCLForm.CurrentTableIndex], tmpDCL, RepIdParams, nqmFromGrid);
               1:
                 If Assigned(FDCLForm) Then
-                  TextReport:=TDCLTextReport.InitReport(FDCLLogOn,
+                  TextReport:=TDCLTextReport.InitReport(_Namespace, FDCLLogOn,
                     FDCLForm.Tables[FDCLForm.CurrentTableIndex], tmpDCL, RepIdParams, nqmNew);
               2:
-                TextReport:=TDCLTextReport.InitReport(FDCLLogOn, nil, tmpDCL, RepIdParams, nqmNew);
+                TextReport:=TDCLTextReport.InitReport(_Namespace, FDCLLogOn, nil, tmpDCL, RepIdParams, nqmNew);
               end;
 
               If Assigned(TextReport) then
@@ -6199,21 +6291,21 @@ begin
               If tmpStr3<>'' Then
               begin
                 tmpStr2:=FindParam('VariableName=', ScrStr);
-                FDCLLogOn.Variables.NewVariableWithTest(tmpStr2);
+                FDCLLogOn.Variables.NewVariableWithTest(_Namespace, tmpStr2);
 
                 If LowerCase(tmpStr3)='yesno' Then
                 begin
                   If ShowErrorMessage(10, TmpStr)=1 Then
-                    FDCLLogOn.Variables.Variables[tmpStr2]:='1'
+                    FDCLLogOn.Variables.Variables[_Namespace, tmpStr2]:='1'
                   Else
-                    FDCLLogOn.Variables.Variables[tmpStr2]:='0';
+                    FDCLLogOn.Variables.Variables[_Namespace, tmpStr2]:='0';
                 end
                 Else If LowerCase(tmpStr3)='input' Then
                 begin
                   TranslateValContext(tmpStr2);
                   tmpStr3:=FindParam('DefaultValue=', ScrStr);
                   TranslateValContext(tmpStr3);
-                  FDCLLogOn.Variables.Variables[tmpStr2]:=InputBox(TmpStr, '', tmpStr3);
+                  FDCLLogOn.Variables.Variables[_Namespace, tmpStr2]:=InputBox(TmpStr, '', tmpStr3);
                 end;
               end
               Else
@@ -6303,7 +6395,7 @@ begin
                     If tmp3<>'' Then
                       DCLQuery.SQL.Text:='select '+tmp4+' from '+tmp3+' where '+tmp3;
                     DCLQuery.Open;
-                    FDCLLogOn.Variables.Variables[tmp1]:=TrimRight(DCLQuery.Fields[0].AsString);
+                    FDCLLogOn.Variables.Variables[_Namespace, tmp1]:=TrimRight(DCLQuery.Fields[0].AsString);
                     DCLQuery.Close;
                   end
                   Else
@@ -6313,12 +6405,12 @@ begin
                     begin
                       v3:=StrToIntEx(TmpStr)-1;
                       If Assigned(FDCLForm.Tables[ - 1].TableParts[v3]) Then
-                        FDCLLogOn.Variables.Variables[tmp1]:=FDCLForm.Tables[ - 1].TableParts[v3]
+                        FDCLLogOn.Variables.Variables[_Namespace, tmp1]:=FDCLForm.Tables[ - 1].TableParts[v3]
                           .Query.FieldByName(tmp1).AsString;
                     end
                     Else
                     begin
-                      FDCLLogOn.Variables.Variables[tmp1]:=
+                      FDCLLogOn.Variables.Variables[_Namespace, tmp1]:=
                         TrimRight(FDCLForm.CurrentQuery.FieldByName(tmp2).AsString);
                     end;
                   end;
@@ -6573,7 +6665,7 @@ begin
               If FindParam('Child=', ScrStr)='1' Then
               Begin
                 If Assigned(FDCLForm) then
-                  FDCLForm:=FDCLLogOn.CreateForm(TmpStr, FDCLForm, FDCLForm, nil, FDCLForm.GetDataSource,
+                  FDCLForm:=FDCLLogOn.CreateForm(TmpStr, FDCLForm, FDCLForm, Self, nil, FDCLForm.GetDataSource,
                     ModalOpen, ChooseMode, ReturnValueParams);
               End
               Else
@@ -6585,13 +6677,13 @@ begin
                   Begin
                     v1:=StrToIntEx(tmpStr2)-1;
                     If Assigned(FDCLForm.Tables[ - 1].TableParts[v1]) Then
-                      FDCLForm:=FDCLLogOn.CreateForm(TmpStr, nil, FDCLForm,
+                      FDCLForm:=FDCLLogOn.CreateForm(TmpStr, nil, FDCLForm, Self,
                         FDCLForm.Tables[ - 1].TableParts[v1].Query, nil, ModalOpen, ChooseMode,
                         ReturnValueParams);
                   End;
                 end
                 Else
-                  FDCLForm:=FDCLLogOn.CreateForm(TmpStr, nil, FDCLForm, FDCLForm.CurrentQuery, nil, ModalOpen, ChooseMode,
+                  FDCLForm:=FDCLLogOn.CreateForm(TmpStr, nil, FDCLForm, Self, FDCLForm.CurrentQuery, nil, ModalOpen, ChooseMode,
                     ReturnValueParams);
 
                   If Assigned(FDCLForm) Then
@@ -6669,14 +6761,14 @@ begin
 
                       if RetVal.KeyVar<>'' then
                       begin
-                        FDCLLogOn.Variables.NewVariableWithTest(RetVal.KeyVar);
-                        FDCLLogOn.Variables.SetVariableByName(RetVal.KeyVar, RetVal.Key);
+                        FDCLLogOn.Variables.NewVariableWithTest(_Namespace, RetVal.KeyVar);
+                        FDCLLogOn.Variables.SetVariableByName(_Namespace, RetVal.KeyVar, RetVal.Key);
                       end;
 
                       if RetVal.ValueVar<>'' then
                       begin
-                        FDCLLogOn.Variables.NewVariableWithTest(RetVal.ValueVar);
-                        FDCLLogOn.Variables.SetVariableByName(RetVal.ValueVar, RetVal.Val);
+                        FDCLLogOn.Variables.NewVariableWithTest(_Namespace, RetVal.ValueVar);
+                        FDCLLogOn.Variables.SetVariableByName(_Namespace, RetVal.ValueVar, RetVal.Val);
                       end;
 
                       If Assigned(ReturnValueParams) Then
@@ -6719,14 +6811,14 @@ begin
                 tmpStr1:=SortParams(TmpStr, v1);
                 v2:=PosEx('=', tmpStr1);
                 If v2=0 Then
-                  FDCLLogOn.Variables.NewVariable(tmpStr1, '')
+                  FDCLLogOn.Variables.NewVariable(_Namespace, tmpStr1, '')
                 Else
                 begin
                   tmpStr2:=Trim(Copy(tmpStr1, 1, v2-1));
                   tmpStr3:=Copy(tmpStr1, v2+1, Length(tmpStr1)-v2);
                   TranslateValContext(tmpStr3);
 
-                  FDCLLogOn.Variables.NewVariable(tmpStr2, tmpStr3);
+                  FDCLLogOn.Variables.NewVariable(_Namespace, tmpStr2, tmpStr3);
                 end;
               end;
             end;
@@ -6735,7 +6827,7 @@ begin
             begin
               tmpStr2:=FindParam('dispose=', ScrStr);
               For v1:=1 to ParamsCount(tmpStr2) do
-                FDCLLogOn.Variables.FreeVariable(SortParams(tmpStr2, v1));
+                FDCLLogOn.Variables.FreeVariable(_Namespace, SortParams(tmpStr2, v1));
             end;
 
             If PosEx('Exit;', ScrStr)=1 Then
@@ -6984,7 +7076,7 @@ begin
               If Not Assigned(BinStore) Then
                 BinStore:=TBinStore.Create(FDCLLogOn, ftSQL, '', '', '',
                   FindParam('DataField=', ScrStr));
-              FDCLLogOn.Variables.NewVariable(tmpStr1, BinStore.MD5(FindParam('SQL=', ScrStr)));
+              FDCLLogOn.Variables.NewVariable(_Namespace, tmpStr1, BinStore.MD5(FindParam('SQL=', ScrStr)));
             end;
 
             If PosEx('SQLmon_Clear;', ScrStr)=1 Then
@@ -7027,7 +7119,7 @@ begin
               tmp1:=FindParam('Evalute=', ScrStr);
 
               tmp2:=FindParam('ResultVar=', ScrStr);
-              If Not FDCLLogOn.Variables.Exists(tmp2) Then
+              If Not FDCLLogOn.Variables.Exists(_Namespace, tmp2) Then
                 tmp2:='';
               If tmp2='' Then
                 EvalResultScript:=RunScript(tmp1)
@@ -7505,7 +7597,7 @@ procedure TDCLCommand.RePlaseVariabless(var Variables: String);
 begin
   If Assigned(FDCLForm) Then
     FDCLForm.RePlaseVariables(Variables);
-  FDCLLogOn.RePlaseVariables(Variables);
+  FDCLLogOn.RePlaseVariables(_Namespace, Variables);
 end;
 
 { TDCLLogOn }
@@ -8299,7 +8391,7 @@ begin
   KillerDog.Enabled:=True;
 end;
 
-function TDCLLogOn.CreateForm(FormName: String; ParentForm, CallerForm: TDCLForm; Query: TDCLDialogQuery;
+function TDCLLogOn.CreateForm(FormName: String; ParentForm, CallerForm: TDCLForm; Command:TDCLCommand; Query: TDCLDialogQuery;
   Data: TDataSource; ModalMode: Boolean; ReturnValueMode: TChooseMode;
   ReturnValueParams: TReturnValueParams=nil; Script:TStringList=nil): TDCLForm;
 var
@@ -8327,7 +8419,7 @@ begin
   End;
 
   i:=FForms.Count;
-  FormPoint:=TDCLForm.Create(FormName, Self, ParentForm, CallerForm, i, Scr, Query, Data,
+  FormPoint:=TDCLForm.Create(FormName, Self, ParentForm, CallerForm, Command, i, Scr, Query, Data,
     ModalMode, ReturnValueMode, ReturnValueParams);
 
   if Assigned(FormPoint) then
@@ -8407,7 +8499,7 @@ begin
     Bat.Insert(0, '#/bin/sh');
 {$ENDIF}
     sBAT:=Bat.Text;
-    RePlaseVariables(sBAT);
+    RePlaseVariables('', sBAT);
     Bat.Text:=sBAT;
     Bat.SaveToFile(IncludeTrailingPathDelimiter(AppConfigDir)+'$Batch$.bat');
 {$IFDEF UNIX}
@@ -8436,7 +8528,7 @@ begin
   If VBSText.Count>0 Then
   begin
     tmpVBSText:=VBSText.Text;
-    RePlaseVariables(tmpVBSText);
+    RePlaseVariables('', tmpVBSText);
     ExecuteStatement(tmpVBSText);
   end;
   FreeAndNil(VBSText);
@@ -8722,7 +8814,7 @@ Begin
   If CompareString(Scr[0], '[FORM]') Then
   begin
     Scr.Delete(0);
-    Form:=CreateForm(VirtScrName, nil, nil, nil, nil, False,
+    Form:=CreateForm(VirtScrName, nil, nil, nil, nil, nil, False,
       chmNone, nil, Scr);
   end
   Else
@@ -9246,46 +9338,49 @@ begin
   Timer1.Enabled:=False;
   FreeAndNil(Timer1);
 
-  FDCLMainMenu.LockMenu;
-
-  MenuQuery:=TDCLDialogQuery.Create(nil);
-  MenuQuery.Name:='Menu_'+IntToStr(UpTime);
-  SetDBName(MenuQuery);
-
-  MenuQuery.SQL.Text:=GetRolesQueryText(qtSelect, ' s.'+GPT.IdentifyField+
-      ' between 40001 and 40100 order by s.'+GPT.IdentifyField);
-  MenuQuery.Open;
-  While Not MenuQuery.Eof do
+  if Assigned(FDCLMainMenu) then
   begin
-    FDCLMainMenu.ChoseRunType(MenuQuery.FieldByName(GPT.CommandField).AsString,
-      MenuQuery.FieldByName(GPT.DCLTextField).AsString, MenuQuery.FieldByName(GPT.DCLNameField)
-        .AsString, 1);
-    MenuQuery.Next;
-  end;
-  MenuQuery.Close;
+    FDCLMainMenu.LockMenu;
 
-  If FileExists(GPT.LaunchScrFile) then
-  Begin
-    RunSkriptFromFile(GPT.LaunchScrFile);
-  End;
-  GPT.LaunchScrFile:='';
+    MenuQuery:=TDCLDialogQuery.Create(nil);
+    MenuQuery.Name:='Menu_'+IntToStr(UpTime);
+    SetDBName(MenuQuery);
 
-  If GPT.LaunchForm<>'' then
-  Begin
-    MenuQuery.SQL.Text:=GetRolesQueryText(qtSelect, ' s.'+GPT.DCLNameField+
-        '='+GPT.StringTypeChar+GPT.LaunchForm+GPT.StringTypeChar);
+    MenuQuery.SQL.Text:=GetRolesQueryText(qtSelect, ' s.'+GPT.IdentifyField+
+        ' between 40001 and 40100 order by s.'+GPT.IdentifyField);
     MenuQuery.Open;
-    If Not MenuQuery.Eof then
+    While Not MenuQuery.Eof do
     begin
-      FDCLMainMenu.ChoseRunType('', '',
-        MenuQuery.FieldByName(GPT.DCLNameField).AsString, 0);
+      FDCLMainMenu.ChoseRunType(MenuQuery.FieldByName(GPT.CommandField).AsString,
+        MenuQuery.FieldByName(GPT.DCLTextField).AsString, MenuQuery.FieldByName(GPT.DCLNameField)
+          .AsString, 1);
+      MenuQuery.Next;
     end;
     MenuQuery.Close;
-  End;
 
-  FDCLMainMenu.UnLockMenu;
+    If FileExists(GPT.LaunchScrFile) then
+    Begin
+      RunSkriptFromFile(GPT.LaunchScrFile);
+    End;
+    GPT.LaunchScrFile:='';
 
-  FreeAndNil(MenuQuery);
+    If GPT.LaunchForm<>'' then
+    Begin
+      MenuQuery.SQL.Text:=GetRolesQueryText(qtSelect, ' s.'+GPT.DCLNameField+
+          '='+GPT.StringTypeChar+GPT.LaunchForm+GPT.StringTypeChar);
+      MenuQuery.Open;
+      If Not MenuQuery.Eof then
+      begin
+        FDCLMainMenu.ChoseRunType('', '',
+          MenuQuery.FieldByName(GPT.DCLNameField).AsString, 0);
+      end;
+      MenuQuery.Close;
+    End;
+
+    FDCLMainMenu.UnLockMenu;
+
+    FreeAndNil(MenuQuery);
+  end;
 end;
 
 procedure TDCLLogOn.KillerForms(Sender: TObject);
@@ -9412,9 +9507,9 @@ begin
   end;
 end;
 
-procedure TDCLLogOn.RePlaseVariables(var VariablesSet: String);
+procedure TDCLLogOn.RePlaseVariables(const Namespace: String; var VariablesSet: String);
 begin
-  Variables.RePlaseVariables(VariablesSet, nil);
+  Variables.RePlaseVariables(Namespace, VariablesSet, nil);
 end;
 
 procedure TDCLLogOn.RunCommand(CommandName: String);
@@ -9476,11 +9571,11 @@ begin
   End;
 end;
 
-procedure TDCLLogOn.TranslateVal(var S: String);
+procedure TDCLLogOn.TranslateVal(const Namespace: String; var S: String);
 var
   Factor: Word;
 begin
-  RePlaseVariables(S);
+  RePlaseVariables(Namespace, S);
   Factor:=0;
   TranslateProc(S, Factor, nil);
 end;
@@ -9836,6 +9931,9 @@ procedure TDCLMainMenu.ChoseRunType(Command, DCLText, Name: String; Order: Byte)
 var
   DCL: TStringList;
 begin
+  if not Assigned(FDCLLogOn) then
+    Exit;
+
   If FDCLLogOn.RoleOK<>lsLogonOK Then
     Exit;
   DCL:=TStringList.Create;
@@ -9866,7 +9964,7 @@ begin
         If FindParam('script type=', LowerCase(DCL[0]))='command' Then
           ExecCommand(DCLText)
         Else
-          FDCLLogOn.CreateForm(TrimRight(Name), nil, nil, nil, nil, False, chmNone);
+          FDCLLogOn.CreateForm(TrimRight(Name), nil, nil, nil, nil, nil, False, chmNone);
       End
       Else
         ExecCommand(DCLText);
@@ -10087,7 +10185,7 @@ begin
               DCLQuery:=TDCLDialogQuery.Create(nil);
               DCLQuery.Name:='Menu20001_'+IntToStr(UpTime);
               FDCLLogOn.SetDBName(DCLQuery);
-              FDCLLogOn.RePlaseVariables(tmpSQL);
+              FDCLLogOn.RePlaseVariables('', tmpSQL);
               DCLQuery.SQL.Text:=tmpSQL;
               DCLQuery.Open;
               tmpSQL:=TrimRight(DCLQuery.Fields[0].AsString);
@@ -10098,7 +10196,7 @@ begin
           begin
             tmpSQL1:=FindParam('ReturnValue=', tmpSQL);
             DeleteNonPrintSimb(tmpSQL1);
-            FDCLLogOn.RePlaseVariables(tmpSQL1);
+            FDCLLogOn.RePlaseVariables('', tmpSQL1);
             tmpSQL:=tmpSQL1;
           end;
 
@@ -10117,7 +10215,7 @@ begin
       MenuQuery.SQL.Text:=FDCLLogOn.GetRolesQueryText(qtSelect, ' s.'+GPT.IdentifyField+'=0');
       MenuQuery.Open;
       tmpSQL:=TrimRight(MenuQuery.FieldByName(GPT.DCLNameField).AsString);
-      FDCLLogOn.RePlaseVariables(tmpSQL);
+      FDCLLogOn.RePlaseVariables('', tmpSQL);
       tmpSQL:=tmpSQL+GPT.MainFormCaption;
       FForm.Caption:=tmpSQL;
 
@@ -10381,9 +10479,9 @@ begin
 
   Calendars[l].Control.Date:=Calendar.Value;
   If Calendars[l].VarName<>'' Then
-    FDCLLogOn.Variables.NewVariable(Calendars[l].VarName, DateToStr(Calendars[l].Control.Date))
+    FDCLLogOn.Variables.NewVariable(GetNamespace, Calendars[l].VarName, DateToStr(Calendars[l].Control.Date))
   Else
-    FDCLLogOn.Variables.NewVariable('Calendar_'+IntToStr(l), DateToStr(Calendars[l].Control.Date));
+    FDCLLogOn.Variables.NewVariable(GetNamespace, 'Calendar_'+IntToStr(l), DateToStr(Calendars[l].Control.Date));
 
   Calendars[l].Control.OnChange:=CalendarOnChange;
 
@@ -10417,11 +10515,11 @@ begin
   state:=False;
   If Field.Variable<>'' Then
   begin
-    FDCLLogOn.Variables.NewVariableWithTest(Field.Variable);
+    FDCLLogOn.Variables.NewVariableWithTest(GetNamespace, Field.Variable);
   end
   Else
   begin
-    FDCLLogOn.Variables.NewVariableWithTest('CheckBox_'+Field.FieldName);
+    FDCLLogOn.Variables.NewVariableWithTest(GetNamespace, 'CheckBox_'+Field.FieldName);
     Field.Variable:='CheckBox_'+Field.FieldName;
   end;
 
@@ -10450,9 +10548,9 @@ begin
 
   Case CheckBoxes[l].CheckBox.Checked of
   True:
-  FDCLLogOn.Variables.Variables[Field.Variable]:='1';
+  FDCLLogOn.Variables.Variables[GetNamespace, Field.Variable]:='1';
   False:
-  FDCLLogOn.Variables.Variables[Field.Variable]:='0';
+  FDCLLogOn.Variables.Variables[GetNamespace, Field.Variable]:='0';
   end;
   IncXYPos(EditTopStep, EditWidth, Field);
 end;
@@ -10673,7 +10771,7 @@ begin
   begin
     TempStr:=FindParam('_Value=', Field.OPL);
     RePlaseParams(TempStr);
-    FDCLLogOn.RePlaseVariables(TempStr);
+    FDCLLogOn.RePlaseVariables(GetNamespace, TempStr);
   end;
   2:
   begin
@@ -10681,7 +10779,7 @@ begin
     ShadowQuery.Name:='DateBoxQ_'+IntToStr(UpTime);
     FDCLLogOn.SetDBName(ShadowQuery);
     TempStr:=FindParam('SQL=', Field.OPL);
-    FDCLLogOn.RePlaseVariables(TempStr);
+    FDCLLogOn.RePlaseVariables(GetNamespace, TempStr);
     RePlaseParams(TempStr);
     ShadowQuery.SQL.Text:=TempStr;
     ShadowQuery.Open;
@@ -10704,12 +10802,12 @@ begin
 
   If FindParam('VariableName=', Field.OPL)<>'' Then
   begin
-    FDCLLogOn.Variables.NewVariable(FindParam('VariableName=', Field.OPL), TempStr);
+    FDCLLogOn.Variables.NewVariable(GetNamespace, FindParam('VariableName=', Field.OPL), TempStr);
     KeyField:=FindParam('VariableName=', Field.OPL);
   end
   Else
   begin
-    FDCLLogOn.Variables.NewVariable('DateBox_'+Field.FieldName, TempStr);
+    FDCLLogOn.Variables.NewVariable(GetNamespace, 'DateBox_'+Field.FieldName, TempStr);
     KeyField:='DateBox_'+Field.FieldName;
   end;
 
@@ -10814,7 +10912,7 @@ begin
     DBFilters[l].Lookup.KeyField:=Filter.KeyField;
 
     If DBFilters[l].VarName<>'' Then
-      FDCLLogOn.Variables.Variables[DBFilters[l].VarName]:=
+      FDCLLogOn.Variables.Variables[GetNamespace, DBFilters[l].VarName]:=
         TrimRight(DBFilters[l].FilterQuery.FieldByName(DBFilters[l].Lookup.KeyField).AsString);
 
     DBFilters[l].Lookup.ListSource:=DBFilters[l].FilterData;
@@ -10873,7 +10971,7 @@ begin
       DBFilters[l].Combo.Name:='DBComboFilter'+IntToStr(l);
 
       If DBFilters[l].VarName<>'' Then
-        FDCLLogOn.Variables.Variables[DBFilters[l].VarName]:=
+        FDCLLogOn.Variables.Variables[GetNamespace, DBFilters[l].VarName]:=
           TrimRight(DBFilters[l].FilterQuery.FieldByName(DBFilters[l].Lookup.KeyField).AsString);
 
       DBFilters[l].Combo.Width:=Filter.Width;
@@ -10977,7 +11075,7 @@ begin
   begin
     If Filter.KeyValue<>'' Then
     begin
-      FDCLLogOn.RePlaseVariables(Filter.KeyValue);
+      FDCLLogOn.RePlaseVariables(GetNamespace, Filter.KeyValue);
       DBFilters[l].Edit.Text:=Filter.KeyValue;
       Key:=13;
       OnContextFilter(DBFilters[l].Edit, Key, []);
@@ -11065,7 +11163,7 @@ begin
     begin
       tmpStr1:=FindParam('VariableName=', Field.OPL);
       DropBoxes[l].Variable:=tmpStr1;
-      FDCLLogOn.Variables.NewVariableWithTest(tmpStr1);
+      FDCLLogOn.Variables.NewVariableWithTest(GetNamespace, tmpStr1);
     end;
 
     tmpSQL1:=FindParam('SQL=', Field.OPL);
@@ -11209,7 +11307,7 @@ begin
   If FieldBoxType<>fbtOutBox Then
   begin
     RePlaseParams(TempStr);
-    FDCLForm.RePlaseVariables(TempStr);
+    RePlaseVariables(TempStr);
     TempStr:=FindParam('Format=', Field.OPL);
     if TempStr<>'' then
     begin
@@ -11259,7 +11357,7 @@ begin
   Begin
     TempStr:=FindParam('_Value=', Field.OPL);
     RePlaseParams(TempStr);
-    FDCLForm.RePlaseVariables(TempStr);
+    RePlaseVariables(TempStr);
 
     if TempStr<>'' then
     begin
@@ -11300,13 +11398,13 @@ begin
   begin
     TempStr:=FindParam('_Value=', Field.OPL);
     RePlaseParams(TempStr);
-    FDCLForm.RePlaseVariables(TempStr);
+    RePlaseVariables(TempStr);
   end;
   6:
   begin
     TempStr:=FindParam('_ValueIfEmpty=', Field.OPL);
     RePlaseParams(TempStr);
-    FDCLForm.RePlaseVariables(TempStr);
+    RePlaseVariables(TempStr);
   end;
   2:
   begin
@@ -11315,7 +11413,7 @@ begin
     FDCLLogOn.SetDBName(ShadowQuery);
     TempStr:=FindParam('SQL=', Field.OPL);
     RePlaseParams(TempStr);
-    FDCLForm.RePlaseVariables(TempStr);
+    RePlaseVariables(TempStr);
     ShadowQuery.SQL.Text:=TempStr;
     ShadowQuery.Open;
     If FindParam('ReturnField=', Field.OPL)<>'' Then
@@ -11335,12 +11433,12 @@ begin
   4:begin
     TempStr:=FindParam('_ValueIfNull=', Field.OPL);
     RePlaseParams(TempStr);
-    FDCLForm.RePlaseVariables(TempStr);
+    RePlaseVariables(TempStr);
   end;
   5:begin
     TempStr:=FindParam('_ValueIfNotNull=', Field.OPL);
     RePlaseParams(TempStr);
-    FDCLForm.RePlaseVariables(TempStr);
+    RePlaseVariables(TempStr);
   end;
   end;
 
@@ -11349,10 +11447,10 @@ begin
   Else
     KeyField:=NamePrefix+Field.FieldName;
 
-  FDCLForm.LocalVariables.NewVariableWithTest(KeyField);
+  FDCLForm.LocalVariables.NewVariableWithTest(GetNamespace, KeyField);
 
   Edits[EditsCount].EditToVariables:=KeyField;
-  FDCLForm.LocalVariables.Variables[KeyField]:=TempStr;
+  FDCLForm.LocalVariables.Variables[GetNamespace, KeyField]:=TempStr;
   Edits[EditsCount].Edit.Text:=TempStr;
   Field.Height:=Edits[EditsCount].Edit.Height;
 
@@ -11454,7 +11552,7 @@ begin
   TempStr:=FindParam('VariableName=', Field.OPL);
   If TempStr<>'' Then
   begin
-    FDCLLogOn.Variables.NewVariableWithTest(TempStr);
+    FDCLLogOn.Variables.NewVariableWithTest(GetNamespace, TempStr);
     Lookups[l].LookupToVars:=TempStr;
   end;
 
@@ -11541,7 +11639,7 @@ begin
   LookupTables[l].DCLGrid:=TDCLGrid.Create(FDCLForm, LookupTables[l].LookupPanel, dctLookupGrid,
     nil, FData);
   TempStr:=FindParam('SQL=', Field.OPL);
-  FDCLForm.RePlaseVariables(TempStr);
+  RePlaseVariables(TempStr);
   FFactor:=0;
   TranslateProc(TempStr, FFactor, Query);
   LookupTables[l].DCLGrid.SetSQL(TempStr);
@@ -11687,14 +11785,14 @@ begin
   TempStr:=FindParam('_VariableName=', Field.OPL);
   If TempStr<>'' Then
   begin
-    If FDCLLogOn.Variables.Exists(TempStr) Then
+    If FDCLLogOn.Variables.Exists(GetNamespace, TempStr) Then
     begin
       If Not FieldExists(Field.FieldName, Query) Then
         RollBars[l].RollBar.Position:=StrToInt(TempStr);
       RollBars[l].Variable:=TempStr;
     end
     Else
-      FDCLLogOn.Variables.NewVariableWithTest(TempStr);
+      FDCLLogOn.Variables.NewVariableWithTest(GetNamespace, TempStr);
   end;
 
   If FieldExists(Field.FieldName, Query) Then
@@ -12061,7 +12159,7 @@ begin
   CalendarIdx:=(Sender as DateTimePicker).Tag;
 
   EdDate:=DateToStr((Sender as DateTimePicker).Date);
-  FDCLLogOn.Variables.Variables[Calendars[CalendarIdx].VarName]:=EdDate;
+  FDCLLogOn.Variables.Variables[GetNamespace, Calendars[CalendarIdx].VarName]:=EdDate;
   If Calendars[CalendarIdx].ReOpen Then
   begin
     FQuery.Close;
@@ -12098,12 +12196,12 @@ var
 begin
   isd:=(Sender as TCheckbox).Tag;
   sd:=CheckBoxes[isd].CheckBoxToVars;
-  If FDCLLogOn.Variables.Exists(sd) Then
+  If FDCLLogOn.Variables.Exists(GetNamespace, sd) Then
     Case (Sender as TCheckbox).Checked of
     True:
-    FDCLLogOn.Variables.Variables[sd]:='1';
+    FDCLLogOn.Variables.Variables[GetNamespace, sd]:='1';
     False:
-    FDCLLogOn.Variables.Variables[sd]:='0';
+    FDCLLogOn.Variables.Variables[GetNamespace, sd]:='0';
     end;
 end;
 
@@ -12190,9 +12288,9 @@ begin
         FQuery.FieldByName(ContextLists[ComboNum].DataField).AsInteger:=
           tmpQuery.FieldByName(ContextLists[ComboNum].KeyField).AsInteger;
       end;
-      if FDCLLogOn.Variables.Exists(ContextLists[ComboNum].Variable) then
+      if FDCLLogOn.Variables.Exists(GetNamespace, ContextLists[ComboNum].Variable) then
       begin
-        FDCLLogOn.Variables.Variables[ContextLists[ComboNum].Variable]:=tmpQuery.FieldByName(ContextLists[ComboNum].KeyField).AsString;
+        FDCLLogOn.Variables.Variables[GetNamespace, ContextLists[ComboNum].Variable]:=tmpQuery.FieldByName(ContextLists[ComboNum].KeyField).AsString;
       end;
     end;
     tmpQuery.Close;
@@ -12856,7 +12954,7 @@ begin
   end;
 
   If DropBoxes[v1].Variable<>'' Then
-    FDCLLogOn.Variables.Variables[DropBoxes[v1].Variable]:=IntToStr(v2);
+    FDCLLogOn.Variables.Variables[GetNamespace, DropBoxes[v1].Variable]:=IntToStr(v2);
 end;
 
 procedure TDCLGrid.EditClick(Sender: TObject);
@@ -12918,7 +13016,7 @@ begin
 
   if inFormat then
   // Update variables
-    FDCLForm.LocalVariables.Variables[Edits[EdNamb].EditToVariables]:=EdText;
+    FDCLForm.LocalVariables.Variables[GetNamespace, Edits[EdNamb].EditToVariables]:=EdText;
 end;
 
 procedure TDCLGrid.EditOnFloatData(Sender: TObject; var Key: Char);
@@ -13026,7 +13124,7 @@ begin
     ExeplStr:=TrimRight((Sender as TDBLookupComboBox).KeyValue);
     DBFilters[FilterIdx].FilterString:=ExeplStr;
 
-    FDCLLogOn.Variables.Variables[DBFilters[FilterIdx].VarName]:=TrimRight(ExeplStr);
+    FDCLLogOn.Variables.Variables[GetNamespace, DBFilters[FilterIdx].VarName]:=TrimRight(ExeplStr);
 
     OpenQuery(QueryBuilder(0));
   end;
@@ -13048,7 +13146,7 @@ begin
       ExeplStr:=(cbx.Items.Objects[cbx.ItemIndex] as TComboFilterItem).Key;
       DBFilters[FilterIdx].FilterString:=ExeplStr;
 
-      FDCLLogOn.Variables.Variables[DBFilters[FilterIdx].VarName]:=TrimRight(ExeplStr);
+      FDCLLogOn.Variables.Variables[GetNamespace, DBFilters[FilterIdx].VarName]:=TrimRight(ExeplStr);
 
       OpenQuery(QueryBuilder(0));
     end;
@@ -13180,7 +13278,7 @@ begin
       FreeAndNil(FindFields);
     end;
 
-    FDCLForm.RePlaseVariables(tmpSQL2);
+    RePlaseVariables(tmpSQL2);
     FFactor:=0;
     TranslateProc(tmpSQL2, FFactor, Query);
     FQuery.SQL.Text:=tmpSQL2;
@@ -13254,7 +13352,6 @@ begin
                 end;
               end;
     end;
-
     BaseChanged:=False;
     if Assigned(FGridPanel) then
       FreeAndNil(FGridPanel);
@@ -13748,7 +13845,7 @@ begin
   Begin
     if not Lookups[v1].NoDataField then
     begin
-      FDCLLogOn.Variables.Variables[Lookups[v1].LookupToVars]:=
+      FDCLLogOn.Variables.Variables[GetNamespace, Lookups[v1].LookupToVars]:=
         TrimRight(Lookups[v1].LookupQuery.FieldByName(Look.KeyField).AsString);
     end;
   End;
@@ -13773,7 +13870,7 @@ begin
   begin
     KeyFiled:=(Sender as TDBLookupComboBox).KeyField;
 
-    FDCLLogOn.Variables.Variables[Lookups[v4].LookupToVars]:=
+    FDCLLogOn.Variables.Variables[GetNamespace, Lookups[v4].LookupToVars]:=
       TrimRight(Lookups[v4].LookupQuery.FieldByName(KeyFiled).AsString);
   end;
 end;
@@ -13787,7 +13884,7 @@ begin
   DateBoxes[DateBoxNamb].ModifyDateBox:=1;
   // Update variables
   EdDate:=DateToStr((Sender as DateTimePicker).Date);
-  FDCLLogOn.Variables.Variables[DateBoxes[DateBoxNamb].DateBoxToVariables]:=EdDate;
+  FDCLLogOn.Variables.Variables[GetNamespace, DateBoxes[DateBoxNamb].DateBoxToVariables]:=EdDate;
 
   If DateBoxes[DateBoxNamb].DateBoxType=0 Then
   begin
@@ -13829,7 +13926,7 @@ begin
     End
     Else
     Begin
-        FDCLLogOn.Variables.Variables[DBFilters[FilterIdx].VarName]:=TrimRight(ExeplStr);
+        FDCLLogOn.Variables.Variables[GetNamespace, DBFilters[FilterIdx].VarName]:=TrimRight(ExeplStr);
     End;
   End;
 
@@ -13880,7 +13977,7 @@ var
 begin
   FQuery.Close;
   FQuery.SQL.Clear;
-  FDCLForm.RePlaseVariables(QText);
+  RePlaseVariables(QText);
   FFactor:=0;
   TranslateProc(QText, FFactor, nil);
   FQuery.SQL.Append(QText);
@@ -14096,12 +14193,12 @@ begin
 
         If ExeplStr='-1' Then
         begin
-          FDCLForm.RePlaseVariables(tmpSQL);
+          RePlaseVariables(tmpSQL);
           DBFilters[FN].FilterChengFlag:= - 1;
         end
         Else
         begin
-          FDCLForm.RePlaseVariables(WhereStr);
+          RePlaseVariables(WhereStr);
           DBFilters[FN].FilterChengFlag:=1;
 
           If ExeplStr<>'-1' Then
@@ -14153,7 +14250,7 @@ begin
     tmpSQL1:=tmpSQL+' '+WhereStr+' ';
   end;
   end;
-  FDCLForm.RePlaseVariables(tmpSQL1);
+  RePlaseVariables(tmpSQL1);
   FFactor:=0;
   TranslateProc(tmpSQL1, FFactor, nil);
   Result:=tmpSQL1;
@@ -14225,7 +14322,7 @@ begin
   end;
 
   If RollBars[v1].Variable<>'' Then
-    FDCLLogOn.Variables.Variables[RollBars[v1].Variable]:=IntToStr((Sender as TTrackBar).Position);
+    FDCLLogOn.Variables.Variables[GetNamespace, RollBars[v1].Variable]:=IntToStr((Sender as TTrackBar).Position);
 end;
 
 procedure TDCLGrid.SaveDB;
@@ -14798,6 +14895,20 @@ begin
     end;
 end;
 
+procedure TDCLGrid.RePlaseVariables(var VariablesSet: String);
+begin
+  FDCLForm.LocalVariables.RePlaseVariables(GetNamespace, VariablesSet, FQuery);
+  FDCLForm.RePlaseVariables(VariablesSet);
+  FDCLLogon.RePlaseVariables(GetNamespace, VariablesSet);
+end;
+
+function TDCLGrid.GetNamespace: String;
+begin
+  Result:='';
+  if Assigned(FDCLForm) then
+    Result:=FDCLForm.GetNamespace;
+end;
+
 procedure TDCLGrid.ToolButtonsOnClick(Sender: TObject);
 var
   NumBtn: Integer;
@@ -14811,7 +14922,7 @@ var
   FFactor: Word;
 begin
   RePlaseParams(Params);
-  FDCLForm.RePlaseVariables(Params);
+  RePlaseVariables(Params);
   FFactor:=0;
   TranslateProc(Params, FFactor, Query);
 end;
@@ -14908,6 +15019,7 @@ procedure TDCLCommandButton.ExecCommand(Sender: TObject);
 var
   Tag, v1: Integer;
   FDCLCommand: TDCLCommand;
+  guid: TGUID;
 begin
   Tag:=(Sender as TDialogButton).Tag;
 
@@ -14920,16 +15032,26 @@ begin
         FDCLForm.Tables[ - 1].FQueryGlob.GoToBookmark(TBookmark(FDCLForm.Tables[ - 1].Grid.SelectedRows[v1]));
 
         FDCLCommand:=TDCLCommand.Create(FDCLForm, FDCLLogOn);
+        if Params[Tag].Host then
+        begin
+          CreateGUID(guid);
+          FDCLCommand.SetNamespace(GUIDToString(guid));
+        end;
         FDCLCommand.ExecCommand(Commands[Tag], FDCLForm);
-        FreeAndNil(FDCLCommand);
+        ///FreeAndNil(FDCLCommand);
       end;
     end;
   end
   else
   begin
     FDCLCommand:=TDCLCommand.Create(FDCLForm, FDCLLogOn);
+    if Params[Tag].Host then
+    begin
+      CreateGUID(guid);
+      FDCLCommand.SetNamespace(GUIDToString(guid));
+    end;
     FDCLCommand.ExecCommand(Commands[Tag], FDCLForm);
-    FreeAndNil(FDCLCommand);
+    //FreeAndNil(FDCLCommand);
   end;
 end;
 
@@ -15152,7 +15274,7 @@ begin
         OO:=CreateOleObject('com.sun.star.ServiceManager');
 
       Desktop:=OO.CreateInstance('com.sun.star.frame.Desktop');
-      VariantArray:=VarArrayCreate([0, 0], varVariant);
+      VariantArray:=VarArrayCreate([0, 1], varVariant);
       Case OfficeDocumentFormat of
       odfMSO2007:
       VariantArray[0]:=MakePropertyValue(OO, 'FilterName', 'MS Word 2007');
@@ -15296,6 +15418,7 @@ begin
           OOSetVisible(Document, True);
           ShowErrorMessage( - 5005, '');
         end;
+        //break;
       end;
 
       If ToPDF Then
@@ -15326,7 +15449,9 @@ begin
         end;
         end;
 
-        Document.StoreAsURL(FileNameToURL(AddToFileName(OutFileName, '_'+IntToStr(DocNum))),
+        VariantArray[1]:=MakePropertyValue(OO, 'Overwrite', True);
+
+        Document.StoreToURL(FileNameToURL(AddToFileName(FileName, '_'+IntToStr(DocNum))),
           VariantArray);
       end;
 
@@ -15719,7 +15844,7 @@ begin
     DocNum:=1;
     While Not DCLQuery.Eof do
     begin
-      WordRun(MsWord);
+      WordRun(MsWord, GPT.WordOLEExtension);
       WordOpen(MsWord, FileName);
       if Hide then
         MsWord.Visible:=False;
@@ -15899,7 +16024,7 @@ begin
     If FileExists(FileName) Then
     begin
       try
-        Excel:=CreateOleObject('Excel.Application');
+        Excel:=CreateOleObject('Excel.Application'+GPT.ExcelOLEExtension);
         Excel.Visible:=False;
         WBk:=Excel.WorkBooks.Add(FileName);
       Except
@@ -16089,7 +16214,7 @@ end;
 procedure TDCLTextReport.GrabValOnEdit(Sender: TObject);
 begin
   If Length(VarsToControls)>(Sender as TEdit).Tag Then
-    FDCLLogOn.Variables.Variables[VarsToControls[(Sender as TEdit).Tag]]:=(Sender as TEdit).Text;
+    FDCLLogOn.Variables.Variables[_Namespace, VarsToControls[(Sender as TEdit).Tag]]:=(Sender as TEdit).Text;
 end;
 
 procedure TDCLTextReport.ValComboOnChange(Sender: TObject);
@@ -16103,7 +16228,7 @@ begin
     Else
       Val:=(Sender as TDBLookupComboBox).KeyValue;
 
-    FDCLLogOn.Variables.Variables[VarsToControls[(Sender as TDBLookupComboBox).Tag]]:=Val;
+    FDCLLogOn.Variables.Variables[_Namespace, VarsToControls[(Sender as TDBLookupComboBox).Tag]]:=Val;
   end;
 end;
 
@@ -16124,18 +16249,18 @@ end;
 procedure TDCLTextReport.GrabDateOnChange(Sender: TObject);
 begin
   If Length(VarsToControls)>(Sender as DateTimePicker).Tag Then
-    FDCLLogOn.Variables.Variables[VarsToControls[(Sender as DateTimePicker).Tag]]:=
+    FDCLLogOn.Variables.Variables[_Namespace, VarsToControls[(Sender as DateTimePicker).Tag]]:=
       DateToStr((Sender as DateTimePicker).Date);
 end;
 
 procedure TDCLTextReport.GrabValListOnChange(Sender: TObject);
 begin
   If Length(VarsToControls)>(Sender as TComboBox).Tag Then
-    FDCLLogOn.Variables.Variables[VarsToControls[(Sender as TComboBox).Tag]]:=
+    FDCLLogOn.Variables.Variables[_Namespace, VarsToControls[(Sender as TComboBox).Tag]]:=
       (Sender as TComboBox).Text;
 end;
 
-constructor TDCLTextReport.InitReport(DCLLogOn: TDCLLogOn; DCLGrid: TDCLGrid; OPL: TStringList;
+constructor TDCLTextReport.InitReport(const NameSpace: String; DCLLogOn: TDCLLogOn; DCLGrid: TDCLGrid; OPL: TStringList;
   ParamsSet: Cardinal; Mode: TNewQueryMode);
 var
   RepParamsSet: TDCLDialogQuery;
@@ -16169,6 +16294,7 @@ var
 begin
   InConsoleCodePage:=False;
   FSaved:=True;
+  _NameSpace:=NameSpace;
   FDCLLogOn:=DCLLogOn;
   FDCLGrid:=DCLGrid;
   Body:=TStringList.Create;
@@ -16226,7 +16352,7 @@ begin
     begin
       If PosEx('DeclareVariable=', InitSkrypts[LocalVar1])<>0 Then
       begin
-        FDCLLogOn.Variables.NewVariableWithTest(FindParam('DeclareVariable=', InitSkrypts[LocalVar1]));
+        FDCLLogOn.Variables.NewVariableWithTest(_Namespace, FindParam('DeclareVariable=', InitSkrypts[LocalVar1]));
       end;
 
       If PosEx('GrabValueList=', InitSkrypts[LocalVar1])<>0 Then
@@ -16244,7 +16370,7 @@ begin
           GrabLabel.Caption:=FindParam('GrabValueList=', InitSkrypts[LocalVar1]);
 
         tmpSQL:=FindParam('GrabValueList=', InitSkrypts[LocalVar1]);
-        FDCLLogOn.Variables.NewVariableWithTest(tmpSQL);
+        FDCLLogOn.Variables.NewVariableWithTest(_Namespace, tmpSQL);
         GrabValueList:=TComboBox.Create(GrabValueForm);
         GrabValueList.Parent:=GrabValueForm;
         GrabValueList.Name:='GrabValList_'+IntToStr(LocalVar1);
@@ -16380,7 +16506,7 @@ begin
         GrabDate.Left:=8;
         GrabDate.Width:=GrabComponentsWidth;
         GrabDate.Tag:=SetVarToControl(FindParam('GrabDate=', InitSkrypts[LocalVar1]));
-        FDCLLogOn.Variables.NewVariable(FindParam('GrabDate=', InitSkrypts[LocalVar1]),
+        FDCLLogOn.Variables.NewVariable(_Namespace, FindParam('GrabDate=', InitSkrypts[LocalVar1]),
           DateToStr(GrabDate.Date));
 
         tmpSQL:=Trim(FindParam('DefaultValue=', InitSkrypts[LocalVar1]));
@@ -16444,7 +16570,7 @@ begin
   If GlobalSQL.Count<>0 Then
   begin
     tmpSQL:=GlobalSQL.Text;
-    FDCLLogOn.TranslateVal(tmpSQL);
+    FDCLLogOn.TranslateVal(_Namespace, tmpSQL);
     FReportQuery.Close;
     FReportQuery.SQL.Text:=tmpSQL;
 
@@ -16473,7 +16599,7 @@ begin
     For i:=0 to EndSkrypts.Count-1 do
     begin
       If PosEx('DisposeVariable=', EndSkrypts[i])<>0 Then
-        FDCLLogOn.Variables.FreeVariable(FindParam('DisposeVariable=', EndSkrypts[i]));
+        FDCLLogOn.Variables.FreeVariable(_Namespace, FindParam('DisposeVariable=', EndSkrypts[i]));
     end;
 
   If Not FSaved Then
@@ -16713,7 +16839,7 @@ procedure TDCLTextReport.RePlaseVariables(var VarsSet: String);
 begin
   If Assigned(FDCLGrid) Then
     FDCLGrid.TranslateVal(VarsSet);
-  FDCLLogOn.TranslateVal(VarsSet);
+  FDCLLogOn.TranslateVal(_Namespace, VarsSet);
 end;
 
 procedure TDCLTextReport.PrintigReport;
@@ -16912,7 +17038,7 @@ var
   TempFile: String;
 begin
   FErrorCode:=0;
-  FDCLLogOn.TranslateVal(Template);
+  FDCLLogOn.TranslateVal('', Template);
 
   If Template<>'' Then
   begin
