@@ -42,8 +42,6 @@ DefaultLibraryLocation='libfbclient.so';
   Ver='10.3.3.1';
   VersionS='$VersionSignature$'+Ver+'$';
 
-  CompotableVersion='9.1.129.309';
-
   JPEGCompressionQuality=85;
 
   EditWidth=230;
