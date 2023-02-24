@@ -133,7 +133,6 @@ Type
   public
     // Command: TDCLCommand;
     CurrentForm: Integer;
-    LogonParams: TLogonParams;
     RoleRaightsLevel: Word;
     Variables: TVariables;
     EvalFormula: String;
@@ -10263,55 +10262,6 @@ begin
 
       FDCLLogOn.RunInitSkripts;
 
-      MenuQuery.SQL.Text:='select Count(*) from '+GPT.DCLTable+' where '+GPT.IdentifyField+'=50000';
-      RecCount:=0;
-      DebugProc('Selecting components(50000):');
-      DebugProc('  Query: '+MenuQuery.SQL.Text);
-      try
-        DebugProc('  ... selected');
-        MenuQuery.Open;
-        RecCount:=MenuQuery.Fields[0].AsInteger;
-        DebugProc('  ... OK');
-      Except
-        DebugProc('  ... Fail');
-      end;
-      If RecCount>0 Then
-      begin
-        For RecCount:=1 to 4 do
-          ProgrammCompVer[RecCount]:=StrToInt(SortParams(CompotableVersion, RecCount, '.'));
-
-        MenuQuery.Close;
-        MenuQuery.SQL.Text:='select '+GPT.DCLNameField+' from '+GPT.DCLTable+' where '+
-          GPT.IdentifyField+'=50000';
-        MenuQuery.Open;
-        tmpSQL:=Trim(MenuQuery.FieldByName(GPT.DCLNameField).AsString);
-        If Length(tmpSQL)>=11 Then
-          For RecCount:=1 to 4 do
-            BaseCompVer[RecCount]:=StrToInt(SortParams(tmpSQL, RecCount, '.'));
-
-        v1:=0;
-        SubNum:=0;
-        For RecCount:=1 to 4 do
-        Begin
-          If (ProgrammCompVer[RecCount]<BaseCompVer[RecCount]) and (v1<SubNum) Then
-          Begin
-            If RecCount=1 Then
-              ShowErrorMessage(1, GetDCLMessageString(msVersionsGap))
-            Else
-              ShowErrorMessage(1, GetDCLMessageString(msOldVersion));
-
-            break;
-          End
-          Else
-            If (ProgrammCompVer[RecCount]>BaseCompVer[RecCount]) and (v1>SubNum) Then
-              break;
-            
-          Inc(v1, ProgrammCompVer[RecCount]);
-          Inc(SubNum, BaseCompVer[RecCount]);
-        End;
-      end;
-      MenuQuery.Close;
-
       FreeAndNil(MenuQuery);
     end;
   End;
@@ -14220,7 +14170,7 @@ begin
       If FQuery.State in dsEditModes Then
         FQuery.Post;
 
-      FQuery.SaveDB;
+      ///FQuery.SaveDB;  // уже есть в DCLQuery
       For tpc:=1 to Length(FTableParts) do
       begin
         FTableParts[tpc-1].Close;
@@ -14236,11 +14186,11 @@ begin
   If Assigned(FLocalBookmark) Then
     try
       If FQuery.Active then
+      If FQuery.BookmarkValid(FLocalBookmark) then
       If FQuery.RecordCount<>0 then
         FQuery.GoToBookmark(FLocalBookmark);
     finally
       FQuery.FreeBookmark(FLocalBookmark);
-      FLocalBookmark:=nil;
     end;
 
   For tpc:=1 to Length(FTableParts) do
