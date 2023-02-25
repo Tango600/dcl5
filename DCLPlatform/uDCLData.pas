@@ -53,9 +53,6 @@ type
     OfficeFormat: TOfficeFormat;
   end;
 
-{TLogonParams=record
-//
-end;}
 
 TVariable=Record
   NameSpace, Name: String;

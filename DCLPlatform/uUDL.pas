@@ -1959,7 +1959,7 @@ begin
     IncButtonPanelHeight:=ButtonPanelHeight;
     FGrids[GridIndex].ButtonPanel:=TDialogPanel.Create(FGrids[GridIndex].FGridPanel);
     FGrids[GridIndex].ButtonPanel.Parent:=FGrids[GridIndex].FGridPanel;
-    FGrids[GridIndex].ButtonPanel.Top:=30; // FForm.ClientHeight-2;
+    FGrids[GridIndex].ButtonPanel.Top:=30;  // FForm.ClientHeight-2;
     FGrids[GridIndex].ButtonPanel.Height:=ButtonPanelHeight;
     FGrids[GridIndex].ButtonPanel.Align:=alBottom;
 
@@ -2863,6 +2863,7 @@ begin
   FSeed:=FForm.Handle;
   FFormMenu:=TMainMenu.Create(FForm);
   // FFormMenu.Parent:=FForm;
+  FForm.DisableAlign;
 
   AddMainItem(InitCap(GetDCLMessageString(msSettings)), 'SettingsMenuItem',
     'Tools', nil);
@@ -2943,6 +2944,11 @@ begin
       begin
         CreateGUID(guid);
         Namespace:=GUIDToString(guid);
+      end;
+
+      If PosEx('NoButtonsPanel;', ScrStr)=1 Then
+      begin
+        FGrids[GridIndex].ButtonPanel.Hide;
       end;
 
       If PosEx('DialogName=', ScrStr)=1 Then
@@ -4283,6 +4289,7 @@ begin
       FPages.ActivePageIndex:=0;
       ChangeTabPage(FPages);
 
+      FForm.EnableAlign;
       If FForm.Showing Then
         FForm.Hide;
       If Not FForm.Showing Then
@@ -14936,6 +14943,7 @@ var
   MS: TMemoryStream;
   BM: TBitmap;
 begin
+  Parent.Show;
   FButtonsCount:=Length(Commands);
   inc(FButtonsCount);
   SetLength(Commands, FButtonsCount);
