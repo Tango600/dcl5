@@ -32,10 +32,6 @@ uses
   uDCLResources in 'uDCLResources.pas',
   uDCLSQLMonitor in 'uDCLSQLMonitor.pas',
   uDCLDownloader in 'uDCLDownloader.pas',
-  {$IFDEF MSWINDOWS}
-  uOpenOffice In 'uOpenOffice.pas',
-  uOfficeDocs in 'uOfficeDocs.pas',
-  {$ENDIF}
   uLZW in 'uLZW.pas',
   FileBuffer in 'FileBuffer.pas',
   uDCLQuery in 'uDCLQuery.pas',

@@ -8,8 +8,6 @@ uses
   Controls, Forms, Dialogs, StdCtrls,
 {$IFDEF FPC}
   LCLType, InterfaceBase, LazUTF8,
-{$ELSE}
-  uGlass,
 {$ENDIF}
   uDCLConst, uUDL, uDCLData, uDCLMultiLang, ExtCtrls;
 
@@ -148,12 +146,12 @@ begin
   If FileExists(FileName) then
   Begin
     Rep.LoadFromFile(FileName);
-    DCLTextReport:=TDCLTextReport.InitReport(DCLMainLogOn, nil, Rep, 0, nqmNew);
+    DCLTextReport:=TDCLTextReport.InitReport('', DCLMainLogOn, nil, Rep, 0, nqmNew);
     DCLTextReport.InConsoleCodePage:=InConsoleCodePage;
     DCLTextReport.OpenReport('Result.txt', rvmAllDS);
     DCLTextReport.CloseReport('Result.txt');
     FreeAndNil(DCLTextReport);
-    ExecApp(GPT.Viewer+' Result.txt');
+    ExecApp(GPT.Viewer+' Result.txt', '');
   End;
 end;
 

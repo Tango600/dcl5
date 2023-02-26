@@ -16,10 +16,6 @@ uses
   {$ENDIF}
   Forms,
   {$IFNDEF FPC}
-  {$IFDEF VCLFIX}
-  VCLFixPack in 'VCLFixPack.pas',
-  ControlsAtomFix in 'ControlsAtomFix.pas',
-  {$ENDIF}
   {$IFnDEF USEDELPHIThemes}
   {$IFDEF ThemedDBGrid}
   ThemedDBGrid in 'ThemedDBGrid.pas',
@@ -58,7 +54,7 @@ uses
   Vcl.Themes,
   Vcl.Styles,
   {$ENDIF}{$ENDIF}
-  uLogging in 'uLogging.pas';
+  uLogging in 'uLogging.pas', uDCLMD5;
 
 {$R DCLRun.res}
 

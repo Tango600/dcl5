@@ -50,9 +50,9 @@
   {$DEFINE IBX}
 {$ENDIF}
 {$IFDEF FPC}
-  {$DEFINE ZEOS}
+//  {$DEFINE ZEOS}
 //  {$DEFINE SQLdb}
-//  {$DEFINE SQLdbIB}
+  {$DEFINE SQLdbIB}
 //  {$DEFINE IBX}
 
 //  {$DEFINE ZVComponents}

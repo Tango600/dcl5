@@ -5,9 +5,6 @@ interface
 
 uses
 {$IFNDEF FPC}
-{$IFDEF VCLFIX}
-  VCLFixPack, ControlsAtomFix,
-{$ENDIF}
 {$ENDIF}
 {$IFDEF MSWINDOWS}
   uNewFonts, Windows, Messages,
@@ -15,8 +12,6 @@ uses
   SysUtils, Classes, Controls, Forms, Dialogs,
 {$IFDEF FPC}
   LCLType, LConvEncoding, LazUTF8,
-{$ELSE}
-  uGlass,
 {$ENDIF}
   uDCLConst, uUDL, uDCLData, uStringParams, uDCLMultiLang;
 
@@ -158,7 +153,6 @@ begin
         end;
       end;
     end;
-
   end;
 
   S:=FindScryptFileCall;
