@@ -908,7 +908,6 @@ Type
 {$IFDEF MSWINDOWS}
     MsWord, Excel, WBk: OleVariant;
 {$ENDIF}
-    WordVer: Byte;
   public
     OfficeDocumentFormat: TOfficeDocumentFormat;
     OfficeFormat: TOfficeFormat;
@@ -10077,7 +10076,6 @@ constructor TDCLMainMenu.Create(var DCLLogOn: TDCLLogOn; Form: TForm; Relogin: B
 Type
   TCompotableVersionNumbers=Array [1..4] of Word;
 var
-  ProgrammCompVer, BaseCompVer: TCompotableVersionNumbers;
   RecCount, SubNum, v1: Integer;
   NewMainForm: Boolean;
   SubQuery, MenuQuery, DCLQuery: TDCLDialogQuery;
@@ -11979,7 +11977,6 @@ end;
 procedure TDCLGrid.AfterInsert(Data: TDataSet);
 var
   v1, v2: Integer;
-  vv:String;
 begin
   If FUserLevelLocal<ulWrite Then
     Data.Cancel
@@ -12784,11 +12781,20 @@ begin
           begin
             Case FField.FType of
             ftGraphic:
+            begin
             inc(FField.Top, GraficTopStep);
+            IncXYPos(GraficTopStep, FField.Width, FField);
+            end;
             ftMemo:
+            begin
             inc(FField.Top, MemoHeight+FieldDownStep);
-          Else
-          inc(FField.Top, EditTopStep)
+            IncXYPos(MemoHeight+FieldDownStep, FField.Width, FField);
+            end;
+            Else
+            begin
+              inc(FField.Top, EditTopStep);
+              IncXYPos(EditTopStep, FField.Width, FField);
+            end;
             end;
           end;
 
@@ -15207,7 +15213,7 @@ end;
 
 procedure TDCLOfficeReport.ReportOpenOfficeWriter(ParamStr: String; Save, Close: Boolean);
 var
-  TextPointer, CursorPointer, BookmarksSupplier, InsLength, BookMark: Variant;
+  TextPointer, CursorPointer, BookmarksSupplier, BookMark: Variant;
   BookmarckNum, LayotCount, FontSize, lastBookmarks: Word;
   DocNum: Cardinal;
   SQLStr, FileName, OutFileName, Ext, TemplateExt, InsStr, BookMarkName, LayotStr, LayotItem: String;
@@ -15405,10 +15411,7 @@ begin
             Else
               InsStr:=Trim(DCLQuery.FieldByName(BookMarkName).AsString);
 
-            //InsLength:=Variant(Length(InsStr));
             CursorPointer.GotoRange(BookMark.GetStart, False);
-            //CursorPointer.GoRight(InsLength, True);
-            //CursorPointer.setString('');
             If FontStyleRec.italic=1 Then
               CursorPointer.setPropertyValue('CharPosture', Ord(fsItalic));
             If FontStyleRec.Bold=1 Then
@@ -15764,7 +15767,7 @@ var
   SQLStr, FileName, OutFileName, Ext, TemplateExt, LayotStr, LayotItem, BookmarckName: String;
   Layot: TStringList;
   DocNum: Cardinal;
-  ParamNum, BookmarckNum, LayotCount, FontSize: Byte;
+  BookmarckNum, LayotCount, FontSize: Byte;
 
   ToWrite, BookmarkFromLayot, OneDoc, Hide: Boolean;
   FontStyleRec: TFontStyleRec;
