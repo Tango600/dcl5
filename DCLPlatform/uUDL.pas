@@ -5713,6 +5713,7 @@ begin
             begin
               If GetRaightsByContext(InContext)>ulReadOnly Then
               Begin
+                SetCurrentDir(Path);
                 TmpStr:=FindParam('execute=', ScrStr);
 
                 tmpStr1:=FindParam('WorkDir=', ScrStr);
@@ -12678,12 +12679,19 @@ begin
           If PosEx('[FieldParagraphDown];', FOPL[ScrStrNum+FieldNo+FieldNo])<>0 Then
           begin
             Case FField.FType of
-            ftGraphic:
+            ftGraphic:begin
             inc(FField.Top, GraficTopStep);
-            ftMemo:
+            IncXYPos(GraficTopStep, FField.Width, FField);
+            end;
+            ftMemo:begin
             inc(FField.Top, MemoHeight+FieldDownStep);
-          Else
-          inc(FField.Top, EditTopStep)
+            IncXYPos(MemoHeight+FieldDownStep, FField.Width, FField);
+            end;
+            Else
+            begin
+              inc(FField.Top, EditTopStep);
+              IncXYPos(EditTopStep, FField.Width, FField);
+            end;
             end;
           end;
 
