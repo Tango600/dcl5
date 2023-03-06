@@ -41,6 +41,7 @@ type
     procedure FormCreate(Sender: TObject);
   private
     ScriptDir, ScriptExt: String;
+    notAccessLevel: Boolean;
     GPT: TGPT;
     Scripts: Array of TDCLScript;
     procedure ConnectDB;
@@ -51,7 +52,7 @@ type
 implementation
 
 uses
-  FileUtil, uStringParams;
+  FileUtil, uStringParams, uDCLTypes;
 
 {$R *.lfm}
 
@@ -140,6 +141,23 @@ begin
   StatusBar1.Panels[1].Text:=dclIni;
 
   ConnectDB;
+
+  SQLQuery1.Params.Clear;
+  SQLQuery1.SQL.Text:='select ACCESSLEVEL from DCL_USERS where DCL_USER_NAME=:UN and DCL_USER_PASS=:pass';
+  SQLQuery1.ParamByName('UN').AsString:=GPT.DCLUserName;
+  SQLQuery1.ParamByName('pass').AsString:=GPT.DCLUserPass;
+  SQLQuery1.Open;
+  SQLQuery1.Last;
+
+  notAccessLevel:=False;
+  If not SQLQuery1.IsEmpty then
+  begin
+    If SQLQuery1.Fields[0].AsInteger<Ord(ulDeveloper) then
+    begin
+      notAccessLevel:=True;
+      btUpload.Enabled:=False;
+    end;
+  end;
 
   If FileExists('Settings.ini') then
   begin
@@ -308,6 +326,7 @@ var
   Modified, MetaDataExist:Boolean;
   MDFile:TStringList;
 begin
+  If notAccessLevel then Exit;
   MDFile:=TStringList.Create;
   StatusBar1.Panels[2].Text:='';
 

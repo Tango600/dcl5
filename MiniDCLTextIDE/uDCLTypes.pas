@@ -22,6 +22,8 @@ type
   TToolBarPanel=TToolBar;
   TDialogLabel=TLabel;
 
+  TUserLevelsType=(ulDeny, ulReadOnly, ulWrite, ulExecute, ulLevel1, ulLevel2, ulLevel3, ulLevel4,
+    ulDeveloper, ulUndefined);
 
 implementation
 
