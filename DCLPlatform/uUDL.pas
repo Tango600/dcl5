@@ -5811,6 +5811,7 @@ begin
             begin
               If GetRaightsByContext(InContext)>ulReadOnly Then
               Begin
+                SetCurrentDir(Path);
                 TmpStr:=FindParam('execute=', ScrStr);
 
                 tmpStr1:=FindParam('WorkDir=', ScrStr);
