@@ -9,8 +9,7 @@ uses
   uNewFonts, WinInet,
 {$ENDIF}
   Forms, Classes, Controls, ExtCtrls, ComCtrls, Dialogs, Buttons,
-  uStringParams, uDCLMultiLang,
-  uDCLTypes, uDCLConst;
+  uDCLMultiLang, uDCLTypes, uDCLConst;
 
 Type
   TDownloader=class(TObject)
