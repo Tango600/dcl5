@@ -1416,7 +1416,7 @@ begin
         45:
         TmpStr:=OSType;
         46:
-        TmpStr:=GetMACAddress;
+        TmpStr:='';
         47:
         TmpStr:=UserProfileDir; // '_USERPROFILE_'
         48:
@@ -9032,25 +9032,17 @@ end;
 
 procedure TDCLLogOn.LoggingUser(Login: Boolean);
 var
-  LoggingQuery: TDCLDialogQuery;
-  AddSQLStr1, AddSQLStr2:string;
+  LoggingQuery: TDCLQuery;
 begin
-//{$IFNDEF EMBEDDED}
   If FDBLogOn.Connected then
   Begin
-    LoggingQuery:=TDCLDialogQuery.Create(nil);
+    LoggingQuery:=TDCLQuery.Create(Self.FDBLogOn);
     LoggingQuery.Name:='LoggingUser_'+IntToStr(UpTime);
-    SetDBName(LoggingQuery);
 
     If Login Then
     begin
-      AddSQLStr1:='';
-      AddSQLStr2:='';
       DCLSession.LoginTime:=TimeStampToStr(Now);
-      DCLSession.ComputerName:=GetComputerName;
-      DCLSession.IPAdress:=GetLocalIP;
       DCLSession.UserSystemName:=GetUserFromSystem;
-      DCLSession.MAC:=GetMacAddress;
     end;
 
     If GPT.UserLogging Then
@@ -9059,21 +9051,13 @@ begin
       begin
         If Login Then
         begin
-          If FieldExists(AU_MAC, nil, GPT.ACTIVE_USERS_TABLE) then
-          begin
-            AddSQLStr1:=', '+AU_MAC;
-            AddSQLStr2:=', '+Quote+DCLSession.MAC+Quote;
-          end;
-
           LoggingQuery.SQL.Text:='insert into '+GPT.ACTIVE_USERS_TABLE+
-            '(ACTIVE_USER_ID, ACTIVE_USER_HOST, ACTIVE_USER_IP, ACTIVE_USER_DCL_VER, ACTIVE_USER_LOGIN_TIME'+AddSQLStr1+') '
-            +'values('+GPT.UserID+', '''+DCLSession.ComputerName+'/'+DCLSession.UserSystemName+
-            ''', '''+DCLSession.IPAdress+''', '''+Version+''', '''+DCLSession.LoginTime+''' '+AddSQLStr2+')';
+            '(ACTIVE_USER_ID, ACTIVE_USER_HOST, ACTIVE_USER_DCL_VER, ACTIVE_USER_LOGIN_TIME) '
+            +'values('+GPT.UserID+', '''+DCLSession.UserSystemName+''', '''+Version+''', '''+DCLSession.LoginTime+''')';
         end
         Else
           LoggingQuery.SQL.Text:='delete from '+GPT.ACTIVE_USERS_TABLE+' where ACTIVE_USER_ID='+
-            GPT.UserID+' and ACTIVE_USER_HOST='''+DCLSession.ComputerName+'/'+
-            DCLSession.UserSystemName+''' and '+'ACTIVE_USER_DCL_VER='''+Version+
+            GPT.UserID+' and ACTIVE_USER_DCL_VER='''+Version+
             ''' and ACTIVE_USER_LOGIN_TIME='''+DCLSession.LoginTime+'''';
 
         try
@@ -9090,22 +9074,16 @@ begin
       begin
         If Login Then
         Begin
-          If FieldExists(UL_MAC, nil, GPT.USER_LOGIN_HISTORY_TABLE) then
-          begin
-            AddSQLStr1:=', '+UL_MAC;
-            AddSQLStr2:=', '+Quote+DCLSession.MAC+Quote;
-          end;
-
           LoggingQuery.SQL.Text:='insert into '+GPT.USER_LOGIN_HISTORY_TABLE+
-            '(UL_USER_ID, UL_LOGIN_TIME, UL_HOST_IP, UL_HOST_NAME, UL_DCL_VER'+AddSQLStr1+') '+
+            '(UL_USER_ID, UL_LOGIN_TIME, UL_HOST_NAME, UL_DCL_VER) '+
             'values('+GPT.UserID+
-            ', '''+DCLSession.LoginTime+''', '''+DCLSession.IPAdress+''', '''+DCLSession.ComputerName+
-            '/'+DCLSession.UserSystemName+''', '''+Version+''''+AddSQLStr2+')';
+            ', '''+DCLSession.LoginTime+''', '''+
+            DCLSession.UserSystemName+''', '''+Version+''')';
         End
         Else
           LoggingQuery.SQL.Text:='update '+GPT.USER_LOGIN_HISTORY_TABLE+' set UL_LOGOFF_TIME='''+
             TimeStampToStr(Now)+''' where '+'UL_USER_ID='+GPT.UserID+' and UL_LOGIN_TIME='''+
-            DCLSession.LoginTime+''' and UL_HOST_NAME='''+DCLSession.ComputerName+'/'+
+            DCLSession.LoginTime+''' and UL_HOST_NAME='''+
             DCLSession.UserSystemName+''' and UL_DCL_VER='''+Version+'''';
         try
           LoggingQuery.ExecSQL;
@@ -9117,7 +9095,6 @@ begin
 
     FreeAndNil(LoggingQuery);
   End;
-//{$ENDIF}
 end;
 
 function TDCLLogOn.Login(UserName, Password: String; ShowForm: Boolean): TLogOnStatus;

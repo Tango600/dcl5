@@ -193,9 +193,6 @@ DefaultLibraryLocation='libfbclient.so';
   RolesToUsersUserIDField='ru_userid';
   RolesToUsersRoleIDField='ru_roleid';
 
-  AU_MAC='ACTIVE_USER_MAC';
-  UL_MAC='UL_MAC';
-
   ScriptControlLanguage='VBScript';
 
   UserLevelsSet='ulDeny,ulReadOnly,ulWrite,ulExecute,ulLevel,ulDeveloper';
