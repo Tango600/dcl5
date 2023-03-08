@@ -106,7 +106,7 @@ TDateTimeItem=Record
 End;
 
 TDCLSession=Record
-  LoginTime, ComputerName, MAC, IPAdress, UserSystemName: String;
+  LoginTime, UserSystemName: String;
 End;
 
 RStructModify=Record
