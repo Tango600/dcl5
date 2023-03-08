@@ -57,8 +57,8 @@ Uses
 {$IFNDEF FPC}
   JPEG,
 {$ENDIF}
-  uDCLDownloader,
-  uDCLMessageForm, uDCLSQLMonitor, uDCLQuery, uLogging, MD5, uDCLNetUtils,
+  uDCLDownloader, uDCLMD5,
+  uDCLMessageForm, uDCLSQLMonitor, uDCLQuery, uLogging, uDCLNetUtils,
   uStringParams, uDCLData, uDCLConst, uDCLTypes;
 
 Type
@@ -8686,7 +8686,7 @@ end;
 
 function TDCLLogOn.GetSecKeyData(Data: TMemoryStream; UserName: String): String;
 var
-  DataMD5, PassMD5: TMD5Digest;
+  DataMD5, PassMD5: String;
   i, tmp1: Byte;
   Pass: String;
   ShadowQuery: TDCLDialogQuery;
@@ -8716,9 +8716,11 @@ begin
       end;
       PassMD5:=MD5String(Pass);
 
-      For i:=0 to 15 do
+      i:=0;
+      While i<32 do
       begin
-        tmp1:=DataMD5.v[i] Mod PassMD5.v[i];
+        tmp1:=HexToInt(DataMD5[i]+DataMD5[i+1]) Mod HexToInt(PassMD5[i]+PassMD5[i+1]);
+        Inc(i, 2);
         Result:=Result+IntToHex(tmp1, 2);
       end;
     end;
@@ -17798,7 +17800,7 @@ var
   MS: TMemoryStream;
 begin
   MS:=GetData(DataName, FindType);
-  Result:=MD5DigestToStr(MD5Stream(MS));
+  Result:=MD5Stream(MS);
 end;
 
 procedure TBaseBinStore.DeleteData(DataName: String; FindType: TFindType);

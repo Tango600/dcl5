@@ -20,7 +20,7 @@ uses
 {$ENDIF}
   Dialogs,
   uUDL,
-  uLZW, uDCLTypes,
+  uLZW, uDCLTypes, uDCLMD5,
   Controls, Classes, Graphics, DateUtils,
   uDCLData, uDCLConst, uStringParams;
 
@@ -129,7 +129,7 @@ function IsDigits(Value: String): Boolean;
 implementation
 
 uses
-  SumProps, uDCLResources, uDCLDBUtils, uDCLMultiLang, uDCLOfficeUtils, MD5;
+  SumProps, uDCLResources, uDCLDBUtils, uDCLMultiLang, uDCLOfficeUtils;
 
 function ValidObject(const AObj: TObject): Boolean;
 begin
@@ -1395,11 +1395,11 @@ Begin
         25:Begin
           If FileExists(FunctionParams[1]) then
           Begin
-            TmpStr:=MD5FileToStr(FunctionParams[1]);
+            TmpStr:=MD5File(FunctionParams[1]);
           End;
         End;
         26:Begin
-          TmpStr:=MD5DigestToStr(MD5String(FunctionParams[1]));
+          TmpStr:=MD5String(FunctionParams[1]);
         End;
         27:Begin // Eval
           TmpStr:=Calculate(FunctionParams[1]);
@@ -1796,7 +1796,7 @@ End;
 
 Function HashString(S: String): String;
 Begin
-  Result:=MD5DigestToStr(MD5String(S));
+  Result:=MD5String(S);
 End;
 
 Function NoFileExt(const FileName:String):Boolean;
@@ -1949,7 +1949,7 @@ end;
 
 Function ReplaceSQLFields(SQL, Fields: String): String;
 var
-  i, s, f, skb, t, l:Integer;
+  i, s, f, skb, t:Integer;
   First:Boolean;
   OpenerSet, CloseerSet, FindToken:String;
 begin
@@ -1964,7 +1964,6 @@ begin
     OpenerSet:='(';
     CloseerSet:=')';
     First:=True;
-    l:=Length(FindToken);
     i:=1;
     t:=1;
     skb:=0;
@@ -2451,7 +2450,6 @@ end;
 function ConvertBinToXBase(Data:TMemoryStream; Base:Byte):TMemoryStream;
 var
   BaseStep:Byte;
-  BasseSet:Array[0..64] of Byte;
   Buffer:Int64;
   i:Integer;
   S:String;
@@ -2459,11 +2457,6 @@ begin
   Result:=TMemoryStream.Create;
   If Data.Size>0 then
   Begin
-    For i:=0 to 9 do
-      BasseSet[i]:=Ord('0')+i;
-    For i:=10 to Base do
-      BasseSet[i]:=Ord('A')+i-10;
-
     BaseStep:=1;//(Base div 8)+((8+(Base mod 8)-1) div 8);
     Data.Position:=0;
 
@@ -2480,7 +2473,6 @@ end;
 
 function ConvertXBaseToBin(Data:TMemoryStream; Base:Byte):TMemoryStream;
 var
-  BasseSet:Array[0..64] of Byte;
   SingleDig, b:Byte;
   S:string;
   i:Integer;
@@ -2488,11 +2480,6 @@ Begin
   Result:=TMemoryStream.Create;
   If Data.Size>0 then
   Begin
-    For i:=0 to 9 do
-      BasseSet[i]:=Ord('0')+i;
-    For i:=10 to Base do
-      BasseSet[i]:=Ord('A')+i-10;
-
     Data.Position:=0;
     While Data.Position<Data.Size-1 do
     Begin
