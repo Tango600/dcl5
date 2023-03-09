@@ -16,6 +16,7 @@ uses
   {$ENDIF}
   Forms,
   {$IFNDEF FPC}
+  uIBUpdateSQLW,
   {$IFnDEF USEDELPHIThemes}
   {$IFDEF ThemedDBGrid}
   ThemedDBGrid in 'ThemedDBGrid.pas',
@@ -54,7 +55,7 @@ uses
   Vcl.Themes,
   Vcl.Styles,
   {$ENDIF}{$ENDIF}
-  uLogging in 'uLogging.pas', uDCLMD5;
+  uLogging, uDCLMD5, uNewFonts;
 
 {$R DCLRun.res}
 
@@ -68,8 +69,8 @@ begin
   Application.Initialize;
   {$IFDEF MSWINDOWS}
   Application.MainFormOnTaskbar:=True;
-  {$ENDIF}
   Application.UpdateFormatSettings:=False;
+  {$ENDIF}
   {$IFNDEF FPC}{$IFDEF USEDELPHIThemes}
   TStyleManager.TrySetStyle('Smokey Quartz Kamri');
   {$ENDIF}{$ENDIF}
