@@ -18,21 +18,21 @@ uses
   Variants;
 
 type
-  TIBUpdateSQLW = class(TIBUpdateSQL)// UpdateObj)
+  TIBUpdateSQLW = class(TIBUpdateSQL)
   private
-  // Указатель на "пишущую" транзакцию
+  // РЈРєР°Р·Р°С‚РµР»СЊ РЅР° "РїРёС€СѓС‰СѓСЋ" С‚СЂР°РЅР·Р°РєС†РёСЋ
     FUpdateTransaction:TIBTransaction;
-  // здесь подмена вместо "родной" FQueries
+  // Р·РґРµСЃСЊ РїРѕРґРјРµРЅР° РІРјРµСЃС‚Рѕ "СЂРѕРґРЅРѕР№" FQueries
     FQueriesW: array[TUpdateKind] of TIBQuery;
     procedure SetUpdateTransaction(Value:TIBTransaction);
   protected
-  // здесь подмена вместо "родной" GetQuery
+  // Р·РґРµСЃСЊ РїРѕРґРјРµРЅР° РІРјРµСЃС‚Рѕ "СЂРѕРґРЅРѕР№" GetQuery
     function  GetQueryW(UpdateKind: TUpdateKind): TIBQuery;
-  // здесь подмена вместо "родной" SQLChanged
+  // Р·РґРµСЃСЊ РїРѕРґРјРµРЅР° РІРјРµСЃС‚Рѕ "СЂРѕРґРЅРѕР№" SQLChanged
     procedure SQLChangedW(Sender: TObject);
-  // Устанавливает TIBQuery.Transaction
+  // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ TIBQuery.Transaction
     procedure SetQueryTransaction(UpdateKind: TUpdateKind);
-  // Чистит указатели  при удалении fUpdateTransaction
+  // Р§РёСЃС‚РёС‚ СѓРєР°Р·Р°С‚РµР»Рё  РїСЂРё СѓРґР°Р»РµРЅРёРё fUpdateTransaction
     procedure Notification( AComponent: TComponent; Operation: TOperation); override;
   public
     constructor Create(AOwner: TComponent); override;
@@ -42,11 +42,11 @@ type
     {$ELSE}
     procedure Apply(UpdateKind: TUpdateKind; buff: PChar); override;
     {$ENDIF}
-  // здесь подмена вместо "родной" ExecSQL
+  // Р·РґРµСЃСЊ РїРѕРґРјРµРЅР° РІРјРµСЃС‚Рѕ "СЂРѕРґРЅРѕР№" ExecSQL
     procedure ExecSQLW(UpdateKind: TUpdateKind);
-  // здесь подмена вместо "родной" SetParams
+  // Р·РґРµСЃСЊ РїРѕРґРјРµРЅР° РІРјРµСЃС‚Рѕ "СЂРѕРґРЅРѕР№" SetParams
     procedure SetParamsW(UpdateKind: TUpdateKind);
-  // здесь подмена вместо "родной" Query
+  // Р·РґРµСЃСЊ РїРѕРґРјРµРЅР° РІРјРµСЃС‚Рѕ "СЂРѕРґРЅРѕР№" Query
     property QueryW[UpdateKind: TUpdateKind]: TIBQuery read GetQueryW;
   published
     property UpdateTransaction:TIBTransaction read fUpdateTransaction
@@ -70,7 +70,7 @@ begin
   inherited Create(AOwner);
   for UpdateKind := Low(TUpdateKind) to High(TUpdateKind) do
   begin
-  // Изменим обработчики OnChange для уже созданных
+  // РР·РјРµРЅРёРј РѕР±СЂР°Р±РѕС‚С‡РёРєРё OnChange РґР»СЏ СѓР¶Рµ СЃРѕР·РґР°РЅРЅС‹С…
   // TStringList
     TStringList(SQL[UpdateKind]).OnChange := SQLChangedW;
   end;
@@ -80,7 +80,7 @@ destructor TIBUpdateSQLW.Destroy;
 var
   UpdateKind: TUpdateKind;
 begin
-// очистим массив FQueriesW
+// РѕС‡РёСЃС‚РёРј РјР°СЃСЃРёРІ FQueriesW
   for UpdateKind := Low(TUpdateKind) to High(TUpdateKind) do
   if Assigned(FQueriesW[UpdateKind]) then
   begin
@@ -91,8 +91,8 @@ begin
 end;
 
 
-// Функция возвращает указатель на объект TIBQuery из нашего
-// массива FWQueries
+// Р¤СѓРЅРєС†РёСЏ РІРѕР·РІСЂР°С‰Р°РµС‚ СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РѕР±СЉРµРєС‚ TIBQuery РёР· РЅР°С€РµРіРѕ
+// РјР°СЃСЃРёРІР° FWQueries
 function TIBUpdateSQLW.GetQueryW(UpdateKind: TUpdateKind): TIBQuery;
 begin
   if not Assigned(FQueriesW[UpdateKind]) then
@@ -113,7 +113,7 @@ begin
     begin
       if Assigned(FQueriesW[UpdateKind]) then
       begin
-      // Установить текст SQL
+      // РЈСЃС‚Р°РЅРѕРІРёС‚СЊ С‚РµРєСЃС‚ SQL
         FQueriesW[UpdateKind].Params.Clear;
         FQueriesW[UpdateKind].SQL.Assign(SQL[UpdateKind]);
       end;
@@ -157,7 +157,7 @@ end;
 
 procedure TIBUpdateSQLW.Apply(UpdateKind: TUpdateKind{$IFDEF FPC}; buff: PChar{$ENDIF});
 begin
-// вызываем "наши" процедуры
+// РІС‹Р·С‹РІР°РµРј "РЅР°С€Рё" РїСЂРѕС†РµРґСѓСЂС‹
   SetParamsW(UpdateKind);
   ExecSQLW(UpdateKind);
 end;
@@ -166,7 +166,7 @@ procedure TIBUpdateSQLW.ExecSQLW(UpdateKind: TUpdateKind);
 begin
   with QueryW[UpdateKind] do
   begin
-  // если определен fUpdateTransaction
+  // РµСЃР»Рё РѕРїСЂРµРґРµР»РµРЅ fUpdateTransaction
     if Assigned(fUpdateTransaction) and
     not fUpdateTransaction.InTransaction then
       fUpdateTransaction.StartTransaction;
@@ -179,7 +179,7 @@ begin
     finally
       if Assigned(fUpdateTransaction) then
       begin
-        // в любом сдучае лучше Commit
+        // РІ Р»СЋР±РѕРј СЃРґСѓС‡Р°Рµ Р»СѓС‡С€Рµ Commit
         fUpdateTransaction.Commit;
       end;
     end;
@@ -221,8 +221,8 @@ begin
     end;
 end;
 
-// процедура устанавливает значение FUpdateTransaction и
-// определяет IBDatabase и IBTransaction для всех
+// РїСЂРѕС†РµРґСѓСЂР° СѓСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ Р·РЅР°С‡РµРЅРёРµ FUpdateTransaction Рё
+// РѕРїСЂРµРґРµР»СЏРµС‚ IBDatabase Рё IBTransaction РґР»СЏ РІСЃРµС…
 // IBQuery(Queries)
 procedure TIBUpdateSQLW.SetUpdateTransaction(Value:TIBTransaction);
 var

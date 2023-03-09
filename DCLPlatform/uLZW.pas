@@ -1,7 +1,7 @@
 Unit uLZW;
 
-// Модуль LZW паковщика и распаковщика
-// требует модуля FileBuffer
+// РњРѕРґСѓР»СЊ LZW РїР°РєРѕРІС‰РёРєР° Рё СЂР°СЃРїР°РєРѕРІС‰РёРєР°
+// С‚СЂРµР±СѓРµС‚ РјРѕРґСѓР»СЏ FileBuffer
 interface
 
 uses
@@ -78,7 +78,7 @@ Begin
   Begin
     If Dict[s].Up=ClearDictValue then
     Begin
-      // Никого нет на этой ноде
+      // РќРёРєРѕРіРѕ РЅРµС‚ РЅР° СЌС‚РѕР№ РЅРѕРґРµ
       Dict[s].Up:=DictPos;
       Dict[DictPos].Up:=ClearDictValue;
       Dict[DictPos].Left:=ClearDictValue;
@@ -88,11 +88,11 @@ Begin
     End
     Else
     Begin
-      // Кто-то живёт тут
+      // РљС‚Рѕ-С‚Рѕ Р¶РёРІС‘С‚ С‚СѓС‚
       If C>Dict[Dict[s].Up].AddChar then
       Begin
-        // Смотрим куда податься
-        // Вперёд
+        // РЎРјРѕС‚СЂРёРј РєСѓРґР° РїРѕРґР°С‚СЊСЃСЏ
+        // Р’РїРµСЂС‘Рґ
         dc:=Dict[s].Up;
         While Dict[dc].Right<>ClearDictValue do
           dc:=Dict[dc].Right;
@@ -106,7 +106,7 @@ Begin
       End
       Else
       Begin
-        // Назад
+        // РќР°Р·Р°Рґ
         dc:=Dict[s].Up;
         While Dict[dc].Left<>ClearDictValue do
           dc:=Dict[dc].Left;
@@ -247,8 +247,8 @@ Begin
   ResetBuffer(Arc);
 End;
 
-//Показывает, во сколько раз архив будет меньше оригинала
-//Если результат меньше 1, то архив больше
+//РџРѕРєР°Р·С‹РІР°РµС‚, РІРѕ СЃРєРѕР»СЊРєРѕ СЂР°Р· Р°СЂС…РёРІ Р±СѓРґРµС‚ РјРµРЅСЊС€Рµ РѕСЂРёРіРёРЅР°Р»Р°
+//Р•СЃР»Рё СЂРµР·СѓР»СЊС‚Р°С‚ РјРµРЅСЊС€Рµ 1, С‚Рѕ Р°СЂС…РёРІ Р±РѕР»СЊС€Рµ
 function TestCompress(Var Data, Arc: TByteFile): Real;
 begin
   TestMode:=True;

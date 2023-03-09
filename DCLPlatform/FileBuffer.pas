@@ -1,7 +1,7 @@
 Unit FileBuffer;
-// Модуль буферизированного ввода/вывода, реально ускаряет файловые
-// операции из за ввода/вывода в память, а только потом, как буфер
-// переполнится, в файл.
+// РњРѕРґСѓР»СЊ Р±СѓС„РµСЂРёР·РёСЂРѕРІР°РЅРЅРѕРіРѕ РІРІРѕРґР°/РІС‹РІРѕРґР°, СЂРµР°Р»СЊРЅРѕ СѓСЃРєР°СЂСЏРµС‚ С„Р°Р№Р»РѕРІС‹Рµ
+// РѕРїРµСЂР°С†РёРё РёР· Р·Р° РІРІРѕРґР°/РІС‹РІРѕРґР° РІ РїР°РјСЏС‚СЊ, Р° С‚РѕР»СЊРєРѕ РїРѕС‚РѕРј, РєР°Рє Р±СѓС„РµСЂ
+// РїРµСЂРµРїРѕР»РЅРёС‚СЃСЏ, РІ С„Р°Р№Р».
 
 interface
 
@@ -131,18 +131,18 @@ Function BitRead(Var F: TByteFile; NumBits: Byte): Word;
 var
   B: Word;
 begin
-  { Пока в буфере не хватает бит - читаем их из файла }
+  { РџРѕРєР° РІ Р±СѓС„РµСЂРµ РЅРµ С…РІР°С‚Р°РµС‚ Р±РёС‚ - С‡РёС‚Р°РµРј РёС… РёР· С„Р°Р№Р»Р° }
   While ReadCounterBit<NumBits do
   Begin
     B:=GetBytes(F);
     ReadBitsBuffer:=ReadBitsBuffer or(B shl ReadCounterBit);
-    { Добавляем его в буфер }
+    { Р”РѕР±Р°РІР»СЏРµРј РµРіРѕ РІ Р±СѓС„РµСЂ }
     Inc(ReadCounterBit, 8);
   End;
   BitRead:=Word(ReadBitsBuffer and((1 shl NumBits)-1));
-  { Получаем из буфера нужное кол-во бит }
+  { РџРѕР»СѓС‡Р°РµРј РёР· Р±СѓС„РµСЂР° РЅСѓР¶РЅРѕРµ РєРѕР»-РІРѕ Р±РёС‚ }
   ReadBitsBuffer:=ReadBitsBuffer shr NumBits;
-  { Отчищаем буфер от выданных бит }
+  { РћС‚С‡РёС‰Р°РµРј Р±СѓС„РµСЂ РѕС‚ РІС‹РґР°РЅРЅС‹С… Р±РёС‚ }
   Dec(ReadCounterBit, NumBits);
 end;
 
@@ -156,14 +156,14 @@ Var
 begin
   BitBuffer:=Num;
   WriteBitsBuffer:=WriteBitsBuffer or(BitBuffer shl WriteCounterBit);
-  { Добавляем в буфер новые биты }
+  { Р”РѕР±Р°РІР»СЏРµРј РІ Р±СѓС„РµСЂ РЅРѕРІС‹Рµ Р±РёС‚С‹ }
   Inc(WriteCounterBit, NumBits);
   While (WriteCounterBit>=8) do
   Begin
-    B:=Byte(WriteBitsBuffer and $FF); { Получаем первый байт из буфера }
+    B:=Byte(WriteBitsBuffer and $FF); { РџРѕР»СѓС‡Р°РµРј РїРµСЂРІС‹Р№ Р±Р°Р№С‚ РёР· Р±СѓС„РµСЂР° }
     OutputBytes(F, B);
     WriteBitsBuffer:=WriteBitsBuffer shr 8;
-    { Отчищам буфер от записанных бит }
+    { РћС‚С‡РёС‰Р°Рј Р±СѓС„РµСЂ РѕС‚ Р·Р°РїРёСЃР°РЅРЅС‹С… Р±РёС‚ }
     Dec(WriteCounterBit, 8);
   End;
 end;
@@ -194,7 +194,7 @@ Begin
     Result:=InBuffer[SeekPos-((BufsCount-1)*BufLength)]
   Else
   Begin
-    // не повезло не попали в буфер
+    // РЅРµ РїРѕРІРµР·Р»Рѕ РЅРµ РїРѕРїР°Р»Рё РІ Р±СѓС„РµСЂ
 
     OldPos:=F.Position;
     F.Seek(SeekPos, 0);
