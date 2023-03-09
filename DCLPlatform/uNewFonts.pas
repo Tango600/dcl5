@@ -1,7 +1,7 @@
 unit uNewFonts;
 {$I DefineType.pas}
-//Плюс для каждой формы вы должны установить ей ParentFont = True.
-//Вот и всё. Теперь ваша программа будет использовать шрифт для UI, установленный в системе. 
+//РџР»СЋСЃ РґР»СЏ РєР°Р¶РґРѕР№ С„РѕСЂРјС‹ РІС‹ РґРѕР»Р¶РЅС‹ СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РµР№ ParentFont = True.
+//Р’РѕС‚ Рё РІСЃС‘. РўРµРїРµСЂСЊ РІР°С€Р° РїСЂРѕРіСЂР°РјРјР° Р±СѓРґРµС‚ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ С€СЂРёС„С‚ РґР»СЏ UI, СѓСЃС‚Р°РЅРѕРІР»РµРЅРЅС‹Р№ РІ СЃРёСЃС‚РµРјРµ. 
 interface
  
 uses
@@ -49,7 +49,7 @@ begin
     DefFontData.Charset := FGUIFont.Charset;
     DefFontData.Name := {$IFnDEF FPC}UTF8EncodeToShortString(FGUIFont.Name){$ELSE}AnsiToUTF8(FGUIFont.Name){$ENDIF};
 {$IFnDEF FPC}
-    DefFontData.Quality := FGUIFont.Quality; // Только для Delphi XE и выше
+    DefFontData.Quality := FGUIFont.Quality; // РўРѕР»СЊРєРѕ РґР»СЏ Delphi XE Рё РІС‹С€Рµ
 {$ENDIF}
   end;
  
