@@ -23,3 +23,5 @@ bin/*
 /DCLPlatform/*.FDB
 *.docx
 *_0.dproj
+/DCLPlatform/lib/
+/DCLPlatform/backup/
