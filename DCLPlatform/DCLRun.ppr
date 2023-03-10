@@ -35,7 +35,7 @@ uses
   uLZW in 'uLZW.pas',
   FileBuffer in 'FileBuffer.pas',
   uDCLQuery in 'uDCLQuery.pas',
-  uLogging in 'uLogging.pas';
+  uLogging, uDCLMD5, uNewFonts;
 
 {$R DCLRun.res}
 
@@ -46,7 +46,10 @@ begin
   RequireDerivedFormResource:=True;
   Application.Scaled:=True;
   Application.Initialize;
+  {$IFDEF MSWINDOWS}
+  Application.MainFormOnTaskbar:=True;
+  Application.UpdateFormatSettings:=False;
+  {$ENDIF}
   Application.CreateForm(TMainForm, MainForm);
   Application.Run;
 end.
-
