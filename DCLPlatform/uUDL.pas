@@ -58,7 +58,7 @@ Uses
   JPEG,
 {$ENDIF}
   uDCLDownloader, uDCLMD5,
-  uDCLMessageForm, uDCLSQLMonitor, uDCLQuery, uLogging, uDCLNetUtils,
+  uDCLMessageForm, uDCLSQLMonitor, uDCLQuery, uLogging, uDCLSysUtils,
   uStringParams, uDCLData, uDCLConst, uDCLTypes;
 
 Type

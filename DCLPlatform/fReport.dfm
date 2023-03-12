@@ -1,8 +1,9 @@
 object MainForm: TMainForm
   Left = 633
   Top = 281
-  ClientHeight = 79
-  ClientWidth = 301
+  BorderStyle = bsSingle
+  ClientHeight = 78
+  ClientWidth = 297
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -11,7 +12,6 @@ object MainForm: TMainForm
   Font.Style = []
   Position = poDesktopCenter
   OnCreate = FormCreate
-  PixelsPerInch = 96
   TextHeight = 13
   object ButtonPrint: TButton
     Left = 16

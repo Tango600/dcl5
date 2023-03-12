@@ -1,26 +1,24 @@
-unit uDCLNetUtils;
+unit uDCLSysUtils;
 {$I DefineType.pas}
 
 interface
 
 uses
 {$IFDEF MSWINDOWS}
-  Windows;
+  Windows,
 {$ENDIF}
-{$IFDEF UNIX}
-  unix, sockets, lclintf;
-{$ENDIF}
+  SysUtils;
 
 function GetUserFromSystem: string;
 
 implementation
 
 function GetUserFromSystem: string;
+{$IFDEF MSWINDOWS}
 var
   UserName: string;
   UserNameLen: DWORD;
 Begin
-{$IFDEF MSWINDOWS}
   UserNameLen:=255;
   SetLength(UserName, UserNameLen);
   If Windows.GetUserName(PChar(UserName), UserNameLen) Then
@@ -28,7 +26,8 @@ Begin
   Else
     Result:='<Unk.>';
 {$ENDIF}
-{$IFDEF UNIX}
+{$IFDEF unix}
+begin
   UserName:=GetEnvironmentVariable('HOME');
   Result:=Copy(UserName, 7, Length(UserName));
 {$ENDIF}

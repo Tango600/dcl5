@@ -29,7 +29,7 @@ uses
   uDCLData in 'uDCLData.pas',
   uDCLConst in 'uDCLConst.pas',
   uDCLUtils in 'uDCLUtils.pas',
-  uDCLNetUtils in 'uDCLNetUtils.pas',
+  uDCLSysUtils in 'uDCLSysUtils.pas',
   uDCLTypes in 'uDCLTypes.pas',
   SumProps in 'SumProps.pas',
   uDCLMessageForm in 'uDCLMessageForm.pas',
