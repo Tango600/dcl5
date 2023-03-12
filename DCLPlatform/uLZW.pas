@@ -5,11 +5,7 @@ Unit uLZW;
 interface
 
 uses
-  SysUtils,
-{$IFDEF UNIX}
-  Linux,
-{$ENDIF}
-  FileBuffer;
+  SysUtils, FileBuffer;
 
 Procedure CompressProc(Var Data, Arc: TByteFile);
 Procedure DecompressProc(Var Arc, Data: TByteFile);
