@@ -9,20 +9,13 @@ uses
   Interfaces,
   {$IFDEF IBX}
   ibexpress,
+  uIBUpdateSQLW,
   {$ENDIF}
   {$IFDEF ZEOS}
   zcomponent,
   {$ENDIF}
   {$ENDIF}
   Forms,
-  {$IFNDEF FPC}
-  uIBUpdateSQLW,
-  {$IFnDEF USEDELPHIThemes}
-  {$IFDEF ThemedDBGrid}
-  ThemedDBGrid in 'ThemedDBGrid.pas',
-  {$ENDIF}
-  {$ENDIF}
-  {$ENDIF}
   {$IFDEF FPC}
   DBCtrls,
   DBGrids,
@@ -55,7 +48,7 @@ uses
   Vcl.Themes,
   Vcl.Styles,
   {$ENDIF}{$ENDIF}
-  uLogging, uDCLMD5, uNewFonts;
+  uLogging, uDCLMD5;
 
 {$R DCLRun.res}
 
@@ -66,6 +59,7 @@ begin
   {$IFDEF FPC}
   RequireDerivedFormResource:=True;
   {$ENDIF}
+  Application.Scaled:=True;
   Application.Initialize;
   {$IFDEF MSWINDOWS}
   Application.MainFormOnTaskbar:=True;

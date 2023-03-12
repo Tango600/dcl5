@@ -11,11 +11,6 @@ Uses
 {$ELSE}
   DBCtrls, DBGrids,
 {$ENDIF}
-{$IFNDEF FPC}
-{$IFDEF ThemedDBGrid}
-  ThemedDBGrid,
-{$ENDIF}
-{$ENDIF}
 {$IFDEF ADO}
   ADODB, ADOConst, ADOInt,
 {$ENDIF}
