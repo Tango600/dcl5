@@ -14,9 +14,9 @@ function GetUserFromSystem: string;
 implementation
 
 function GetUserFromSystem: string;
-{$IFDEF MSWINDOWS}
 var
   UserName: string;
+{$IFDEF MSWINDOWS}
   UserNameLen: DWORD;
 Begin
   UserNameLen:=255;
