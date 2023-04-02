@@ -437,7 +437,7 @@ Type
     PartSplitter: TSplitter;
 
     constructor Create(var Form: TDCLForm; Parent: TWinControl; SurfType: TDataControlType;
-      Query: TDCLDialogQuery; Data: TDataSource);
+      Query: TDCLDialogQuery; Data: TDataSource); overload;
     destructor Destroy; override;
 
     procedure CreateFields(FOPL: TStringList);
@@ -674,7 +674,7 @@ Type
     constructor Create(DialogName: String; var DCLLogOn: TDCLLogOn; ParentForm, CallerForm: TDCLForm;
       Command:TDCLCommand; aFormNum: Integer; OPL: TStringList; Query: TDCLDialogQuery; Data: TDataSource;
       Modal:Boolean=False; ReturnValueMode: TChooseMode=chmNone;
-      ReturnValueParams: TReturnValueParams=nil);
+      ReturnValueParams: TReturnValueParams=nil); overload;
     destructor Destroy; override;
 
     function GetNamespace: String;
@@ -5084,6 +5084,7 @@ var
   Sign:TSigns;
   tmpDCLForm:TDCLForm;
   nextLine:Boolean;
+  localCommand: TDCLCommand;
 
   procedure GotoGoto(LabelName: String);
   var
@@ -5581,7 +5582,8 @@ begin
             If PosEx('ExecCommand=', ScrStr)=1 Then
             begin
               tmp1:=FindParam('ExecCommand=', ScrStr);
-              ExecCommand(tmp1, FDCLForm);
+              localCommand:=TDCLCommand.Create(FDCLForm, FDCLLogOn);
+              localCommand.ExecCommand(tmp1, FDCLForm);
             end;
 
             If PosEx('SeparateChar=', ScrStr)=1 Then
@@ -7350,7 +7352,7 @@ begin
   tmp1:='';
   tmp1:=LowerCase(FindParam('target=', Scr));
   If tmp1='' Then
-    tmp1:='dbf';
+    tmp1:='sql';
   Mode:=LowerCase(LowerCase(FindParam('mode=', Scr)));
   If Mode='' Then
     Mode:='new';
@@ -11494,7 +11496,7 @@ begin
   Lookups[l].Lookup.Name:='LookUpField_'+IntToStr(l);
   Lookups[l].Lookup.Tag:=l;
   {$IFnDEF FPC}
-  Lookups[l].Lookup.DropDownRows:=12;
+  Lookups[l].Lookup.DropDownRows:=20;
   {$ENDIF}
 
   Lookups[l].NoDataField:=Field.NoDataField;
@@ -15938,11 +15940,14 @@ end;
 procedure TDCLOfficeReport.ReportExcel(ParamStr: String; Save, Close: Boolean);
 var
   SQLStr, FileName, OutFileName, ColorStr, Ext, TemplateExt, Fields: String;
-  EnableRowChColor, EnableColChColor, Hide: Boolean;
+  EnableRowChColor, EnableColChColor, Hide, IsDate: Boolean;
   RecRepNum, v1: Word;
   RowRColor, RowBColor, RowGColor, ColRColor, ColBColor, ColGColor: Integer;
   DCLQuery: TDCLDialogQuery;
   FillStrategy: TSheetFillStrategy;
+  ReportDate: TDate;
+  ReportTime: TTime;
+  ReportDateTime: TDateTime;
 begin
 {$IFDEF MSWINDOWS}
   Ext:='xls';
@@ -16089,6 +16094,7 @@ begin
 
         For v1:=0 to DCLQuery.FieldCount-1 do
         begin
+          IsDate:=False;
           case DCLQuery.Fields[v1].DataType of
           ftString, ftMemo, ftFmtMemo, ftWideString, ftFixedWideChar,
             ftWideMemo:begin
@@ -16106,19 +16112,29 @@ begin
           end;
           ftDate:begin
             Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:='ДД.ММ.ГГГГ';
+            ReportDate:=DCLQuery.Fields[v1].AsDateTime;
+            Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].Value:=ReportDate;
+            IsDate:=True;
           end;
           ftTime:begin
             Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:='ЧЧ:мм:сс';
+            ReportTime:=DCLQuery.Fields[v1].AsDateTime;
+            Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].Value:=ReportTime;
+            IsDate:=True;
           end;
           ftDateTime, ftTimeStamp{$IFnDEF FPC}, ftOraTimeStamp{$ENDIF}:begin
             Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:='ДД.ММ.ГГГГ ЧЧ:мм:сс';
+            ReportDateTime:=DCLQuery.Fields[v1].AsDateTime;
+            Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].Value:=ReportDateTime;
+            IsDate:=True;
           end;
           Else
             Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].NumberFormat:='';
           end;
 
-          Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].Value:=
-            Trim(DCLQuery.Fields[v1].AsString);
+          If Not IsDate Then
+            Excel.Sheets[1].Range['DATA'].Cells.Item[RecRepNum, v1+1].Value:=
+              Trim(DCLQuery.Fields[v1].AsString);
 
           If EnableRowChColor Then
             If RecRepNum Mod 2=0 Then
