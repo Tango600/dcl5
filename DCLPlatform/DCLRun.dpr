@@ -58,8 +58,8 @@ var
 begin
   {$IFDEF FPC}
   RequireDerivedFormResource:=True;
-  {$ENDIF}
   Application.Scaled:=True;
+  {$ENDIF}
   Application.Initialize;
   {$IFDEF MSWINDOWS}
   Application.MainFormOnTaskbar:=True;
